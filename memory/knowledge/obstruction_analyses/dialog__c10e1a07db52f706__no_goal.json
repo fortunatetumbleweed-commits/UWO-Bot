@@ -1,0 +1,21 @@
+{
+  "purpose": "Village amity panel for a Berber Village showing current Neutral amity level (60,000/100,000), active Envoy status effect details (trade goods and amity bonuses/penalties), achievement/weekly rewards, and discovered items",
+  "full_text": "Amity: Neutral 60,000/100,000. Envoy – Preparing to send out an envoy to a big city. Status Effect Details: Target Trade Goods Gain Amount +25%, Village Amity gain -25%, Additional Village Amity gain +10% (Artwork, Livestock), Additional Trade Goods gain +10% (Sundries, Crafts), Stock Decrease Trade Goods -1.5% (Sundries, Crafts, Artwork). Achievement Reward: None. Weekly Reward: None. Discoveries: [3 items shown].",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "c10e1a07db52f706",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T14:32:37.983817+00:00",
+  "visit_count": 177,
+  "raw_api_response": {
+    "purpose": "Village amity panel for a Berber Village showing current Neutral amity level (60,000/100,000), active Envoy status effect details (trade goods and amity bonuses/penalties), achievement/weekly rewards, and discovered items",
+    "full_text": "Amity: Neutral 60,000/100,000. Envoy – Preparing to send out an envoy to a big city. Status Effect Details: Target Trade Goods Gain Amount +25%, Village Amity gain -25%, Additional Village Amity gain +10% (Artwork, Livestock), Additional Trade Goods gain +10% (Sundries, Crafts), Stock Decrease Trade Goods -1.5% (Sundries, Crafts, Artwork). Achievement Reward: None. Weekly Reward: None. Discoveries: [3 items shown].",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

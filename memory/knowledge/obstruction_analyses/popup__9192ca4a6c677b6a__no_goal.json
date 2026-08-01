@@ -1,0 +1,21 @@
+{
+  "purpose": "The city menu panel for Tripoli is open, listing all available port facilities (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) that the player can navigate to.",
+  "full_text": "Spring Apr 19:14 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "9192ca4a6c677b6a",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T02:21:33.680838+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The city menu panel for Tripoli is open, listing all available port facilities (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) that the player can navigate to.",
+    "full_text": "Spring Apr 19:14 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

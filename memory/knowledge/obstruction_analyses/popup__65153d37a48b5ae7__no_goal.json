@@ -1,0 +1,21 @@
+{
+  "purpose": "The Blueprint screen is displaying the Western ship blueprints tab, showing available ship designs (Tallette, Barque, Hansa Cog) at Level 10, with the Western Build Level progress indicator (1,178,848/1,341,680) visible — this is the normal Blueprint UI, not a true obstruction popup",
+  "full_text": "Western Build LV 25 | Improved Western | Improved Eastern | Improved Special | Barque LV 10 | Hansa Cog LV 10",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "65153d37a48b5ae7",
+  "goal_intent": null,
+  "cached_at": "2026-05-16T02:37:41.149932+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Blueprint screen is displaying the Western ship blueprints tab, showing available ship designs (Tallette, Barque, Hansa Cog) at Level 10, with the Western Build Level progress indicator (1,178,848/1,341,680) visible — this is the normal Blueprint UI, not a true obstruction popup",
+    "full_text": "Western Build LV 25 | Improved Western | Improved Eastern | Improved Special | Barque LV 10 | Hansa Cog LV 10",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

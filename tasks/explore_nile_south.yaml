@@ -1,0 +1,45 @@
+# tasks/explore_nile_south.yaml
+#
+# Explore voyage: sail south down the Nile from Cairo, hugging the
+# west bank (port-side hug), aiming for the upper-Nile waypoint at
+# (5.71, 32.12) used by the baseline destination-reach voyages.
+#
+# Start from anywhere:
+#   - in port → the bot opens the harbour and taps Depart (no world-map
+#     destination selection — the whole point of `explore` is that
+#     we're not picking a port);
+#   - at sea → the bot skips departure and starts the hug-shore loop
+#     immediately.
+#
+# Voyage traces land under
+#   data/sessions/explore_port_<timestamp>/
+# (the directory is auto-created by run_explore_voyage if not given).
+
+name: "Explore Nile — South (port hug)"
+description: >
+  Sail south along the Nile's west bank from Cairo to the upper-Nile
+  waypoint (5.71, 32.12).  Used as the §13.27 / §13.28 regression
+  baseline voyage; uses the canonical Phase A + point-pursuit driver
+  + §13.28 stop-on-rejection mechanism.
+start_port: Cairo                   # informational only — used for the warning
+rounds: 1
+
+loop:
+  - action: explore
+    side: left                      # port-side hug (left of the bow)
+    # endpoint removed — pure exploration mode for Trémaux state-machine
+    # validation.  Bot should explore all forks, hit dead-ends, backtrack,
+    # exhaust, then signal done.  See docs/destination_generator_design.md § 5e.
+    # endpoint_lat: 5.71
+    # endpoint_lon: 32.12
+    max_ticks: 1100  # doubled — raw RGBA capture halved tick duration
+    hud_every: 1     # read sea-HUD lat/lon every tick (~95 ms direct-EasyOCR)
+    driver_mode: point_pursuit
+    waypoint_generator: phase_a
+    astern_expansion: false
+    graduated_density: false          # §13.30 was slower on Nile A/B; binary mask
+                                       # is the production baseline.  §13.31 perception
+                                       # fix runs regardless.
+    junction_picker: tremaux          # Phase 3 validation: hybrid Trémaux DFS at
+                                       # confirmed junctions, Yamauchi fallback.
+    note: "Hug the west bank southward to the upper Nile"

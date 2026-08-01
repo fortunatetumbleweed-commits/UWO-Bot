@@ -1,0 +1,21 @@
+{
+  "purpose": "A skill/action radial menu showing available maritime activities at the current sea tile, listing experience rewards for Sea Exploration, Explore Land, Fishing, and indicating that Salvage is unavailable here",
+  "full_text": "Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "180ee1f8b5fb98a3",
+  "goal_intent": null,
+  "cached_at": "2026-05-21T14:49:14.127497+00:00",
+  "visit_count": 5,
+  "raw_api_response": {
+    "purpose": "A skill/action radial menu showing available maritime activities at the current sea tile, listing experience rewards for Sea Exploration, Explore Land, Fishing, and indicating that Salvage is unavailable here",
+    "full_text": "Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

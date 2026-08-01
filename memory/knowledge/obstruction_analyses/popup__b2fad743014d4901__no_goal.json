@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation panel showing the minimap, current season/time, and a list of nearby ports with distances (Cairo, Port Said, Beirut, etc.) overlaid on the right side of the screen",
+  "full_text": "C/HW 10 | Speed: 0.0 kw | Wind: 14 | Coordinates: 31.50, 29.68 | Autumn | Oct | Daytime | ??? Approx. 27.7km | Cairo Approx. 148.7km | Port Said Approx. 227.2km | ??? Approx. 380.3km | Beirut Approx. 506.7km | ??? Approx. 561.5km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "b2fad743014d4901",
+  "goal_intent": null,
+  "cached_at": "2026-05-28T17:34:37.780459+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Navigation panel showing the minimap, current season/time, and a list of nearby ports with distances (Cairo, Port Said, Beirut, etc.) overlaid on the right side of the screen",
+    "full_text": "C/HW 10 | Speed: 0.0 kw | Wind: 14 | Coordinates: 31.50, 29.68 | Autumn | Oct | Daytime | ??? Approx. 27.7km | Cairo Approx. 148.7km | Port Said Approx. 227.2km | ??? Approx. 380.3km | Beirut Approx. 506.7km | ??? Approx. 561.5km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,16 @@
+name: trade_port_london_port_royal
+start_port: Port London
+rounds: 999
+loop:
+  - action: sell_all
+    port: Port London
+  - action: buy_all
+    port: Port London
+  - action: sail_to
+    destination: Port Royal
+  - action: sell_all
+    port: Port Royal
+  - action: buy_all
+    port: Port Royal
+  - action: sail_to
+    destination: Port London

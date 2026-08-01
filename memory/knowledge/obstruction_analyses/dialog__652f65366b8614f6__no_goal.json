@@ -1,0 +1,21 @@
+{
+  "purpose": "The main game HUD and navigation menu are visible — this is the standard open-sea interface showing the player's ship (TaylorFP, LV92) with resource stats, action buttons, and bottom toolbar; no true dialog obstruction is present",
+  "full_text": "Ship | Fleet | Assign | Build | Storage | Mates | Admiral | Chronicles | Mission | Nation | Journal | Collection | Lighthouse | Combat | Assault | Dispatch | Production | Enhance | Auction | Rank | Guild | Friend | Blue Gem: 87,673 | Red Gem: 3,436 | Energy: 605 / 539 | Total Load Capacity: 1,610/4,066 | Food: 276 | Ammo: 0 | Sailing Log | Voyage",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "dialog",
+  "structural_hash": "652f65366b8614f6",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T20:27:43.460623+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The main game HUD and navigation menu are visible — this is the standard open-sea interface showing the player's ship (TaylorFP, LV92) with resource stats, action buttons, and bottom toolbar; no true dialog obstruction is present",
+    "full_text": "Ship | Fleet | Assign | Build | Storage | Mates | Admiral | Chronicles | Mission | Nation | Journal | Collection | Lighthouse | Combat | Assault | Dispatch | Production | Enhance | Auction | Rank | Guild | Friend | Blue Gem: 87,673 | Red Gem: 3,436 | Energy: 605 / 539 | Total Load Capacity: 1,610/4,066 | Food: 276 | Ammo: 0 | Sailing Log | Voyage",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

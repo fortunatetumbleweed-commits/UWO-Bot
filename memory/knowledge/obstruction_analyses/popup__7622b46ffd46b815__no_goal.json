@@ -1,0 +1,21 @@
+{
+  "purpose": "NPC dialogue bubbles from London townspeople are displaying ambient flavour conversations — a Fortune Teller NPC complaining about speaking English, and another NPC commenting on the fighting on the island — overlapping the game world screen",
+  "full_text": "Happy 2026. There's plenty of fighting going on in this island. Although that's how I make a living… I'm about to strain my tongue from trying to speak in English!",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "7622b46ffd46b815",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T16:56:13.104732+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "NPC dialogue bubbles from London townspeople are displaying ambient flavour conversations — a Fortune Teller NPC complaining about speaking English, and another NPC commenting on the fighting on the island — overlapping the game world screen",
+    "full_text": "Happy 2026. There's plenty of fighting going on in this island. Although that's how I make a living… I'm about to strain my tongue from trying to speak in English!",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

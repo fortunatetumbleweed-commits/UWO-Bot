@@ -1,0 +1,42 @@
+{
+  "_comment": "Cultural trade restrictions. restrictions: goods forbidden per culture. port_cultures: port->culture mapping. category_restrictions: OCR category substrings to filter.",
+
+  "restrictions": {
+    "islamic": [
+      "pig", "pork", "ham", "bacon", "lard", "sausage",
+      "wine", "beer", "ale", "rum", "brandy", "whiskey", "whisky",
+      "sake", "spirits", "liquor", "mead", "cider",
+      "livestock_pork", "alcohol"
+    ],
+    "ottoman": [
+      "pig", "pork", "ham", "bacon", "lard", "sausage",
+      "wine", "beer", "ale", "rum", "brandy", "whiskey", "whisky",
+      "sake", "spirits", "liquor", "mead", "cider",
+      "alcohol"
+    ]
+  },
+
+  "port_cultures": {
+    "aden":         "islamic",
+    "jeddah":       "islamic",
+    "muscat":       "islamic",
+    "hormuz":       "islamic",
+    "suez":         "islamic",
+    "alexandria":   "islamic",
+    "beirut":       "islamic",
+    "tunis":        "islamic",
+    "algiers":      "islamic",
+    "mogadishu":    "islamic",
+    "mombasa":      "islamic",
+    "zanzibar":     "islamic",
+    "istanbul":     "ottoman",
+    "athens":       "ottoman",
+    "aceh":         "islamic",
+    "patani":       "islamic"
+  },
+
+  "category_restrictions": {
+    "islamic": ["liquor", "alcohol", "pork", "pig"],
+    "ottoman": ["liquor", "alcohol", "pork", "pig"]
+  }
+}

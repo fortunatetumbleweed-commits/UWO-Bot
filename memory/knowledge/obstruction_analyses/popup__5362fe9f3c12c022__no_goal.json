@@ -1,0 +1,21 @@
+{
+  "purpose": "The Bank building tooltip is displayed, describing its services (savings account and insurance), while an NPC speech bubble mentions sailing southeast to Amsterdam and difficulty spotting mines from a boat.",
+  "full_text": "Bank. 00:00-23:59. Keep your riches safe, sign up for a savings account to earn interest, or purchase an insurance plan. NPC: I'm going to sail southeast to Amsterdam. Although it's difficult to spot a mine when you're on a boat…",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "5362fe9f3c12c022",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T14:42:07.242953+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Bank building tooltip is displayed, describing its services (savings account and insurance), while an NPC speech bubble mentions sailing southeast to Amsterdam and difficulty spotting mines from a boat.",
+    "full_text": "Bank. 00:00-23:59. Keep your riches safe, sign up for a savings account to earn interest, or purchase an insurance plan. NPC: I'm going to sail southeast to Amsterdam. Although it's difficult to spot a mine when you're on a boat…",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

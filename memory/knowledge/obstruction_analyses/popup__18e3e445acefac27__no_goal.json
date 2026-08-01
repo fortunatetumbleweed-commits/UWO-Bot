@@ -1,0 +1,21 @@
+{
+  "purpose": "The game is automatically returning the fleet to port because no sailing log/record was registered after departing, summarising the voyage stats (Sea Exploration ×780, Cannot Land ×1,535, Fishing ×968, Cannot Salvage ×140) before forced port entry.",
+  "full_text": "Sea Exploration ×780 — Cannot Land ×1,535 — Fishing ×968 — Cannot Salvage ×140. Returning to port due to no sailing record after departure.",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "18e3e445acefac27",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T01:19:10.695322+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The game is automatically returning the fleet to port because no sailing log/record was registered after departing, summarising the voyage stats (Sea Exploration ×780, Cannot Land ×1,535, Fishing ×968, Cannot Salvage ×140) before forced port entry.",
+    "full_text": "Sea Exploration ×780 — Cannot Land ×1,535 — Fishing ×968 — Cannot Salvage ×140. Returning to port due to no sailing record after departure.",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

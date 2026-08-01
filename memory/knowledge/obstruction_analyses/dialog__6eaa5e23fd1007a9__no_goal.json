@@ -1,0 +1,21 @@
+{
+  "purpose": "A tooltip popup describing the Market building in London, showing its operating hours and function of buying and selling Trade Goods",
+  "full_text": "Market. 00:00-23:59. Buy and sell Trade Goods.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "6eaa5e23fd1007a9",
+  "goal_intent": null,
+  "cached_at": "2026-05-19T14:18:55.714571+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A tooltip popup describing the Market building in London, showing its operating hours and function of buying and selling Trade Goods",
+    "full_text": "Market. 00:00-23:59. Buy and sell Trade Goods.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

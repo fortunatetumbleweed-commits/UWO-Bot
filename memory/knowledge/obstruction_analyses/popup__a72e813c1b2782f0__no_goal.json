@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation panel showing the mini-map, current coordinates, season/time, and nearest port distances from the player's current position in the Atlantic Ocean",
+  "full_text": "HW 9 10 14 | 27.0 | Coordinates: 25.18, -65.85 | Dry Season Feb Night | San Juan Approx. 532.5km | Santo Domingo Approx. 746.7km | Ciguayo Village Approx. 814.1km | Nassau Approx. 877.8km",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "a72e813c1b2782f0",
+  "goal_intent": null,
+  "cached_at": "2026-05-20T22:27:36.695678+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Navigation panel showing the mini-map, current coordinates, season/time, and nearest port distances from the player's current position in the Atlantic Ocean",
+    "full_text": "HW 9 10 14 | 27.0 | Coordinates: 25.18, -65.85 | Dry Season Feb Night | San Juan Approx. 532.5km | Santo Domingo Approx. 746.7km | Ciguayo Village Approx. 814.1km | Nassau Approx. 877.8km",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

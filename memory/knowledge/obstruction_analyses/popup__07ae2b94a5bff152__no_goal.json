@@ -1,0 +1,21 @@
+{
+  "purpose": "The Recruit Crew panel showing fleet crew status, standby crew count (1403 Ming), and recruitment input controls for hiring up to 883 additional crew members across the fleet's ships",
+  "full_text": "Standby Crew 1403 Ming. Recruit Crew 0/883. Min | Max Waiting Time | Max. Emergency Recruit: 0. Normal Recruit: 0. Recruit.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "07ae2b94a5bff152",
+  "goal_intent": null,
+  "cached_at": "2026-05-16T00:31:52.664648+00:00",
+  "visit_count": 8,
+  "raw_api_response": {
+    "purpose": "The Recruit Crew panel showing fleet crew status, standby crew count (1403 Ming), and recruitment input controls for hiring up to 883 additional crew members across the fleet's ships",
+    "full_text": "Standby Crew 1403 Ming. Recruit Crew 0/883. Min | Max Waiting Time | Max. Emergency Recruit: 0. Normal Recruit: 0. Recruit.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

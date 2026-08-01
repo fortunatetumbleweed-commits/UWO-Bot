@@ -1,0 +1,91 @@
+{
+  "task_name": "London to Port Royal — 1 Round Trip",
+  "started_at": "2026-04-27T22:15:30.663954+00:00",
+  "ended_at": "2026-04-27T23:25:06.149773+00:00",
+  "elapsed_seconds": 4175.485819,
+  "rounds_completed": 0,
+  "total_profit": 6544917,
+  "ducats_per_hour": 5642864.620156431,
+  "steps": [
+    {
+      "action": "sell_all",
+      "port": "London",
+      "ok": true,
+      "profit": 6902305,
+      "duration_s": 156.25162737500068,
+      "notes": "sold 1 goods  +6,902,305d"
+    },
+    {
+      "action": "buy_all",
+      "port": "London",
+      "ok": true,
+      "profit": -1415686,
+      "duration_s": 257.29890720799995,
+      "notes": "bought 9 goods  -1,415,686d (→Lisboa)"
+    },
+    {
+      "action": "sail_to",
+      "port": "Lisboa",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 548.0969902500001,
+      "notes": "arrived"
+    },
+    {
+      "action": "sail_to",
+      "port": "Las Palmas",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 370.5209250839998,
+      "notes": "arrived"
+    },
+    {
+      "action": "sail_to",
+      "port": "Port Royal",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 846.4909967080002,
+      "notes": "arrived"
+    },
+    {
+      "action": "sell_all",
+      "port": "Port Royal",
+      "ok": true,
+      "profit": 5219036,
+      "duration_s": 108.82014112499928,
+      "notes": "sold 1 goods  +5,219,036d"
+    },
+    {
+      "action": "buy_all",
+      "port": "Port Royal",
+      "ok": true,
+      "profit": -4160738,
+      "duration_s": 411.23079404200143,
+      "notes": "bought 6 goods  -4,160,738d (→Las Palmas)"
+    },
+    {
+      "action": "sail_to",
+      "port": "Las Palmas",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 818.8733422080004,
+      "notes": "arrived"
+    },
+    {
+      "action": "sail_to",
+      "port": "Lisbon",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 397.5296671670003,
+      "notes": "arrived"
+    },
+    {
+      "action": "sail_to",
+      "port": "London",
+      "ok": false,
+      "profit": 0,
+      "duration_s": 74.30552441600048,
+      "notes": "failed to arrive"
+    }
+  ]
+}

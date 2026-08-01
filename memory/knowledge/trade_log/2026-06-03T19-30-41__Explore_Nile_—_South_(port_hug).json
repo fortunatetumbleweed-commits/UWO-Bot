@@ -1,0 +1,19 @@
+{
+  "task_name": "Explore Nile — South (port hug)",
+  "started_at": "2026-06-03T19:30:41.451205+00:00",
+  "ended_at": "2026-06-03T20:09:36.467804+00:00",
+  "elapsed_seconds": 2335.016599,
+  "rounds_completed": 1,
+  "total_profit": 0,
+  "ducats_per_hour": 0.0,
+  "steps": [
+    {
+      "action": "explore",
+      "port": "side=left",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 2251.062006917,
+      "notes": "phase=COMPLETE ticks=550"
+    }
+  ]
+}

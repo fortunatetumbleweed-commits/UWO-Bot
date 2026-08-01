@@ -1,0 +1,21 @@
+{
+  "purpose": "A Fortune Teller NPC tooltip/nameplate is displayed above a player character (TaylorFP) standing near the Fortune Teller building in London, alongside a seasonal 'Happy 2026' celebration overlay; the right-side panel shows the city navigation menu for London.",
+  "full_text": "Fortune Teller. Happy 2026. TaylorFP. Autumn Sep 02:44. Harbor, Market, Shipyard, Bank, Inn, Cathedral, Venturer Association, Item Shop.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "80a338ad86ca2039",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T16:49:26.957491+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A Fortune Teller NPC tooltip/nameplate is displayed above a player character (TaylorFP) standing near the Fortune Teller building in London, alongside a seasonal 'Happy 2026' celebration overlay; the right-side panel shows the city navigation menu for London.",
+    "full_text": "Fortune Teller. Happy 2026. TaylorFP. Autumn Sep 02:44. Harbor, Market, Shipyard, Bank, Inn, Cathedral, Venturer Association, Item Shop.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

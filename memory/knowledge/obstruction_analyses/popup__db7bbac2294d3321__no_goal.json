@@ -1,0 +1,21 @@
+{
+  "purpose": "An anchored-position activity menu showing available actions at the current sea tile: Sea Exploration, Explore Land, Fishing, and Cannot Salvage — along with the local weather condition (Little Cloudy, no weather effects).",
+  "full_text": "Little Cloudy — There are no weather effects. Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "db7bbac2294d3321",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T16:25:46.166747+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "An anchored-position activity menu showing available actions at the current sea tile: Sea Exploration, Explore Land, Fishing, and Cannot Salvage — along with the local weather condition (Little Cloudy, no weather effects).",
+    "full_text": "Little Cloudy — There are no weather effects. Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

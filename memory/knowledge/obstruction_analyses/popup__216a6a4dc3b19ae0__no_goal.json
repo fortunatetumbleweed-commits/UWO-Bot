@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase screen at a port marketplace is displaying available trade goods (Whisky, Steel, Flannel, Wheat, Duck, Brass, Cowhide, Bronze, Butter) with their quantities, price indices, and gold costs for the player to buy cargo",
+  "full_text": "Whisky (Liquor, Specialties) qty:241 98% 1,356g | Steel (Wares, Specialties) qty:342 102% 1,353g | Flannel (Fabrics, Specialties) qty:177 94% 868g | Wheat (Food) qty:1,994 101% 106g | Duck (Livestock) qty:1,203 91% 160g | Brass (Wares) qty:592 103% 641g | Cowhide (Wares) qty:826 91% 280g | Bronze (Wares) qty:630 104% 521g | Butter (Seasoning) qty:2,878 99% 178g",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "216a6a4dc3b19ae0",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T20:37:13.256885+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase screen at a port marketplace is displaying available trade goods (Whisky, Steel, Flannel, Wheat, Duck, Brass, Cowhide, Bronze, Butter) with their quantities, price indices, and gold costs for the player to buy cargo",
+    "full_text": "Whisky (Liquor, Specialties) qty:241 98% 1,356g | Steel (Wares, Specialties) qty:342 102% 1,353g | Flannel (Fabrics, Specialties) qty:177 94% 868g | Wheat (Food) qty:1,994 101% 106g | Duck (Livestock) qty:1,203 91% 160g | Brass (Wares) qty:592 103% 641g | Cowhide (Wares) qty:826 91% 280g | Bronze (Wares) qty:630 104% 521g | Butter (Seasoning) qty:2,878 99% 178g",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

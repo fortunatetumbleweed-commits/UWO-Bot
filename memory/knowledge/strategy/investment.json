@@ -1,0 +1,36 @@
+{
+  "_note": "Port investment strategy. Seeded from CLAUDE.md.",
+
+  "rationale": "Investing in ports on active trade routes generates passive blue_gem and ducat income weekly.",
+
+  "mayor_benefits": [
+    "Raise or lower taxes for specific countries (affects all traders at this port)",
+    "Set market events (temporary price changes, special goods availability)",
+    "Largest share of weekly investment rewards",
+    "Consecutive mayoral terms unlock additional event types and more good designations"
+  ],
+
+  "investor_rewards": [
+    {"type": "blue_gems",                "notes": "premium currency — high value"},
+    {"type": "ducats",                   "notes": "direct cash return"},
+    {"type": "investment_chests",        "notes": "contain blue gems, tokens, other items"},
+    {"type": "investment_season_tokens", "notes": "spend at current season shop for exclusive items"}
+  ],
+
+  "reward_distribution": "weekly, based on ranking",
+
+  "bot_strategy": [
+    "Invest in ports on the active trade route",
+    "Track current mayor via port_arrival_overlay — assess how competitive investment scene is",
+    "Long-term: target mayoralty on key trade ports for price control advantage",
+    "Investment is done at the Bureau building (present at every port)"
+  ],
+
+  "market_events": {
+    "_note": "Mayor can trigger these from Bureau → Manage Market Event (1hr, costs currency)",
+    "urg_buy":    "selected goods sell higher",
+    "urg_sale":   "selected goods purchase lower",
+    "bazaar":     "selected trade good *type* sells higher",
+    "closeout":   "selected trade good *type* purchases lower"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "The mini-map panel and nearby port distance list is overlaying the screen, showing the ship's current position near Tripoli in Autumn/November/Night with distances to nearby ports including Tripoli (~11km) and Benghazi (~537km)",
+  "full_text": "TW 10 | 0.0 | 3^ | Tripoli 33,25,13,15 | Season: Autumn, Nov, Night | # Tripoli | Approx 11km | ??? Approx 430km | ??? Approx 477.7km | Benghazi Approx 537km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "31bc40e188e77194",
+  "goal_intent": null,
+  "cached_at": "2026-05-29T16:50:08.644286+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The mini-map panel and nearby port distance list is overlaying the screen, showing the ship's current position near Tripoli in Autumn/November/Night with distances to nearby ports including Tripoli (~11km) and Benghazi (~537km)",
+    "full_text": "TW 10 | 0.0 | 3^ | Tripoli 33,25,13,15 | Season: Autumn, Nov, Night | # Tripoli | Approx 11km | ??? Approx 430km | ??? Approx 477.7km | Benghazi Approx 537km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

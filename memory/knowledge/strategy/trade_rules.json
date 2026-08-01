@@ -1,0 +1,34 @@
+{
+  "_note": "Trade strategy rules. Seeded from game documentation. Bot-learned data will refine over time.",
+  "_sources": ["CLAUDE.md documentation", "game mechanic observations"],
+
+  "negotiation_defaults": {
+    "_note": "Default negotiation strategy when not overridden by task config.",
+    "sell": "no",
+    "buy": "once",
+    "rationale": "Sell: base price is acceptable, negotiation risk not worth it. Buy: one attempt often yields a small discount at low risk."
+  },
+
+  "price_events": {
+    "soaring":    {"direction": "up",   "description": "Price spiking sharply upward"},
+    "plunging":   {"direction": "down", "description": "Price crashing sharply"},
+    "trending":   {"direction": "up",   "description": "Moderate sustained rise"},
+    "overflowing":{"direction": "down", "description": "Oversupply crash"},
+    "booming":    {"direction": "up",   "description": "Demand surge"}
+  },
+
+  "tax_exemptions": [
+    "tax_permit",
+    "national_reputation",
+    "admiral_title",
+    "city_trait",
+    "expertise_bonus"
+  ],
+
+  "culture_restrictions": {
+    "islamic": {
+      "zero_value_goods": ["pork", "wine", "pig"],
+      "notes": "Do not bring pork or wine to Islamic cities — zero sale value"
+    }
+  }
+}

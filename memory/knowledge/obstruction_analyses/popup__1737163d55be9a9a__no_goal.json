@@ -1,0 +1,21 @@
+{
+  "purpose": "A New Year celebration overlay ('Happy 2026') appeared on screen while near another player's ship (TaylorFP / Coen Transporters), also displaying nearby activity logs such as Sea Exploration, Explore Land, Fishing, and Cannot Salvage skill results",
+  "full_text": "Happy 2026 — 淡墨桜 / TaylorFP (Coen Transporters) — Sea Exploration x780 — Explore Land x1,535 — Fishing x968 — Cannot Salvage x140",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "1737163d55be9a9a",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T04:13:57.935026+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A New Year celebration overlay ('Happy 2026') appeared on screen while near another player's ship (TaylorFP / Coen Transporters), also displaying nearby activity logs such as Sea Exploration, Explore Land, Fishing, and Cannot Salvage skill results",
+    "full_text": "Happy 2026 — 淡墨桜 / TaylorFP (Coen Transporters) — Sea Exploration x780 — Explore Land x1,535 — Fishing x968 — Cannot Salvage x140",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

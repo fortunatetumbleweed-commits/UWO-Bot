@@ -1,0 +1,4 @@
+{"t_s": 11.569811166999997, "phase": "stopped", "speed_kt": 10.0, "heading_deg": 70.62252000255467, "lat": 35.9, "lon": 16.22}
+{"t_s": 11.518535332999996, "phase": "accel", "speed_kt": 10.0, "heading_deg": 45.403466665773465, "lat": 36.33, "lon": 16.74}
+{"t_s": 5.081232499999999, "phase": "turn_at_speed", "speed_kt": 10.0, "heading_deg": 45.403466665773465, "lat": 36.33, "lon": 16.74}
+{"t_s": 17.828745124999998, "phase": "start_w_rudder", "speed_kt": 10.0, "heading_deg": 249.40105802313593, "lat": 36.21, "lon": 16.45}

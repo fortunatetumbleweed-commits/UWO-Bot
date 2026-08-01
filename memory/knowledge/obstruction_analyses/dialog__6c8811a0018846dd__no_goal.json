@@ -1,0 +1,21 @@
+{
+  "purpose": "In-port navigation panel listing available port facilities (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) in Las Palmas during Spring May 15:02",
+  "full_text": "Spring May 15:02 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "6c8811a0018846dd",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T21:08:19.004091+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "In-port navigation panel listing available port facilities (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) in Las Palmas during Spring May 15:02",
+    "full_text": "Spring May 15:02 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

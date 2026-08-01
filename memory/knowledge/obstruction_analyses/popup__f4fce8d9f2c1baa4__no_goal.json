@@ -1,0 +1,21 @@
+{
+  "purpose": "The Private Investment leaderboard screen showing top investors (Liothean, Dragonsbane, baatra, ManchaVerde) with their investment points, dividend tax perks, and rewards, alongside the player's own investment panel showing Industry/Commerce/Military at LV 10 with a note that investments lock after 23:30 Sunday and results are calculated Monday after 00:10",
+  "full_text": "Dividend 5% Liothean 622,765 P | Industry LV 10 8,689,999 Invest | Dividend 4% Dragonsbane 142,000 P | Commerce LV 10 8,666,953 Invest | Dividend 4% baatra 140,500 P | Military LV 10 8,675,127 Invest | Dividend 4% ManchaVerde 121,000 P | Dividend Dante4 | TaylorFP 0 P - Until Calculations 2d left | Investments cannot be made after 23:30 on Sunday due to the calculation of results, and rewards can be obtained in [Company Overview] > [Investment Progress] after 00:10 on Monday.",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "f4fce8d9f2c1baa4",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T14:54:52.456629+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Private Investment leaderboard screen showing top investors (Liothean, Dragonsbane, baatra, ManchaVerde) with their investment points, dividend tax perks, and rewards, alongside the player's own investment panel showing Industry/Commerce/Military at LV 10 with a note that investments lock after 23:30 Sunday and results are calculated Monday after 00:10",
+    "full_text": "Dividend 5% Liothean 622,765 P | Industry LV 10 8,689,999 Invest | Dividend 4% Dragonsbane 142,000 P | Commerce LV 10 8,666,953 Invest | Dividend 4% baatra 140,500 P | Military LV 10 8,675,127 Invest | Dividend 4% ManchaVerde 121,000 P | Dividend Dante4 | TaylorFP 0 P - Until Calculations 2d left | Investments cannot be made after 23:30 on Sunday due to the calculation of results, and rewards can be obtained in [Company Overview] > [Investment Progress] after 00:10 on Monday.",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

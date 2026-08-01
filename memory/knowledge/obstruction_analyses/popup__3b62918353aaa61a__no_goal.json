@@ -1,0 +1,21 @@
+{
+  "purpose": "City navigation menu listing available facilities in Las Palmas port (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau)",
+  "full_text": "Spring Apr 20:22 | Harbor | Harbor | Market | Shipyard | Bank | Inn | Sanctuary | Union | Bureau",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "3b62918353aaa61a",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T23:47:02.517599+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "City navigation menu listing available facilities in Las Palmas port (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau)",
+    "full_text": "Spring Apr 20:22 | Harbor | Harbor | Market | Shipyard | Bank | Inn | Sanctuary | Union | Bureau",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

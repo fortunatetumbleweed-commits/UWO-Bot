@@ -1,0 +1,21 @@
+{
+  "purpose": "The shipyard Build menu is open, displaying available ships to construct including Tallette, Barque, Hansa Cog, Brigantine, Cog Redonda, and Cog Latina along with their Improved variants, build costs, and Western Build skill level progress.",
+  "full_text": "Build menu — All / West / East / Special / Improved Western / Improved Eastern / Improved Special tabs. Western Build LV 25, 4,178,848 / 1,341,680 XP. Buildable: Tallette 21,600g, Barque 21,600g, Hansa Cog 21,600g. First Build EXP x2: Improved Tallette 64,800g, Improved Barque 64,800g, Improved Hansa Cog 64,800g. Tier 2 — First Build EXP x2: Brigantine, Improved Brigantine, Cog Redonda 21,600g(?), Improved Cog Redonda, Cog Latina, Improved Cog Latina.",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "4ffa60147d58562c",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T18:36:21.971650+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The shipyard Build menu is open, displaying available ships to construct including Tallette, Barque, Hansa Cog, Brigantine, Cog Redonda, and Cog Latina along with their Improved variants, build costs, and Western Build skill level progress.",
+    "full_text": "Build menu — All / West / East / Special / Improved Western / Improved Eastern / Improved Special tabs. Western Build LV 25, 4,178,848 / 1,341,680 XP. Buildable: Tallette 21,600g, Barque 21,600g, Hansa Cog 21,600g. First Build EXP x2: Improved Tallette 64,800g, Improved Barque 64,800g, Improved Hansa Cog 64,800g. Tier 2 — First Build EXP x2: Brigantine, Improved Brigantine, Cog Redonda 21,600g(?), Improved Cog Redonda, Cog Latina, Improved Cog Latina.",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

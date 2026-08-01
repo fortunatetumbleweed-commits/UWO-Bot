@@ -1,0 +1,21 @@
+{
+  "purpose": "NPC tutorial hints advising the player that equipping a ram strengthens ram attacks and that building ships repeatedly improves their quality",
+  "full_text": "Equipping a ram will make your ram attacks stronger. If you want to make a strong ship, you need to build a lot.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "e5ede28d9cadb16b",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T01:56:05.649261+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "NPC tutorial hints advising the player that equipping a ram strengthens ram attacks and that building ships repeatedly improves their quality",
+    "full_text": "Equipping a ram will make your ram attacks stronger. If you want to make a strong ship, you need to build a lot.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

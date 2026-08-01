@@ -1,0 +1,21 @@
+{
+  "purpose": "The Recruit Crew panel showing standby crew availability (1303 Ming sailors) and the cost to hire 953 crew members (205,848 gold) to fill the fleet up to 2,275 total capacity",
+  "full_text": "Standby Crew: 1303 Ming. Recruit Crew: 953/2,275. Min | Max Waiting Time | Max. Emergency Recruit: 0. Normal Recruit: 205,848. Recruit (cost 205,848 gold).",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "9b664a6cdb0f124a",
+  "goal_intent": null,
+  "cached_at": "2026-05-20T03:51:10.723905+00:00",
+  "visit_count": 22,
+  "raw_api_response": {
+    "purpose": "The Recruit Crew panel showing standby crew availability (1303 Ming sailors) and the cost to hire 953 crew members (205,848 gold) to fill the fleet up to 2,275 total capacity",
+    "full_text": "Standby Crew: 1303 Ming. Recruit Crew: 953/2,275. Min | Max Waiting Time | Max. Emergency Recruit: 0. Normal Recruit: 205,848. Recruit (cost 205,848 gold).",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

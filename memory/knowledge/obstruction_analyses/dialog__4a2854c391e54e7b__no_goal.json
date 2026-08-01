@@ -1,0 +1,21 @@
+{
+  "purpose": "An in-game news panel showing recent patch notes and maintenance notices, overlaying the port screen in Las Palmas",
+  "full_text": "Updates: May 13 Patch Notes (5/20 07:53 Added) 2026.05.11 — April 8 Patch Note (Updated on 4/10 11:00 UTC+9) 2026.04.06 — Mar. 11 Patch Note (Added on 5/6 19:37) 2026.03.09 — Vittorio Sartori New Admiral Update — Investment Season 6 — Notices: 05/21 Notice of Maintenance Completion 1 day ago",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "4a2854c391e54e7b",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T16:27:51.907393+00:00",
+  "visit_count": 3,
+  "raw_api_response": {
+    "purpose": "An in-game news panel showing recent patch notes and maintenance notices, overlaying the port screen in Las Palmas",
+    "full_text": "Updates: May 13 Patch Notes (5/20 07:53 Added) 2026.05.11 — April 8 Patch Note (Updated on 4/10 11:00 UTC+9) 2026.04.06 — Mar. 11 Patch Note (Added on 5/6 19:37) 2026.03.09 — Vittorio Sartori New Admiral Update — Investment Season 6 — Notices: 05/21 Notice of Maintenance Completion 1 day ago",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

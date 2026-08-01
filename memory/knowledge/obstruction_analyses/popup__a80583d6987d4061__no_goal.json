@@ -1,0 +1,21 @@
+{
+  "purpose": "A seasonal New Year 2026 greeting message broadcast from another player (TaylorFP) appearing as a chat overlay on the open sea",
+  "full_text": "Happy 2026",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "a80583d6987d4061",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T21:22:08.168810+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A seasonal New Year 2026 greeting message broadcast from another player (TaylorFP) appearing as a chat overlay on the open sea",
+    "full_text": "Happy 2026",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

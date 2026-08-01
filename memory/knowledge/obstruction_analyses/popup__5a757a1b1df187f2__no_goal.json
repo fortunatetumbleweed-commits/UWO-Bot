@@ -1,0 +1,21 @@
+{
+  "purpose": "The Contract Exchange panel showing Mate Contract quantities and their conversion ratios to Common Contracts (30:1 for blue-grade, 20:1 for gold-grade), allowing the player to select and exchange accumulated Mate Contracts.",
+  "full_text": "Exchange Mate Contract for Common Contract at the following ratio. Grade Mate Contract : Common Contract (blue) 30 : 1 (gold) 20 : 1 Select the Mate Contract to exchange. Contract quantities visible: 5, 5, 13, 10, 10, 10, 50, 15, 25, 15, 15, 70, 10, 20, 45, 15",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "5a757a1b1df187f2",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T21:56:12.054357+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Contract Exchange panel showing Mate Contract quantities and their conversion ratios to Common Contracts (30:1 for blue-grade, 20:1 for gold-grade), allowing the player to select and exchange accumulated Mate Contracts.",
+    "full_text": "Exchange Mate Contract for Common Contract at the following ratio. Grade Mate Contract : Common Contract (blue) 30 : 1 (gold) 20 : 1 Select the Mate Contract to exchange. Contract quantities visible: 5, 5, 13, 10, 10, 10, 50, 15, 25, 15, 15, 70, 10, 20, 45, 15",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

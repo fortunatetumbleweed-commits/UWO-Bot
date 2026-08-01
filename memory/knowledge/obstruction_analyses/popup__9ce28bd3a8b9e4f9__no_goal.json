@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation panel showing nearby port distances and current sailing conditions (season, month, time of day) while en route to London",
+  "full_text": "C/TW 9 10 5 | 27.0 | Do Anti | Winter Feb Night | Dover Approx 15.7km | Calais Approx 81km | London Approx 130.2km | Antwerp Approx 146.4km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "9ce28bd3a8b9e4f9",
+  "goal_intent": null,
+  "cached_at": "2026-05-20T22:38:06.627881+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Navigation panel showing nearby port distances and current sailing conditions (season, month, time of day) while en route to London",
+    "full_text": "C/TW 9 10 5 | 27.0 | Do Anti | Winter Feb Night | Dover Approx 15.7km | Calais Approx 81km | London Approx 130.2km | Antwerp Approx 146.4km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

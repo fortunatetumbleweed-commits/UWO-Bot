@@ -1,0 +1,22 @@
+{
+  "sessions": {
+    "ai_nav_2026-06-30T15-47-03": {
+      "gold": 177,
+      "gold_unverified": 69,
+      "silver": 140,
+      "silver_nobrg": 13,
+      "hard": 201,
+      "total": 600,
+      "frame_missing": 0
+    }
+  },
+  "totals": {
+    "gold": 177,
+    "gold_unverified": 69,
+    "silver": 140,
+    "silver_nobrg": 13,
+    "hard": 201,
+    "total": 600,
+    "frame_missing": 0
+  }
+}

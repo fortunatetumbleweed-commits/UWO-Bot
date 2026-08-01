@@ -1,0 +1,31 @@
+name: "London to Lisbon — 1 Round Trip"
+description: "London to Lisbon (direct)"
+
+start_port: London
+rounds: 1
+
+loop:
+  # ── Forward leg: London → Lisbon ──
+  - action: sell_all
+    port: London
+    note: "Sell cargo at London"
+  - action: buy_all
+    port: London
+    note: "Buy recommended goods at London"
+  - action: sail_to
+    destination: Lisbon
+
+  # ── Return leg: Lisbon → London ──
+  - action: sell_all
+    port: Lisbon
+    note: "Sell cargo at Lisbon"
+  - action: buy_all
+    port: Lisbon
+    note: "Buy recommended goods at Lisbon"
+  - action: sail_to
+    destination: London
+
+report:
+  - profit_loss
+  - per_round
+  - unrecognized_scenes

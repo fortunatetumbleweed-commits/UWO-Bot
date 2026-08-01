@@ -1,0 +1,21 @@
+{
+  "purpose": "The England Immigration officer explains that England is currently not accepting immigration applications, because a city has already been invested in the player's name, with 1 day remaining before the status resets",
+  "full_text": "Unfortunately, our country is currently not accepting any immigration. A city has been invested in your name. 1 day left. Cannot Immigrate.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "f7e214517aa0f29f",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T19:57:46.380805+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The England Immigration officer explains that England is currently not accepting immigration applications, because a city has already been invested in the player's name, with 1 day remaining before the status resets",
+    "full_text": "Unfortunately, our country is currently not accepting any immigration. A city has been invested in your name. 1 day left. Cannot Immigrate.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

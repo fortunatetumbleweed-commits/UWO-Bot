@@ -1,0 +1,21 @@
+{
+  "purpose": "The city navigation menu for Casablanca is open, listing all available port facilities such as Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Bureau, and Fortune Teller.",
+  "full_text": "Spring May 11:46 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Bureau, Fortune Teller",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "4d6323a4a9635ea5",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T15:42:28.613919+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The city navigation menu for Casablanca is open, listing all available port facilities such as Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Bureau, and Fortune Teller.",
+    "full_text": "Spring May 11:46 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Bureau, Fortune Teller",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

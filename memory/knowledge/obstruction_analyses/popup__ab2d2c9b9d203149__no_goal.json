@@ -1,0 +1,21 @@
+{
+  "purpose": "The Private Investment leaderboard panel showing top investors' dividend rates and the player's own investment standing, alongside the right-side panel displaying Industry, Commerce, and Military branch levels with their current investment point totals and 'Invest' buttons, with 1 day remaining until weekly calculation",
+  "full_text": "Dividend 5% Industry LV 10 8,689,999 Invest | Dividend 4% 500 1,800 Commerce LV 10 8,658,286 Invest | Dividend 4% 300 Military LV 10 Dividend 8,689,999 4% 250 1,000 Invest | Dividend Until Calculations 1d left",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "ab2d2c9b9d203149",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T22:15:39.133790+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Private Investment leaderboard panel showing top investors' dividend rates and the player's own investment standing, alongside the right-side panel displaying Industry, Commerce, and Military branch levels with their current investment point totals and 'Invest' buttons, with 1 day remaining until weekly calculation",
+    "full_text": "Dividend 5% Industry LV 10 8,689,999 Invest | Dividend 4% 500 1,800 Commerce LV 10 8,658,286 Invest | Dividend 4% 300 Military LV 10 Dividend 8,689,999 4% 250 1,000 Invest | Dividend Until Calculations 1d left",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

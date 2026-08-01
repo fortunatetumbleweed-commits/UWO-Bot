@@ -1,0 +1,46 @@
+{
+  "_note": "Market dialog detection keywords and result field maps. Edit here — no code changes needed.",
+
+  "dialog_confirmations": {
+    "_note": "Keywords that confirm a specific dialog is on screen. Used in _wait_for_screen / _screen_contains.",
+    "trade_goods_info":  ["sales cost"],
+    "basket_loaded":     ["nego"],
+    "confirm_sales":     ["confirm"],
+    "negotiation":       ["negotiat", "chance", "propose"],
+    "sell_result":       ["total amount"],
+    "number_input":      ["enter number"],
+    "confirm_purchase":  ["purchase cost", "confirm"],
+    "buy_result":        ["total amount"],
+    "put_in_bulk_label": ["put in bulk", "put"]
+  },
+
+  "sell_result_fields": [
+    {"label": "mate trade exp", "field": "trade_exp",    "max_value": 50000},
+    {"label": "trade exp",      "field": "trade_exp",    "max_value": 50000},
+    {"label": "trade fame",     "field": "trade_fame",   "max_value": 50000},
+    {"label": "total amount",   "field": "total_amount", "max_value": 999999999},
+    {"label": "sales cost",     "field": "sales_cost",   "max_value": 999999999},
+    {"label": "profit",         "field": "profit",       "max_value": 999999999},
+    {"label": "surcharge",      "field": "surcharge",    "max_value": 999999999},
+    {"label": "tax",            "field": "tax",          "max_value": 999999999}
+  ],
+
+  "buy_result_fields": [
+    {"label": "purchase cost",  "field": "purchase_cost", "max_value": 999999999},
+    {"label": "total amount",   "field": "total_amount",  "max_value": 999999999},
+    {"label": "tax",            "field": "tax",           "max_value": 999999999},
+    {"label": "discount",       "field": "discount",      "max_value": 999999999}
+  ],
+
+  "negotiation_buttons": {
+    "use_one":  ["use 1 chance"],
+    "use_all":  ["use all"],
+    "skip":     ["no button", "no"]
+  },
+
+  "action_buttons": {
+    "_note": "Label variants for primary action buttons in market flows. Edit here to add localised or variant text.",
+    "purchase": ["purchase", "Purchase"],
+    "sell":     ["sell", "Sell"]
+  }
+}

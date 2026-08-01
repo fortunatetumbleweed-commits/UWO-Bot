@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation panel showing the mini-map, current season/time, and a list of nearby ports with approximate distances from the player's current position in the Atlantic Ocean",
+  "full_text": "C/TW 10 | 27.0 | Coordinates: 38.15, -36.17 | Winter, Feb, Daytime | Santa Island Approx. 519.1km | Azores Approx. 1,147.9km | Madeira Approx. 1,580.3km | Las Palmas Approx. 1,837.6km",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "ebf9c1b79d98dd04",
+  "goal_intent": null,
+  "cached_at": "2026-05-20T22:32:14.892656+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Navigation panel showing the mini-map, current season/time, and a list of nearby ports with approximate distances from the player's current position in the Atlantic Ocean",
+    "full_text": "C/TW 10 | 27.0 | Coordinates: 38.15, -36.17 | Winter, Feb, Daytime | Santa Island Approx. 519.1km | Azores Approx. 1,147.9km | Madeira Approx. 1,580.3km | Las Palmas Approx. 1,837.6km",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

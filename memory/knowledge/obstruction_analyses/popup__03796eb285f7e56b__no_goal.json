@@ -1,0 +1,21 @@
+{
+  "purpose": "The minimap/navigation panel on the right side showing nearby port distances (Tripoli 12.1km, Syracuse 432.3km, Tunis 475.5km, Benghazi 542km) along with current season, month, and time of day — this is a persistent HUD panel, not a dismissible popup",
+  "full_text": "TW 10 | Coordinates 33,26,13,09 | Spring Mar Night | Tripoli Approx 12.1km | Syracuse Approx 432.3km | Tunis Approx 475.5km | Benghazi Approx 542km | Fishing x968 | Cannot Salvage x140",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "03796eb285f7e56b",
+  "goal_intent": null,
+  "cached_at": "2026-05-21T20:51:23.108824+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The minimap/navigation panel on the right side showing nearby port distances (Tripoli 12.1km, Syracuse 432.3km, Tunis 475.5km, Benghazi 542km) along with current season, month, and time of day — this is a persistent HUD panel, not a dismissible popup",
+    "full_text": "TW 10 | Coordinates 33,26,13,09 | Spring Mar Night | Tripoli Approx 12.1km | Syracuse Approx 432.3km | Tunis Approx 475.5km | Benghazi Approx 542km | Fishing x968 | Cannot Salvage x140",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

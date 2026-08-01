@@ -1,0 +1,21 @@
+{
+  "purpose": "An Energy currency tooltip overlay explaining Energy costs (Daily Charge, Company LV Increase, Receive Energy) and the player's current maximum Energy capacity, triggered by tapping the Energy icon in the top-right HUD while on the Berber Village screen.",
+  "full_text": "Energy — Currency required for using various contents. Daily Charge: 77. Company LV Increase: 78. Receive Energy: 50. Max 539 available to own. It's a peaceful village. Amity: Neutral 60,000/100,000. Status Effect Details. Achievement Reward: None. Weekly Reward: None. Discoveries.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "6cf881c73a12a934",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T19:35:18.263209+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "An Energy currency tooltip overlay explaining Energy costs (Daily Charge, Company LV Increase, Receive Energy) and the player's current maximum Energy capacity, triggered by tapping the Energy icon in the top-right HUD while on the Berber Village screen.",
+    "full_text": "Energy — Currency required for using various contents. Daily Charge: 77. Company LV Increase: 78. Receive Energy: 50. Max 539 available to own. It's a peaceful village. Amity: Neutral 60,000/100,000. Status Effect Details. Achievement Reward: None. Weekly Reward: None. Discoveries.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

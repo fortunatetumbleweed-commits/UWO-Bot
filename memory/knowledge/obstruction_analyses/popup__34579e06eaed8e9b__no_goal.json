@@ -1,0 +1,21 @@
+{
+  "purpose": "A Western Build Level progress panel showing the player's current shipbuilding XP (1,178,848 / 1,341,680) at level 25, overlaying the Dismantle dock screen which lists ships that yield Western Build EXP when dismantled",
+  "full_text": "Western Build LV 25 — 1,178,848 / 1,341,680 XP. Ships visible: Improved Adler (Western Build EXP +4,940), Improved Ingermanland (Western Build EXP +8,940), Improved Bucentaur (Western Build EXP +8,940), Improved Manila Galleon / Improved Manila Gall / Improved Manila Gal4 (Western Build EXP +4,940 each).",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "34579e06eaed8e9b",
+  "goal_intent": null,
+  "cached_at": "2026-05-16T00:17:40.798324+00:00",
+  "visit_count": 6,
+  "raw_api_response": {
+    "purpose": "A Western Build Level progress panel showing the player's current shipbuilding XP (1,178,848 / 1,341,680) at level 25, overlaying the Dismantle dock screen which lists ships that yield Western Build EXP when dismantled",
+    "full_text": "Western Build LV 25 — 1,178,848 / 1,341,680 XP. Ships visible: Improved Adler (Western Build EXP +4,940), Improved Ingermanland (Western Build EXP +8,940), Improved Bucentaur (Western Build EXP +8,940), Improved Manila Galleon / Improved Manila Gall / Improved Manila Gal4 (Western Build EXP +4,940 each).",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "The Recruit Crew panel showing fleet crew status, standby crew pool (939 Ming sailors available), and recruitment controls allowing the player to hire up to 883 additional crew members via Normal or Emergency Recruit options.",
+  "full_text": "Standby Crew: 939 Ming. Recruit Crew: 0 / 883. Min | Max Waiting Time | Max. Emergency Recruit: 0. Normal Recruit: 0. Recruit.",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "67b7900988cabec2",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T22:04:52.378267+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The Recruit Crew panel showing fleet crew status, standby crew pool (939 Ming sailors available), and recruitment controls allowing the player to hire up to 883 additional crew members via Normal or Emergency Recruit options.",
+    "full_text": "Standby Crew: 939 Ming. Recruit Crew: 0 / 883. Min | Max Waiting Time | Max. Emergency Recruit: 0. Normal Recruit: 0. Recruit.",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "World Map port search panel is open showing a list of discovered ports, with map labels for Ternate, Ambon, and Banda visible in the Southeast Asian/Maluku island region",
+  "full_text": "Ternate, Ambon, Banda",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "dialog",
+  "structural_hash": "7db12f186bf7aa86",
+  "goal_intent": null,
+  "cached_at": "2026-05-19T03:49:15.442711+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "World Map port search panel is open showing a list of discovered ports, with map labels for Ternate, Ambon, and Banda visible in the Southeast Asian/Maluku island region",
+    "full_text": "Ternate, Ambon, Banda",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

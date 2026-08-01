@@ -1,0 +1,110 @@
+[
+  {
+    "id": "port_overworld",
+    "description": "Port town overworld — no building open, character visible",
+    "detection": {
+      "notes": "hamburger visible OR (no home, no back, port name readable in top-left)"
+    },
+    "exits": [
+      {"action": "tap_building",  "to": "building",    "note": "tap any building entry"},
+      {"action": "tap_mini_map",  "to": "port_map"},
+      {"action": "tap_hamburger", "to": "main_menu"}
+    ],
+    "flows": []
+  },
+  {
+    "id": "building",
+    "description": "Inside any building (market, harbour, bank, castle, etc.)",
+    "detection": {
+      "notes": "home button visible; screen title identifies sub-type"
+    },
+    "exits": [
+      {"action": "tap_home",   "to": "port_overworld"},
+      {"action": "press_back", "to": "port_overworld"},
+      {"action": "tap_sub_menu_item", "to": "sub_menu", "note": "open a building sub-menu (Recruit Crew, Purchase, Sell, Deposit, ...)"}
+    ],
+    "flows": ["market_purchase", "market_sell", "harbor_departure"]
+  },
+  {
+    "id": "sub_menu",
+    "description": "A building sub-menu screen (Recruit Crew, Purchase, Sell, Deposit, ...). One level deeper than the building's main pane.",
+    "detection": {
+      "notes": "back arrow visible top-left; screen title is a known sub-menu name (Purchase, Sell, Recruit Crew, Deposit, Withdraw, ...)"
+    },
+    "exits": [
+      {"action": "press_back", "to": "building", "note": "back out one level to the building's main pane.  Only navigation exit — tap_home is intentionally NOT registered because skipping straight to overworld abandons in-progress transactions (e.g. tapping Home from the Recruit Crew sub-menu silently drops the recruit transaction).  recover_to_port_overworld therefore goes sub_menu -> press_back -> building -> tap_home (2 hops), preserving any context that was committed before the recovery fired."}
+    ],
+    "flows": []
+  },
+  {
+    "id": "port_map",
+    "description": "Grayscale overhead port map",
+    "detection": {
+      "notes": "home button visible; port map visual chrome; building icons visible"
+    },
+    "exits": [
+      {"action": "tap_home",       "to": "port_overworld"},
+      {"action": "tap_globe_icon", "to": "world_map"}
+    ],
+    "flows": []
+  },
+  {
+    "id": "world_map",
+    "description": "World map overlay showing all ports",
+    "detection": {
+      "notes": "home button visible; 'World Map' in top-left title OCR"
+    },
+    "exits": [
+      {"action": "press_back",         "to": "port_overworld"},
+      {"action": "tap_city_go_to_city","to": "sea",           "note": "triggers departure"}
+    ],
+    "flows": []
+  },
+  {
+    "id": "main_menu",
+    "description": "Hamburger side panel — shows game sections (guild, auction, combat…)",
+    "detection": {
+      "notes": "hamburger ≡ replaced by × at same position (2280-2400, 5-80); building list shows menu items: guild/auction/combat/collection/lighthouse/assault/production/enhance/rank/friend (≥2 match)",
+      "panel_keywords": ["guild", "auction", "combat", "collection", "lighthouse", "assault", "production", "enhance", "rank", "friend"],
+      "min_keyword_matches": 2
+    },
+    "exits": [
+      {"action": "tap_x_button", "to": "port_overworld", "note": "× appears where hamburger was"},
+      {"action": "press_back",   "to": "port_overworld"}
+    ],
+    "flows": []
+  },
+  {
+    "id": "sea",
+    "description": "Open sea — sailing HUD visible. Two sub-cases: sailing (destination set) or idle (no destination). Both navigable.",
+    "detection": {
+      "notes": "sailing HUD keywords visible: 'days of sailing', zone label, wind speed"
+    },
+    "exits": [
+      {"action": "open_world_map_from_sea", "to": "world_map"}
+    ],
+    "flows": []
+  },
+  {
+    "id": "sea_cinematic",
+    "description": "Idle/cinematic sea view — HUD hidden. Tap to restore HUD.",
+    "detection": {
+      "notes": "no HUD, no port name, no home button"
+    },
+    "exits": [
+      {"action": "tap_centre", "to": "sea"}
+    ],
+    "flows": []
+  },
+  {
+    "id": "loading",
+    "description": "Transition loading screen between states",
+    "detection": {
+      "notes": "loading animation present"
+    },
+    "exits": [
+      {"action": "wait", "to": null, "note": "resolves automatically to next state"}
+    ],
+    "flows": []
+  }
+]

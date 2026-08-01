@@ -1,0 +1,21 @@
+{
+  "purpose": "Fleet formation panel showing the convoy/fleet composition tab (C/TW) with ship durability, crew, and life stats for each vessel in the player's fleet",
+  "full_text": "C/TW",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "db3d12e893fd64d4",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T21:24:14.424670+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Fleet formation panel showing the convoy/fleet composition tab (C/TW) with ship durability, crew, and life stats for each vessel in the player's fleet",
+    "full_text": "C/TW",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "_comment": "Maps in-game building names that share function (sub-menus, layout) to a canonical building slug. The layout-lookup loader applies these aliases before looking up files in scene_layouts/buildings/, so different in-game names that share function reference the same canonical layout file without manual duplication.",
+  "_added_2026_05_13": "Initial seed based on user-confirmed function-groups: palace/castle, cathedral/temple/sanctuary/church.  Add more entries as new aliases are observed.",
+  "aliases": {
+    "palace":     "castle",
+    "cathedral":  "church",
+    "temple":     "church",
+    "sanctuary":  "church"
+  }
+}

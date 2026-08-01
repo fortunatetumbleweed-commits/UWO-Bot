@@ -1,0 +1,21 @@
+{
+  "purpose": "The Recruit Crew panel showing fleet crew at full capacity (2,642/2,642) with standby crew at 0 Ming, allowing the player to set recruitment numbers via Min/Max controls and trigger Normal or Emergency recruitment",
+  "full_text": "Standby Crew: 0 Ming. Recruit Crew: 0/0. Min | Max Waiting Time | Max. Emergency Recruit: 0. Normal Recruit: 0. Recruit.",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "fa1cf836dcc6ff4c",
+  "goal_intent": null,
+  "cached_at": "2026-05-18T04:34:01.397632+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Recruit Crew panel showing fleet crew at full capacity (2,642/2,642) with standby crew at 0 Ming, allowing the player to set recruitment numbers via Min/Max controls and trigger Normal or Emergency recruitment",
+    "full_text": "Standby Crew: 0 Ming. Recruit Crew: 0/0. Min | Max Waiting Time | Max. Emergency Recruit: 0. Normal Recruit: 0. Recruit.",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

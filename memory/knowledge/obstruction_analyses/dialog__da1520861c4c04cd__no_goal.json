@@ -1,0 +1,21 @@
+{
+  "purpose": "The bounding box encompasses the game's standard HUD elements (resource panel, navigation buttons, and action menu) rather than a true dialog or popup — no actual obstruction is present on screen.",
+  "full_text": "Ship | Blue Gem 100,225 | Red Gem 3,436 | Energy 596/539 | Load 1,406/4,066 | Food 29 | Ammo 0 | Mates | Journal | Dispatch | Sailing Log | Voyage",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "dialog",
+  "structural_hash": "da1520861c4c04cd",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T14:02:59.783399+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The bounding box encompasses the game's standard HUD elements (resource panel, navigation buttons, and action menu) rather than a true dialog or popup — no actual obstruction is present on screen.",
+    "full_text": "Ship | Blue Gem 100,225 | Red Gem 3,436 | Energy 596/539 | Load 1,406/4,066 | Food 29 | Ammo 0 | Mates | Journal | Dispatch | Sailing Log | Voyage",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Label — {{ session_id }}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Courier New', monospace;
+      background: #0f0f0f;
+      color: #d4d4d4;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── header ── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: #141414;
+      border-bottom: 1px solid #222;
+      flex-shrink: 0;
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .session-name { color: #7ec8e3; font-size: 0.85rem; }
+    .frame-counter { color: #888; font-size: 0.85rem; }
+    .progress-bar-bg { background: #222; border-radius: 3px; height: 6px; width: 200px; }
+    .progress-bar-fill { height: 100%; background: #4caf82; border-radius: 3px; }
+    .back-link { color: #555; text-decoration: none; font-size: 0.8rem; }
+    .back-link:hover { color: #888; }
+
+    /* ── screenshot ── */
+    .image-area {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      min-height: 0;
+      position: relative;
+    }
+    .screenshot {
+      max-height: 100%;
+      max-width: 100%;
+      object-fit: contain;
+      border: 1px solid #222;
+      border-radius: 4px;
+    }
+    .current-label {
+      position: absolute;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1a3a2a;
+      color: #4caf82;
+      font-size: 0.8rem;
+      padding: 4px 12px;
+      border-radius: 12px;
+      border: 1px solid #2a5a3a;
+      white-space: nowrap;
+      max-width: 80%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ── nav arrows ── */
+    .nav-prev, .nav-next {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,0.5);
+      color: #555;
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 12px 8px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      text-decoration: none;
+      transition: color 0.15s, background 0.15s;
+    }
+    .nav-prev { left: 16px; }
+    .nav-next { right: 16px; }
+    .nav-prev:hover, .nav-next:hover { color: #d4d4d4; background: rgba(0,0,0,0.8); }
+
+    /* ── button area ── */
+    /* Scrollable when many tag groups exist (e.g. sea has 7).  Cap at
+     * 45 vh so the screenshot above stays at least half the viewport.
+     * Without this cap the button-area grew unbounded and squeezed the
+     * image down to a thumbnail. */
+    .button-area {
+      padding: 10px 20px 8px;
+      background: #141414;
+      border-top: 1px solid #222;
+      flex-shrink: 0;
+      max-height: 45vh;
+      overflow-y: auto;
+    }
+    /* Subtle scrollbar so it doesn't dominate the dark UI. */
+    .button-area::-webkit-scrollbar { width: 8px; }
+    .button-area::-webkit-scrollbar-track { background: #141414; }
+    .button-area::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 4px; }
+    .button-area::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
+
+    /* screen type buttons */
+    .button-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+    .label-btn {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 7px 12px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      font-size: 0.82rem;
+      transition: background 0.1s, border-color 0.1s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .label-btn:hover  { background: #2a2a2a; border-color: #555; }
+    .label-btn.active { background: #1a3a2a; border-color: #4caf82; color: #4caf82; }
+    .label-btn.pending { background: #2a2a1a; border-color: #a0a04a; color: #d4d440; }
+    .shortcut {
+      background: #333;
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-size: 0.72rem;
+      color: #888;
+    }
+
+    /* ── tag panel ── */
+    .tag-panel {
+      border: 1px solid #2a3a2a;
+      border-radius: 6px;
+      background: #111;
+      padding: 8px 12px;
+      margin-bottom: 8px;
+    }
+    .tag-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+    .tag-group:last-child { margin-bottom: 0; }
+    .tag-group-label {
+      color: #555;
+      font-size: 0.72rem;
+      min-width: 80px;
+      flex-shrink: 0;
+    }
+    .tag-chip {
+      background: #1e1e1e;
+      color: #aaa;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 3px 10px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      font-size: 0.78rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: background 0.1s, border-color 0.1s, color 0.1s;
+      user-select: none;
+    }
+    .tag-chip:hover    { background: #2a2a2a; border-color: #555; color: #d4d4d4; }
+    .tag-chip.selected { background: #1a3a2a; border-color: #4caf82; color: #4caf82; }
+    .tag-key {
+      background: #333;
+      border-radius: 3px;
+      padding: 1px 4px;
+      font-size: 0.68rem;
+      color: #666;
+    }
+    .tag-chip.selected .tag-key { color: #2a6a3a; }
+
+    /* confirm row */
+    .confirm-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .notes-input {
+      flex: 1;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 4px;
+      color: #d4d4d4;
+      font-family: 'Courier New', monospace;
+      font-size: 0.82rem;
+      padding: 5px 10px;
+      outline: none;
+    }
+    .notes-input:focus { border-color: #555; }
+    .notes-input::placeholder { color: #444; }
+    .confirm-btn {
+      background: #1a3a2a;
+      color: #4caf82;
+      border: 1px solid #2a5a3a;
+      border-radius: 4px;
+      padding: 5px 16px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      font-size: 0.82rem;
+      white-space: nowrap;
+    }
+    .confirm-btn:hover { background: #234d30; }
+
+    /* utility row */
+    .util-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+    .skip-btn {
+      background: transparent;
+      color: #555;
+      border: 1px solid #282828;
+      border-radius: 4px;
+      padding: 5px 14px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      font-size: 0.78rem;
+      transition: color 0.1s;
+    }
+    .skip-btn:hover { color: #888; }
+    .finish-btn {
+      background: transparent;
+      color: #4caf82;
+      border: 1px solid #2a5a3a;
+      border-radius: 4px;
+      padding: 5px 14px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      font-size: 0.78rem;
+      text-decoration: none;
+    }
+    .finish-btn:hover { background: #1a3a2a; }
+    .hint {
+      text-align: center;
+      color: #383838;
+      font-size: 0.72rem;
+      margin-top: 5px;
+    }
+
+    /* ── done overlay ── */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+      z-index: 100;
+    }
+    .done-overlay.visible { display: flex; }
+    .done-title { font-size: 1.6rem; color: #4caf82; }
+    .done-sub   { color: #888; font-size: 0.9rem; }
+    .done-link  { color: #7ec8e3; text-decoration: none; font-size: 0.9rem; }
+    .done-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <!-- header -->
+  <div class="header">
+    <div class="header-left">
+      <a class="back-link" href="/">← sessions</a>
+      {% if filter_type %}
+      <span class="session-name" style="color:#e3a87e">relabeling: {{ filter_label }}</span>
+      {% else %}
+      <span class="session-name">{{ session_id }}</span>
+      {% endif %}
+      <span class="frame-counter" id="counter">
+        {% if filter_type %}
+          {{ total }} remaining
+        {% else %}
+          frame {{ index + 1 }} / {{ total }} &nbsp;·&nbsp; labeled {{ labeled }}
+        {% endif %}
+      </span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progress-fill"
+           style="width: {{ (labeled / total * 100)|int if not filter_type else 0 }}%"></div>
+    </div>
+  </div>
+
+  <!-- screenshot -->
+  <div class="image-area">
+    <div class="current-label" id="label-badge"
+         style="{{ '' if frame.screen_type else 'display:none' }}">
+      ✓ <span id="label-badge-text">{{ frame.screen_type or '' }}{% if frame.tags %} · {{ frame.tags | join(' ') }}{% endif %}{% if frame.notes %} · {{ frame.notes }}{% endif %}</span>
+    </div>
+
+    <a class="nav-prev" href="{{ nav_base }}/frame/{{ prev_index }}">‹</a>
+    <img class="screenshot" id="screenshot"
+         src="/frames/{{ session_id }}/{{ frame.file }}"
+         alt="frame {{ index }}">
+    <a class="nav-next" href="{{ nav_base }}/frame/{{ next_index }}">›</a>
+  </div>
+
+  <!-- label controls -->
+  <div class="button-area">
+
+    <!-- screen type buttons -->
+    <div class="button-row" id="btn-row">
+      {% for st in screen_types %}
+      <button class="label-btn {% if frame.screen_type == st.id %}active{% endif %}"
+              id="btn-{{ st.id }}"
+              data-type="{{ st.id }}"
+              onclick="selectType('{{ st.id }}')">
+        <span class="shortcut">{{ st.key }}</span>{{ st.label }}
+      </button>
+      {% endfor %}
+    </div>
+
+    <!-- tag panel — shown after screen type is selected -->
+    <div class="tag-panel" id="tag-panel">
+      <div id="tag-groups-container"></div>
+    </div>
+
+    <!-- confirm row: notes + confirm button -->
+    <div class="confirm-row" id="confirm-row">
+      <input class="notes-input" id="notes-input" type="text"
+             placeholder="notes (optional) — Tab to focus, Escape to blur"
+             value="{{ frame.notes or '' }}">
+      <button class="confirm-btn" onclick="confirmLabel()">
+        confirm &nbsp;<span class="shortcut">↵</span>
+      </button>
+    </div>
+
+    <!-- util row -->
+    <div class="util-row">
+      <button class="skip-btn" onclick="submitLabel('skip', [], '')">
+        skip &nbsp;<span class="shortcut">space</span>
+      </button>
+      <a class="finish-btn" href="/">Finish &amp; back</a>
+    </div>
+    <p class="hint">
+      1–9 / 0 / a–z: screen type &nbsp;·&nbsp;
+      letter keys: toggle tag (after type selected) &nbsp;·&nbsp;
+      ↵ confirm &nbsp;·&nbsp; ← → navigate &nbsp;·&nbsp; space skip
+    </p>
+  </div>
+
+  <!-- done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-title">Session complete ✓</div>
+    <div class="done-sub">All frames labeled.</div>
+    <a class="done-link" href="/">← back to sessions</a>
+  </div>
+
+  <script>
+    const SESSION_ID  = {{ session_id | tojson }};
+    const FRAME_FILE  = {{ frame.file | tojson }};
+    const TOTAL       = {{ total }};
+    const FILTER_TYPE = {{ filter_type | tojson }};
+    const NAV_BASE    = {{ nav_base | tojson }};
+    const SCREEN_TAGS = {{ screen_tags | tojson }};
+
+    let currentIndex = {{ index }};
+    let selectedType = {{ frame.screen_type | tojson }};
+    let selectedTags = new Set({{ (frame.tags or []) | tojson }});
+    let pendingConfirm = !!selectedType;
+
+    // ── tag panel ─────────────────────────────────────────────────────────────
+
+    function buildTagPanel(typeId) {
+      const container = document.getElementById('tag-groups-container');
+      container.innerHTML = '';
+      const groups = SCREEN_TAGS[typeId] || [];
+      groups.forEach(group => {
+        const row = document.createElement('div');
+        row.className = 'tag-group';
+        if (group.single_select) row.dataset.singleSelect = '1';
+        const lbl = document.createElement('span');
+        lbl.className = 'tag-group-label';
+        lbl.textContent = group.group
+            + (group.single_select ? ' (pick one)' : '');
+        row.appendChild(lbl);
+        group.tags.forEach(tag => {
+          const chip = document.createElement('span');
+          chip.className = 'tag-chip' + (selectedTags.has(tag.id) ? ' selected' : '');
+          chip.dataset.tagId = tag.id;
+          chip.dataset.tagKey = tag.key;
+          chip.dataset.groupName = group.group;
+          chip.innerHTML = `<span class="tag-key">${tag.key}</span>${tag.label}`;
+          chip.addEventListener('click', () => toggleTag(tag.id, chip, group));
+          row.appendChild(chip);
+        });
+        container.appendChild(row);
+      });
+    }
+
+    function toggleTag(tagId, chipEl, group) {
+      if (selectedTags.has(tagId)) {
+        selectedTags.delete(tagId);
+        chipEl.classList.remove('selected');
+        return;
+      }
+      // Single-select groups: deselect any previously-selected tag in
+      // the same group before adding the new one.  Implements
+      // radio-button behaviour for groups marked single_select=true in
+      // screen_tags.json.
+      if (group && group.single_select) {
+        for (const otherTag of group.tags) {
+          if (otherTag.id !== tagId && selectedTags.has(otherTag.id)) {
+            selectedTags.delete(otherTag.id);
+            const otherChip = document.querySelector(
+              `.tag-chip[data-tag-id="${otherTag.id}"]`
+            );
+            if (otherChip) otherChip.classList.remove('selected');
+          }
+        }
+      }
+      selectedTags.add(tagId);
+      chipEl.classList.add('selected');
+    }
+
+    function hasTags(typeId) {
+      const groups = SCREEN_TAGS[typeId] || [];
+      return groups.some(g => g.tags && g.tags.length > 0);
+    }
+
+    // ── type selection ────────────────────────────────────────────────────────
+
+    function selectType(typeId) {
+      document.querySelectorAll('.label-btn').forEach(b => b.classList.remove('active', 'pending'));
+      selectedType = typeId;
+      selectedTags = new Set();
+      document.getElementById('btn-' + typeId).classList.add('pending');
+      buildTagPanel(typeId);
+      pendingConfirm = true;
+    }
+
+    // ── confirm & submit ──────────────────────────────────────────────────────
+
+    function confirmLabel() {
+      if (!selectedType || selectedType === 'skip') return;
+      const notes = document.getElementById('notes-input').value.trim();
+      submitLabel(selectedType, [...selectedTags], notes);
+    }
+
+    function submitLabel(screenType, tags, notes) {
+      pendingConfirm = false;
+      document.querySelectorAll('.label-btn').forEach(b => b.classList.remove('active', 'pending'));
+
+      if (screenType !== 'skip') {
+        const btn = document.getElementById('btn-' + screenType);
+        if (btn) btn.classList.add('active');
+
+        // Update label badge
+        let badgeText = screenType;
+        if (tags && tags.length) badgeText += ' · ' + tags.join(' ');
+        if (notes) badgeText += ' · ' + notes;
+        document.getElementById('label-badge-text').textContent = badgeText;
+        document.getElementById('label-badge').style.display = '';
+      }
+
+      fetch('/label', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id:   SESSION_ID,
+          file:         FRAME_FILE,
+          screen_type:  screenType,
+          tags:         tags || [],
+          notes:        notes || '',
+          filter_type:  FILTER_TYPE,
+          filter_index: currentIndex,
+        }),
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.next_index !== null && data.next_index !== undefined) {
+          if (FILTER_TYPE) {
+            window.location.href = `${NAV_BASE}/frame/${data.next_index}`;
+          } else {
+            document.getElementById('counter').textContent =
+              `frame ${currentIndex + 1} / ${data.total}  ·  labeled ${data.labeled}`;
+            const pct = Math.round(data.labeled / data.total * 100);
+            document.getElementById('progress-fill').style.width = pct + '%';
+            window.location.href = `${NAV_BASE}/frame/${data.next_index}`;
+          }
+        } else if (FILTER_TYPE) {
+          window.location.href = '/';
+        } else if (data.done) {
+          document.getElementById('done-overlay').classList.add('visible');
+        }
+      });
+    }
+
+    // ── keyboard ──────────────────────────────────────────────────────────────
+
+    document.addEventListener('keydown', e => {
+      const tag = e.target.tagName;
+
+      // Notes input: Escape to blur, Enter to confirm
+      if (tag === 'INPUT') {
+        if (e.key === 'Escape') { e.target.blur(); return; }
+        if (e.key === 'Enter')  { e.preventDefault(); confirmLabel(); return; }
+        return;
+      }
+
+      // Enter confirms pending label
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (pendingConfirm) confirmLabel();
+        return;
+      }
+
+      // Space = skip
+      if (e.key === ' ') {
+        e.preventDefault();
+        submitLabel('skip', [], '');
+        return;
+      }
+
+      // Arrow keys = navigate (only when not in pending state)
+      if (!pendingConfirm) {
+        if (e.key === 'ArrowLeft')  { window.location.href = `${NAV_BASE}/frame/{{ prev_index }}`; return; }
+        if (e.key === 'ArrowRight') { window.location.href = `${NAV_BASE}/frame/{{ next_index }}`; return; }
+      }
+
+      // Tab = focus notes
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        document.getElementById('notes-input').focus();
+        return;
+      }
+
+      // In pending mode: letter keys toggle tags
+      if (pendingConfirm && e.key.length === 1 && e.key.match(/[a-z]/i)) {
+        const keyLower = e.key.toLowerCase();
+        const tagGroups = SCREEN_TAGS[selectedType] || [];
+        for (const group of tagGroups) {
+          const tag = group.tags.find(t => t.key === keyLower);
+          if (tag) {
+            const chip = document.querySelector(`[data-tag-id="${tag.id}"]`);
+            if (chip) toggleTag(tag.id, chip, group);
+            return;
+          }
+        }
+        return;  // don't fall through to screen type shortcuts while in tag mode
+      }
+
+      // Screen type shortcuts
+      const types = {{ screen_types | tojson }};
+      const match = types.find(t => t.key === e.key);
+      if (match) { selectType(match.id); return; }
+    });
+
+    // Initialize tag panel and button state on page load
+    if (selectedType) {
+      buildTagPanel(selectedType);
+      const btn = document.getElementById('btn-' + selectedType);
+      if (btn) btn.classList.add('active');
+    }
+  </script>
+
+</body>
+</html>

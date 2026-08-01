@@ -1,0 +1,21 @@
+{
+  "purpose": "Port facility menu listing available services in Casablanca, including Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Bureau, and Fortune Teller, with a note that the Inn is fully booked tomorrow",
+  "full_text": "Spring May 16:20 — Harbor (00:00–23:59) Market Shipyard Bank — This port is filled tomorrow. Inn Sanctuary Bureau Fortune Teller",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "b77b925a9fab1d47",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T15:57:39.959779+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Port facility menu listing available services in Casablanca, including Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Bureau, and Fortune Teller, with a note that the Inn is fully booked tomorrow",
+    "full_text": "Spring May 16:20 — Harbor (00:00–23:59) Market Shipyard Bank — This port is filled tomorrow. Inn Sanctuary Bureau Fortune Teller",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

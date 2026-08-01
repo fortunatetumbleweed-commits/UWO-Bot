@@ -1,0 +1,21 @@
+{
+  "purpose": "The Investment screen showing private investor rankings (Liothean, Dragonsbane, baatra, ManchaVerde) with their investment points, dividend tax perks, and a weekly calculation deadline notice warning that no investments can be made after 23:30 Sunday and rewards are distributed via Company Overview > Investment Progress after 00:10 Monday.",
+  "full_text": "Dividend 5% Liothean 622,765 P | Industry LV 10 8,681,309 Invest | Dividend 4% Dragonsbane 142,000 P | Commerce LV 10 8,658,286 Invest | Dividend 4% baatra 140,500 P | Military LV 10 8,689,999 Invest | Dividend 4% ManchaVerde 121,000 P | Dividend Dante4 | TaylorFP 0 P - | Until Calculations 1d left | Investments cannot be made after 23:30 on Sunday due to the calculation of results, and rewards can be obtained in [Company Overview] > [Investment Progress] after 00:10 on Monday.",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "76ebb7a7ccdd2ce9",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T17:04:06.500919+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Investment screen showing private investor rankings (Liothean, Dragonsbane, baatra, ManchaVerde) with their investment points, dividend tax perks, and a weekly calculation deadline notice warning that no investments can be made after 23:30 Sunday and rewards are distributed via Company Overview > Investment Progress after 00:10 Monday.",
+    "full_text": "Dividend 5% Liothean 622,765 P | Industry LV 10 8,681,309 Invest | Dividend 4% Dragonsbane 142,000 P | Commerce LV 10 8,658,286 Invest | Dividend 4% baatra 140,500 P | Military LV 10 8,689,999 Invest | Dividend 4% ManchaVerde 121,000 P | Dividend Dante4 | TaylorFP 0 P - | Until Calculations 1d left | Investments cannot be made after 23:30 on Sunday due to the calculation of results, and rewards can be obtained in [Company Overview] > [Investment Progress] after 00:10 on Monday.",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

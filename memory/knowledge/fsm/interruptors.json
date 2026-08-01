@@ -1,0 +1,486 @@
+[
+  {
+    "id": "discovery_notice",
+    "description": "First-visit discovery overlay — new port, village, landmark, or sea region",
+    "atomic": false,
+    "detection": "translucent overlay with discovery/exploration text",
+    "dismissal": "tap_anywhere",
+    "resumes": "current_state_unchanged"
+  },
+  {
+    "id": "active_story_event",
+    "description": "Storyline / cutscene is currently active. Top-right chrome shows 'Skip', 'Auto', and 'Dialog History' controls; the rest of the screen is taken over by the cutscene (NPC sprite + speech bubble or background scene). Bot does not need to play story content for now — the dismissal handler skips out via Skip when available, taps confirm on any skip-confirmation dialog, taps any button on a mandatory-choice screen (the user confirmed any button advances the cutscene), and falls back to a safe lower-centre tap for narration screens. Loops until the cutscene chrome clears.",
+    "atomic": true,
+    "detection": "Top-right cutscene chrome — both 'Skip' and 'Dialog History' visible. Both required (conjunction) so settings/auto-sail menus that contain 'Auto' alone don't false-fire.",
+    "detection_keywords": [
+      "skip",
+      "dialog history"
+    ],
+    "dismissal": "tap_skip_or_advance_until_clear",
+    "resumes": "current_state_unchanged"
+  },
+  {
+    "id": "daily_news",
+    "description": "Daily news popup — LINE web content viewer.  The popup has TWO display states: (A) the article-list view used to show 'Main' / 'Daily News' as a title, and (B) after the bot accidentally taps an article link the title bar is replaced by a larger hamburger + back-arrow chrome with NO title text.  Title-based detection ('Main') only catches state A.  Body-content keywords catch BOTH states because the LINE viewer shows the 'Uncharted Waters Origin' site identifier under every article header.  The close button is a small round X icon hanging OUTSIDE the dialog at its top-right edge — hard to see (low contrast against background, partially overlapping the underlying perk/event popup's 'Attendance' header text).  Do NOT use the screen-corner fallback or any X-shaped icon found by OCR; both would hit the wrong popup.",
+    "atomic": true,
+    "detection": "'Uncharted Waters Origin' site label visible in popup body (matches both list-view and article-view).  Legacy 'Main' title only matched the list view.",
+    "detection_keywords": [
+      "uncharted waters origin"
+    ],
+    "dismissal": "tap_close_button_only",
+    "close_position": [
+      1794,
+      240
+    ],
+    "resumes": "current_state_unchanged"
+  },
+  {
+    "id": "daily_login_reward",
+    "description": "Daily login reward popup",
+    "atomic": true,
+    "detection": "'Login Reward' or 'Daily Reward' text visible",
+    "detection_keywords": [
+      "login",
+      "reward"
+    ],
+    "dismissal": "tap_collect_or_ok",
+    "resumes": "current_state_unchanged"
+  },
+  {
+    "id": "attendance_popup",
+    "description": "Monthly attendance event popup — shows calendar/progress.  Close X is a white X glyph inside the dark header bar at the top-right corner of the screen (well above and right of the daily-news popup's X, which can stack on top).",
+    "atomic": true,
+    "detection": "'Attendance' text visible in popup",
+    "detection_keywords": [
+      "monthly",
+      "attendance"
+    ],
+    "dismissal": "tap_close_button_only",
+    "close_position": [
+      2016,
+      91
+    ],
+    "resumes": "current_state_unchanged"
+  },
+  {
+    "id": "perk_event",
+    "description": "Perk event popup — shows perk rewards/progress; often appears together with the attendance popup as the same modal (Perk/Event tabs at the top).  Close X is a white X glyph inside the dark header bar at the top-right corner of the screen.",
+    "atomic": true,
+    "detection": "'Perk Event' or 'Perk' text visible in popup",
+    "detection_keywords": [
+      "perk",
+      "event"
+    ],
+    "dismissal": "tap_close_button_only",
+    "close_position": [
+      2016,
+      91
+    ],
+    "resumes": "current_state_unchanged"
+  },
+  {
+    "id": "server_announcement",
+    "description": "Server-wide announcement popup",
+    "atomic": true,
+    "detection": "'Announcement' or 'Notice' text in a centered modal",
+    "dismissal": "tap_ok_or_x",
+    "resumes": "current_state_unchanged"
+  },
+  {
+    "id": "level_up_notice",
+    "description": "Level-up or skill-up notification overlay",
+    "atomic": false,
+    "detection": "level-up animation / notification overlay",
+    "dismissal": "auto_dismisses_or_tap",
+    "resumes": "current_state_unchanged"
+  },
+  {
+    "id": "android_connection_dialog",
+    "description": "Android-style connection unstable warning — forces a game reload.  Critical to detect: when this fires undetected the bot keeps running on stale perception while the game has restarted underneath, leading to long sea_cinematic waits and timeouts (observed in May-1 16:43 run).  Three-keyword conjunction is specific enough not to false-fire on harbor / market 'notice' dialogs.",
+    "atomic": true,
+    "detection": "bright white modal; text contains 'notice' + 'connection' + 'unstable'",
+    "detection_keywords": [
+      "notice",
+      "connection",
+      "unstable"
+    ],
+    "dismissal": "tap_ok_then_wait_reload",
+    "resumes": "current_state_unchanged"
+  },
+  {
+    "id": "union_request",
+    "description": "Another player requests a union (combat) engagement.  Dialog is centered modal — Union main view also contains 'Union' and 'Request' words in its title bar and left-strip menu, so structural.text_zone restricts the match to the central dialog area only.",
+    "atomic": true,
+    "detection": "union request dialog visible",
+    "detection_keywords": [
+      "union",
+      "request"
+    ],
+    "structural": {
+      "text_zone": [
+        0.3,
+        0.3,
+        0.7,
+        0.8
+      ]
+    },
+    "dismissal": "tap_accept_or_decline",
+    "resumes": "current_state_unchanged"
+  },
+  {
+    "id": "abandon_basket_confirm",
+    "description": "Confirmation dialog shown when pressing Back with goods in the basket — asks whether to leave and lose the basket contents",
+    "atomic": true,
+    "detection": "dialog asking whether to leave/abandon while basket has items",
+    "detection_keywords": [
+      "abandon",
+      "basket"
+    ],
+    "dismissal": "tap_ok",
+    "resumes": "building"
+  },
+  {
+    "id": "supply_exhausted",
+    "description": "Supply exhausted warning dialog — appears at sea",
+    "atomic": true,
+    "detection": "supply exhausted / out of supply dialog visible",
+    "detection_keywords": [
+      "supply",
+      "exhausted"
+    ],
+    "dismissal": "tap_ok",
+    "resumes": "sea"
+  },
+  {
+    "id": "fleet_death_recovery_screen",
+    "description": "Fleet destruction recovery screen. Two options: 'Quick Revive' (costs blue gems, revives in place — only use if carrying extremely high value cargo) and 'Port Return' (free, returns to nearest port with damaged ships, 0 crew, some cargo loss). Default action is always Port Return by tapping the right card at approximately (1800, 120). If a confirmation OK appears, dismiss it. Bot should NEVER choose Quick Revive unless a future high-value-cargo flag is set.",
+    "atomic": true,
+    "detection": "Quick Revive + Port Return + Revive in current location + Return to the nearest city + Naval Protection + Enemy Strike",
+    "detection_keywords": [
+      "quick revive",
+      "port return"
+    ],
+    "dismissal": "tap(1800,120)_then_wait_1s_then_tap_port return_then_wait_2s_then_tap_ok",
+    "resumes": "current_state_unchanged"
+  },
+  {
+    "id": "market_language_effect_popup_blocking_purchase",
+    "description": "A language/expertise info popup appeared when the bot tapped near the language tile in the lower-left area of the market screen. The popup shows Language and Expertise level effects. Bot must dismiss it by tapping the centred OK button first, then find and tap the Purchase button located at the lower-right of the market screen. Bot was incorrectly identifying flow as market_sell; correct flow is market_purchase.",
+    "atomic": true,
+    "detection": "Language LV Effect + Expertise LV Effect + Languages Known + Purchasing LV + Sales LV + Portuguese",
+    "detection_keywords": [
+      "language lv effect",
+      "expertise lv effect"
+    ],
+    "dismissal": "tap_ok_then_wait_1s_then_tap_purchase",
+    "resumes": "current_state_unchanged"
+  },
+  {
+    "id": "harbor_supply_manual_dialog_dismiss",
+    "description": "When inside Harbor > Supply, the bot accidentally tapped the manual supply option which opens a per-item supply dialog (Water/Food/Material/Ammo). This should be dismissed via the X button (top-right of the dialog, approx 1538,178 in original coords) and then Auto Supply should be used instead from the underlying supply dialog.  structural.text_zone restricts the match to the central dialog area so the Harbor sub-menu's normal Supply panel (which also contains those four words on the right side) doesn't false-fire.",
+    "atomic": true,
+    "detection": "Supply + Water + Food + Material + Ammo + 0/326 + 0/325 + maximum capacity + load ratio",
+    "detection_keywords": [
+      "water",
+      "food",
+      "material",
+      "ammo"
+    ],
+    "structural": {
+      "text_zone": [
+        0.3,
+        0.2,
+        0.75,
+        0.8
+      ]
+    },
+    "dismissal": "tap(1538,178)",
+    "resumes": "current_state_unchanged"
+  },
+  {
+    "id": "recruit_crew_innkeeper_dialog_dismiss_and_back",
+    "description": "DEPRECATED — superseded by crew_hired_overlay_inn (defined below).  Originally interpreted the Innkeeper 'Here's all the mates we got.' overlay as a no-mates-available signal that required pressing Back, but that overlay is actually the post-recruit confirmation and the underlying recruit_crew sub-menu should be preserved.  Kept for backward compatibility but downgraded to a safe tap_anywhere dismissal so it can no longer eject the bot from the Inn.  Structural anchor added to keep it from firing outside the centre speech-bubble zone.",
+    "atomic": true,
+    "detection": "Innkeeper + Here's all the mates we got",
+    "detection_keywords": [
+      "here's all the mates"
+    ],
+    "structural": {
+      "text_zone": [
+        0.3,
+        0.6,
+        0.65,
+        0.78
+      ]
+    },
+    "dismissal": "tap_anywhere",
+    "resumes": "current_state_unchanged"
+  },
+  {
+    "id": "recruit_crew_confirmation_dialog_asking",
+    "description": "Recruit Crew confirmation dialog asking to recruit 110 crew for 23,760 gold",
+    "atomic": true,
+    "detection_keywords": [
+      "Recruit",
+      "Crew",
+      "Notice",
+      "23,760"
+    ],
+    "dismissal": "tap_ok",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-05-02T04:26:12.937232+00:00",
+    "learned_from": "claude",
+    "correction_count": 0
+  },
+  {
+    "id": "recruit_110_crew_confirmation_dialog_ask",
+    "description": "Recruit 110 Crew confirmation dialog asking to spend 23,760 gold",
+    "atomic": true,
+    "detection_keywords": [
+      "Recruit",
+      "Crew",
+      "Notice",
+      "23,760"
+    ],
+    "dismissal": "tap_ok",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-05-02T04:50:56.830812+00:00",
+    "learned_from": "claude",
+    "correction_count": 0
+  },
+  {
+    "id": "recruit_110_crew_confirmation_dialog_cos",
+    "description": "Recruit 110 Crew confirmation dialog costing 23,760 gold",
+    "atomic": true,
+    "detection_keywords": [
+      "Recruit",
+      "Crew",
+      "Notice",
+      "23,760"
+    ],
+    "dismissal": "tap_ok",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-05-02T12:39:38.959769+00:00",
+    "learned_from": "claude",
+    "correction_count": 0
+  },
+  {
+    "id": "crew_recruitment_confirmation_dialog_ask",
+    "description": "Crew recruitment confirmation dialog asking to recruit 110 crew for 23,760 gold",
+    "atomic": true,
+    "detection_keywords": [
+      "Recruit",
+      "Crew",
+      "Notice",
+      "23,760"
+    ],
+    "dismissal": "tap_ok",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-05-02T13:18:27.015121+00:00",
+    "learned_from": "claude",
+    "correction_count": 0
+  },
+  {
+    "id": "the_screen_shows_a_list_of_recruitment_o",
+    "description": "The screen shows a list of recruitment options and a notice about crew size requirements.",
+    "atomic": true,
+    "detection_keywords": [
+      "recruit",
+      "cancel",
+      "fleet crew",
+      "standby crew"
+    ],
+    "dismissal": "tap_ok",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-05-02T17:31:22.996960+00:00",
+    "learned_from": "qwen",
+    "correction_count": 0
+  },
+  {
+    "id": "the_screen_displays_a_text_overlay_with",
+    "description": "The screen displays a text overlay with a location and a message about fighting on the island.",
+    "atomic": true,
+    "detection_keywords": [
+      "Plymouth",
+      "World",
+      "Trollercoaster shield is",
+      "and mandatoryl",
+      "20",
+      "10",
+      "Cathedral",
+      "Happy 2026",
+      "Summer",
+      "14.26",
+      "d Harbor",
+      "TaylorFP",
+      "Market",
+      "There'$ plenty of fighting going on in",
+      "Shipyard",
+      "this island.",
+      "Bank",
+      "Although that's how make a",
+      "living"
+    ],
+    "dismissal": "tap_ok_or_x",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-05-02T19:08:45.743093+00:00",
+    "learned_from": "qwen",
+    "correction_count": 0
+  },
+  {
+    "id": "fortune_teller_npc_info_popup_in_plymout",
+    "description": "Fortune Teller NPC info popup in Plymouth town",
+    "atomic": true,
+    "detection_keywords": [
+      "Fortune Teller",
+      "Read fortunes",
+      "00:00-23:59"
+    ],
+    "dismissal": "tap_anywhere",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-05-02T19:13:20.964355+00:00",
+    "learned_from": "claude",
+    "correction_count": 0
+  },
+  {
+    "id": "fortune_teller_building_info_popup_in_pl",
+    "description": "Fortune Teller building info popup in Plymouth town",
+    "atomic": true,
+    "detection_keywords": [
+      "Fortune Teller",
+      "Read fortunes",
+      "find secrets"
+    ],
+    "dismissal": "tap_anywhere",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-05-02T19:15:11.834271+00:00",
+    "learned_from": "claude",
+    "correction_count": 0
+  },
+  {
+    "id": "the_screen_displays_a_location_name_plym",
+    "description": "The screen displays a location name 'Plymouth' and mentions a Fortune Teller service.",
+    "atomic": true,
+    "detection_keywords": [
+      "Plymouth",
+      "Fortune Teller"
+    ],
+    "dismissal": "tap_ok",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-05-02T19:16:59.685799+00:00",
+    "learned_from": "qwen",
+    "correction_count": 0
+  },
+  {
+    "id": "supply_your_fleet_and_set_sail",
+    "description": "Supply your fleet and set sail.",
+    "atomic": true,
+    "detection_keywords": [
+      "Plymouth",
+      "Pass",
+      "20 10 Harbor",
+      "Supply your fleet",
+      "set sail"
+    ],
+    "dismissal": "tap_ok",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-05-02T23:14:33.955975+00:00",
+    "learned_from": "qwen",
+    "correction_count": 0
+  },
+  {
+    "id": "inn_tooltip_popup_appearing_when_hoverin",
+    "description": "Inn tooltip popup appearing when hovering over the Inn building in Plymouth",
+    "atomic": true,
+    "detection_keywords": [
+      "Inn",
+      "Recruit mates",
+      "loyalty",
+      "injuries"
+    ],
+    "dismissal": "tap_anywhere",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-05-02T23:39:29.063043+00:00",
+    "learned_from": "claude",
+    "correction_count": 0
+  },
+  {
+    "id": "crew_hired_overlay_harbor",
+    "description": "Full-screen translucent overlay after recruiting crew at the Harbor. The Harbor Official NPC sprite appears centre-screen with a speech bubble that says 'The Crew is ready!'. The underlying Recruit Crew sub-menu remains visible behind. Structural anchors: the NPC name and bubble body appear as a vertical pair in the centre zone (cx 800-1200, cy 700-770). Dismissal: tap anywhere — overlays auto-clear or close on tap.",
+    "atomic": true,
+    "detection": "Harbor Official NPC speech bubble confirming crew has been recruited",
+    "detection_keywords": [
+      "harbor official"
+    ],
+    "structural": {
+      "text_zone": [
+        0.3,
+        0.6,
+        0.55,
+        0.78
+      ],
+      "requires_vertical_pair": true,
+      "vertical_pair_min_gap": 30,
+      "vertical_pair_max_gap": 120
+    },
+    "dismissal": "tap_anywhere",
+    "resumes": "current_state_unchanged"
+  },
+  {
+    "id": "crew_hired_overlay_inn",
+    "description": "Full-screen translucent overlay after recruiting crew at the Inn. The Innkeeper NPC sprite appears centre-screen with a speech bubble that says \"Here's all the mates we got.\". The underlying Recruit Crew sub-menu remains visible behind. Structural anchors: the NPC name and bubble body appear as a vertical pair in the centre zone (cx 800-1200, cy 700-770). Dismissal: tap anywhere — overlays auto-clear or close on tap.",
+    "atomic": true,
+    "detection": "Innkeeper NPC speech bubble confirming all mates available have been hired",
+    "detection_keywords": [
+      "innkeeper"
+    ],
+    "structural": {
+      "text_zone": [
+        0.3,
+        0.6,
+        0.55,
+        0.78
+      ],
+      "requires_vertical_pair": true,
+      "vertical_pair_min_gap": 30,
+      "vertical_pair_max_gap": 120
+    },
+    "dismissal": "tap_anywhere",
+    "resumes": "current_state_unchanged"
+  },
+  {
+    "id": "android_home_screen_with_app_icons_and_w",
+    "description": "Android home screen with app icons and widgets",
+    "atomic": true,
+    "detection_keywords": [
+      "home screen",
+      "launcher",
+      "Play Store",
+      "Gmail",
+      "YouTube"
+    ],
+    "dismissal": "tap_anywhere",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-05-21T16:44:36.013874+00:00",
+    "learned_from": "claude",
+    "correction_count": 0
+  },
+  {
+    "id": "android_home_screen_with_app_icons_and_a",
+    "description": "Android home screen with app icons and a Google search bar",
+    "atomic": true,
+    "detection_keywords": [
+      "Play Store",
+      "Gmail",
+      "Photos",
+      "YouTube",
+      "Audible",
+      "home screen"
+    ],
+    "dismissal": "tap_anywhere",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-05-21T16:46:14.520050+00:00",
+    "learned_from": "claude",
+    "correction_count": 0
+  }
+]

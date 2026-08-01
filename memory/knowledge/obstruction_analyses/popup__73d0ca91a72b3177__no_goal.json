@@ -1,0 +1,21 @@
+{
+  "purpose": "A New Year 2026 greeting popup appeared near the Fortune Teller NPC in London, displayed by another player (TaylorFP) as a celebratory in-game message",
+  "full_text": "Fortune Teller — Happy 2026 — TaylorFP — Autumn Sep 22:06 — Harbor, Market, Shipyard, Bank, Inn, Cathedral, Venturer Association, Item Shop",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "73d0ca91a72b3177",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T16:47:06.364799+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A New Year 2026 greeting popup appeared near the Fortune Teller NPC in London, displayed by another player (TaylorFP) as a celebratory in-game message",
+    "full_text": "Fortune Teller — Happy 2026 — TaylorFP — Autumn Sep 22:06 — Harbor, Market, Shipyard, Bank, Inn, Cathedral, Venturer Association, Item Shop",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

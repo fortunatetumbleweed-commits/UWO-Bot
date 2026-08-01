@@ -1,0 +1,21 @@
+{
+  "purpose": "A ship interaction radial menu has appeared showing available actions (Sea Exploration, Explore Land, Fishing, Cannot Salvage) for the vessel 'Tumbler', all currently at ×0 uses, blocking navigation",
+  "full_text": "Sea Exploration ×0 | Explore Land ×0 | Fishing ×0 | Cannot Salvage ×0",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "6fbe0a072ec7af13",
+  "goal_intent": "sail_to",
+  "cached_at": "2026-05-24T20:22:49.069112+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A ship interaction radial menu has appeared showing available actions (Sea Exploration, Explore Land, Fishing, Cannot Salvage) for the vessel 'Tumbler', all currently at ×0 uses, blocking navigation",
+    "full_text": "Sea Exploration ×0 | Explore Land ×0 | Fishing ×0 | Cannot Salvage ×0",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Weather report overlay showing current sea conditions as Cloudy with no active weather effects on the voyage",
+  "full_text": "There are no weather effects. Berber Village ETA 1 d",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "41adaee9b388e003",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T17:01:12.244403+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Weather report overlay showing current sea conditions as Cloudy with no active weather effects on the voyage",
+    "full_text": "There are no weather effects. Berber Village ETA 1 d",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

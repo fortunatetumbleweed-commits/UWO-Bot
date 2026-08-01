@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>UWO Supervisor — Sessions</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Courier New', monospace;
+      background: #0f0f0f;
+      color: #d4d4d4;
+      padding: 40px;
+    }
+    h1 {
+      font-size: 1.4rem;
+      color: #7ec8e3;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+    .subtitle {
+      color: #666;
+      font-size: 0.85rem;
+      margin-bottom: 40px;
+    }
+    .empty {
+      color: #555;
+      font-style: italic;
+      margin-top: 40px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    /* Two-column layout: categories on the left, sessions on the right.
+       Below 1100px viewport they stack vertically (single column). */
+    .split-pane {
+      display: flex;
+      gap: 40px;
+      margin-top: 24px;
+      align-items: flex-start;
+    }
+    .split-pane > section {
+      flex: 1 1 0;
+      min-width: 0;          /* allow children with overflow to shrink */
+    }
+    @media (max-width: 1100px) {
+      .split-pane { flex-direction: column; gap: 0; }
+    }
+    th {
+      text-align: left;
+      color: #666;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 8px 16px;
+      border-bottom: 1px solid #222;
+    }
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #1a1a1a;
+      font-size: 0.9rem;
+    }
+    tr:hover td { background: #151515; }
+    .session-link {
+      color: #7ec8e3;
+      text-decoration: none;
+    }
+    .session-link:hover { text-decoration: underline; }
+    .progress-bar-bg {
+      background: #222;
+      border-radius: 3px;
+      height: 8px;
+      width: 120px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: #4caf82;
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+    .pct {
+      color: #888;
+      font-size: 0.8rem;
+      margin-left: 8px;
+    }
+    .done { color: #4caf82; }
+    .progress-cell { display: flex; align-items: center; }
+
+    /* ── stats ── */
+    h2 {
+      font-size: 1rem;
+      color: #666;
+      font-weight: normal;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0 0 16px;       /* first heading inside each pane — no extra top space */
+    }
+    .stats-table {}            /* now fills its column; width controlled by .split-pane */
+    .stats-table td:first-child { color: #7ec8e3; min-width: 220px; }
+    .stats-table td:nth-child(2) { color: #d4d4d4; text-align: right; padding-right: 16px; min-width: 48px; }
+    .stats-table td:nth-child(3) { min-width: 160px; }
+    .count-bar-bg { background: #1a1a1a; border-radius: 3px; height: 6px; width: 140px; }
+    .count-bar-fill { height: 100%; background: #3a6a8a; border-radius: 3px; }
+    .count-bar-fill.low { background: #8a3a3a; }
+    .count-bar-fill.ok  { background: #4caf82; }
+    .total-row td { color: #666; border-top: 1px solid #222; padding-top: 10px; }
+    .stats-table tr.clickable { cursor: pointer; }
+    .stats-table tr.clickable:hover td { background: #151515; }
+    .stats-table td a { color: inherit; text-decoration: none; display: block; }
+    .stale-badge {
+      display: inline-block;
+      background: #4a1a1a;
+      color: #e07070;
+      border: 1px solid #7a2a2a;
+      border-radius: 10px;
+      font-size: 0.7rem;
+      padding: 1px 8px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+  <h1>UWO Supervisor</h1>
+  <p class="subtitle">
+    Capture: <code>python -m supervisor.capture_session</code> &nbsp;|&nbsp;
+    Labeler: <code>python -m supervisor.labeler</code> &nbsp;|&nbsp;
+    <a href="/training" style="color:#7ec8e3">Training Data →</a>
+  </p>
+
+  <div class="split-pane">
+  <section>
+  <h2>Label counts</h2>
+  {% if total_labels == 0 %}
+  <p class="empty">No labels yet.</p>
+  {% else %}
+  <table class="stats-table">
+    <thead>
+      <tr>
+        <th>Screen type</th>
+        <th style="text-align:right">Frames</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in stats %}
+      {% set is_stale = s.id not in known_ids %}
+      <tr class="{% if s.count > 0 %}clickable{% endif %}">
+        <td>
+          <a href="/type/{{ s.id }}">
+            {{ s.label }}
+            {% if is_stale %}
+            <span class="stale-badge">⚠ stale — relabel</span>
+            {% endif %}
+          </a>
+        </td>
+        <td><a href="/type/{{ s.id }}">{{ s.count }}</a></td>
+        <td>
+          <div class="count-bar-bg">
+            <div class="count-bar-fill
+              {% if is_stale %}low
+              {% elif s.count == 0 %}
+              {% elif s.count < 15 %}low
+              {% elif s.count >= 30 %}ok
+              {% endif %}"
+                 style="width: {{ [s.pct * 1.4, 100] | min }}%"></div>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+      <tr class="total-row">
+        <td>Total</td>
+        <td>{{ total_labels }}</td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="color:#555; font-size:0.75rem; margin-top:10px;">
+    bar colour: <span style="color:#8a3a3a">■</span> &lt;15 (sparse)
+    &nbsp; <span style="color:#3a6a8a">■</span> 15–29
+    &nbsp; <span style="color:#4caf82">■</span> ≥30 (good)
+  </p>
+  {% endif %}
+  </section>
+
+  <section>
+  <h2>Sessions</h2>
+  {% if sessions %}
+  <table>
+    <thead>
+      <tr>
+        <th>Session</th>
+        <th>Frames</th>
+        <th>Progress</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in sessions %}
+      <tr>
+        <td>
+          <a class="session-link" href="/session/{{ s.session_id }}">
+            {{ s.started_at }}
+          </a>
+        </td>
+        <td>{{ s.total }}</td>
+        <td>
+          <div class="progress-cell">
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" style="width: {{ s.pct }}%"></div>
+            </div>
+            {% if s.pct == 100 %}
+              <span class="pct done">✓ done</span>
+            {% else %}
+              <span class="pct">{{ s.labeled }}/{{ s.total }}</span>
+            {% endif %}
+          </div>
+        </td>
+        <td>
+          {% if s.pct < 100 %}
+          <a class="session-link" href="/session/{{ s.session_id }}">label →</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No sessions yet.</p>
+  {% endif %}
+  </section>
+  </div>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation minimap/nearby-ports panel showing the ship's current position near Odesa with distances to surrounding ports in the Black Sea region",
+  "full_text": "C/HW | 10 10 | Odesa | 27.0 K | 45.65, 30.72 | Autumn Oct Daytime | Odesa Approx. 86.5km | Varna Approx. 329.3km | ??? Approx. 464.2km | ??? Approx. 518.7km",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "3a3afa92083be567",
+  "goal_intent": null,
+  "cached_at": "2026-05-28T13:22:12.322033+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Navigation minimap/nearby-ports panel showing the ship's current position near Odesa with distances to surrounding ports in the Black Sea region",
+    "full_text": "C/HW | 10 10 | Odesa | 27.0 K | 45.65, 30.72 | Autumn Oct Daytime | Odesa Approx. 86.5km | Varna Approx. 329.3km | ??? Approx. 464.2km | ??? Approx. 518.7km",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation panel showing nearby landmarks and ports with approximate distances, along with current season, month, and time-of-day information for the open sea voyage",
+  "full_text": "HW 10 | Wind: 27.0 | Coordinates: 42,57,40,75 | Season: Autumn, Oct, Daytime | ??? Approx. 118km | ??? Approx. 438.8km | ??? Approx. 485.1km | Odesa Approx. 860.5km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "aaa6721688ff94f4",
+  "goal_intent": null,
+  "cached_at": "2026-05-28T13:37:13.828143+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Navigation panel showing nearby landmarks and ports with approximate distances, along with current season, month, and time-of-day information for the open sea voyage",
+    "full_text": "HW 10 | Wind: 27.0 | Coordinates: 42,57,40,75 | Season: Autumn, Oct, Daytime | ??? Approx. 118km | ??? Approx. 438.8km | ??? Approx. 485.1km | Odesa Approx. 860.5km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "An NPC dialogue bubble is appearing in port, likely a tavern keeper or local character offering a hint about whiskey or a related trade/quest item",
+  "full_text": "Ship 100,233 3,368 Mates 599 / 539 954/2,873 Journal Food Ammo 297 Dispatch Log — how about whiskey to up!",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "dialog",
+  "structural_hash": "9d46293caccdda6a",
+  "goal_intent": null,
+  "cached_at": "2026-05-19T14:38:05.181824+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "An NPC dialogue bubble is appearing in port, likely a tavern keeper or local character offering a hint about whiskey or a related trade/quest item",
+    "full_text": "Ship 100,233 3,368 Mates 599 / 539 954/2,873 Journal Food Ammo 297 Dispatch Log — how about whiskey to up!",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

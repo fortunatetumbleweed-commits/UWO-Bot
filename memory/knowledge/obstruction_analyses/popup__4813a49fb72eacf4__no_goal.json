@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation panel showing nearby ports and distances, current season/time, wind/current conditions, and the ship's coordinates on the sea chart",
+  "full_text": "C/HW | Wind/Current: 0.0 | Speed: 2.4 | Coordinates: 45.01, 34.63 | Season: Autumn, Oct, Daytime | ??? Approx 105.3km | ??? Approx 314.7km | Odesa Approx 376.7km | Varna Approx 534.9km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "4813a49fb72eacf4",
+  "goal_intent": null,
+  "cached_at": "2026-05-28T13:32:45.441879+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Navigation panel showing nearby ports and distances, current season/time, wind/current conditions, and the ship's coordinates on the sea chart",
+    "full_text": "C/HW | Wind/Current: 0.0 | Speed: 2.4 | Coordinates: 45.01, 34.63 | Season: Autumn, Oct, Daytime | ??? Approx 105.3km | ??? Approx 314.7km | Odesa Approx 376.7km | Varna Approx 534.9km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

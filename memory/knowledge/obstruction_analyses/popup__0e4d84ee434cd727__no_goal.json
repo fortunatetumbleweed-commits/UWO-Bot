@@ -1,0 +1,21 @@
+{
+  "purpose": "The in-port navigation menu for Tripoli is displayed, listing all available port facilities the player can visit: Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, and Bureau — along with the current in-game date (Spring, March, 00:08).",
+  "full_text": "Spring Mar 00:08 | Harbor | Market | Shipyard | Bank | Inn | Sanctuary | Union | Bureau",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "0e4d84ee434cd727",
+  "goal_intent": null,
+  "cached_at": "2026-05-21T15:11:55.656475+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The in-port navigation menu for Tripoli is displayed, listing all available port facilities the player can visit: Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, and Bureau — along with the current in-game date (Spring, March, 00:08).",
+    "full_text": "Spring Mar 00:08 | Harbor | Market | Shipyard | Bank | Inn | Sanctuary | Union | Bureau",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

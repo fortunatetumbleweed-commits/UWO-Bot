@@ -1,0 +1,21 @@
+{
+  "purpose": "A floating activity-reward summary showing points earned from Sea Exploration, Explore Land, Fishing, and a failed Salvage attempt during the current voyage segment.",
+  "full_text": "Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "794e4623560ecbcf",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T04:12:25.879231+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A floating activity-reward summary showing points earned from Sea Exploration, Explore Land, Fishing, and a failed Salvage attempt during the current voyage segment.",
+    "full_text": "Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

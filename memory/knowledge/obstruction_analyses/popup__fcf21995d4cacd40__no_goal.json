@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation panel showing nearby ports and landmarks with distances, plus the minimap and season/time indicators — this is the persistent right-side HUD, not a dismissible popup",
+  "full_text": "C/TW 10 | 0.0 | Las Palmas 28.01, -15.87 | Spring Apr Night | Las Palmas Approx. 18.4km | Berber Village Approx. 253.1km | Madeira Approx. 320.8km | Arguin / Bastidas Approx. 671.8km | Fishing x968 | Cannot Salvage x140",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "fcf21995d4cacd40",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T14:21:09.972040+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Navigation panel showing nearby ports and landmarks with distances, plus the minimap and season/time indicators — this is the persistent right-side HUD, not a dismissible popup",
+    "full_text": "C/TW 10 | 0.0 | Las Palmas 28.01, -15.87 | Spring Apr Night | Las Palmas Approx. 18.4km | Berber Village Approx. 253.1km | Madeira Approx. 320.8km | Arguin / Bastidas Approx. 671.8km | Fishing x968 | Cannot Salvage x140",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

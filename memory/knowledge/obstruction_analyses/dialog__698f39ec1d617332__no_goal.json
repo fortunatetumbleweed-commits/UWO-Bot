@@ -1,0 +1,21 @@
+{
+  "purpose": "The main game HUD and navigation menu are visible — this is the standard sea-sailing interface showing the player's company stats, resources, and action buttons; no actual dialog or popup is obstructing gameplay",
+  "full_text": "Ship | Blue Gem 87,673 | Red Gem 3,436 | Mates | Energy 605 / 539 | Total Load Capacity 1,617/4,066 | Journal | Food 283 | Ammo 0 | Dispatch | Sailing Log | Voyage",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "dialog",
+  "structural_hash": "698f39ec1d617332",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T20:42:24.661003+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The main game HUD and navigation menu are visible — this is the standard sea-sailing interface showing the player's company stats, resources, and action buttons; no actual dialog or popup is obstructing gameplay",
+    "full_text": "Ship | Blue Gem 87,673 | Red Gem 3,436 | Mates | Energy 605 / 539 | Total Load Capacity 1,617/4,066 | Journal | Food 283 | Ammo 0 | Dispatch | Sailing Log | Voyage",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

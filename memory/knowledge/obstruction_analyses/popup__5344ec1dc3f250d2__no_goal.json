@@ -1,0 +1,21 @@
+{
+  "purpose": "The right-side navigation panel listing all available port facilities in Tripoli harbour (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau)",
+  "full_text": "Spring Mar 12:42 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "5344ec1dc3f250d2",
+  "goal_intent": null,
+  "cached_at": "2026-05-21T15:06:13.636242+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The right-side navigation panel listing all available port facilities in Tripoli harbour (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau)",
+    "full_text": "Spring Mar 12:42 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

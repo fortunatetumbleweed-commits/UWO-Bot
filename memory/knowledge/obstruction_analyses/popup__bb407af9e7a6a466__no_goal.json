@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation panel showing the ship's current position near Cairo with a list of nearby ports and their distances along the sailing route in the Mediterranean/Red Sea region",
+  "full_text": "C/HW 10 | 0.0 | Cairo | 30,12,30,57 | Winter, Jan, Night | Cairo Approx. 11.5km | ??? Approx. 115.5km | Port Said Approx. 233.9km | ??? Approx. 391.6km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "bb407af9e7a6a466",
+  "goal_intent": null,
+  "cached_at": "2026-05-31T20:04:44.079260+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Navigation panel showing the ship's current position near Cairo with a list of nearby ports and their distances along the sailing route in the Mediterranean/Red Sea region",
+    "full_text": "C/HW 10 | 0.0 | Cairo | 30,12,30,57 | Winter, Jan, Night | Cairo Approx. 11.5km | ??? Approx. 115.5km | Port Said Approx. 233.9km | ??? Approx. 391.6km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

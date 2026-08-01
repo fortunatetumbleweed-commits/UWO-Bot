@@ -1,0 +1,21 @@
+{
+  "purpose": "A nearby player named TaylorFP has completed a voyage report showing accumulated activity counts for Sea Exploration, Explore Land, Fishing, and Cannot Salvage actions, displayed as a floating nameplate overlay in open sea",
+  "full_text": "Happy 2026 — TaylorFP: Sea Exploration x780, Explore Land x1,535, Fishing x968, Cannot Salvage x140",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "6c3c13cdd7932886",
+  "goal_intent": null,
+  "cached_at": "2026-05-20T21:24:47.580818+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A nearby player named TaylorFP has completed a voyage report showing accumulated activity counts for Sea Exploration, Explore Land, Fishing, and Cannot Salvage actions, displayed as a floating nameplate overlay in open sea",
+    "full_text": "Happy 2026 — TaylorFP: Sea Exploration x780, Explore Land x1,535, Fishing x968, Cannot Salvage x140",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

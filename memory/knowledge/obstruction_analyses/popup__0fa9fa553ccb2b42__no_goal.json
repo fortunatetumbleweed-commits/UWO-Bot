@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation panel showing nearby ports and distances, with current sea conditions (Winter, February, Night) and the ship's mini-map near Port Said",
+  "full_text": "C/HW 10 | Speed: 0.0 | Near Port Said (31,51 32,60) | Season: Winter, Feb, Night | Port Said Approx. 13.4km | ??? Approx. 158.9km | ??? Approx. 218.5km | Cairo Approx. 231.6km | Beirut Approx. 319.9km | ??? Approx. 455.4km | Fishing x0 | Cannot Salvage x0",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "0fa9fa553ccb2b42",
+  "goal_intent": null,
+  "cached_at": "2026-06-01T02:49:54.391806+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Navigation panel showing nearby ports and distances, with current sea conditions (Winter, February, Night) and the ship's mini-map near Port Said",
+    "full_text": "C/HW 10 | Speed: 0.0 | Near Port Said (31,51 32,60) | Season: Winter, Feb, Night | Port Said Approx. 13.4km | ??? Approx. 158.9km | ??? Approx. 218.5km | Cairo Approx. 231.6km | Beirut Approx. 319.9km | ??? Approx. 455.4km | Fishing x0 | Cannot Salvage x0",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

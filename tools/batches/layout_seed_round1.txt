@@ -1,0 +1,26 @@
+# Round-1 batch for tools/seed_layout_from_frame.py
+#
+# Run as:
+#   python tools/seed_layout_from_frame.py \
+#       --batch tools/batches/layout_seed_round1.txt --write --skip-existing
+#
+# 10 frames — 5 building_interior (fill stubs), 5 sub_menu (new files).
+# Approximate cost: ~$0.20 total at sonnet-4-6 pricing.
+#
+# --skip-existing protects buildings/harbor/_building.md,
+# buildings/market/_building.md, and buildings/bureau/_building.md
+# which were already hand-cleaned this session.
+
+# ── Building interiors we haven't covered yet ────────────────────────
+data/sessions/2026-04-15_16-05-29/frames/0028_1609523404.png   # bank
+data/sessions/2026-04-15_16-05-29/frames/0017_1608453573.png   # item_shop
+data/sessions/2026-04-14_21-52-17/frames/0008_2152559297.png   # shipyard
+data/sessions/2026-04-15_16-05-29/frames/0058_1613348033.png   # union
+data/sessions/2026-04-15_16-05-29/frames/0110_1620289972.png   # fortune_teller
+
+# ── Sub-menus newly resolvable via title-OCR / action tag ────────────
+data/sessions/2026-04-15_16-05-29/frames/0029_1609565576.png   # bank/deposit_withdrawal
+data/sessions/2026-04-15_16-05-29/frames/0101_1619399899.png   # bureau/invest
+data/sessions/2026-04-14_21-52-17/frames/0018_2153318953.png   # market/purchase
+data/sessions/2026-04-15_16-05-29/frames/0035_1610390388.png   # estate/insurance
+data/sessions/2026-04-15_16-05-29/frames/0059_1613402342.png   # union/requests

@@ -1,0 +1,21 @@
+{
+  "purpose": "A Fortune Teller NPC is displaying New Year 2026 greeting dialogue along with flavour speech about fighting on the island, while a nearby character complains about straining their tongue speaking English — this is ambient NPC conversation, not a quest or trade event",
+  "full_text": "Happy 2026. There's plenty of fighting going on in this island. Although that's how I make a living… / I'm about to strain my tongue from trying to speak in English!",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "91f4b71734722906",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T16:44:10.850442+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A Fortune Teller NPC is displaying New Year 2026 greeting dialogue along with flavour speech about fighting on the island, while a nearby character complains about straining their tongue speaking English — this is ambient NPC conversation, not a quest or trade event",
+    "full_text": "Happy 2026. There's plenty of fighting going on in this island. Although that's how I make a living… / I'm about to strain my tongue from trying to speak in English!",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

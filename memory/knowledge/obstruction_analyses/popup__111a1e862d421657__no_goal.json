@@ -1,0 +1,21 @@
+{
+  "purpose": "An informational tooltip explaining the current sea zone is 'Safe Waters', meaning there are no adverse sailing conditions affecting the fleet here.",
+  "full_text": "Safe Waters — Sailing Condition: There are no sailing conditions.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "111a1e862d421657",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T00:16:16.166616+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "An informational tooltip explaining the current sea zone is 'Safe Waters', meaning there are no adverse sailing conditions affecting the fleet here.",
+    "full_text": "Safe Waters — Sailing Condition: There are no sailing conditions.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

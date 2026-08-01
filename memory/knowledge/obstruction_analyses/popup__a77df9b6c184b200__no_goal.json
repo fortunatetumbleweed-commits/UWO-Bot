@@ -1,0 +1,21 @@
+{
+  "purpose": "The Gear shop screen is open, displaying purchasable equipment items (Zweihänder, Agate Ring, Rondel Dagger, Tourmaline Oorbel) with their quantities and gold prices, awaiting the player to select an item to buy.",
+  "full_text": "All | Weapon | Armor | Accessory | Mate Appearance — Zweihänder (Weapon) x7 43,200 gold | Agate Ring (Accessory) x6 43,200 gold | Rondel Dagger (Weapon) x4 2,700 gold | Tourmaline Oorbel (Accessory) x7 2,700 gold — Cart: Please select an item to purchase. Purchase Price: 0",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "a77df9b6c184b200",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T18:26:12.126193+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Gear shop screen is open, displaying purchasable equipment items (Zweihänder, Agate Ring, Rondel Dagger, Tourmaline Oorbel) with their quantities and gold prices, awaiting the player to select an item to buy.",
+    "full_text": "All | Weapon | Armor | Accessory | Mate Appearance — Zweihänder (Weapon) x7 43,200 gold | Agate Ring (Accessory) x6 43,200 gold | Rondel Dagger (Weapon) x4 2,700 gold | Tourmaline Oorbel (Accessory) x7 2,700 gold — Cart: Please select an item to purchase. Purchase Price: 0",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

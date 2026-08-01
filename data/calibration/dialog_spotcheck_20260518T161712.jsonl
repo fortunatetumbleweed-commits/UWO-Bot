@@ -1,0 +1,90 @@
+{"label": "result_screen", "session": "2026-04-14_21-52-17", "file": "0024_2153526730.png", "fired": false, "kind": null, "anchors": []}
+{"label": "result_screen", "session": "2026-04-15_16-05-29", "file": "0031_1610160824.png", "fired": false, "kind": null, "anchors": []}
+{"label": "result_screen", "session": "2026-04-15_16-05-29", "file": "0034_1610323425.png", "fired": false, "kind": null, "anchors": []}
+{"label": "result_screen", "session": "2026-04-15_16-05-29", "file": "0037_1610535334.png", "fired": false, "kind": null, "anchors": []}
+{"label": "result_screen", "session": "2026-04-15_16-05-29", "file": "0045_1611495973.png", "fired": false, "kind": null, "anchors": []}
+{"label": "result_screen", "session": "2026-04-15_16-05-29", "file": "0049_1612197690.png", "fired": false, "kind": null, "anchors": []}
+{"label": "result_screen", "session": "2026-04-15_16-05-29", "file": "0054_1612485761.png", "fired": false, "kind": null, "anchors": []}
+{"label": "result_screen", "session": "2026-04-15_16-05-29", "file": "0055_1612557838.png", "fired": false, "kind": null, "anchors": []}
+{"label": "dialog_overlay", "session": "2026-04-14_21-49-12", "file": "0006_2149427746.png", "fired": true, "kind": "confirmation", "anchors": ["close", "actions"]}
+{"label": "dialog_overlay", "session": "2026-04-14_21-49-12", "file": "0001_2149215731.png", "fired": true, "kind": "reward", "anchors": ["close", "actions"]}
+{"label": "dialog_overlay", "session": "2026-04-15_16-05-29", "file": "0000_1605387562.png", "fired": true, "kind": "npc_dialogue", "anchors": ["close", "npc"]}
+{"label": "dialog_overlay", "session": "2026-04-15_16-05-29", "file": "0001_1605496962.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_overlay", "session": "2026-04-15_16-05-29", "file": "0002_1605570436.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_overlay", "session": "2026-04-15_16-05-29", "file": "0003_1606020876.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_overlay", "session": "2026-04-15_16-05-29", "file": "0004_1606071446.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_overlay", "session": "2026-04-15_16-05-29", "file": "0005_1606118493.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_transaction", "session": "2026-04-15_16-05-29", "file": "0030_1610109205.png", "fired": true, "kind": "confirmation", "anchors": ["actions"]}
+{"label": "dialog_transaction", "session": "2026-04-15_16-05-29", "file": "0033_1610270803.png", "fired": true, "kind": "confirmation", "anchors": ["actions"]}
+{"label": "dialog_transaction", "session": "2026-04-15_16-05-29", "file": "0036_1610489201.png", "fired": false, "kind": null, "anchors": []}
+{"label": "dialog_transaction", "session": "2026-04-15_16-05-29", "file": "0044_1611422892.png", "fired": true, "kind": "confirmation", "anchors": ["actions"]}
+{"label": "dialog_transaction", "session": "2026-04-15_16-05-29", "file": "0048_1612127489.png", "fired": true, "kind": "confirmation", "anchors": ["actions"]}
+{"label": "dialog_transaction", "session": "2026-04-15_16-05-29", "file": "0061_1613537318.png", "fired": true, "kind": "confirmation", "anchors": ["close", "actions"]}
+{"label": "dialog_transaction", "session": "2026-04-15_16-05-29", "file": "0064_1614153593.png", "fired": false, "kind": null, "anchors": []}
+{"label": "dialog_transaction", "session": "2026-04-15_16-05-29", "file": "0112_1620376329.png", "fired": true, "kind": "confirmation", "anchors": ["actions"]}
+{"label": "dialog_event", "session": "2026-04-15_16-52-30", "file": "0020_1655518405.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_event", "session": "2026-04-15_16-05-29", "file": "0000_1605387562.png", "fired": true, "kind": "npc_dialogue", "anchors": ["close", "npc"]}
+{"label": "dialog_event", "session": "2026-04-15_16-05-29", "file": "0001_1605496962.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_event", "session": "2026-04-15_16-05-29", "file": "0002_1605570436.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_event", "session": "2026-04-15_16-05-29", "file": "0003_1606020876.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_event", "session": "2026-04-15_16-05-29", "file": "0004_1606071446.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_event", "session": "2026-04-15_16-05-29", "file": "0005_1606118493.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_event", "session": "2026-04-15_16-05-29", "file": "0006_1606170499.png", "fired": true, "kind": "npc_dialogue", "anchors": ["close", "npc"]}
+{"label": "dialog_system", "session": "2026-04-15_21-54-26", "file": "0005_2156116746.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_system", "session": "2026-04-15_21-54-26", "file": "0006_2156211817.png", "fired": true, "kind": "npc_dialogue", "anchors": ["close", "actions", "npc"]}
+{"label": "dialog_system", "session": "2026-04-15_21-54-26", "file": "0041_2203109054.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_system", "session": "2026-04-15_21-54-26", "file": "0042_2203171939.png", "fired": true, "kind": "confirmation", "anchors": ["close", "actions"]}
+{"label": "dialog_system", "session": "2026-04-15_21-54-26", "file": "0051_2204022968.png", "fired": true, "kind": "system", "anchors": ["actions"]}
+{"label": "dialog_system", "session": "2026-04-15_16-05-29", "file": "0052_1612389080.png", "fired": true, "kind": "system", "anchors": ["close", "actions"]}
+{"label": "dialog_system", "session": "2026-04-15_16-05-29", "file": "0053_1612430524.png", "fired": true, "kind": "system", "anchors": ["close", "actions"]}
+{"label": "dialog_system", "session": "2026-04-15_16-05-29", "file": "0077_1616264294.png", "fired": true, "kind": "system", "anchors": ["close", "actions"]}
+{"label": "npc_dialogue", "session": "2026-04-15_21-54-26", "file": "0050_2203595297.png", "fired": false, "kind": null, "anchors": []}
+{"label": "npc_dialogue", "session": "2026-04-15_21-54-26", "file": "0077_2216561597.png", "fired": false, "kind": null, "anchors": []}
+{"label": "npc_dialogue", "session": "2026-04-15_21-54-26", "file": "0078_2216595424.png", "fired": false, "kind": null, "anchors": []}
+{"label": "npc_dialogue", "session": "2026-04-15_21-54-26", "file": "0079_2217032239.png", "fired": false, "kind": null, "anchors": []}
+{"label": "npc_dialogue", "session": "2026-04-15_21-54-26", "file": "0092_2220426810.png", "fired": false, "kind": null, "anchors": []}
+{"label": "npc_dialogue", "session": "2026-04-15_16-05-29", "file": "0063_1614069766.png", "fired": false, "kind": null, "anchors": []}
+{"label": "npc_dialogue", "session": "2026-04-15_16-05-29", "file": "0065_1614228682.png", "fired": false, "kind": null, "anchors": []}
+{"label": "npc_dialogue", "session": "2026-04-15_16-05-29", "file": "0066_1614271427.png", "fired": false, "kind": null, "anchors": []}
+{"label": "announcement", "session": "2026-04-15_21-54-26", "file": "0064_2205497296.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "announcement", "session": "2026-04-15_21-54-26", "file": "0072_2215555438.png", "fired": false, "kind": null, "anchors": []}
+{"label": "announcement", "session": "2026-04-15_21-54-26", "file": "0075_2216194023.png", "fired": false, "kind": null, "anchors": []}
+{"label": "announcement", "session": "2026-04-15_21-54-26", "file": "0091_2220331900.png", "fired": false, "kind": null, "anchors": []}
+{"label": "announcement", "session": "2026-04-15_21-54-26", "file": "0096_2221039319.png", "fired": false, "kind": null, "anchors": []}
+{"label": "announcement", "session": "2026-04-15_21-54-26", "file": "0104_2226366265.png", "fired": false, "kind": null, "anchors": []}
+{"label": "announcement", "session": "2026-04-15_16-52-30", "file": "0020_1655518405.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "announcement", "session": "2026-04-15_21-54-26", "file": "0064_2205497296.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_gameplay", "session": "2026-04-15_21-54-26", "file": "0004_2156010606.png", "fired": true, "kind": "confirmation", "anchors": ["close", "actions"]}
+{"label": "dialog_gameplay", "session": "2026-04-15_21-54-26", "file": "0043_2203208319.png", "fired": true, "kind": "confirmation", "anchors": ["close", "actions"]}
+{"label": "dialog_gameplay", "session": "2026-04-15_21-54-26", "file": "0044_2203240771.png", "fired": false, "kind": null, "anchors": []}
+{"label": "dialog_gameplay", "session": "2026-04-15_21-54-26", "file": "0046_2203374818.png", "fired": false, "kind": null, "anchors": []}
+{"label": "dialog_gameplay", "session": "2026-04-15_21-54-26", "file": "0047_2203457063.png", "fired": false, "kind": null, "anchors": []}
+{"label": "dialog_gameplay", "session": "2026-04-15_21-54-26", "file": "0048_2203508552.png", "fired": false, "kind": null, "anchors": []}
+{"label": "dialog_gameplay", "session": "2026-04-15_21-54-26", "file": "0049_2203547032.png", "fired": false, "kind": null, "anchors": []}
+{"label": "dialog_gameplay", "session": "2026-04-15_21-54-26", "file": "0053_2204175314.png", "fired": true, "kind": "confirmation", "anchors": ["close", "actions"]}
+{"label": "dialog_reward", "session": "2026-04-15_21-54-26", "file": "0007_2156506131.png", "fired": false, "kind": null, "anchors": []}
+{"label": "dialog_reward", "session": "2026-04-15_21-54-26", "file": "0061_2205094262.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_reward", "session": "2026-04-15_21-54-26", "file": "0062_2205126046.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_reward", "session": "2026-04-15_21-54-26", "file": "0063_2205195376.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_reward", "session": "2026-04-15_16-05-29", "file": "0000_1605387562.png", "fired": true, "kind": "npc_dialogue", "anchors": ["close", "npc"]}
+{"label": "dialog_reward", "session": "2026-04-15_16-05-29", "file": "0001_1605496962.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_reward", "session": "2026-04-15_16-05-29", "file": "0002_1605570436.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_reward", "session": "2026-04-15_16-05-29", "file": "0007_1606217599.png", "fired": true, "kind": "reward", "anchors": ["close", "actions"]}
+{"label": "dialog_shop", "session": "2026-04-15_16-05-29", "file": "0003_1606020876.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_shop", "session": "2026-04-15_16-05-29", "file": "0004_1606071446.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_shop", "session": "2026-04-15_16-05-29", "file": "0005_1606118493.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_shop", "session": "2026-04-15_16-05-29", "file": "0006_1606170499.png", "fired": true, "kind": "npc_dialogue", "anchors": ["close", "npc"]}
+{"label": "dialog_shop", "session": "2026-04-15_16-05-29", "file": "0002_1605570436.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_shop", "session": "2026-04-16_18-23-30", "file": "0003_1825517667.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_shop", "session": "2026-04-16_18-23-30", "file": "0004_1826029465.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_shop", "session": "2026-04-16_18-23-30", "file": "0005_1826075961.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_game_notice", "session": "2026-04-16_20-35-45", "file": "0013_2106214751.png", "fired": true, "kind": "system", "anchors": ["actions"]}
+{"label": "dialog_game_notice", "session": "2026-04-16_19-19-54", "file": "0012_1924013219.png", "fired": true, "kind": "system", "anchors": ["actions"]}
+{"label": "dialog_game_notice", "session": "2026-04-16_19-19-54", "file": "0017_1924581150.png", "fired": true, "kind": "system", "anchors": ["actions"]}
+{"label": "dialog_game_notice", "session": "2026-04-16_19-19-54", "file": "0018_1925013453.png", "fired": true, "kind": "system", "anchors": ["actions"]}
+{"label": "dialog_game_notice", "session": "2026-04-16_19-19-54", "file": "0022_1925443300.png", "fired": true, "kind": "system", "anchors": ["close", "actions"]}
+{"label": "dialog_game_notice", "session": "2026-04-15_21-54-26", "file": "0005_2156116746.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_game_notice", "session": "2026-04-15_21-54-26", "file": "0006_2156211817.png", "fired": true, "kind": "npc_dialogue", "anchors": ["close", "actions", "npc"]}
+{"label": "dialog_game_notice", "session": "2026-04-15_21-54-26", "file": "0041_2203109054.png", "fired": true, "kind": "informational", "anchors": ["close"]}
+{"label": "dialog_android", "session": "2026-04-25_23-05-56", "file": "0000_2306018063.png", "fired": false, "kind": null, "anchors": []}
+{"label": "dialog_android", "session": "2026-04-24_15-51-13", "file": "0000_1551171949.png", "fired": true, "kind": "informational", "anchors": ["close"]}

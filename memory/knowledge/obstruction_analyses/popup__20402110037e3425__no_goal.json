@@ -1,0 +1,21 @@
+{
+  "purpose": "A New Year greeting overlay ('Happy 2026') has appeared near the Fortune Teller NPC in London, likely a seasonal/holiday event popup triggered by proximity to the NPC or a calendar event, overlapping the town navigation menu.",
+  "full_text": "Fortune Teller — Happy 2026 — TaylorFP — Autumn Sep 03:48 — Harbor, Market, Shipyard, Bank, Inn, Cathedral, Venturer Association, Item Shop",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "20402110037e3425",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T16:49:58.704775+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A New Year greeting overlay ('Happy 2026') has appeared near the Fortune Teller NPC in London, likely a seasonal/holiday event popup triggered by proximity to the NPC or a calendar event, overlapping the town navigation menu.",
+    "full_text": "Fortune Teller — Happy 2026 — TaylorFP — Autumn Sep 03:48 — Harbor, Market, Shipyard, Bank, Inn, Cathedral, Venturer Association, Item Shop",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

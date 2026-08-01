@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation minimap/compass panel showing nearby ports and distances, with the closest known port being Benghazi at approximately 14.9km, currently in Autumn/October daytime on the Pacific Ocean",
+  "full_text": "HW 7 10 10 | Wind 0.0 k 17 | Benghazi 32,59,19,91 | Autumn Oct Daytime | Anchor Benghazi Approx. 14.9km | ??? Approx. 529.4km | ??? Approx. 541.5km | ??? Approx. 555.3km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "9c2fa8a2de0a8d5c",
+  "goal_intent": null,
+  "cached_at": "2026-05-28T19:15:05.236425+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Navigation minimap/compass panel showing nearby ports and distances, with the closest known port being Benghazi at approximately 14.9km, currently in Autumn/October daytime on the Pacific Ocean",
+    "full_text": "HW 7 10 10 | Wind 0.0 k 17 | Benghazi 32,59,19,91 | Autumn Oct Daytime | Anchor Benghazi Approx. 14.9km | ??? Approx. 529.4km | ??? Approx. 541.5km | ??? Approx. 555.3km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,225 @@
+{
+  "plan_id": "inn_recruit_route",
+  "goal_id": "has_enough_crew",
+  "provenance": "hand_authored",
+  "confidence": "unverified",
+  "steps": [
+    {
+      "step_id": "step_1_exit_to_port",
+      "action": {
+        "kind": "exit_to_port_overworld"
+      },
+      "expected_progress": {
+        "kind": "state_change",
+        "hint": "back at port_overworld with the harbor entrance visible",
+        "expected_state": "port_overworld"
+      },
+      "travel_count": 26,
+      "success_count": 25,
+      "failure_count": 1,
+      "avg_duration_secs": 189.82769868309134,
+      "last_traveled_at": "2026-05-23T16:51:27.607965+00:00"
+    },
+    {
+      "step_id": "step_2_navigate_inn",
+      "action": {
+        "kind": "navigate_to",
+        "target": "inn"
+      },
+      "expected_progress": {
+        "kind": "detail_match",
+        "hint": "inside the inn building (NPC + sub-menus visible)",
+        "expected_detail_substring": "inn"
+      },
+      "travel_count": 26,
+      "success_count": 22,
+      "failure_count": 4,
+      "avg_duration_secs": 135.51418169349716,
+      "last_traveled_at": "2026-05-23T16:59:07.429956+00:00"
+    },
+    {
+      "step_id": "step_3_open_recruit_crew",
+      "action": {
+        "kind": "tap_primary_action",
+        "building": "inn",
+        "sub_menu": "recruit_crew"
+      },
+      "expected_progress": {
+        "kind": "detail_match",
+        "hint": "Recruit Crew sub-screen visible — list of ships with crew counts on the left, gold Recruit button on the right panel",
+        "expected_detail_substring": "recruit crew"
+      },
+      "travel_count": 22,
+      "success_count": 19,
+      "failure_count": 3,
+      "avg_duration_secs": 109.15323930789079,
+      "last_traveled_at": "2026-05-23T16:17:01.794074+00:00"
+    },
+    {
+      "step_id": "replan_inserted_1",
+      "action": {
+        "kind": "tap_button",
+        "labels": [
+          "Recruit"
+        ],
+        "region": {
+          "x": 857,
+          "y": 358,
+          "w": 140,
+          "h": 30
+        }
+      },
+      "expected_progress": {
+        "kind": "free_text",
+        "hint": "Tapping the gold Recruit button should trigger a confirmation dialog or directly recruit 953 crew members, increasing fleet crew count"
+      },
+      "travel_count": 2,
+      "failure_count": 2,
+      "last_traveled_at": "2026-05-23T16:20:16.162483+00:00",
+      "notes": "inserted by claude_replan: Tapping the gold Recruit button should trigger a confirmation dialog or directly recruit 953 crew members, increasing fleet crew count"
+    },
+    {
+      "step_id": "replan_inserted_2",
+      "action": {
+        "kind": "commit_via_positive_taps",
+        "max_taps": 3,
+        "settle_secs": 2.0
+      },
+      "expected_progress": {
+        "kind": "free_text",
+        "hint": "Confirm any OK/confirmation dialog that appears after tapping Recruit. Fleet crew count should increase to 953."
+      },
+      "notes": "inserted by claude_replan: Confirm any OK/confirmation dialog that appears after tapping Recruit. Fleet crew count should increase to 953."
+    },
+    {
+      "step_id": "step_3b_commit_recruit",
+      "action": {
+        "kind": "commit_via_positive_taps",
+        "max_taps": 6,
+        "settle_secs": 3.0
+      },
+      "expected_progress": {
+        "kind": "free_text",
+        "hint": "After the recruit screen's positive-tap loop settles (gold Recruit button -> OK confirmation -> back at recruit screen with Recruit still visible), recruitment should be committed.  This step is replan-protected: replan can insert steps before or after but cannot drop it."
+      },
+      "travel_count": 12,
+      "success_count": 8,
+      "failure_count": 4,
+      "avg_duration_secs": 122.86223850524985,
+      "last_traveled_at": "2026-05-20T16:43:50.473978+00:00"
+    },
+    {
+      "step_id": "step_4_exit_after_recruit",
+      "action": {
+        "kind": "exit_to_port_overworld"
+      },
+      "expected_progress": {
+        "kind": "state_change",
+        "hint": "back at port_overworld; fleet crew should now be sufficient",
+        "expected_state": "port_overworld"
+      },
+      "expected_goal": {
+        "goal_id": "has_enough_crew",
+        "rationale": "After step_3b's positive-button cycle, recruitment should have committed.  This exit is the canonical post-recruit checkpoint."
+      },
+      "travel_count": 8,
+      "success_count": 4,
+      "failure_count": 4,
+      "avg_duration_secs": 110.8433341299999,
+      "last_traveled_at": "2026-05-13T17:23:34.793763+00:00"
+    },
+    {
+      "step_id": "step_5_navigate_harbor",
+      "action": {
+        "kind": "navigate_to",
+        "target": "harbor"
+      },
+      "expected_progress": {
+        "kind": "detail_match",
+        "hint": "inside the harbor (Ready to sail / Depart Now visible)",
+        "expected_detail_substring": "harbor"
+      },
+      "travel_count": 6,
+      "success_count": 5,
+      "failure_count": 1,
+      "avg_duration_secs": 96.50645350000002,
+      "last_traveled_at": "2026-05-13T17:25:22.877113+00:00"
+    },
+    {
+      "step_id": "replan_inserted_1",
+      "action": {
+        "kind": "tap_button",
+        "labels": [
+          "Supply Departure",
+          "29,109"
+        ],
+        "region": {
+          "x": 857,
+          "y": 368,
+          "w": 220,
+          "h": 40
+        }
+      },
+      "expected_progress": {
+        "kind": "free_text",
+        "hint": "Tapping Supply Departure should auto-purchase food and water supplies needed for the voyage, filling the 0/326 and 0/325 slots. A confirmation dialog or direct supply may follow."
+      },
+      "travel_count": 4,
+      "failure_count": 4,
+      "last_traveled_at": "2026-05-13T17:26:03.217636+00:00",
+      "notes": "inserted by claude_replan: Tapping Supply Departure should auto-purchase food and water supplies needed for the voyage, filling the 0/326 and 0/325 slots. A confirmation dialog or direct supply may follow."
+    },
+    {
+      "step_id": "replan_inserted_2",
+      "action": {
+        "kind": "commit_via_positive_taps",
+        "max_taps": 3,
+        "settle_secs": 2.0
+      },
+      "expected_progress": {
+        "kind": "free_text",
+        "hint": "Confirm any supply purchase dialog (OK/Confirm). After settling, food and water slots should be non-zero and Depart Now should become active."
+      },
+      "notes": "inserted by claude_replan: Confirm any supply purchase dialog (OK/Confirm). After settling, food and water slots should be non-zero and Depart Now should become active."
+    },
+    {
+      "step_id": "replan_step_1",
+      "action": {
+        "kind": "noop"
+      },
+      "expected_progress": {
+        "kind": "free_text",
+        "hint": "Remain at harbor screen; verify crew count 953 is strictly greater than pre-plan baseline. If 'Ready to sail' is shown and no 'not enough crew' warning is visible, goal conditions may already be satisfied. Check if Depart Now becomes active."
+      },
+      "travel_count": 2,
+      "failure_count": 2,
+      "last_traveled_at": "2026-05-04T22:16:17.298387+00:00",
+      "notes": "inserted by claude_replan: Remain at harbor screen; verify crew count 953 is strictly greater than pre-plan baseline. If 'Ready to sail' is shown and no 'not enough crew' warning is visible, goal conditions may already be satisfied. Check if Depart Now becomes active."
+    },
+    {
+      "step_id": "replan_step_2",
+      "action": {
+        "kind": "tap_button",
+        "labels": [
+          "Depart Now"
+        ],
+        "region": {
+          "x": 897,
+          "y": 348,
+          "w": 180,
+          "h": 40
+        }
+      },
+      "expected_progress": {
+        "kind": "free_text",
+        "hint": "If Depart Now was active, fleet departs. If still grayed, a confirmation dialog or supply requirement may appear."
+      },
+      "notes": "inserted by claude_replan: If Depart Now was active, fleet departs. If still grayed, a confirmation dialog or supply requirement may appear."
+    }
+  ],
+  "description": "Resolve 'not enough crew' by exiting the harbor, navigating to the inn's Recruit Crew sub-menu, committing the recruit transaction via the OmniParser-driven commit_via_positive_taps primitive, and re-entering the harbor to verify.",
+  "notes": "Hand-authored.  step_3b_commit_recruit is replan-protected (apply_replan_to_plan preserves commit_via_positive_taps action kinds in DECISION_REPLACE) so Claude replan cannot drop the positive-button cycle from the plan.; replan replaced steps from index 6: \"The harbor screen shows 'Ready to sail' with crew at 953/2,275 and no 'not enoug\"; replan inserted 2 step(s) at index 6: \"The crew goal condition (953 crew, 'Ready to sail' visible, no crew warning) app\"; replan inserted 2 step(s) at index 3: 'The commit_via_positive_taps step returned no_progress because it tried to tap p'",
+  "travel_count": 18,
+  "failure_count": 14,
+  "last_traveled_at": "2026-05-23T16:59:07.430109+00:00"
+}

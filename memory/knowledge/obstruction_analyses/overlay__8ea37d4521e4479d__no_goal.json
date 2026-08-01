@@ -1,0 +1,21 @@
+{
+  "purpose": "A Palace soldier greets members of the TaylorFP company and directs them to proceed inside, acting as a welcome dialogue upon entering the Palace",
+  "full_text": "Welcome! Members of the TaylorFP company, please come this way.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "overlay",
+  "structural_hash": "8ea37d4521e4479d",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T20:00:36.263217+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A Palace soldier greets members of the TaylorFP company and directs them to proceed inside, acting as a welcome dialogue upon entering the Palace",
+    "full_text": "Welcome! Members of the TaylorFP company, please come this way.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

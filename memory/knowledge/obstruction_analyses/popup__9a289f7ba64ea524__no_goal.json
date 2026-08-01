@@ -1,0 +1,21 @@
+{
+  "purpose": "The city navigation menu for Tripoli's Harbor district is open, listing all available port facilities the player can visit (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) along with the current in-game date and time.",
+  "full_text": "Spring Apr 21:44 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "9a289f7ba64ea524",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T02:22:43.055893+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The city navigation menu for Tripoli's Harbor district is open, listing all available port facilities the player can visit (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) along with the current in-game date and time.",
+    "full_text": "Spring Apr 21:44 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

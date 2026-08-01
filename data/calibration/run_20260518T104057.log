@@ -1,0 +1,139 @@
+2026-05-18 10:40:58.396 | DEBUG    | vision.local_vision:find_vision_model:54 - Installed Ollama models: ['qwen2.5:7b', 'llava:7b', 'llama3:latest', 'llama2:latest']
+2026-05-18 10:41:20.851 | INFO     | vision.omniparser:_load_yolo:172 - Loading OmniParser YOLO on mps…
+2026-05-18 10:41:20.953 | INFO     | vision.omniparser:_load_yolo:175 - OmniParser YOLO ready in 0.1s
+2026-05-18 10:41:33.024 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'ISurabaya' as likely corruption of seed port 'surabaya'
+2026-05-18 10:41:33.026 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'Amsterdanted' as likely corruption of seed port 'amsterdam'
+2026-05-18 10:41:33.026 | DEBUG    | vision.text_correction:correct_port_name:261 - [text_correction] port 'Den Helder' → no match above 0.6 (best='Montpellier' ratio=0.48)
+2026-05-18 10:41:33.026 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Den Helder' → no match above 0.6 (best='Safe Waters' ratio=0.38)
+2026-05-18 10:41:33.027 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'ISurabaya' as likely corruption of seed port 'surabaya'
+2026-05-18 10:41:33.028 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'Amsterdanted' as likely corruption of seed port 'amsterdam'
+2026-05-18 10:41:33.028 | DEBUG    | vision.text_correction:correct_port_name:261 - [text_correction] port 'Den Helder' → no match above 0.6 (best='Montpellier' ratio=0.48)
+2026-05-18 10:43:07.636 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Supply' → no match above 0.6 (best='South China Sea' ratio=0.19)
+2026-05-18 10:43:07.637 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Repair' → no match above 0.6 (best='Red Sea' ratio=0.46)
+2026-05-18 10:43:31.282 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Supply' → no match above 0.6 (best='South China Sea' ratio=0.19)
+2026-05-18 10:43:31.283 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Repair' → no match above 0.6 (best='Red Sea' ratio=0.46)
+2026-05-18 10:43:57.735 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Supply' → no match above 0.6 (best='South China Sea' ratio=0.19)
+2026-05-18 10:43:57.736 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Repair' → no match above 0.6 (best='Red Sea' ratio=0.46)
+2026-05-18 10:44:19.347 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Supply' → no match above 0.6 (best='South China Sea' ratio=0.19)
+2026-05-18 10:44:19.348 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Repair' → no match above 0.6 (best='Red Sea' ratio=0.46)
+2026-05-18 10:44:40.860 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Supply' → no match above 0.6 (best='South China Sea' ratio=0.19)
+2026-05-18 10:44:40.861 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Repair' → no match above 0.6 (best='Red Sea' ratio=0.46)
+2026-05-18 10:45:09.391 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Supply' → no match above 0.6 (best='South China Sea' ratio=0.19)
+2026-05-18 10:45:09.392 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Repair' → no match above 0.6 (best='Red Sea' ratio=0.46)
+2026-05-18 10:45:29.602 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Supply' → no match above 0.6 (best='South China Sea' ratio=0.19)
+2026-05-18 10:45:29.602 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Repair' → no match above 0.6 (best='Red Sea' ratio=0.46)
+2026-05-18 10:46:06.292 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Supply' → no match above 0.6 (best='South China Sea' ratio=0.19)
+2026-05-18 10:46:06.293 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Repair' → no match above 0.6 (best='Red Sea' ratio=0.46)
+2026-05-18 10:46:33.946 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Supply' → no match above 0.6 (best='South China Sea' ratio=0.19)
+2026-05-18 10:46:33.947 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Repair' → no match above 0.6 (best='Red Sea' ratio=0.46)
+2026-05-18 10:47:02.567 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Supply' → no match above 0.6 (best='South China Sea' ratio=0.19)
+2026-05-18 10:47:02.568 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Repair' → no match above 0.6 (best='Red Sea' ratio=0.46)
+  [dense] 2026-04-15_21-54-26: agg 7/30 stage2 7/30 illegal=1
+2026-05-18 10:56:24.891 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'ISurabaya' as likely corruption of seed port 'surabaya'
+2026-05-18 10:56:24.893 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'Amsterdanted' as likely corruption of seed port 'amsterdam'
+2026-05-18 10:56:24.894 | DEBUG    | vision.text_correction:correct_port_name:261 - [text_correction] port 'Den Helder' → no match above 0.6 (best='Montpellier' ratio=0.48)
+2026-05-18 10:56:24.894 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Den Helder' → no match above 0.6 (best='Safe Waters' ratio=0.38)
+2026-05-18 10:56:24.895 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'ISurabaya' as likely corruption of seed port 'surabaya'
+2026-05-18 10:56:24.895 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'Amsterdanted' as likely corruption of seed port 'amsterdam'
+2026-05-18 10:56:24.896 | DEBUG    | vision.text_correction:correct_port_name:261 - [text_correction] port 'Den Helder' → no match above 0.6 (best='Montpellier' ratio=0.48)
+2026-05-18 10:56:50.259 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Supply' → no match above 0.6 (best='South China Sea' ratio=0.19)
+2026-05-18 10:56:50.260 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Repair' → no match above 0.6 (best='Red Sea' ratio=0.46)
+2026-05-18 10:57:23.804 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Supply' → no match above 0.6 (best='South China Sea' ratio=0.19)
+2026-05-18 10:57:23.806 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Repair' → no match above 0.6 (best='Red Sea' ratio=0.46)
+2026-05-18 11:00:38.005 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Sailing' → no match above 0.6 (best='Pacific Ocean' ratio=0.40)
+2026-05-18 11:02:35.313 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'London' → no match above 0.6 (best='Indian Ocean' ratio=0.44)
+2026-05-18 11:03:01.560 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'City' → no match above 0.6 (best='Arctic Ocean' ratio=0.25)
+2026-05-18 11:03:37.210 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Sell' → no match above 0.6 (best='Red Sea' ratio=0.36)
+2026-05-18 11:05:20.176 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Purchase' → no match above 0.6 (best='South China Sea' ratio=0.52)
+2026-05-18 11:05:20.177 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Sell' → no match above 0.6 (best='Red Sea' ratio=0.36)
+2026-05-18 11:05:20.179 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'ISurabaya' as likely corruption of seed port 'surabaya'
+2026-05-18 11:05:20.181 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'Amsterdanted' as likely corruption of seed port 'amsterdam'
+2026-05-18 11:05:20.181 | INFO     | vision.text_correction:correct_port_name:267 - [text_correction] port 'Sell' → 'Seville' (similarity 0.73)
+2026-05-18 11:05:20.181 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Sell' → no match above 0.6 (best='Red Sea' ratio=0.36)
+2026-05-18 11:05:20.182 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'ISurabaya' as likely corruption of seed port 'surabaya'
+2026-05-18 11:05:20.183 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'Amsterdanted' as likely corruption of seed port 'amsterdam'
+2026-05-18 11:05:20.183 | INFO     | vision.text_correction:correct_port_name:267 - [text_correction] port 'Sell' → 'Seville' (similarity 0.73)
+2026-05-18 11:05:20.184 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'ISurabaya' as likely corruption of seed port 'surabaya'
+2026-05-18 11:05:20.184 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'Amsterdanted' as likely corruption of seed port 'amsterdam'
+2026-05-18 11:05:20.185 | INFO     | vision.text_correction:correct_port_name:267 - [text_correction] port 'Purchase' → 'Cohasset' (similarity 0.62)
+2026-05-18 11:05:20.185 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'ISurabaya' as likely corruption of seed port 'surabaya'
+2026-05-18 11:05:20.186 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'Amsterdanted' as likely corruption of seed port 'amsterdam'
+2026-05-18 11:05:20.186 | DEBUG    | vision.text_correction:correct_port_name:261 - [text_correction] port 'Trade Goods' → no match above 0.6 (best='Santiago de Cuba' ratio=0.37)
+2026-05-18 11:05:20.187 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'ISurabaya' as likely corruption of seed port 'surabaya'
+2026-05-18 11:05:20.188 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'Amsterdanted' as likely corruption of seed port 'amsterdam'
+2026-05-18 11:05:20.188 | DEBUG    | vision.text_correction:correct_port_name:261 - [text_correction] port 'Wheat' → no match above 0.6 (best='Cohasset' ratio=0.46)
+2026-05-18 11:05:20.189 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'ISurabaya' as likely corruption of seed port 'surabaya'
+2026-05-18 11:05:20.189 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'Amsterdanted' as likely corruption of seed port 'amsterdam'
+2026-05-18 11:05:20.190 | INFO     | vision.text_correction:correct_port_name:267 - [text_correction] port 'Sell' → 'Seville' (similarity 0.73)
+2026-05-18 11:06:49.189 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Purchase' → no match above 0.6 (best='South China Sea' ratio=0.52)
+2026-05-18 11:07:19.176 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Purchase' → no match above 0.6 (best='South China Sea' ratio=0.52)
+2026-05-18 11:07:19.177 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Sell' → no match above 0.6 (best='Red Sea' ratio=0.36)
+2026-05-18 11:08:28.599 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Purchase' → no match above 0.6 (best='South China Sea' ratio=0.52)
+2026-05-18 11:08:28.600 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Sell' → no match above 0.6 (best='Red Sea' ratio=0.36)
+2026-05-18 11:09:54.786 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'ISurabaya' as likely corruption of seed port 'surabaya'
+2026-05-18 11:09:54.790 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'Amsterdanted' as likely corruption of seed port 'amsterdam'
+2026-05-18 11:09:54.790 | DEBUG    | vision.text_correction:correct_port_name:261 - [text_correction] port 'Den Helder' → no match above 0.6 (best='Montpellier' ratio=0.48)
+2026-05-18 11:09:54.790 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Den Helder' → no match above 0.6 (best='Safe Waters' ratio=0.38)
+2026-05-18 11:09:54.791 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'ISurabaya' as likely corruption of seed port 'surabaya'
+2026-05-18 11:09:54.792 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'Amsterdanted' as likely corruption of seed port 'amsterdam'
+2026-05-18 11:09:54.792 | DEBUG    | vision.text_correction:correct_port_name:261 - [text_correction] port 'Den Helder' → no match above 0.6 (best='Montpellier' ratio=0.48)
+
+=== dense / rule_only ===
+aggregator accuracy: 7/30 = 23.3%
+stage2 accuracy:     7/30 = 23.3%
+illegal transitions: 1/30
+trace: data/calibration/temporal_dense_rule_only_20260518T104058.jsonl
+
+  [sparse] 2026-04-15_21-54-26: agg 4/30 stage2 4/30 illegal=5
+2026-05-18 11:11:51.969 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'ISurabaya' as likely corruption of seed port 'surabaya'
+2026-05-18 11:11:51.972 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'Amsterdanted' as likely corruption of seed port 'amsterdam'
+2026-05-18 11:11:51.973 | DEBUG    | vision.text_correction:correct_port_name:261 - [text_correction] port 'Den Helder' → no match above 0.6 (best='Montpellier' ratio=0.48)
+2026-05-18 11:11:51.973 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Den Helder' → no match above 0.6 (best='Safe Waters' ratio=0.38)
+2026-05-18 11:11:51.974 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'ISurabaya' as likely corruption of seed port 'surabaya'
+2026-05-18 11:11:51.974 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'Amsterdanted' as likely corruption of seed port 'amsterdam'
+2026-05-18 11:11:51.975 | DEBUG    | vision.text_correction:correct_port_name:261 - [text_correction] port 'Den Helder' → no match above 0.6 (best='Montpellier' ratio=0.48)
+2026-05-18 11:12:52.706 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Supply' → no match above 0.6 (best='South China Sea' ratio=0.19)
+2026-05-18 11:12:52.708 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Repair' → no match above 0.6 (best='Red Sea' ratio=0.46)
+2026-05-18 11:13:26.633 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Supply' → no match above 0.6 (best='South China Sea' ratio=0.19)
+2026-05-18 11:13:26.636 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Repair' → no match above 0.6 (best='Red Sea' ratio=0.46)
+2026-05-18 11:24:23.523 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Purchase' → no match above 0.6 (best='South China Sea' ratio=0.52)
+2026-05-18 11:24:48.890 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Purchase' → no match above 0.6 (best='South China Sea' ratio=0.52)
+2026-05-18 11:24:48.892 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Sell' → no match above 0.6 (best='Red Sea' ratio=0.36)
+2026-05-18 11:25:23.409 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Purchase' → no match above 0.6 (best='South China Sea' ratio=0.52)
+2026-05-18 11:25:23.411 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Sell' → no match above 0.6 (best='Red Sea' ratio=0.36)
+2026-05-18 11:25:52.621 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Purchase' → no match above 0.6 (best='South China Sea' ratio=0.52)
+2026-05-18 11:25:52.622 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Sell' → no match above 0.6 (best='Red Sea' ratio=0.36)
+2026-05-18 11:26:29.016 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Purchase' → no match above 0.6 (best='South China Sea' ratio=0.52)
+2026-05-18 11:26:29.017 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Sell' → no match above 0.6 (best='Red Sea' ratio=0.36)
+2026-05-18 11:26:53.775 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'ISurabaya' as likely corruption of seed port 'surabaya'
+2026-05-18 11:26:53.778 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'Amsterdanted' as likely corruption of seed port 'amsterdam'
+2026-05-18 11:26:53.778 | DEBUG    | vision.text_correction:correct_port_name:261 - [text_correction] port 'Den Helder' → no match above 0.6 (best='Montpellier' ratio=0.48)
+2026-05-18 11:26:53.778 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Den Helder' → no match above 0.6 (best='Safe Waters' ratio=0.38)
+2026-05-18 11:26:53.779 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'ISurabaya' as likely corruption of seed port 'surabaya'
+2026-05-18 11:26:53.780 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'Amsterdanted' as likely corruption of seed port 'amsterdam'
+2026-05-18 11:26:53.780 | DEBUG    | vision.text_correction:correct_port_name:261 - [text_correction] port 'Den Helder' → no match above 0.6 (best='Montpellier' ratio=0.48)
+2026-05-18 11:28:02.614 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'ISurabaya' as likely corruption of seed port 'surabaya'
+2026-05-18 11:28:02.616 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'Amsterdanted' as likely corruption of seed port 'amsterdam'
+2026-05-18 11:28:02.617 | DEBUG    | vision.text_correction:correct_port_name:261 - [text_correction] port 'Map' → no match above 0.6 (best='Macao' ratio=0.50)
+2026-05-18 11:28:02.617 | DEBUG    | vision.text_correction:correct_waters_name:282 - [text_correction] waters 'Map' → no match above 0.6 (best='Mediterranean Sea' ratio=0.20)
+2026-05-18 11:28:02.617 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'ISurabaya' as likely corruption of seed port 'surabaya'
+2026-05-18 11:28:02.618 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'Amsterdanted' as likely corruption of seed port 'amsterdam'
+2026-05-18 11:28:02.618 | DEBUG    | vision.text_correction:correct_port_name:261 - [text_correction] port 'Map' → no match above 0.6 (best='Macao' ratio=0.50)
+2026-05-18 11:28:02.619 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'ISurabaya' as likely corruption of seed port 'surabaya'
+2026-05-18 11:28:02.620 | DEBUG    | vision.text_correction:_known_ports:147 - [text_correction] skipping KB entry 'Amsterdanted' as likely corruption of seed port 'amsterdam'
+2026-05-18 11:28:02.620 | DEBUG    | vision.text_correction:correct_port_name:261 - [text_correction] port 'World' → no match above 0.6 (best='Oslo' ratio=0.44)
+
+=== sparse / rule_only ===
+aggregator accuracy: 4/30 = 13.3%
+stage2 accuracy:     4/30 = 13.3%
+illegal transitions: 5/30
+trace: data/calibration/temporal_sparse_rule_only_20260518T104058.jsonl
+
+  [production_like] 2026-04-15_21-54-26: agg 8/30 stage2 7/30 illegal=6
+
+=== production_like / rule_only ===
+aggregator accuracy: 8/30 = 26.7%
+stage2 accuracy:     7/30 = 23.3%
+illegal transitions: 6/30
+trace: data/calibration/temporal_production_like_rule_only_20260518T104058.jsonl
+

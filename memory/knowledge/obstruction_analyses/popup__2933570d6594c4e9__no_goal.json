@@ -1,0 +1,21 @@
+{
+  "purpose": "The mini-map and nearby port/location panel showing current coordinates, season, time of day, and distances to nearby harbours and unknown locations while sailing in Safe Waters",
+  "full_text": "C/TW 10 | 0.0 | ??? | 45.01, 34.63 | Autumn Oct Night | ??? Approx. 105.3km | ??? Approx. 314.7km | Odesa Approx. 376.7km | Varna Approx. 534.9km",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "2933570d6594c4e9",
+  "goal_intent": null,
+  "cached_at": "2026-05-28T13:33:23.123140+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The mini-map and nearby port/location panel showing current coordinates, season, time of day, and distances to nearby harbours and unknown locations while sailing in Safe Waters",
+    "full_text": "C/TW 10 | 0.0 | ??? | 45.01, 34.63 | Autumn Oct Night | ??? Approx. 105.3km | ??? Approx. 314.7km | Odesa Approx. 376.7km | Varna Approx. 534.9km",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

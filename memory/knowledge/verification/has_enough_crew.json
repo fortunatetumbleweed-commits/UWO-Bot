@@ -1,0 +1,76 @@
+{
+  "goal": "has_enough_crew",
+  "description": "Recruitment committed; fleet has crew sufficient for departure",
+  "predicate_text": "fleet crew count strictly increased since the plan started AND no 'not enough crew' warning is visible at the harbor",
+  "cues": [
+    {
+      "cue": "fleet crew count is strictly greater than it was at the start of the recovery (e.g. 'Fleet Crew Size 953 / 2,275' where the before-frame showed a smaller number)",
+      "polarity": "confirms",
+      "confidence": "high",
+      "stats": { "observed": 0, "confirmed": 0, "refuted": 0 },
+      "provenance": {
+        "source": "hand_authored",
+        "first_seen": "2026-05-02T12:00:00Z",
+        "first_seen_in": "seed catalog for has_enough_crew goal",
+        "noted_during": null,
+        "noted_by": "hand_authored"
+      }
+    },
+    {
+      "cue": "no 'Not Enough Crew' warning text is visible at the harbor screen",
+      "polarity": "confirms",
+      "confidence": "high",
+      "stats": { "observed": 0, "confirmed": 0, "refuted": 0 },
+      "provenance": {
+        "source": "hand_authored",
+        "first_seen": "2026-05-02T12:00:00Z",
+        "first_seen_in": "seed catalog for has_enough_crew goal",
+        "noted_during": null,
+        "noted_by": "hand_authored"
+      }
+    },
+    {
+      "cue": "the 'Depart Now' (or 'Supply Departure') button is gold/yellow (active) rather than gray/disabled",
+      "polarity": "confirms",
+      "confidence": "medium",
+      "stats": { "observed": 0, "confirmed": 0, "refuted": 0 },
+      "provenance": {
+        "source": "hand_authored",
+        "first_seen": "2026-05-02T12:00:00Z",
+        "first_seen_in": "seed catalog for has_enough_crew goal",
+        "noted_during": null,
+        "noted_by": "hand_authored"
+      }
+    },
+    {
+      "cue": "no red dot / red badge appears on the harbor's '+ Recruit Crew' submenu (red dot indicates crew issue)",
+      "polarity": "confirms",
+      "confidence": "medium",
+      "stats": { "observed": 0, "confirmed": 0, "refuted": 0 },
+      "provenance": {
+        "source": "hand_authored",
+        "first_seen": "2026-05-02T12:00:00Z",
+        "first_seen_in": "seed catalog for has_enough_crew goal",
+        "noted_during": null,
+        "noted_by": "hand_authored"
+      }
+    },
+    {
+      "cue": "no red bars on the fleet status panel (right side of harbor) and no red bars on individual ship rows in the recruit-crew sub-screen — both indicate crew shortage",
+      "polarity": "confirms",
+      "confidence": "medium",
+      "stats": { "observed": 0, "confirmed": 0, "refuted": 0 },
+      "provenance": {
+        "source": "hand_authored",
+        "first_seen": "2026-05-02T12:00:00Z",
+        "first_seen_in": "seed catalog for has_enough_crew goal",
+        "noted_during": null,
+        "noted_by": "hand_authored"
+      }
+    }
+  ],
+  "open_questions": [
+    "Does the red dot also indicate other crew problems unrelated to numerical shortage (loyalty, injury, mate roster issues)?  If so, the red-dot cue may false-refute when the count is sufficient but other issues remain.",
+    "On home-port arrival fresh from a voyage, the fleet may show below-max crew without the warning — does that count as 'has_enough_crew'?  Need to confirm whether the goal is 'no warning' (operationally safe to depart) or 'maxed out' (full roster)."
+  ]
+}

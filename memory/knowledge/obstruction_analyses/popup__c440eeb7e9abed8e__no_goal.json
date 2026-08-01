@@ -1,0 +1,21 @@
+{
+  "purpose": "The Recruit Crew panel is open, showing the player's fleet crew status (793/1676 total), 939 Ming standby crew available, and options to recruit up to 883 additional crew members via Normal or Emergency recruitment methods.",
+  "full_text": "Recruit Crew — Fleet Crew Size 793/1676, Min Crew 786. Standby Crew: 939 Ming. Recruit Crew: 0/883. Min | Max Waiting Time | Max. Emergency Recruit: 0. Normal Recruit: 0. Recruit button. Ship crew sizes: 173/337 Min Crew 171, 77/191 Min Crew 75, 99/223 Min Crew 98, 99/209 Min Crew 98, 91/203 Min Crew 90, 126/271. Version: 4.0501.041.291 2605141023 Atlantic Ocean.",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "c440eeb7e9abed8e",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T17:33:14.559210+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The Recruit Crew panel is open, showing the player's fleet crew status (793/1676 total), 939 Ming standby crew available, and options to recruit up to 883 additional crew members via Normal or Emergency recruitment methods.",
+    "full_text": "Recruit Crew — Fleet Crew Size 793/1676, Min Crew 786. Standby Crew: 939 Ming. Recruit Crew: 0/883. Min | Max Waiting Time | Max. Emergency Recruit: 0. Normal Recruit: 0. Recruit button. Ship crew sizes: 173/337 Min Crew 171, 77/191 Min Crew 75, 99/223 Min Crew 98, 99/209 Min Crew 98, 91/203 Min Crew 90, 126/271. Version: 4.0501.041.291 2605141023 Atlantic Ocean.",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

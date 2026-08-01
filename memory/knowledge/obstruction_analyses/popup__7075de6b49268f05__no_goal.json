@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation minimap panel showing nearby ports and their distances, currently expanded as an overlay on the sailing screen near Varna in the Black Sea during Autumn/October night",
+  "full_text": "C/TW | 7 | 10 | 10 | [ship icons] — Varna 27.0 kw 37 — Coordinates: 42.85, 28.34 — Autumn Oct Night — Varna Approx. 23.9km — ??? Approx. 226.7km — Odesa Approx. 423.5km — ??? Approx. 484.1km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "7075de6b49268f05",
+  "goal_intent": null,
+  "cached_at": "2026-05-28T13:13:59.065180+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Navigation minimap panel showing nearby ports and their distances, currently expanded as an overlay on the sailing screen near Varna in the Black Sea during Autumn/October night",
+    "full_text": "C/TW | 7 | 10 | 10 | [ship icons] — Varna 27.0 kw 37 — Coordinates: 42.85, 28.34 — Autumn Oct Night — Varna Approx. 23.9km — ??? Approx. 226.7km — Odesa Approx. 423.5km — ??? Approx. 484.1km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

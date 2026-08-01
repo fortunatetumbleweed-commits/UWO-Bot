@@ -1,0 +1,21 @@
+{
+  "purpose": "A tooltip overlay is displaying the city's navigable facilities (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) alongside a hint warning the player that they need a ship capable of withstanding rough waves to sail further out to sea.",
+  "full_text": "You need a ship that can withstand rough waves as you sail further into the sea. Harbor (00:00–23:59) — Supply your fleet and set sail. Nearby facilities: Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "5c968271dec40c8a",
+  "goal_intent": null,
+  "cached_at": "2026-05-21T22:34:05.170246+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A tooltip overlay is displaying the city's navigable facilities (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) alongside a hint warning the player that they need a ship capable of withstanding rough waves to sail further out to sea.",
+    "full_text": "You need a ship that can withstand rough waves as you sail further into the sea. Harbor (00:00–23:59) — Supply your fleet and set sail. Nearby facilities: Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

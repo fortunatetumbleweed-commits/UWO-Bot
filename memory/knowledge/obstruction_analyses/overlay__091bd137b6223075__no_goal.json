@@ -1,0 +1,21 @@
+{
+  "purpose": "The Savings Account panel is open, showing the player's current savings balance, interest rate, and three deposit tier options (Standard, Superior, Premium) requiring the player to select one deposit type per day",
+  "full_text": "Until Next Deposit 16:12:41. Total Savings: 4,611,000. Interest Rate 6% — 261,000. Please select a savings account option. You can make only one deposit per day. [Tiers: 2 active] Standard Deposit: 3,150,000 Per Deposit, Interest Rate +3% (costs 3,150,000 gold). Superior Deposit: 3,600,000 Per Deposit, Interest Rate +5% (costs 72 gems). Premium Deposit: 4,500,000 Per Deposit, Interest Rate +6% (costs 90 gems).",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "overlay",
+  "structural_hash": "091bd137b6223075",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T22:47:40.396453+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Savings Account panel is open, showing the player's current savings balance, interest rate, and three deposit tier options (Standard, Superior, Premium) requiring the player to select one deposit type per day",
+    "full_text": "Until Next Deposit 16:12:41. Total Savings: 4,611,000. Interest Rate 6% — 261,000. Please select a savings account option. You can make only one deposit per day. [Tiers: 2 active] Standard Deposit: 3,150,000 Per Deposit, Interest Rate +3% (costs 3,150,000 gold). Superior Deposit: 3,600,000 Per Deposit, Interest Rate +5% (costs 72 gems). Premium Deposit: 4,500,000 Per Deposit, Interest Rate +6% (costs 90 gems).",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

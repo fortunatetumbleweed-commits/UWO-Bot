@@ -1,0 +1,321 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Tactical regression cases — edge-anchored centerline pipeline</title>
+<style>
+body { font-family: system-ui, sans-serif; max-width: 1400px; margin: 20px auto;
+        padding: 0 20px; background: #f6f6f8; color: #222; }
+h1 { border-bottom: 2px solid #333; padding-bottom: 6px; }
+h2 { margin-top: 40px; color: #444; border-bottom: 1px solid #bbb; padding-bottom: 4px; }
+.case { background: white; padding: 12px 16px; margin: 16px 0; border-radius: 6px;
+         box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.case h3 { margin-top: 0; color: #333; font-size: 16px; }
+.case.positive h3 { color: #2e7d32; }
+.case.bug h3 { color: #c62828; }
+.meta { font-size: 13px; color: #555; margin: 6px 0 12px 0; line-height: 1.5; }
+.meta code { background: #eee; padding: 1px 4px; border-radius: 3px;
+              font-size: 12px; }
+.tickgrid { display: flex; flex-wrap: wrap; gap: 12px; }
+.tickgrid figure { margin: 0; }
+.tickgrid img { display: block; border: 1px solid #999; }
+.tickgrid figcaption { text-align: center; font-size: 12px; color: #555;
+                        padding-top: 3px; }
+.legend { font-size: 12px; color: #666; margin: 10px 0 20px 0; padding: 8px;
+           background: #fffde7; border-left: 3px solid #ffc107; }
+.legend b { color: #333; }
+.tag { display: inline-block; padding: 1px 8px; border-radius: 10px;
+        font-size: 11px; font-weight: bold; margin-right: 8px; }
+.tag.positive { background: #c8e6c9; color: #1b5e20; }
+.tag.bug      { background: #ffcdd2; color: #b71c1c; }
+</style>
+</head><body>
+<h1>Tactical layer regression cases — edge-anchored centerline pipeline</h1>
+
+<div class="legend">
+  <b>Substrate:</b> LookaheadTactical (with the new
+  <code>tools.edge_centerline_prototype</code>: <code>find_openings</code> +
+  Dijkstra along <code>1/(DT+1)</code>) → HugPathPlanner reflex.
+  Skeleton medial axis (<code>skimage.morphology.skeletonize</code>) is
+  <b>no longer used</b> in the default pipeline.<br><br>
+  <b>Source:</b> All cases below are raw mini-map crops from a single
+  end-to-end Cairo → Y-tip voyage on this substrate
+  (session <code>ai_nav_2026-07-24T16-22-17</code>, ~1000 ticks,
+  closest approach 42 km from Y-tip at t825).  Ran with
+  <code>--commit-bearing 180</code> — several bugs below trace back
+  to that fixed-south target being wrong once the ship approaches
+  or passes the goal.<br><br>
+  <b>Reading these:</b>
+  <span class="tag positive">POSITIVE</span> cases must stay working
+  after any fix.  <span class="tag bug">BUG</span> cases document a
+  known failure the fix should address.
+</div>
+
+<h2>Positive cases (must not regress)</h2>
+
+<div class="case positive">
+  <h3><span class="tag positive">POSITIVE</span> P1: Khartoum bend handled correctly</h3>
+  <div class="meta">
+    <b>Session:</b> <code>ai_nav_2026-07-24T16-22-17</code> &nbsp;
+    <b>Tick:</b> 250 &nbsp;
+    <b>State:</b> lat 17.74, lon 33.97, hdg 183°, cmt 193°, reason=<code>frame_edge</code>, tact_off=[93,-23]<br>
+    <b>Context:</b> Ship reached this position by following the Nile through the ~180° Khartoum bend (roughly W-to-E then back S).  Tactical picker correctly followed the river geometry through the bend and re-locked south after it.<br>
+    <b>Regression check:</b> From a Cairo start, the ship should reach around lat 17-18 lon 33-34 by tick ~200-260 via the E-bend, then resume south.  Any change that makes the picker refuse east openings during a goal-south mission will break this.
+  </div>
+  <div class="tickgrid"><figure><img src="images/ai_nav_2026-07-24T16-22-17_t0250.png" alt="t250"><figcaption>t=250</figcaption></figure></div>
+</div>
+
+<div class="case positive">
+  <h3><span class="tag positive">POSITIVE</span> P3: Continuing south past Y-tip (picker correctly continues committed direction)</h3>
+  <div class="meta">
+    <b>Session:</b> <code>ai_nav_2026-07-24T16-22-17</code> &nbsp;
+    <b>Tick:</b> 475 &nbsp;
+    <b>State:</b> lat 5.04, lon 32.05, hdg 163° SSE, approach ≈ 152°, reason=<code>frame_edge</code>, tact_off=[93,-21]<br>
+    <b>Context:</b> Ship has just passed the Y-tip destination (5.71, 32.12) going south.  Openings visible: top at 336° (behind ship, REVERSE bucket) and bottom at 193° (STRAIGHT bucket, body +40°).  The picker correctly chose bottom — the tactical layer's job is to pick the best water route given the ship's approach direction, not to detect "past goal, reverse" (that's the mission layer's responsibility via arrival tests or return-to targets).<br>
+    <b>Regression check (must not break):</b> With the wall-follower rule, the picker should CONTINUE forward when the only options are STRAIGHT and REVERSE.  Any change that forces reversal purely based on ship→dest bearing would violate the picker's contract (mission-agnostic route selection) and disrupt the natural "explore into pockets before backing out" pattern needed for lake-bottom navigation (e.g. t705 where ship correctly reached lake bottom before flipping north).
+  </div>
+  <div class="tickgrid"><figure><img src="images/ai_nav_2026-07-24T16-22-17_t0475.png" alt="t475"><figcaption>t=475</figcaption></figure></div>
+</div>
+
+<div class="case positive">
+  <h3><span class="tag positive">POSITIVE</span> P5: Closest approach — 42 km from Y-tip (natural voyage outcome)</h3>
+  <div class="meta">
+    <b>Session:</b> <code>ai_nav_2026-07-24T16-22-17</code> &nbsp;
+    <b>Tick:</b> 825 &nbsp;
+    <b>State:</b> lat 5.69, lon 31.74, hdg 348°, cmt 350°, reason=<code>frame_edge</code>, tact_off=[-93,-17]<br>
+    <b>Context:</b> Ship was 42 km from the Y-tip destination (5.71, 32.12).  <code>--arrival-km 40</code> just barely missed the arrival threshold, but the picker's behaviour is sound: dynamic goal bearing 87° (east) has no directly-aligned opening in view (top opening 350°, bottom 163°), so the picker chose the frame-aligned exit closest to ship's bow.  Not a picker bug — just the natural limit of "one Dijkstra pick per tick" when the goal is off-frame.<br>
+    <b>Regression check (must not break):</b> With dynamic goal bearing, the picker at t825 correctly identifies that neither visible opening is well-aligned with the east-pointing goal.  The choice of top (straight-ahead, body_frame +2°) over bottom (175° behind ship) avoids a wasteful ~U-turn, letting the voyage continue naturally.  Any picker change that flips this to bottom would force a U-turn at close-approach and is likely wrong.
+  </div>
+  <div class="tickgrid"><figure><img src="images/ai_nav_2026-07-24T16-22-17_t0825.png" alt="t825"><figcaption>t=825</figcaption></figure></div>
+</div>
+
+<div class="case positive">
+  <h3><span class="tag positive">POSITIVE</span> P6: Legitimate reclassification (new candidate emerged)</h3>
+  <div class="meta">
+    <b>Session:</b> <code>ai_nav_2026-07-24T16-22-17</code> &nbsp;
+    <b>Tick:</b> 868 &nbsp;
+    <b>State:</b> lat 8.14, lon 31.36, hdg 15°, cmt 27°, reason=<code>turning_point</code>, tact_off=[-86,45]<br>
+    <b>Context:</b> Prior tick had a north-frame-edge dest that reclassified as <code>turning_point</code>.  User-confirmed this was legitimate — a new candidate emerged on the left edge as the fork became visible.  NOT a bug like P4.<br>
+    <b>Regression check:</b> Any P4 fix that treats "close to edge" as "still at edge" must NOT suppress this legitimate reclassification.  The topology genuinely changed here (new opening emerged), and the tracker correctly caught it.
+  </div>
+  <div class="tickgrid"><figure><img src="images/ai_nav_2026-07-24T16-22-17_t0868.png" alt="t868"><figcaption>t=868</figcaption></figure></div>
+</div>
+
+<h2>Known bugs (fix candidates)</h2>
+
+<div class="case bug">
+  <h3><span class="tag bug">BUG</span> P2: Y-fork branch pick within hug dead-zone</h3>
+  <div class="meta">
+    <b>Session:</b> <code>ai_nav_2026-07-24T16-22-17</code> &nbsp;
+    <b>Tick:</b> 390 &nbsp;
+    <b>State:</b> lat 9.05, lon 32.12, hdg 214°, cmt 223°, reason=<code>frame_edge</code>, tact_off=[93,-88]<br>
+    <b>Bug:</b> Picker chose a wider bottom-left opening at bearing 223° (SW), only 9° right of ship's SSW heading — within the 15° <code>HUG_DEAD_ZONE_DEG</code> so no hug penalty applied.  The correct branch (Y-tip continuation, more directly SSW) had smaller span and lost on tiebreak.<br>
+    <b>Expected on fix:</b> At this frame the picker should prefer the LEFT branch (per <code>--side port</code>) even though the bearing delta is inside the dead zone.  Fix candidates: shrink <code>HUG_DEAD_ZONE_DEG</code> from 15° to ~5°, or raise <code>HUG_PENALTY_DEG</code> from 25° to ~40°.
+  </div>
+  <div class="tickgrid"><figure><img src="images/ai_nav_2026-07-24T16-22-17_t0390.png" alt="t390"><figcaption>t=390</figcaption></figure></div>
+</div>
+
+<div class="case bug">
+  <h3><span class="tag bug">BUG</span> P4: SEARCH tracker premature reclassification (9 px below top edge)</h3>
+  <div class="meta">
+    <b>Session:</b> <code>ai_nav_2026-07-24T16-22-17</code> &nbsp;
+    <b>Tick:</b> 674 &nbsp;
+    <b>State:</b> lat 0.90, lon 33.55, hdg 354°, cmt 1°, reason=<code>turning_point</code>, tact_off=[-84,1]<br>
+    <b>Bug:</b> Previous tick's <code>frame_edge</code> dest (tact_off dy=-93) had scrolled to dy=-84 (9 px below the top edge) as the ship moved north.  Top edge still had water at that x-column.  SEARCH tracker's edge-continuity test failed on the 9-px shift → reclassified as <code>turning_point</code> → arrival test fired on next tick → new dest picked (with fixed south commit → southward pick → reversal).<br>
+    <b>Expected on fix:</b> Tracker should treat dy in [-93, ~-87] as "still at top edge" (mirroring the 3-6 px frame margin used by anchor extraction).  Ideally re-anchor to the CURRENT top-edge opening at the same x-column rather than reclassify.  Must not break P6 (where reclassification was legitimate because a NEW candidate emerged, not just an existing one drifting inward).
+  </div>
+  <div class="tickgrid"><figure><img src="images/ai_nav_2026-07-24T16-22-17_t0674.png" alt="t674"><figcaption>t=674</figcaption></figure></div>
+</div>
+
+<div class="case bug">
+  <h3><span class="tag bug">BUG</span> P14: Anchored edge flipped to LEFT; should have switched to RIGHT</h3>
+  <div class="meta">
+    <b>Session:</b> <code>ai_nav_2026-07-25T13-09-55</code> &nbsp;
+    <b>Tick:</b> 212<br>
+    <b>Trace sequence:</b>
+    <ul style="margin:4px 0; padding-left: 20px;">
+      <li>t207-t210: off=[-93, +153..+161] top-right corner (bearing 59-60°)</li>
+      <li>t211: off=[-69, +103] still top area (bearing 56°)</li>
+      <li><b>t212: off=[-77, -195] flipped to LEFT frame edge (bearing 292° WNW)</b></li>
+      <li>t213-t215: stays on left edge</li>
+    </ul>
+    <b>Root cause — stale <code>shift_motion_bearing_deg</code>:</b> Ticks t209-t213 all show <code>shift_motion_bearing_deg=111.1°</code> (ESE) while the ship is heading NE (hdg 40-95°) and <code>motion_bearing_deg</code> (lat/lon Δ) reads NE (30-70°).  The frame-shift confidences (0.36-0.69) fall in and out of the 0.30 gate; the pipeline holds the last high-conf value indefinitely.  The bank tracer's priority chain takes <code>shift_motion_bearing_deg</code> first without freshness check, so the trial-walk direction is scored against 111° instead of the actual ~50°.<br>
+    <b>Why t212 specifically flipped:</b> Some minor mask perturbation between t211 and t212 changed the contour concavity near the projection point.  With the WRONG approach bearing, the trial-walk tie-break was already unstable — a small mask change flipped step direction from +1 to -1, and the trace walked to the left frame edge instead of right.  With the CORRECT approach bearing (~50°), the trial-walk would not have been ambiguous.<br>
+    <b>Expected on fix:</b> Detect stale <code>shift_motion_bearing_deg</code> (no update in N ticks, or cross-check against <code>motion_bearing_deg</code>: if disagreement &gt; 90°, prefer motion).  The bank tracer would then see approach ~50° and walk the right-hand continuation naturally.  No "prefer right edge" heuristic needed.
+  </div>
+  <div class="tickgrid"><figure><img src="images/ai_nav_2026-07-25T13-09-55_t0212.png" alt="t212"><figcaption>t=212</figcaption></figure></div>
+</div>
+
+<div class="case bug">
+  <h3><span class="tag bug">BUG</span> P15: Bottom edge has 2 exits; picker flipped to top instead of switching within bottom</h3>
+  <div class="meta">
+    <b>Session:</b> <code>ai_nav_2026-07-25T13-09-55</code> &nbsp;
+    <b>Tick:</b> 373<br>
+    <b>Trace sequence:</b>
+    <ul style="margin:4px 0; padding-left: 20px;">
+      <li>t369-t372: off=[+93, -71..-92] BOTTOM-LEFT area (bearing 217-225° SW)</li>
+      <li><b>t373: off=[-88, +93] flipped to TOP-RIGHT (bearing 47° NE)</b></li>
+      <li>t374-t376: stays top</li>
+    </ul>
+    <b>Root cause — stale <code>shift_motion_bearing_deg</code> (same class as P14):</b> Ticks t371-t374 all show <code>shift_motion_bearing_deg</code> stuck at ~344-349° (nearly N) while the ship is heading south (hdg=192°, speed 8.2kt) and <code>motion_bearing_deg</code> reads 220-230° SW (correct).  Frame-shift confidences (0.27-0.68) are borderline; the 0.30 gate rejects several consecutive ticks and the shift-motion signal stays frozen at the last high-conf value, which happens to point north.  The bank tracer's priority chain takes <code>shift_motion_bearing_deg</code> as approach direction — so at t373 it thinks the ship is heading NORTH, projects onto the west-of-north bank, and walks to the top-right corner.<br>
+    <b>Not a "same-edge preference" problem:</b> If the bank tracer knew the ship was heading SSW, it would project onto the east-side bank (port of southward = east) and the CCW contour walk naturally follows the bank around to the bottom-east exit — no per-edge heuristic needed, tracing itself does the right thing.<br>
+    <b>Expected on fix:</b> Same as P14 — detect stale <code>shift_motion_bearing_deg</code> or cross-check against <code>motion_bearing_deg</code>.  Bank trace with approach ~220° at t373 would follow the left bank from ship position around to the bottom-east frame-edge exit.
+  </div>
+  <div class="tickgrid"><figure><img src="images/ai_nav_2026-07-25T13-09-55_t0373.png" alt="t373"><figcaption>t=373</figcaption></figure></div>
+</div>
+
+<div class="case bug">
+  <h3><span class="tag bug">BUG</span> P16: SEARCH tracker axis-only distance gate admits far cross-edge midpoint</h3>
+  <div class="meta">
+    <b>Session:</b> <code>ai_nav_2026-07-25T15-54-02</code> &nbsp;
+    <b>Tick:</b> 206 &nbsp; <b>Ship:</b> Nile bend at lat 18.4 &nbsp; <b>Approach:</b> ~53° NE (correct, shift + motion agree)<br>
+    <b>Trace sequence:</b>
+    <ul style="margin:4px 0; padding-left: 20px;">
+      <li>t201-t205: off=(-76..-93, +99..+143), tracking top-right corner (NE, bearing ~52-57°)</li>
+      <li><b>t206: off=(-71, -197) — jumped 286 px to LEFT frame edge (bearing 290° WNW)</b></li>
+      <li>t207-t213: stays on left edge, ship crashes into west shore</li>
+      <li>t214: flips back to NE; t215: back to WNW; t217: back to NE — same bug fires repeatedly</li>
+      <li>Ship stuck bouncing between lat 18.3 and 18.4 for 377 ticks (t205→t582)</li>
+    </ul>
+    <b>Root cause — <code>_find_run_midpoint_on_edge</code> axis-only distance gate:</b>
+    Anchor after shift-integration = (row=23, col=286).  Frame edge candidates:
+    <ul style="margin:4px 0; padding-left: 20px;">
+      <li>TOP-RIGHT run midpoint (0, 321): TRUE 2D distance 42 px, col-distance <code>abs(321-286)=35</code> — rejected (radius=30)</li>
+      <li>LEFT edge run midpoint (22, 0): TRUE 2D distance <b>286 px</b>, row-distance <code>abs(22-23)=1</code> — <b>ACCEPTED</b> because row happens to match</li>
+    </ul>
+    The gate used only the axis-parallel coordinate (col for top/bot edges, row for left/right).  When the LEFT-edge midpoint's row aligns with the anchor's row, it passes the gate regardless of how far away it actually is.  Tracker then picks it as its only in-radius candidate and jumps the dest 286 px sideways in one tick.  Fires on every Nile bend where the topology has this alignment.<br>
+    <b>Fix (2026-07-25):</b> use true 2D distance <code>hypot(dy,dx)</code> for both scoring and gating in <code>_find_run_midpoint_on_edge</code>.  With that: both candidates fail radius=30, tracker cleanly fails, <code>_pick_new_dest</code> fires bank tracer, correct NE polyline emerges (verified offline).
+  </div>
+  <div class="tickgrid"><figure><img src="images/ai_nav_2026-07-25T15-54-02_t0206.png" alt="t206"><figcaption>t=206</figcaption></figure></div>
+</div>
+
+<div class="case bug">
+  <h3><span class="tag bug">BUG</span> P17: Corner-split fires on far corner + post-bounce approach direction → flip</h3>
+  <div class="meta">
+    <b>Session:</b> <code>ai_nav_2026-07-25T15-54-02</code> &nbsp;
+    <b>Tick:</b> 401 &nbsp; <b>Ship:</b> lat 8.94, just bounced (speed 0.0 at t400 → 3.0 at t401)<br>
+    <b>Trace sequence:</b>
+    <ul style="margin:4px 0; padding-left: 20px;">
+      <li>t396-t400: off=(+93, +69..+101) — tracking BOTTOM-RIGHT run midpoint (SSE, bearing ~133-143°)</li>
+      <li><b>t401: off=(-93, +49) — flipped to TOP-RIGHT run midpoint (NNE, bearing 28°)</b></li>
+      <li>Ship then wanders east/north for the next ~15 ticks</li>
+    </ul>
+    <b>Root cause 1 — corner-split fires on FAR corner:</b>
+    At t400 the BL corner (bottom-left) was CONNECTED (water spanned BOT and LEFT edges through the corner region at cols 0-20).  At t401 it became SPLIT.  The rule fires fresh-pick because "dest is on BOT edge AND BL split affects BOT edge."  <b>But the dest was at col 264</b> — ~245 px from the BL corner region.  The bank continuation at the dest is unaffected: bottom-right run midpoint stayed at col 266-268 across t400→t401.  Rule needs a proximity check: only fire when the affected corner is actually near the dest.<br>
+    <b>Root cause 2 — post-bounce drift as approach direction:</b>
+    Ship heading = 177° (S, still steering south), but <code>shift_motion_bearing_deg = 94.7°</code> and <code>motion_bearing_deg = 96.3°</code> both point EAST — that's the post-bounce recoil drift over ~2-3 ticks of near-zero speed.  Bank tracer took approach=95° and walked the eastern continuation of the port bank, which ended at the top edge.  If it had used a bearing that reflected the ship's actual intent (e.g. 177° from heading, or a longer-window motion that discards the bounce tick), it would have walked south to the bottom-right exit.<br>
+    <b>Expected on fix:</b>
+    <ul style="margin:4px 0; padding-left: 20px;">
+      <li>Corner-split gate on dest proximity to affected corner (e.g. dest within ~60 px of corner region, else ignore).</li>
+      <li>Bank tracer approach direction should filter out bounce ticks (speed drops ≥70%) before averaging, or fall back to heading when motion is contaminated.</li>
+    </ul>
+  </div>
+  <div class="tickgrid"><figure><img src="images/ai_nav_2026-07-25T15-54-02_t0401.png" alt="t401"><figcaption>t=401</figcaption></figure></div>
+</div>
+
+<div class="case bug">
+  <h3><span class="tag bug">BUG</span> P13: Hairpin-bend flip — tactical dest jumps top→bottom on approach</h3>
+  <div class="meta">
+    <b>Session:</b> <code>ai_nav_2026-07-25T11-01-09</code> &nbsp;
+    <b>Tick:</b> 573 &nbsp;
+    <b>State:</b> lat 18.08, lon 33.95, hdg 357° N, approach 104° E<br>
+    <b>Context:</b> Ship approaching the top of a Nile hairpin bend — water body is U-shaped in the frame view.  Similar semantics to the Y-tip dead-end (P11): the current channel dead-ends into a 180° curve.  Bank continuation goes AROUND the bend back southward on the other side.<br>
+    <b>Bug pattern across ticks:</b>
+    <ul style="margin: 4px 0; padding-left: 20px;">
+      <li>t566-t572: dest on TOP edge (dy=-93), bearing 348-9°.  Ship approaching top of hairpin.</li>
+      <li><b>t573 JUMP: dest jumps to BOTTOM (dy=+72)</b>, bearing 178° south.  Ship U-turns.</li>
+      <li>t574+: dest stays on bottom edge.  Ship reversed direction.</li>
+    </ul>
+    Testing the current bank tracer + max-distance truncation on this sequence: t570/t571 produce very short polylines (3-5 pts, max_dist ~70 px) because the trial-walk direction picker + P11 truncation collapse when the bank curves back quickly.  Then at t572+ the tracer produces long south-going polylines.  Discontinuity in output despite similar mask geometry.<br>
+    <b>Relationship to P11:</b> Same underlying phenomenon — bank curves 180° around a terminal.  P11's max-distance truncation correctly identifies "the farthest point ALONG the trace from ship" — for a hairpin the farthest point is the tip of the bend (deep into the north).  But when the ship approaches the tip closely, "farthest point on trace" collapses to near-ship, giving tiny polylines.  Fix needs to handle this transition more gracefully.<br>
+    <b>Expected on fix:</b> Ideally the ship should either steer INTO the bend and curl around it (like the Y-tip case where ship followed the bank), OR recognize the topology change and lock a turning point at the bend apex.  Either way, the transition from "approach the bend" to "past the bend" shouldn't produce an immediate 180° flip in the tactical dest.
+  </div>
+  <div class="tickgrid"><figure><img src="images/ai_nav_2026-07-25T11-01-09_t0573.png" alt="t573"><figcaption>t=573</figcaption></figure></div>
+</div>
+
+<div class="case bug">
+  <h3><span class="tag bug">BUG</span> P12: SEARCH tracker same-edge stickiness hides new bank exit at corner</h3>
+  <div class="meta">
+    <b>Session:</b> <code>ai_nav_2026-07-25T11-01-09</code> &nbsp;
+    <b>Tick:</b> 445 &nbsp;
+    <b>State:</b> lat 8.23, lon 33.46, hdg 325° NW<br>
+    <b>Context:</b> Ship coming out of Y-tip pocket, heading NW.  Water is at the top-left corner of the mini-map — CONTINUOUS along both the top and left frame edges.  As the ship moves NW, the actual left-bank continuation goes to the LEFT frame edge.<br>
+    <b>Bug:</b> An earlier fresh pick (~t438) had picked a TOP-edge dest.  The SEARCH tracker's "same edge" rule keeps re-anchoring the dest to whichever top-edge water midpoint is nearest to the shifted previous position.  At t445 the topology has changed enough that a fresh bank trace would pick the LEFT edge — proven at t725 where the same ship position + same corner topology got a LEFT-edge pick (dy=-31, dx=-196) when a fresh pick actually fired.  But the tracker at t445 keeps the stale top-edge dest (dy=-93, dx=-126) → the ship steers NW along the top edge instead of west through the actual continuation.<br>
+    <b>Root cause:</b> The tracker treats top and left as separate edges, but at a corner the water is topologically continuous across both.  Same-edge rule doesn't understand corners.  Also, when land emerges dividing the water into disjoint branches on different edges (t447-t448), the tracker keeps re-anchoring to whichever branch matches the previous dest's edge — even if the correct bank continuation now leads elsewhere.<br>
+    <b>Expected on fix:</b> Retire the SEARCH tracker for the bank-trace picker — run bank tracer every tick.  Bank tracer is cheap (~10ms) and produces a full polyline; HugPathPlanner walks the polyline smoothly so per-tick fresh picks won't cause waypoint jitter.  The corner + topology-change cases both become moot because there's no per-tick continuity assumption.
+  </div>
+  <div class="tickgrid"><figure><img src="images/ai_nav_2026-07-25T11-01-09_t0445.png" alt="t445"><figcaption>t=445</figcaption></figure></div>
+</div>
+
+<div class="case bug">
+  <h3><span class="tag bug">BUG</span> P11: Dead-end curl-back puts the picked waypoint near the ship</h3>
+  <div class="meta">
+    <b>Session:</b> <code>ai_nav_2026-07-25T11-01-09</code> &nbsp;
+    <b>Tick:</b> 391 &nbsp;
+    <b>State:</b> lat 8.64, lon 32.85 (Sudd marshland approach), hdg 122° ESE<br>
+    <b>Bug:</b> The bank trace curved around a dead-end pocket — goes IN, curls 180°, comes back OUT past the ship's vicinity.  Polyline ENDPOINT was at tact_off=[+72, -196] (far SW, ~210 px from ship).  But HugPathPlanner's "farthest ship-visible waypoint" logic picked wp = (91, 184) — <b>essentially AT the ship</b> (ship center at (93, 196); wp is 12 px from ship).  The polyline's return leg crossed close to the ship, so the "farthest visible" point along it landed near ship → steering became ineffective → ship oscillated at the Sudd entrance across t391-t405 with the tactical dest flipping every few ticks.<br>
+    <b>Root cause:</b> when the bank trace includes a 180° dead-end curl, the polyline is not monotonically-outward-from-ship in Euclidean sense.  HugPathPlanner assumes monotonic outward and picks a near-ship point on the return leg.<br>
+    <b>Expected on fix:</b> Truncate the polyline at the point of max Euclidean distance from ship — everything after that is the curl-back leg (goes back TOWARD ship), which should be discarded.  Then the polyline is monotonically outward, HugPathPlanner picks a genuinely-far waypoint at the dead-end tip, and the ship steers into the pocket properly (then backs out following the return leg on subsequent ticks as the frame scrolls).
+  </div>
+  <div class="tickgrid"><figure><img src="images/ai_nav_2026-07-25T11-01-09_t0391.png" alt="t391"><figcaption>t=391</figcaption></figure></div>
+</div>
+
+<div class="case bug">
+  <h3><span class="tag bug">BUG</span> P10: Bank trace walks the wrong direction from the port projection</h3>
+  <div class="meta">
+    <b>Session:</b> <code>ai_nav_2026-07-24T23-57-57</code> &nbsp;
+    <b>Tick:</b> 139 &nbsp;
+    <b>State:</b> lat 21.99, lon 31.75 (deep Nile descent), hdg 246° WSW, approach 166° south<br>
+    <b>Bug:</b> Ship was descending south down the Nile.  Bank tracer's port-side projection correctly landed on the east bank at (y=78, x=264) — cyan point NE of ship.  From there, walking forward in the approach direction (166° south) should have traced the east bank SOUTHward.  Instead the walk went NORTH-EAST, ending at (y=1, x=288) — the top frame edge, NE of ship.  HugPathPlanner reads that endpoint as the tactical dest → steers ship NE → ship reverses out of the Nile and eventually escapes into the Mediterranean.<br>
+    <b>Root cause:</b> The step-direction heuristic in <code>trace_left_bank</code> ("flip step if initial tangent is >90° from approach") picks the wrong tangent at contour points where the two neighboring points happen to be nearly collinear with the ship's radial.  The check compares tangent bearing to approach; if they're on opposite sides of the projection point, the flip decision is wrong.<br>
+    <b>Expected on fix:</b> The trace should either continue SOUTH from the projection (matching approach direction) or, if the trace reaches the top frame edge, STOP there and not extend a polyline whose endpoint is behind the ship.  Two possible fixes:
+    <ul style="margin: 4px 0 0 20px; padding: 0;">
+      <li>Truncate the polyline at the first tangent-reversal or at the first point whose displacement from ship is opposite to approach.</li>
+      <li>Choose step direction so the first N steps move IN the approach direction (not the tangent-vs-approach angle at the projection alone).</li>
+    </ul>
+  </div>
+  <div class="tickgrid"><figure><img src="images/ai_nav_2026-07-24T23-57-57_t0139.png" alt="t139"><figcaption>t=139</figcaption></figure></div>
+</div>
+
+<div class="case bug">
+  <h3><span class="tag bug">BUG</span> P9: Hug-left uses body-frame instead of bank topology</h3>
+  <div class="meta">
+    <b>Session:</b> <code>ai_nav_2026-07-24T22-01-22</code> &nbsp;
+    <b>Tick:</b> 395 &nbsp;
+    <b>State:</b> lat 8.66, lon 33.12 (Sudd marshland approach), hdg 118° E, approach 120° E<br>
+    <b>Openings visible (4):</b>
+    <ul style="margin: 4px 0; padding-left: 20px;">
+      <li><b>top</b> y=0 x=174 span=65 &nbsp; brg=347° &nbsp; body=-133° &nbsp;→ LEFT bucket (barely; threshold -135°) &nbsp;← PICKED</li>
+      <li><b>bottom</b> y=186 x=3 span=8 &nbsp; brg=244° &nbsp; body=+125° &nbsp;→ RIGHT bucket</li>
+      <li><b>bottom</b> y=186 x=258 span=2 &nbsp; brg=146° &nbsp; body=+27° &nbsp;→ STRAIGHT bucket</li>
+      <li><b>left</b> y=127 x=0 span=118 &nbsp; brg=260° &nbsp; body=+140° &nbsp;→ REVERSE bucket</li>
+    </ul>
+    <b>Bug:</b> The user-marked correct pick was the <b>left frame edge</b> (west, span=118 — the largest opening, clearly a navigable channel back into the main Nile).  But in body-frame at approach=120° east, the west direction (bearing 260°) is 140° behind ship → REVERSE bucket → deprioritized.  The picker chose the <b>top</b> opening because at body-frame -133° it landed just inside the LEFT bucket (which is threshold -135°).  Ship then turned NNW into a dead-end continuation instead of exiting the Sudd back to the main Nile via the wide west channel.<br>
+    <b>Root cause:</b> "hug left" in the picker uses SHIP'S body-frame relative to its momentary approach direction.  Ship had just turned east (approach flipped 139°→120° between t394 and t395), so what was WORLD-WEST (the real navigable path) became "behind ship" and got classified as REVERSE.<br>
+    <b>Expected on fix:</b> "Hug left" should be a topological property of the WATER CHANNEL (which bank leads to which opening), not a body-frame angle from the current bow direction.  Proper fix: walk the mask boundary from the ship's projection, count openings encountered in bank-following order, pick the first left-bank-reachable one.  This is a larger implementation than a picker-scoring tweak.  Interim mitigation candidates: use a longer-horizon approach direction (multi-tick averaged commit, not just current shift/motion) so momentary bow flips don't recategorise everything.
+  </div>
+  <div class="tickgrid"><figure><img src="images/ai_nav_2026-07-24T22-01-22_t0395.png" alt="t395"><figcaption>t=395</figcaption></figure></div>
+</div>
+
+<div class="case bug">
+  <h3><span class="tag bug">BUG</span> P8: Low-confidence frame_shift spike flips approach direction</h3>
+  <div class="meta">
+    <b>Session:</b> <code>ai_nav_2026-07-24T20-37-02</code> &nbsp;
+    <b>Tick:</b> 118 &nbsp;
+    <b>State:</b> lat 23.26, lon 32.24, hdg 165° S, motion=170°, heading=165° — all south.  <code>frame_shift_px = [+61, +32, conf=0.208]</code> — a 68-px spike vs the recent 1-2 px shifts.<br>
+    <b>Bug:</b> The <code>_shift_history</code> weighted average uses <code>conf × magnitude</code>, so the low-conf but huge-magnitude t118 shift dominated: 0.208 × 69 = 14.3, vs recent contributions of ~0.7.  Result: <code>shift_motion_bearing_deg</code> flipped from 151° (t117) to <b>332°</b> (t118) — a 180° reversal.  The picker's approach-direction priority uses shift_motion first, so it saw approach=332° NNW while ship was actually going 170° south.  Wall-follower picker chose the top-edge opening (correct for a north-approaching ship) — flipping the tactical dest from bottom to top → ship turned around 180° from south to north.<br>
+    <b>Expected on fix:</b> Filter frame_shift ingest by (a) confidence threshold ≥ 0.30 (rejects t118's 0.208), and (b) magnitude sanity — reject shifts > 3× the recent average.  Motion (from OCR lat/lon) and heading (from CNN) are stable at ~165-170° through t117-t119, so with shift_motion dropped for t118 the picker falls through to motion → approach=170° → bottom opening picked → ship continues south correctly.
+  </div>
+  <div class="tickgrid"><figure><img src="images/ai_nav_2026-07-24T20-37-02_t0118.png" alt="t118"><figcaption>t=118</figcaption></figure></div>
+</div>
+
+<div class="case bug">
+  <h3><span class="tag bug">BUG</span> P7: Wrong branch pick after post-arrival dest refresh</h3>
+  <div class="meta">
+    <b>Session:</b> <code>ai_nav_2026-07-24T16-22-17</code> &nbsp;
+    <b>Tick:</b> 871 &nbsp;
+    <b>State:</b> lat 8.29, lon 31.40 (Bari Village area), hdg 35° NNE, cmt 180°, reason=<code>frame_edge</code>, tact_off=[93,0]<br>
+    <b>Bug:</b> The prior turning-point dest (t870) was on the NORTH edge — ship had been climbing north toward that dest with commit ~29°.  At t871 the arrival test fired and the picker refreshed with a fresh frame_edge dest, choosing the bottom-edge opening (bearing 180° S).  This forced a U-turn from the ship's NNE travel direction (35°) — and violated the hug-left rule (bottom-south is on ship's starboard from a NNE heading, port side is the top loop that leads onward).  The correct pick was the TOP-loop opening: same-side as prior travel, hug-left compliant, and continues the northward committed route rather than reversing.<br>
+    <b>Expected on fix:</b> Picker should prefer openings that are (a) hug-side compliant AND (b) closer to the ship's recent travel bearing than to a naive goal-alignment metric.  Under the current dynamic-goal fix, target=164° SSE and bottom (180° S) still wins on angular alignment — the fix doesn't address the "arrival at a turning point where the new pick should CONTINUE the prior committed direction, not blindly re-orient to raw goal bearing" case.  Regression test: with the picker at t871's state (fresh pick after turning-point arrival, ship heading NNE, prior commit ~29° NNE), does the pick fall on the TOP-loop opening instead of the bottom?
+  </div>
+  <div class="tickgrid"><figure><img src="images/ai_nav_2026-07-24T16-22-17_t0871.png" alt="t871"><figcaption>t=871</figcaption></figure></div>
+</div>
+
+</body></html>

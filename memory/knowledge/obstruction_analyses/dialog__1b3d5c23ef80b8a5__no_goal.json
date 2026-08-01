@@ -1,0 +1,21 @@
+{
+  "purpose": "A tooltip popup describing the Shipyard building in London, explaining it is open all day and allows players to build/dismantle ships and trade ship parts",
+  "full_text": "Shipyard. 00:00-23:59. Build new ships or dismantle old ones. Buy and sell ship parts. The island that England is on is known as Britain.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "1b3d5c23ef80b8a5",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T22:32:40.909570+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A tooltip popup describing the Shipyard building in London, explaining it is open all day and allows players to build/dismantle ships and trade ship parts",
+    "full_text": "Shipyard. 00:00-23:59. Build new ships or dismantle old ones. Buy and sell ship parts. The island that England is on is known as Britain.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

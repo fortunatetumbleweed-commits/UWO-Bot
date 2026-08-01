@@ -1,0 +1,21 @@
+{
+  "purpose": "A New Year celebration overlay (Happy 2025 / Happy 2026) has appeared in the London harbour area, triggered by seasonal event fireworks or greetings from nearby players, partially overlapping the UI but not blocking any active goal",
+  "full_text": "Happy 2025 Happy 2026 — Players Teasongdong, 淡墨桜 (Piracy), and TaylorFP are present in London. LV 92 · 8.46% · Sep · Autumn · 02:38 · Atlantic Ocean. Nearby locations: Harbor, Market, Shipyard, Bank, Inn, Cathedral, Venturer Association, Item Shop, Union.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "32a2755bc0bca3aa",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T16:37:24.634682+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A New Year celebration overlay (Happy 2025 / Happy 2026) has appeared in the London harbour area, triggered by seasonal event fireworks or greetings from nearby players, partially overlapping the UI but not blocking any active goal",
+    "full_text": "Happy 2025 Happy 2026 — Players Teasongdong, 淡墨桜 (Piracy), and TaylorFP are present in London. LV 92 · 8.46% · Sep · Autumn · 02:38 · Atlantic Ocean. Nearby locations: Harbor, Market, Shipyard, Bank, Inn, Cathedral, Venturer Association, Item Shop, Union.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

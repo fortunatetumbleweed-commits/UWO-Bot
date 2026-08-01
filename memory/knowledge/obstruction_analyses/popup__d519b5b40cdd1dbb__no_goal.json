@@ -1,0 +1,21 @@
+{
+  "purpose": "A voyage activity summary popup displaying the results of the current sailing session, listing points earned for Sea Exploration, Fishing, and failed attempts at Landing and Salvaging",
+  "full_text": "Sea Exploration x780 | Cannot Land x1,535 | Fishing x968 | Cannot Salvage x140",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "d519b5b40cdd1dbb",
+  "goal_intent": null,
+  "cached_at": "2026-05-21T22:49:01.991079+00:00",
+  "visit_count": 3,
+  "raw_api_response": {
+    "purpose": "A voyage activity summary popup displaying the results of the current sailing session, listing points earned for Sea Exploration, Fishing, and failed attempts at Landing and Salvaging",
+    "full_text": "Sea Exploration x780 | Cannot Land x1,535 | Fishing x968 | Cannot Salvage x140",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

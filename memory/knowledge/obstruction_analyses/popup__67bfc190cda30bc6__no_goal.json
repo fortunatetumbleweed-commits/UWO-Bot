@@ -1,0 +1,21 @@
+{
+  "purpose": "A Cathedral building info popup describing its operating hours and the benefit of participating in religious activities to gain buffs, displayed when the player tapped on the Cathedral in London.",
+  "full_text": "Cathedral. 00:00-23:59. Participate in religious activities to gain beneficial effects.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "67bfc190cda30bc6",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T20:20:52.375110+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A Cathedral building info popup describing its operating hours and the benefit of participating in religious activities to gain buffs, displayed when the player tapped on the Cathedral in London.",
+    "full_text": "Cathedral. 00:00-23:59. Participate in religious activities to gain beneficial effects.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

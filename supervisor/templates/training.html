@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>UWO — Training Data</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Courier New', monospace;
+      background: #0f0f0f;
+      color: #d4d4d4;
+      padding: 40px;
+    }
+    a { color: #7ec8e3; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    h1 { font-size: 1.4rem; color: #7ec8e3; margin-bottom: 8px; letter-spacing: 1px; }
+    h2 { font-size: 1rem; color: #666; font-weight: normal;
+         text-transform: uppercase; letter-spacing: 1px; margin: 40px 0 16px; }
+    .subtitle { color: #666; font-size: 0.85rem; margin-bottom: 40px; }
+    .empty { color: #555; font-style: italic; margin-top: 20px; }
+    nav { font-size: 0.85rem; color: #555; margin-bottom: 32px; }
+    nav a { color: #7ec8e3; }
+
+    /* ── summary table ── */
+    table { border-collapse: collapse; max-width: 900px; width: 100%; }
+    th { text-align: left; color: #555; font-size: 0.75rem;
+         text-transform: uppercase; letter-spacing: 1px;
+         padding: 8px 16px; border-bottom: 1px solid #222; }
+    td { padding: 10px 16px; border-bottom: 1px solid #1a1a1a; font-size: 0.9rem; }
+    tr:hover td { background: #151515; }
+
+    .bar-bg  { background: #1a1a1a; border-radius: 3px; height: 6px; width: 120px; display:inline-block; vertical-align:middle; }
+    .bar-fill { height: 100%; border-radius: 3px; background: #3a6a8a; }
+    .bar-fill.ok { background: #4caf82; }
+
+    .badge {
+      display: inline-block;
+      border-radius: 10px;
+      font-size: 0.7rem;
+      padding: 1px 8px;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+    .badge.warn  { background: #4a2a10; color: #e0a050; border: 1px solid #7a4a10; }
+    .badge.new   { background: #0a3a0a; color: #50e050; border: 1px solid #1a5a1a; }
+
+    /* ── example gallery ── */
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .card {
+      background: #161616;
+      border: 1px solid #222;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .card img {
+      width: 100%;
+      image-rendering: pixelated;
+      background: #0a0a0a;
+      display: block;
+      max-height: 160px;
+      object-fit: contain;
+    }
+    .card-body { padding: 10px 12px; font-size: 0.8rem; }
+    .card-body .label { color: #7ec8e3; font-size: 0.9rem; margin-bottom: 6px; }
+    .card-body .meta  { color: #555; font-size: 0.72rem; margin-top: 4px; }
+    .card-body .disagree { color: #e07070; font-size: 0.75rem; margin-top: 4px; }
+    .card-body .agree    { color: #4caf82; font-size: 0.75rem; margin-top: 4px; }
+    .trigger { display: inline-block; background: #1a1a2a; color: #8888cc;
+               border-radius: 8px; font-size: 0.7rem; padding: 1px 7px; }
+
+    /* ── pagination ── */
+    .pagination { margin-top: 32px; font-size: 0.85rem; }
+    .pagination a { color: #7ec8e3; margin: 0 8px; }
+    .pagination .cur { color: #d4d4d4; margin: 0 8px; }
+  </style>
+</head>
+<body>
+
+<h1>Training Data</h1>
+<p class="subtitle">
+  Examples where Claude was called as teacher fallback.
+  These accumulate into distillation training datasets.
+</p>
+
+<nav>
+  <a href="/">← Labeler</a>
+  {% if category %}
+  &nbsp;/&nbsp; <a href="/training">Training</a>
+  &nbsp;/&nbsp; {{ category }}
+  {% endif %}
+</nav>
+
+{% if stats is not none and category is none %}
+{# ── Summary view ── #}
+<h2>Categories</h2>
+{% if stats %}
+<table>
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th style="text-align:right">Total</th>
+      <th style="text-align:right">This week</th>
+      <th style="text-align:right">Disagree</th>
+      <th>Top labels</th>
+      <th>Triggers</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in stats %}
+    {% set max_total = namespace(v=1) %}
+    {% for ss in stats %}{% if ss.total > max_total.v %}{% set max_total.v = ss.total %}{% endif %}{% endfor %}
+    <tr>
+      <td><a href="/training/{{ s.category }}">{{ s.category }}</a>
+        {% if s.this_week > 0 %}<span class="badge new">+{{ s.this_week }} this week</span>{% endif %}
+      </td>
+      <td style="text-align:right">{{ s.total }}</td>
+      <td style="text-align:right">{{ s.this_week }}</td>
+      <td style="text-align:right">
+        {% if s.disagreements > 0 %}
+          <span style="color:#e07070">{{ s.disagreements }}</span>
+        {% else %}
+          <span style="color:#444">0</span>
+        {% endif %}
+      </td>
+      <td>
+        <span class="bar-bg">
+          <span class="bar-fill {% if s.total >= 50 %}ok{% endif %}"
+                style="width:{{ [s.total * 100 // max_total.v, 100] | min }}%"></span>
+        </span>
+        {% for label, cnt in (s.label_dist | dictsort(by='value', reverse=true))[:3] %}
+          <span style="color:#888;font-size:0.75rem;margin-left:6px">{{ label }} ({{ cnt }})</span>
+        {% endfor %}
+      </td>
+      <td style="font-size:0.75rem;color:#666">
+        {% for k, v in s.triggers.items() %}{{ k }}:{{ v }} {% endfor %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<p style="color:#555;font-size:0.75rem;margin-top:12px">
+  Disagree = Claude label differs from local model prediction — most valuable for retraining.<br>
+  bar colour: <span style="color:#3a6a8a">■</span> &lt;50 examples &nbsp;
+  <span style="color:#4caf82">■</span> ≥50 (enough to consider retraining)
+</p>
+{% else %}
+<p class="empty">No training data yet. Claude fallback will populate this as the bot runs.</p>
+{% endif %}
+
+{% else %}
+{# ── Category detail view ── #}
+<h2>{{ category }} — {{ total }} examples</h2>
+
+{% if examples %}
+<div class="gallery">
+  {% for ex in examples %}
+  {% set cl = ex.claude_label %}
+  {% set primary_keys = ["name", "scene_type", "label"] %}
+  {% set primary = namespace(v=none) %}
+  {% for k in primary_keys %}{% if cl.get(k) and primary.v is none %}{% set primary.v = cl[k] %}{% endif %}{% endfor %}
+
+  <div class="card">
+    <img src="/training/{{ category }}/crop/{{ ex.image }}" alt="{{ primary.v }}">
+    <div class="card-body">
+      <div class="label">
+        {{ primary.v or "(no label)" }}
+        <span class="trigger">{{ ex.trigger }}</span>
+      </div>
+      <table style="width:100%;font-size:0.75rem;color:#888;border:none">
+        {% for k, v in cl.items() %}
+        {% if v is not none %}
+        <tr>
+          <td style="color:#555;padding:1px 8px 1px 0;border:none">{{ k }}</td>
+          <td style="color:#aaa;border:none">{{ v }}</td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+      </table>
+      {% if ex.local_prediction %}
+        {% if ex.local_prediction == primary.v %}
+        <div class="agree">✓ local agreed: {{ ex.local_prediction }}</div>
+        {% else %}
+        <div class="disagree">✗ local said: {{ ex.local_prediction }}
+          {% if ex.local_confidence %}({{ "%.0f"|format(ex.local_confidence * 100) }}%){% endif %}
+        </div>
+        {% endif %}
+      {% else %}
+        <div class="meta">local: (none — OCR failed)</div>
+      {% endif %}
+      <div class="meta">{{ ex.timestamp[:19].replace("T", " ") }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="pagination">
+  {% if page > 1 %}<a href="/training/{{ category }}?page={{ page - 1 }}">← prev</a>{% endif %}
+  <span class="cur">page {{ page }} / {{ pages }}</span>
+  {% if page < pages %}<a href="/training/{{ category }}?page={{ page + 1 }}">next →</a>{% endif %}
+</div>
+
+{% else %}
+<p class="empty">No examples in this category yet.</p>
+{% endif %}
+
+{% endif %}
+
+</body>
+</html>

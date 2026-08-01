@@ -1,0 +1,21 @@
+{
+  "purpose": "Game exit confirmation dialog asking the player to confirm quitting, noting that Auto Sail will keep the fleet moving to its destination after logout",
+  "full_text": "Exit Game? Your fleet will continue to its destination if you are using Auto Sail.",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "2c46193d4a1310ae",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T00:10:29.339369+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Game exit confirmation dialog asking the player to confirm quitting, noting that Auto Sail will keep the fleet moving to its destination after logout",
+    "full_text": "Exit Game? Your fleet will continue to its destination if you are using Auto Sail.",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

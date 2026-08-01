@@ -1,0 +1,1080 @@
+[
+  {
+    "id": "market_purchase",
+    "description": "Buying goods at a market — from confirm through optional negotiation to result",
+    "parent_state": "building",
+    "parent_state_detail_contains": [
+      "market"
+    ],
+    "atomic": true,
+    "trigger_detection": "purchase confirm dialog visible (Load/Max/Purchase buttons present)",
+    "step_detection_keywords": {
+      "result": [
+        "purchase result",
+        "total amount",
+        "transaction result"
+      ],
+      "confirm": [
+        "confirm purchase",
+        "purchase confirmation"
+      ],
+      "negotiate": [
+        "attempt negotiation",
+        "negotiation success rate",
+        "remaining negotiation attempts"
+      ],
+      "basket": [
+        "put in bulk"
+      ]
+    },
+    "disambiguate_by_nav_detail": true,
+    "steps": [
+      {
+        "id": "basket",
+        "description": "Goods loaded in basket; Purchase button is yellow and ready",
+        "detection": "put in bulk toggle visible; basket has items",
+        "recovery_action": "tap_button",
+        "recovery_button_labels": [
+          "purchase",
+          "Purchase"
+        ],
+        "recovery_region": {
+          "y_min_pct": 0.65,
+          "x_min_pct": 0.6
+        },
+        "notes": "Screen has 3 'Purchase' strings: top-left title (back nav), bottom-left Language Effect tile, and bottom-right yellow action button. Both y and x constraints required to isolate the action button.",
+        "category": "transaction"
+      },
+      {
+        "id": "confirm",
+        "description": "Purchase Confirmation dialog — shows purchase cost; OK confirms, Back/Cancel dismisses",
+        "detection": "purchase cost label visible; Load / Max quantity buttons present",
+        "recovery_action": "tap_button",
+        "recovery_button_labels": [
+          "ok",
+          "OK",
+          "confirm"
+        ],
+        "category": "transaction"
+      },
+      {
+        "id": "negotiate",
+        "description": "Optional 'Attempt Negotiation' dialog — appears between confirm and result for purchase.  Title is 'Attempt Negotiation'; mate speech bubble on the left narrates a discount estimate; 3 buttons stacked on the right: 'No' (neutral skip), 'Use 1 chance' (white, disappears when success-rate >= 100%), 'Use all remaining chances' (yellow primary action).",
+        "optional": true,
+        "detection": "Attempt Negotiation dialog visible — title 'Attempt Negotiation' plus 'No' / 'Use 1 chance' / 'Use all remaining chances' buttons",
+        "recovery_action": "tap_button",
+        "recovery_button_labels_ref": "market.negotiation_buttons.skip",
+        "_canonical_source_note": "Button labels are sourced via recovery_button_labels_ref from dialogs/market.json:negotiation_buttons.skip — no duplication.  Path A (actions/market_actions.py:_handle_negotiation) reads market.json directly during normal trade rounds; this Path B step (driven by brain/recovery.py:advance_mandatory_flow as a recovery fallback for stuck-mid-negotiation) now reads the SAME canonical labels via ControlKB.flow_step_recovery's ref-resolver.",
+        "recovery_button_labels_note": "current strategy is to skip negotiation for speed/certainty (refs market.negotiation_buttons.skip).  Future improvement: when the success-rate text on the dialog is >= 100% the negotiation is guaranteed to succeed, so switching the ref to market.negotiation_buttons.use_all is free profit; that requires reading the rate first.",
+        "category": "dismissal"
+      },
+      {
+        "id": "result",
+        "description": "Purchase result dialog — must tap OK to complete",
+        "detection": "Result dialog visible with OK/Close button",
+        "recovery_action": "tap_button",
+        "recovery_button_labels": [
+          "ok",
+          "confirm",
+          "close"
+        ],
+        "category": "dismissal"
+      }
+    ],
+    "terminal_state": "building",
+    "terminal_detail": "building: market",
+    "provenance": "hand_authored",
+    "confidence": "high",
+    "travel_count": 2,
+    "success_count": 0,
+    "failure_count": 2,
+    "avg_duration_secs": 0.0,
+    "first_traveled_at": null,
+    "last_traveled_at": "2026-05-15T20:39:54.615087+00:00",
+    "supersedes": [],
+    "status": "incomplete",
+    "positive_transaction_count": 1,
+    "terminal_state_recognized": false,
+    "last_attempt_outcome": "failed"
+  },
+  {
+    "id": "market_sell",
+    "description": "Selling goods at a market — from confirm through optional negotiation to result",
+    "parent_state": "building",
+    "parent_state_detail_contains": [
+      "market"
+    ],
+    "atomic": true,
+    "trigger_detection": "sell confirm dialog visible",
+    "disambiguate_by_nav_detail": true,
+    "step_detection_keywords": {
+      "negotiate": [
+        "attempt negotiation",
+        "negotiation success rate",
+        "remaining negotiation attempts"
+      ],
+      "result": [
+        "sell result",
+        "sales cost",
+        "total amount",
+        "transaction result"
+      ]
+    },
+    "steps": [
+      {
+        "id": "confirm",
+        "description": "Sell confirmation dialog",
+        "detection": "sell confirm dialog visible",
+        "recovery_action": "tap_button",
+        "recovery_button_labels": [
+          "sell",
+          "Sell",
+          "confirm"
+        ],
+        "category": "transaction"
+      },
+      {
+        "id": "negotiate",
+        "description": "Optional 'Attempt Negotiation' dialog — same shape as market_purchase.negotiate (title 'Attempt Negotiation', 3 buttons on the right: 'No', 'Use 1 chance', 'Use all remaining chances').  Mate's speech bubble narrates a markup estimate ('we should be able to get N% more for this').",
+        "optional": true,
+        "detection": "Attempt Negotiation dialog visible during market_sell flow",
+        "recovery_action": "tap_button",
+        "recovery_button_labels_ref": "market.negotiation_buttons.skip",
+        "_canonical_source_note": "Button labels sourced via recovery_button_labels_ref from dialogs/market.json:negotiation_buttons.skip — see market_purchase.negotiate for the full explanation.",
+        "recovery_button_labels_note": "current strategy: skip (ref market.negotiation_buttons.skip).  Future improvement: when the success-rate text on the dialog is >= 100%, switch the ref to market.negotiation_buttons.use_all for free markup.",
+        "category": "dismissal"
+      },
+      {
+        "id": "result",
+        "description": "Sell result dialog",
+        "detection": "Result dialog visible with OK/Close button",
+        "recovery_action": "tap_button",
+        "recovery_button_labels": [
+          "ok",
+          "confirm",
+          "close"
+        ],
+        "category": "dismissal"
+      }
+    ],
+    "terminal_state": "building",
+    "terminal_detail": "building: market",
+    "provenance": "hand_authored",
+    "confidence": "high",
+    "travel_count": 0,
+    "success_count": 0,
+    "failure_count": 0,
+    "avg_duration_secs": 0.0,
+    "first_traveled_at": null,
+    "last_traveled_at": null,
+    "supersedes": [],
+    "status": "complete",
+    "positive_transaction_count": 1,
+    "terminal_state_recognized": true,
+    "last_attempt_outcome": null
+  },
+  {
+    "id": "harbor_departure",
+    "description": "Departing from harbour — once confirmed, leads to sea",
+    "parent_state": "building",
+    "parent_state_detail_contains": [
+      "harbor",
+      "harbour"
+    ],
+    "atomic": true,
+    "trigger_detection": "departure confirmation dialog visible after tapping Supply Depart or Depart Now",
+    "step_detection_keywords": {},
+    "notes_on_keywords": "harbor_departure is NOT detectable via keyword scan — the normal harbor screen contains the same text ('Depart Now', 'Departure') as any confirmation dialog. This flow is entered through the goal's explicit departure action, not passive flow detection.",
+    "steps": [
+      {
+        "id": "confirm",
+        "description": "Departure confirmation dialog",
+        "detection": "departure confirm dialog visible",
+        "recovery_action": "tap_button",
+        "recovery_button_labels": [
+          "confirm",
+          "ok"
+        ],
+        "category": "transaction"
+      },
+      {
+        "id": "loading",
+        "description": "Loading screen during departure",
+        "recovery_action": "wait",
+        "category": "dismissal"
+      }
+    ],
+    "terminal_state": "sea",
+    "blocking_signals": [
+      {
+        "text": "not enough crew",
+        "description": "Fleet crew below departure minimum — hire crew at an Inn then return",
+        "action": "resolve",
+        "resolution": [
+          {
+            "action": "exit_to_port_overworld"
+          },
+          {
+            "action": "navigate_to_building",
+            "target": "inn"
+          },
+          {
+            "action": "tap_primary_action",
+            "building": "inn",
+            "sub_menu": "recruit_crew"
+          },
+          {
+            "action": "exit_to_port_overworld"
+          },
+          {
+            "action": "navigate_to_building",
+            "target": "harbor"
+          },
+          {
+            "action": "retry"
+          }
+        ]
+      },
+      {
+        "text": "not enough supply",
+        "description": "Fleet has insufficient supplies and Supply Departure is unavailable",
+        "action": "escalate"
+      }
+    ],
+    "departure_buttons": [
+      {
+        "id": "supply_depart",
+        "label_variants": [
+          "supply departure",
+          "supply depart"
+        ],
+        "priority": 1,
+        "description": "Resupplies and departs in one step — preferred when visible"
+      },
+      {
+        "id": "auto_supply",
+        "label_variants": [
+          "auto supply"
+        ],
+        "priority": 2,
+        "description": "Only appears in the supply prep dialog (after tapping Depart Now without full supplies). Does NOT exist on the harbor top level or Supply sub-menu. Resupplies then departs.",
+        "context": "supply_prep_dialog"
+      },
+      {
+        "id": "depart_now",
+        "label_variants": [
+          "depart now",
+          "depart"
+        ],
+        "priority": 3,
+        "description": "Departs immediately — only safe to tap when fully supplied"
+      }
+    ],
+    "provenance": "hand_authored",
+    "confidence": "high",
+    "travel_count": 0,
+    "success_count": 0,
+    "failure_count": 0,
+    "avg_duration_secs": 0.0,
+    "first_traveled_at": null,
+    "last_traveled_at": null,
+    "supersedes": [],
+    "status": "complete",
+    "positive_transaction_count": 1,
+    "terminal_state_recognized": true,
+    "last_attempt_outcome": null
+  },
+  {
+    "id": "smuggler_negotiation",
+    "description": "Negotiation with smugglers — similar to market negotiation but in a different context",
+    "parent_state": "building",
+    "atomic": true,
+    "trigger_detection": "smuggler negotiation dialog visible",
+    "steps": [],
+    "terminal_state": "building",
+    "notes": "Not yet implemented — to be discovered via Claude Vision when encountered",
+    "parent_state_detail_contains": [],
+    "step_detection_keywords": {},
+    "provenance": "hand_authored",
+    "confidence": "high",
+    "travel_count": 0,
+    "success_count": 0,
+    "failure_count": 0,
+    "avg_duration_secs": 0.0,
+    "first_traveled_at": null,
+    "last_traveled_at": null,
+    "supersedes": [],
+    "status": "incomplete",
+    "positive_transaction_count": 0,
+    "terminal_state_recognized": true,
+    "last_attempt_outcome": null
+  },
+  {
+    "id": "soldier_detention",
+    "description": "Detained by soldiers at harbour when smuggling — must resolve before leaving",
+    "parent_state": "building",
+    "parent_state_detail_contains": [
+      "harbor",
+      "harbour"
+    ],
+    "atomic": true,
+    "trigger_detection": "soldier detention dialog visible",
+    "steps": [],
+    "terminal_state": "building",
+    "notes": "Not yet implemented — to be discovered via Claude Vision when encountered",
+    "step_detection_keywords": {},
+    "provenance": "hand_authored",
+    "confidence": "high",
+    "travel_count": 0,
+    "success_count": 0,
+    "failure_count": 0,
+    "avg_duration_secs": 0.0,
+    "first_traveled_at": null,
+    "last_traveled_at": null,
+    "supersedes": [],
+    "status": "incomplete",
+    "positive_transaction_count": 0,
+    "terminal_state_recognized": true,
+    "last_attempt_outcome": null
+  },
+  {
+    "id": "learned_building__sea_cinematic__20260501T173946Z",
+    "description": "Auto-learned via Claude guidance — goal: Complete the dialog opened by step 'tap_primary_action' so the bot can proceed to 'exit_to_port_overworld'.  Overall: Resolving 'not enough crew' — step sequence: ['exit_to_port_overworld', 'navigate_to_building', 'tap_primary_action', 'exit_to_port_overworld', 'navigate_to_building', 'retry']",
+    "parent_state": "building",
+    "atomic": true,
+    "trigger_detection": "recruit crew",
+    "step_detection_keywords": {
+      "step_1": [
+        "confirmation",
+        "dialog",
+        "result"
+      ]
+    },
+    "steps": [
+      {
+        "id": "step_1",
+        "description": "Tapping the gold 'Recruit' button will recruit the pre-filled 839 crew members to resolve the 'not enough crew' blocker.",
+        "detection": "A confirmation dialog or result screen appears confirming crew has been recruited.",
+        "recovery_action": "tap_button",
+        "recovery_button_labels": [
+          "recruit"
+        ],
+        "recovery_region": {
+          "y_min_pct": 0.8,
+          "y_max_pct": 0.92,
+          "x_min_pct": 0.78,
+          "x_max_pct": 1.0
+        },
+        "visual_hint": "gold",
+        "category": "transaction"
+      }
+    ],
+    "terminal_state": "sea_cinematic",
+    "learned_at": "2026-05-01T17:39:46.493207+00:00",
+    "learned_via": "claude_guidance",
+    "parent_state_detail_contains": [
+      "recruit"
+    ],
+    "provenance": "hand_authored",
+    "confidence": "high",
+    "travel_count": 0,
+    "success_count": 0,
+    "failure_count": 0,
+    "avg_duration_secs": 0.0,
+    "first_traveled_at": null,
+    "last_traveled_at": null,
+    "supersedes": [],
+    "status": "complete",
+    "positive_transaction_count": 1,
+    "terminal_state_recognized": true,
+    "last_attempt_outcome": null
+  },
+  {
+    "id": "learned_building__sea_cinematic__20260501T192302Z",
+    "description": "Auto-learned via Claude guidance — goal: Complete the dialog opened by step 'tap_primary_action' so the bot can proceed to 'exit_to_port_overworld'.  Overall: Resolving 'not enough crew' — step sequence: ['exit_to_port_overworld', 'navigate_to_building', 'tap_primary_action', 'exit_to_port_overworld', 'navigate_to_building', 'retry']",
+    "parent_state": "building",
+    "atomic": true,
+    "trigger_detection": "recruit crew",
+    "step_detection_keywords": {
+      "step_1": [
+        "confirmation",
+        "result",
+        "dialog"
+      ]
+    },
+    "steps": [
+      {
+        "id": "step_1",
+        "description": "Tapping the gold 'Recruit' button will hire the pre-filled 101 crew members to resolve the 'not enough crew' blocker.",
+        "detection": "A confirmation or result dialog appears, then the recruit crew screen returns to its base state with updated crew counts.",
+        "recovery_action": "tap_button",
+        "recovery_button_labels": [
+          "recruit"
+        ],
+        "recovery_region": {
+          "y_min_pct": 0.8,
+          "y_max_pct": 0.92,
+          "x_min_pct": 0.75,
+          "x_max_pct": 1.0
+        },
+        "visual_hint": "gold",
+        "category": "transaction"
+      }
+    ],
+    "terminal_state": "sea_cinematic",
+    "learned_at": "2026-05-01T19:23:02.382704+00:00",
+    "learned_via": "claude_guidance",
+    "parent_state_detail_contains": [
+      "recruit"
+    ],
+    "provenance": "hand_authored",
+    "confidence": "high",
+    "travel_count": 0,
+    "success_count": 0,
+    "failure_count": 0,
+    "avg_duration_secs": 0.0,
+    "first_traveled_at": null,
+    "last_traveled_at": null,
+    "supersedes": [],
+    "status": "complete",
+    "positive_transaction_count": 1,
+    "terminal_state_recognized": true,
+    "last_attempt_outcome": null
+  },
+  {
+    "id": "learned_port_overworld__building__20260502T042633Z",
+    "description": "Auto-learned via Claude guidance — goal: Complete the dialog opened by step 'tap_primary_action' so the bot can proceed to 'exit_to_port_overworld'.  Overall: Resolving 'not enough crew' — step sequence: ['exit_to_port_overworld', 'navigate_to_building', 'tap_primary_action', 'exit_to_port_overworld', 'navigate_to_building', 'retry']",
+    "parent_state": "port_overworld",
+    "atomic": true,
+    "trigger_detection": "near harbor entrance recruited",
+    "step_detection_keywords": {
+      "step_1": [
+        "confirmation",
+        "dialog",
+        "result"
+      ]
+    },
+    "steps": [
+      {
+        "id": "step_1",
+        "description": "Tapping the gold 'Recruit' button will hire the pre-filled 110 crew members to resolve the 'not enough crew' blocker.",
+        "detection": "A confirmation dialog or result dialog appears confirming crew has been recruited, then returns to the recruit crew screen with updated crew counts.",
+        "recovery_action": "tap_button",
+        "recovery_button_labels": [
+          "recruit"
+        ],
+        "recovery_region": {
+          "y_min_pct": 0.82,
+          "y_max_pct": 0.92,
+          "x_min_pct": 0.76,
+          "x_max_pct": 1.0
+        },
+        "visual_hint": "gold",
+        "category": "transaction"
+      }
+    ],
+    "terminal_state": "building",
+    "learned_at": "2026-05-02T04:26:33.763555+00:00",
+    "learned_via": "claude_guidance",
+    "parent_state_detail_contains": [
+      "the"
+    ],
+    "provenance": "hand_authored",
+    "confidence": "high",
+    "travel_count": 0,
+    "success_count": 0,
+    "failure_count": 0,
+    "avg_duration_secs": 0.0,
+    "first_traveled_at": null,
+    "last_traveled_at": null,
+    "supersedes": [],
+    "status": "complete",
+    "positive_transaction_count": 1,
+    "terminal_state_recognized": true,
+    "last_attempt_outcome": null
+  },
+  {
+    "id": "learned_building__building__20260502T062847Z",
+    "description": "Auto-learned via Claude guidance — goal: Complete the dialog opened by step 'tap_primary_action' so the bot can proceed to 'exit_to_port_overworld'.  Overall: Resolving 'not enough crew' — step sequence: ['exit_to_port_overworld', 'navigate_to_building', 'tap_primary_action', 'exit_to_port_overworld', 'navigate_to_building', 'retry']",
+    "parent_state": "building",
+    "atomic": true,
+    "trigger_detection": "recruit crew",
+    "step_detection_keywords": {
+      "step_1": [
+        "confirmation",
+        "dialog",
+        "result"
+      ]
+    },
+    "steps": [
+      {
+        "id": "step_1",
+        "description": "Tapping the Recruit button with the pre-filled minimum crew value (110) will purchase the needed crew and resolve the 'not enough crew' blocker.",
+        "detection": "A confirmation dialog or result screen appears showing crew has been successfully recruited, then returns to the recruit crew screen.",
+        "recovery_action": "tap_button",
+        "recovery_button_labels": [
+          "recruit"
+        ],
+        "recovery_region": {
+          "y_min_pct": 0.8,
+          "y_max_pct": 0.92,
+          "x_min_pct": 0.85,
+          "x_max_pct": 1.0
+        },
+        "visual_hint": "gold",
+        "category": "transaction"
+      }
+    ],
+    "terminal_state": "building",
+    "learned_at": "2026-05-02T06:28:47.382277+00:00",
+    "learned_via": "claude_guidance",
+    "parent_state_detail_contains": [
+      "recruit"
+    ],
+    "provenance": "hand_authored",
+    "confidence": "high",
+    "travel_count": 0,
+    "success_count": 0,
+    "failure_count": 0,
+    "avg_duration_secs": 0.0,
+    "first_traveled_at": null,
+    "last_traveled_at": null,
+    "supersedes": [],
+    "status": "complete",
+    "positive_transaction_count": 1,
+    "terminal_state_recognized": true,
+    "last_attempt_outcome": null
+  },
+  {
+    "id": "learned_building__building__20260502T065814Z",
+    "description": "Auto-learned via Claude guidance — goal: Complete the dialog opened by step 'tap_primary_action' so the bot can proceed to 'exit_to_port_overworld'.  Overall: Resolving 'not enough crew' — step sequence: ['exit_to_port_overworld', 'navigate_to_building', 'tap_primary_action', 'exit_to_port_overworld', 'navigate_to_building', 'retry']",
+    "parent_state": "building",
+    "atomic": true,
+    "trigger_detection": "recruit crew",
+    "step_detection_keywords": {
+      "step_1": [
+        "confirmation",
+        "dialog",
+        "result"
+      ]
+    },
+    "steps": [
+      {
+        "id": "step_1",
+        "description": "Tapping the Recruit button will hire the pre-filled 110 crew members to resolve the 'not enough crew' blocker.",
+        "detection": "A confirmation dialog or result screen appears confirming crew recruitment, then the screen returns to the recruit crew menu.",
+        "recovery_action": "tap_button",
+        "recovery_button_labels": [
+          "recruit"
+        ],
+        "recovery_region": {
+          "y_min_pct": 0.82,
+          "y_max_pct": 0.92,
+          "x_min_pct": 0.75,
+          "x_max_pct": 1.0
+        },
+        "visual_hint": "gold",
+        "category": "transaction"
+      }
+    ],
+    "terminal_state": "building",
+    "learned_at": "2026-05-02T06:58:14.220206+00:00",
+    "learned_via": "claude_guidance",
+    "parent_state_detail_contains": [
+      "recruit"
+    ],
+    "provenance": "hand_authored",
+    "confidence": "high",
+    "travel_count": 0,
+    "success_count": 0,
+    "failure_count": 0,
+    "avg_duration_secs": 0.0,
+    "first_traveled_at": null,
+    "last_traveled_at": null,
+    "supersedes": [],
+    "status": "complete",
+    "positive_transaction_count": 1,
+    "terminal_state_recognized": true,
+    "last_attempt_outcome": null
+  },
+  {
+    "id": "learned_building__port_overworld__20260502T115915Z",
+    "description": "Auto-learned via Claude guidance — goal: Complete the dialog opened by step 'tap_primary_action' so the bot can proceed to 'exit_to_port_overworld'.  Overall: Resolving 'not enough crew' — step sequence: ['exit_to_port_overworld', 'navigate_to_building', 'tap_primary_action', 'exit_to_port_overworld', 'navigate_to_building', 'retry']",
+    "parent_state": "building",
+    "atomic": true,
+    "trigger_detection": "recruit crew",
+    "step_detection_keywords": {
+      "step_1": [
+        "confirmation",
+        "dialog",
+        "result"
+      ],
+      "step_2": [
+        "notice",
+        "dialog",
+        "closes"
+      ]
+    },
+    "steps": [
+      {
+        "id": "step_1",
+        "description": "Tapping the gold 'Recruit' button will hire the pre-filled minimum crew needed to resolve the 'not enough crew' blocker.",
+        "detection": "A confirmation dialog or result dialog appears showing crew has been recruited successfully.",
+        "recovery_action": "tap_button",
+        "recovery_button_labels": [
+          "recruit"
+        ],
+        "recovery_region": {
+          "y_min_pct": 0.8,
+          "y_max_pct": 0.92,
+          "x_min_pct": 0.75,
+          "x_max_pct": 1.0
+        },
+        "visual_hint": "gold",
+        "category": "transaction"
+      },
+      {
+        "id": "step_2",
+        "description": "A connection-unstable notice is blocking the screen and must be dismissed by tapping OK before the bot can proceed.",
+        "detection": "The notice dialog closes and the game restarts or returns to a usable state.",
+        "recovery_action": "tap_button",
+        "recovery_button_labels": [
+          "ok"
+        ],
+        "recovery_region": {
+          "y_min_pct": 0.6,
+          "y_max_pct": 0.85,
+          "x_min_pct": 0.7,
+          "x_max_pct": 0.95
+        },
+        "category": "dismissal"
+      }
+    ],
+    "terminal_state": "port_overworld",
+    "learned_at": "2026-05-02T11:59:15.492664+00:00",
+    "learned_via": "claude_guidance",
+    "parent_state_detail_contains": [
+      "recruit"
+    ],
+    "provenance": "hand_authored",
+    "confidence": "high",
+    "travel_count": 0,
+    "success_count": 0,
+    "failure_count": 0,
+    "avg_duration_secs": 0.0,
+    "first_traveled_at": null,
+    "last_traveled_at": null,
+    "supersedes": [],
+    "status": "complete",
+    "positive_transaction_count": 1,
+    "terminal_state_recognized": true,
+    "last_attempt_outcome": null
+  },
+  {
+    "id": "learned_building__building__20260502T121309Z",
+    "description": "Auto-learned via Claude guidance — goal: Complete the dialog opened by step 'tap_primary_action' so the bot can proceed to 'exit_to_port_overworld'.  Overall: Resolving 'not enough crew' — step sequence: ['exit_to_port_overworld', 'navigate_to_building', 'tap_primary_action', 'exit_to_port_overworld', 'navigate_to_building', 'retry']",
+    "parent_state": "building",
+    "atomic": true,
+    "trigger_detection": "recruit crew",
+    "step_detection_keywords": {
+      "step_1": [
+        "confirmation",
+        "result",
+        "dialog"
+      ]
+    },
+    "steps": [
+      {
+        "id": "step_1",
+        "description": "Tapping the gold 'Recruit' button will hire the pre-filled 110 crew members to resolve the 'not enough crew' blocker.",
+        "detection": "A confirmation or result dialog appears showing crew successfully recruited, then the screen returns to the recruit crew building view.",
+        "recovery_action": "tap_button",
+        "recovery_button_labels": [
+          "recruit"
+        ],
+        "recovery_region": {
+          "y_min_pct": 0.82,
+          "y_max_pct": 0.92,
+          "x_min_pct": 0.75,
+          "x_max_pct": 1.0
+        },
+        "visual_hint": "gold",
+        "category": "transaction"
+      }
+    ],
+    "terminal_state": "building",
+    "learned_at": "2026-05-02T12:13:09.278493+00:00",
+    "learned_via": "claude_guidance",
+    "parent_state_detail_contains": [
+      "recruit"
+    ],
+    "provenance": "hand_authored",
+    "confidence": "high",
+    "travel_count": 0,
+    "success_count": 0,
+    "failure_count": 0,
+    "avg_duration_secs": 0.0,
+    "first_traveled_at": null,
+    "last_traveled_at": null,
+    "supersedes": [],
+    "status": "complete",
+    "positive_transaction_count": 1,
+    "terminal_state_recognized": true,
+    "last_attempt_outcome": null
+  },
+  {
+    "id": "learned_building__building__20260502T123959Z",
+    "description": "Auto-learned via Claude guidance — goal: Complete the dialog opened by step 'tap_primary_action' so the bot can proceed to 'exit_to_port_overworld'.  Overall: Resolving 'not enough crew' — step sequence: ['exit_to_port_overworld', 'navigate_to_building', 'tap_primary_action', 'exit_to_port_overworld', 'navigate_to_building', 'retry']",
+    "parent_state": "building",
+    "atomic": true,
+    "trigger_detection": "recruit crew",
+    "step_detection_keywords": {
+      "step_1": [
+        "confirmation",
+        "result",
+        "dialog"
+      ]
+    },
+    "steps": [
+      {
+        "id": "step_1",
+        "description": "Tapping the gold 'Recruit' button will hire the pre-filled 110 crew members to resolve the 'not enough crew' blocker.",
+        "detection": "A confirmation or result dialog appears confirming the crew has been recruited, then the screen returns to the recruit crew building state.",
+        "recovery_action": "tap_button",
+        "recovery_button_labels": [
+          "recruit"
+        ],
+        "recovery_region": {
+          "y_min_pct": 0.82,
+          "y_max_pct": 0.92,
+          "x_min_pct": 0.76,
+          "x_max_pct": 1.0
+        },
+        "visual_hint": "gold",
+        "category": "transaction"
+      }
+    ],
+    "terminal_state": "building",
+    "learned_at": "2026-05-02T12:39:59.715814+00:00",
+    "learned_via": "claude_guidance",
+    "parent_state_detail_contains": [
+      "recruit"
+    ],
+    "provenance": "hand_authored",
+    "confidence": "high",
+    "travel_count": 0,
+    "success_count": 0,
+    "failure_count": 0,
+    "avg_duration_secs": 0.0,
+    "first_traveled_at": null,
+    "last_traveled_at": null,
+    "supersedes": [],
+    "status": "complete",
+    "positive_transaction_count": 1,
+    "terminal_state_recognized": true,
+    "last_attempt_outcome": null
+  },
+  {
+    "id": "learned_building__building__20260502T130027Z",
+    "description": "Auto-learned via Claude guidance — goal: Complete the dialog opened by step 'tap_primary_action' so the bot can proceed to 'exit_to_port_overworld'.  Overall: Resolving 'not enough crew' — step sequence: ['exit_to_port_overworld', 'navigate_to_building', 'tap_primary_action', 'exit_to_port_overworld', 'navigate_to_building', 'retry']",
+    "parent_state": "building",
+    "atomic": true,
+    "trigger_detection": "recruit crew",
+    "step_detection_keywords": {
+      "step_1": [
+        "confirmation",
+        "dialog",
+        "result"
+      ]
+    },
+    "steps": [
+      {
+        "id": "step_1",
+        "description": "Tapping the gold 'Recruit' button will hire the pre-filled 110 crew members to resolve the 'not enough crew' blocker.",
+        "detection": "A confirmation dialog or result dialog appears acknowledging the crew recruitment, then the screen returns to the recruit crew building state with updated crew counts.",
+        "recovery_action": "tap_button",
+        "recovery_button_labels": [
+          "recruit"
+        ],
+        "recovery_region": {
+          "y_min_pct": 0.8,
+          "y_max_pct": 0.92,
+          "x_min_pct": 0.75,
+          "x_max_pct": 1.0
+        },
+        "visual_hint": "gold",
+        "category": "transaction"
+      }
+    ],
+    "terminal_state": "building",
+    "learned_at": "2026-05-02T13:00:27.659775+00:00",
+    "learned_via": "claude_guidance",
+    "parent_state_detail_contains": [
+      "recruit"
+    ],
+    "provenance": "hand_authored",
+    "confidence": "high",
+    "travel_count": 0,
+    "success_count": 0,
+    "failure_count": 0,
+    "avg_duration_secs": 0.0,
+    "first_traveled_at": null,
+    "last_traveled_at": null,
+    "supersedes": [],
+    "status": "complete",
+    "positive_transaction_count": 1,
+    "terminal_state_recognized": true,
+    "last_attempt_outcome": null
+  },
+  {
+    "id": "learned_building__building__20260502T131848Z",
+    "description": "Auto-learned via Claude guidance — goal: Complete the dialog opened by step 'tap_primary_action' so the bot can proceed to 'exit_to_port_overworld'.  Overall: Resolving 'not enough crew' — step sequence: ['exit_to_port_overworld', 'navigate_to_building', 'tap_primary_action', 'exit_to_port_overworld', 'navigate_to_building', 'retry']",
+    "parent_state": "building",
+    "atomic": true,
+    "trigger_detection": "recruit crew",
+    "step_detection_keywords": {
+      "step_1": [
+        "confirmation",
+        "dialog",
+        "result"
+      ]
+    },
+    "steps": [
+      {
+        "id": "step_1",
+        "description": "Tapping the gold 'Recruit' button will hire the pre-filled 110 crew members to resolve the 'not enough crew' blocker.",
+        "detection": "A confirmation dialog or result dialog appears confirming crew recruitment, then the screen returns to the recruit crew building state.",
+        "recovery_action": "tap_button",
+        "recovery_button_labels": [
+          "recruit"
+        ],
+        "recovery_region": {
+          "y_min_pct": 0.82,
+          "y_max_pct": 0.92,
+          "x_min_pct": 0.78,
+          "x_max_pct": 1.0
+        },
+        "visual_hint": "gold",
+        "category": "transaction"
+      }
+    ],
+    "terminal_state": "building",
+    "learned_at": "2026-05-02T13:18:48.602847+00:00",
+    "learned_via": "claude_guidance",
+    "parent_state_detail_contains": [
+      "recruit"
+    ],
+    "provenance": "hand_authored",
+    "confidence": "high",
+    "travel_count": 0,
+    "success_count": 0,
+    "failure_count": 0,
+    "avg_duration_secs": 0.0,
+    "first_traveled_at": null,
+    "last_traveled_at": null,
+    "supersedes": [],
+    "status": "complete",
+    "positive_transaction_count": 1,
+    "terminal_state_recognized": true,
+    "last_attempt_outcome": null
+  },
+  {
+    "id": "learned_building__building__20260502T133159Z",
+    "description": "Auto-learned via Claude guidance — goal: Complete the dialog opened by step 'tap_primary_action' so the bot can proceed to 'exit_to_port_overworld'.  Overall: Resolving 'not enough crew' — step sequence: ['exit_to_port_overworld', 'navigate_to_building', 'tap_primary_action', 'exit_to_port_overworld', 'navigate_to_building', 'retry']",
+    "parent_state": "building",
+    "atomic": true,
+    "trigger_detection": "recruit crew",
+    "step_detection_keywords": {
+      "step_1": [
+        "confirmation",
+        "dialog",
+        "result"
+      ]
+    },
+    "steps": [
+      {
+        "id": "step_1",
+        "description": "Tapping the yellow 'Recruit' button will hire the pre-filled 110 crew members to resolve the 'not enough crew' blocker.",
+        "detection": "A confirmation dialog or result dialog appears confirming the crew recruitment.",
+        "recovery_action": "tap_button",
+        "recovery_button_labels": [
+          "recruit"
+        ],
+        "recovery_region": {
+          "y_min_pct": 0.8,
+          "y_max_pct": 0.92,
+          "x_min_pct": 0.75,
+          "x_max_pct": 1.0
+        },
+        "visual_hint": "yellow",
+        "category": "transaction"
+      }
+    ],
+    "terminal_state": "building",
+    "learned_at": "2026-05-02T13:31:59.561172+00:00",
+    "learned_via": "claude_guidance",
+    "parent_state_detail_contains": [
+      "recruit"
+    ],
+    "provenance": "hand_authored",
+    "confidence": "high",
+    "travel_count": 0,
+    "success_count": 0,
+    "failure_count": 0,
+    "avg_duration_secs": 0.0,
+    "first_traveled_at": null,
+    "last_traveled_at": null,
+    "supersedes": [],
+    "status": "complete",
+    "positive_transaction_count": 1,
+    "terminal_state_recognized": true,
+    "last_attempt_outcome": null
+  },
+  {
+    "id": "learned_building__building__20260502T134852Z",
+    "description": "Auto-learned via Claude guidance — goal: Complete the dialog opened by step 'tap_primary_action' so the bot can proceed to 'exit_to_port_overworld'.  Overall: Resolving 'not enough crew' — step sequence: ['exit_to_port_overworld', 'navigate_to_building', 'tap_primary_action', 'exit_to_port_overworld', 'navigate_to_building', 'retry']",
+    "parent_state": "building",
+    "atomic": true,
+    "trigger_detection": "recruit crew",
+    "step_detection_keywords": {
+      "step_1": [
+        "confirmation",
+        "dialog",
+        "result"
+      ]
+    },
+    "steps": [
+      {
+        "id": "step_1",
+        "description": "Tapping the gold 'Recruit' button will hire the pre-filled 110 crew members to resolve the 'not enough crew' blocker.",
+        "detection": "A confirmation dialog or result dialog appears confirming the crew has been recruited.",
+        "recovery_action": "tap_button",
+        "recovery_button_labels": [
+          "recruit"
+        ],
+        "recovery_region": {
+          "y_min_pct": 0.8,
+          "y_max_pct": 0.92,
+          "x_min_pct": 0.75,
+          "x_max_pct": 1.0
+        },
+        "visual_hint": "gold",
+        "category": "transaction"
+      }
+    ],
+    "terminal_state": "building",
+    "learned_at": "2026-05-02T13:48:52.532417+00:00",
+    "learned_via": "claude_guidance",
+    "parent_state_detail_contains": [
+      "recruit"
+    ],
+    "provenance": "hand_authored",
+    "confidence": "high",
+    "travel_count": 0,
+    "success_count": 0,
+    "failure_count": 0,
+    "avg_duration_secs": 0.0,
+    "first_traveled_at": null,
+    "last_traveled_at": null,
+    "supersedes": [],
+    "status": "complete",
+    "positive_transaction_count": 1,
+    "terminal_state_recognized": true,
+    "last_attempt_outcome": null
+  },
+  {
+    "id": "learned_building__building__20260502T173311Z",
+    "description": "Auto-learned via Claude guidance — goal: Step 'tap_primary_action' failed — recover from this screen so the resolution can continue.  Overall: Resolving 'not enough crew' — step sequence: ['exit_to_port_overworld', 'navigate_to_building', 'tap_primary_action', 'exit_to_port_overworld', 'navigate_to_building', 'retry']",
+    "parent_state": "building",
+    "atomic": true,
+    "trigger_detection": "building",
+    "step_detection_keywords": {
+      "step_1": [
+        "crew",
+        "recruitment",
+        "dialog"
+      ],
+      "step_2": [
+        "confirmation",
+        "dialog",
+        "result"
+      ],
+      "step_3": [
+        "dialog",
+        "closes",
+        "crew"
+      ]
+    },
+    "steps": [
+      {
+        "id": "step_1",
+        "description": "The 'Recruit Crew' option in the left panel is the primary action needed to resolve 'not enough crew' at the Inn.",
+        "detection": "A crew recruitment dialog or sub-menu opens allowing the bot to recruit crew members.",
+        "recovery_action": "tap_button",
+        "recovery_button_labels": [
+          "recruit crew"
+        ],
+        "recovery_region": {
+          "y_min_pct": 0.3,
+          "y_max_pct": 0.45,
+          "x_min_pct": 0.0,
+          "x_max_pct": 0.2
+        },
+        "category": "navigation"
+      },
+      {
+        "id": "step_2",
+        "description": "Tapping the gold Recruit button will confirm hiring 953 crew members to resolve the 'not enough crew' blocker.",
+        "detection": "A confirmation dialog or result screen appears showing crew successfully recruited, advancing the resolution flow.",
+        "recovery_action": "tap_button",
+        "recovery_button_labels": [
+          "recruit"
+        ],
+        "recovery_region": {
+          "y_min_pct": 0.82,
+          "y_max_pct": 0.92,
+          "x_min_pct": 0.75,
+          "x_max_pct": 1.0
+        },
+        "visual_hint": "gold",
+        "category": "transaction"
+      },
+      {
+        "id": "step_3",
+        "description": "A confirmation dialog is showing asking to recruit 953 crew for 205,848 gold — tapping OK confirms the recruitment and advances the goal.",
+        "detection": "The dialog closes and crew is recruited, returning to the recruit crew screen or port overworld.",
+        "recovery_action": "tap_button",
+        "recovery_button_labels": [
+          "ok"
+        ],
+        "recovery_region": {
+          "y_min_pct": 0.72,
+          "y_max_pct": 0.82,
+          "x_min_pct": 0.52,
+          "x_max_pct": 0.72
+        },
+        "visual_hint": "yellow",
+        "category": "dismissal"
+      }
+    ],
+    "terminal_state": "building",
+    "learned_at": "2026-05-02T17:33:11.745589+00:00",
+    "learned_via": "claude_guidance",
+    "parent_state_detail_contains": [
+      "inn"
+    ],
+    "provenance": "hand_authored",
+    "confidence": "high",
+    "travel_count": 2,
+    "success_count": 0,
+    "failure_count": 2,
+    "avg_duration_secs": 0.0,
+    "first_traveled_at": null,
+    "last_traveled_at": "2026-05-04T14:40:45.384367+00:00",
+    "supersedes": [],
+    "status": "incomplete",
+    "positive_transaction_count": 1,
+    "terminal_state_recognized": true,
+    "last_attempt_outcome": "failed"
+  }
+]

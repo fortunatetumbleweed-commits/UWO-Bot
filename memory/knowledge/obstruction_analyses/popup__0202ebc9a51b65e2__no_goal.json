@@ -1,0 +1,21 @@
+{
+  "purpose": "The mini-map/navigation panel showing nearby port distances, current coordinates, season, and wind/current data — this is a persistent HUD side-panel, not a dismissible popup",
+  "full_text": "C/HW 27.0 hw 34 | Coordinates: 32.05, -50.64 | Winter, Feb, Daytime | Bermuda Island Village Approx. 1,159.1km | Santa Island Approx. 1,456.9km | San Juan Approx. 1,652.5km | Cohasset Approx. 1,851.1km",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "0202ebc9a51b65e2",
+  "goal_intent": null,
+  "cached_at": "2026-05-20T22:29:59.212947+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The mini-map/navigation panel showing nearby port distances, current coordinates, season, and wind/current data — this is a persistent HUD side-panel, not a dismissible popup",
+    "full_text": "C/HW 27.0 hw 34 | Coordinates: 32.05, -50.64 | Winter, Feb, Daytime | Bermuda Island Village Approx. 1,159.1km | Santa Island Approx. 1,456.9km | San Juan Approx. 1,652.5km | Cohasset Approx. 1,851.1km",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

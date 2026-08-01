@@ -1,0 +1,21 @@
+{
+  "purpose": "The right-side navigation panel for London's city facilities (Harbor, Market, Shipyard, Bank, Inn, Cathedral, Venturer Association, Item Shop) is open, overlaying the main game view along with a Harbor tooltip and nearby player labels.",
+  "full_text": "Harbor — Visitor of India — Fleet420 — IcaRabi — Autumn Sep 11:00 — Harbor — Market — Shipyard — Bank — Inn — Cathedral — Venturer Association — Item Shop",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "e41724bcaa76a4f0",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T20:41:35.194348+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The right-side navigation panel for London's city facilities (Harbor, Market, Shipyard, Bank, Inn, Cathedral, Venturer Association, Item Shop) is open, overlaying the main game view along with a Harbor tooltip and nearby player labels.",
+    "full_text": "Harbor — Visitor of India — Fleet420 — IcaRabi — Autumn Sep 11:00 — Harbor — Market — Shipyard — Bank — Inn — Cathedral — Venturer Association — Item Shop",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

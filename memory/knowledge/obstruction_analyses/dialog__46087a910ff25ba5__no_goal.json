@@ -1,0 +1,21 @@
+{
+  "purpose": "A tooltip popup explaining the Energy currency system, showing daily charge costs and current Energy balance, overlaid on the Berber Village amity/status screen",
+  "full_text": "Energy — Currency required for using various contents. Daily Charge: 77, Company LV Increase: 78, Receive Energy: 50. Max 539 available to own. Village Amity: Neutral 60,000/100,000. Status Effect Details: Target Trade Goods Gain Amount +25%, Village Amity gain -25%, Additional Village Amity gain +10% (Artwork, Livestock), Additional Trade Goods gain +10% (Sundries, Crafts), Stock Decrease Trade Goods -1.5% (Sundries, Crafts, Artwork). Achievement Reward: None. Weekly Reward: None. Discoveries shown.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "46087a910ff25ba5",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T14:42:58.418355+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A tooltip popup explaining the Energy currency system, showing daily charge costs and current Energy balance, overlaid on the Berber Village amity/status screen",
+    "full_text": "Energy — Currency required for using various contents. Daily Charge: 77, Company LV Increase: 78, Receive Energy: 50. Max 539 available to own. Village Amity: Neutral 60,000/100,000. Status Effect Details: Target Trade Goods Gain Amount +25%, Village Amity gain -25%, Additional Village Amity gain +10% (Artwork, Livestock), Additional Trade Goods gain +10% (Sundries, Crafts), Stock Decrease Trade Goods -1.5% (Sundries, Crafts, Artwork). Achievement Reward: None. Weekly Reward: None. Discoveries shown.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

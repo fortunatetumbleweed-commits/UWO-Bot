@@ -1,0 +1,21 @@
+{
+  "purpose": "A player ship's activity summary popup is displayed, showing accumulated exploration, fishing, and salvage statistics for the encountered vessel 'TaylorFP'",
+  "full_text": "Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "b799caacdd50b221",
+  "goal_intent": null,
+  "cached_at": "2026-05-20T20:49:52.360667+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A player ship's activity summary popup is displayed, showing accumulated exploration, fishing, and salvage statistics for the encountered vessel 'TaylorFP'",
+    "full_text": "Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

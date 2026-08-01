@@ -1,0 +1,21 @@
+{
+  "purpose": "A world-map notification banner announcing that a 'Booming' trade event is occurring in a currently undiscovered city somewhere on the map",
+  "full_text": "Booming is occurring in an undiscovered city.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "19ebe345ce30a7a7",
+  "goal_intent": "sail_to",
+  "cached_at": "2026-05-24T20:39:44.228240+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A world-map notification banner announcing that a 'Booming' trade event is occurring in a currently undiscovered city somewhere on the map",
+    "full_text": "Booming is occurring in an undiscovered city.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

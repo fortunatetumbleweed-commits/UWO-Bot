@@ -1,0 +1,21 @@
+{
+  "purpose": "Village Amity panel showing the current Neutral relationship status (60,000/100,000) with the Berber Village, including Achievement and Weekly Reward slots (both empty), and a tip from Philippus Paracelsus that Perfume is trending in Algiers",
+  "full_text": "Amity: Neutral 60,000/100,000. Achievement Reward: None. Weekly Reward: None. Philippus Paracelsus: Perfume is Trending in Algiers.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "overlay",
+  "structural_hash": "8620f08f5755c3f8",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T14:54:33.654728+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Village Amity panel showing the current Neutral relationship status (60,000/100,000) with the Berber Village, including Achievement and Weekly Reward slots (both empty), and a tip from Philippus Paracelsus that Perfume is trending in Algiers",
+    "full_text": "Amity: Neutral 60,000/100,000. Achievement Reward: None. Weekly Reward: None. Philippus Paracelsus: Perfume is Trending in Algiers.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

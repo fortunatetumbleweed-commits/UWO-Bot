@@ -1,0 +1,21 @@
+{
+  "purpose": "A Market building tooltip has appeared showing its trading hours and function, while an NPC speech bubble dismisses smaller ports as having nothing worth buying — this is an informational hover/tap overlay for the London Market location",
+  "full_text": "Market. 00:00-23:59. Buy and sell Trade Goods. I'm sure that smaller ports have nothing worth buying.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "3b51c736163fe22c",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T15:05:56.129328+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A Market building tooltip has appeared showing its trading hours and function, while an NPC speech bubble dismisses smaller ports as having nothing worth buying — this is an informational hover/tap overlay for the London Market location",
+    "full_text": "Market. 00:00-23:59. Buy and sell Trade Goods. I'm sure that smaller ports have nothing worth buying.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

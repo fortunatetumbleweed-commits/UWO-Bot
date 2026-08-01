@@ -1,0 +1,21 @@
+{
+  "purpose": "A nearby ship's activity panel is showing another player's vessel (Tumbler, guild: Reis Adventurers) with their current sea activities — Sea Exploration, Explore Land, Fishing, and Cannot Salvage — all at zero counts, appearing as an overlay while sailing",
+  "full_text": "Reis Adventurers — Tumbler: Sea Exploration ×0, Explore Land ×0, Fishing ×0, Cannot Salvage ×0",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "8f3090fcba844cef",
+  "goal_intent": "sail_to",
+  "cached_at": "2026-05-24T20:28:49.589748+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A nearby ship's activity panel is showing another player's vessel (Tumbler, guild: Reis Adventurers) with their current sea activities — Sea Exploration, Explore Land, Fishing, and Cannot Salvage — all at zero counts, appearing as an overlay while sailing",
+    "full_text": "Reis Adventurers — Tumbler: Sea Exploration ×0, Explore Land ×0, Fishing ×0, Cannot Salvage ×0",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

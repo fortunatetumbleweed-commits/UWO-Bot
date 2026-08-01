@@ -1,0 +1,45 @@
+# tasks/explore_port.yaml
+#
+# Investigate everything available at the current port.
+#
+# Pre-condition: the bot is at a port_overworld.
+#
+# What it does (no Claude calls during the run):
+#   1. Open the port map → OmniParser/OCR every building label.
+#      Locked / story-gated buildings (e.g. estates of guilds you haven't
+#      joined, or unfinished story buildings) are recorded with
+#      `locked: true` and skipped.
+#   2. For each non-locked building: navigate inside, capture the main
+#      view, walk every sub-menu item (tap → capture → Back), capture
+#      one frame per sub-menu.
+#   3. Update `memory/knowledge/ports/<port>.json` with the list of
+#      buildings observed at this port.
+#   4. Update `memory/knowledge/buildings/<port>__<bldg>.json` with the
+#      main-view frame path + per-sub-menu records.
+#
+# Frames land under
+#   data/sessions/explore_<port>_<timestamp>/frames/
+# so the existing batch seeder reads them as-is:
+#   python tools/seed_layout_from_frame.py --batch <list-of-frames> --write
+#
+# Customise:
+#   - `start_port`: which port we expect to start at (warning only).
+#   - Run from any port — the task asks where_am_i for the current port
+#     and uses it as the working port.
+
+name: "Explore Port — Capture Buildings + Sub-menus"
+description: >
+  At the current port, enumerate every building via the port map, then
+  enter each non-locked building and capture every sub-menu.  Updates
+  port + building KB records.  Seeding layout markdown is a separate
+  batch step.
+
+start_port:                     # leave blank to use whatever port we're at
+rounds: 1
+
+loop:
+  - action: explore_port
+    note: "Visit every building, capture each sub-menu"
+
+report:
+  - unrecognized_scenes

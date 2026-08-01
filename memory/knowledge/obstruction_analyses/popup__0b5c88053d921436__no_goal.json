@@ -1,0 +1,21 @@
+{
+  "purpose": "The right-side panel showing the city location menu (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) in Las Palmas port, with a chat bubble from an NPC mentioning maritime trading knowledge learned in Amsterdam",
+  "full_text": "I'm not the only one. Spring trading sources are always changing. Harbor | Market | Shipyard | Bank | Inn | Sanctuary | Union | Bureau — I learned all there is to maritime trade back in Amsterdam.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "0b5c88053d921436",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T16:45:51.428018+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The right-side panel showing the city location menu (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) in Las Palmas port, with a chat bubble from an NPC mentioning maritime trading knowledge learned in Amsterdam",
+    "full_text": "I'm not the only one. Spring trading sources are always changing. Harbor | Market | Shipyard | Bank | Inn | Sanctuary | Union | Bureau — I learned all there is to maritime trade back in Amsterdam.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

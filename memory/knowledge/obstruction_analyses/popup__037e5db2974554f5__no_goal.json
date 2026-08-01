@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation panel showing the mini-map with nearby port distances from the player's current position near Tripoli in the Atlantic Ocean / Mediterranean Sea",
+  "full_text": "TW 10 | 0.0 | Tripoli (33.24, 13.07) | Spring | Mar | Night | Tripoli Approx. 11.2km | Syracuse Approx. 434.3km | Tunis Approx. 476.5km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "037e5db2974554f5",
+  "goal_intent": null,
+  "cached_at": "2026-05-21T18:57:05.578252+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Navigation panel showing the mini-map with nearby port distances from the player's current position near Tripoli in the Atlantic Ocean / Mediterranean Sea",
+    "full_text": "TW 10 | 0.0 | Tripoli (33.24, 13.07) | Spring | Mar | Night | Tripoli Approx. 11.2km | Syracuse Approx. 434.3km | Tunis Approx. 476.5km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

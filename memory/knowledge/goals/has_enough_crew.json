@@ -1,0 +1,11 @@
+{
+  "goal_id": "has_enough_crew",
+  "description": "Fleet crew has reached the minimum threshold required for departure.",
+  "local_predicate": {
+    "kind": "compare",
+    "lhs":  {"extract": "fleet_current"},
+    "op":   ">=",
+    "rhs":  {"extract": "min_crew"}
+  },
+  "_predicate_notes": "L4 predicate authored 2026-05-12 from the four-layer empirical analysis (docs/four_layer_perception.md). Validated 100% correct on the 13 relevant test frames; abstains (returns None) on screens where min_crew or fleet capacity isn't visible, so the caller falls back to Claude heavy_check. Replaces ~5-7 Claude heavy_check calls per recruit cycle."
+}

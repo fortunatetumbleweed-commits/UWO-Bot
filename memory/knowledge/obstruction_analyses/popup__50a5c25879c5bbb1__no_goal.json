@@ -1,0 +1,21 @@
+{
+  "purpose": "Mini-map or navigation panel overlay showing current wind/current conditions and speed readings near Port Royal in the Atlantic Ocean",
+  "full_text": "C/TW 0.0 2↑",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "50a5c25879c5bbb1",
+  "goal_intent": null,
+  "cached_at": "2026-05-20T21:18:35.238405+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Mini-map or navigation panel overlay showing current wind/current conditions and speed readings near Port Royal in the Atlantic Ocean",
+    "full_text": "C/TW 0.0 2↑",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

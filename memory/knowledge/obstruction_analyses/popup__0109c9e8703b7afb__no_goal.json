@@ -1,0 +1,21 @@
+{
+  "purpose": "Mini-map panel showing nearby port distances, current season/time, and navigation data for sailing orientation",
+  "full_text": "C/TW 10 | HW 25.8 | Coordinates: 41,51,30,09 | Autumn Oct Daytime | ??? Approx 107km | Varna Approx 211.9km | ??? Approx 368.8km | ??? Approx 499.4km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "0109c9e8703b7afb",
+  "goal_intent": null,
+  "cached_at": "2026-05-28T13:14:58.634065+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Mini-map panel showing nearby port distances, current season/time, and navigation data for sailing orientation",
+    "full_text": "C/TW 10 | HW 25.8 | Coordinates: 41,51,30,09 | Autumn Oct Daytime | ??? Approx 107km | Varna Approx 211.9km | ??? Approx 368.8km | ??? Approx 499.4km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "The city navigation sidebar listing available facilities in Tripoli's port area (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) is overlaying the game view",
+  "full_text": "Spring Mar 15:58 Harbor Market Shipyard Bank Inn Sanctuary Union Bureau",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "6909e916ff058088",
+  "goal_intent": null,
+  "cached_at": "2026-05-21T17:55:51.948087+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The city navigation sidebar listing available facilities in Tripoli's port area (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) is overlaying the game view",
+    "full_text": "Spring Mar 15:58 Harbor Market Shipyard Bank Inn Sanctuary Union Bureau",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

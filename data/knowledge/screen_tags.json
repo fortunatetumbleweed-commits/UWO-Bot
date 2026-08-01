@@ -1,0 +1,208 @@
+{
+  "_comment": "Optional tags for capturing sub-state details within a screen type.",
+  "_comment2": "Tags appear as chips in the labeler after a screen type is selected. Key shortcuts are scoped to the tag panel — no conflict with screen type shortcuts.",
+
+  "screen_tags": {
+    "sea": [
+      {
+        "group": "Right Panel",
+        "single_select": true,
+        "tags": [
+          {"id": "right_panel:tasks",       "label": "Tasks tab",       "key": "t"},
+          {"id": "right_panel:ports",        "label": "Ports tab",       "key": "p"},
+          {"id": "right_panel:fleets",       "label": "Fleets tab",      "key": "f"},
+          {"id": "right_panel:ship_status",  "label": "Ship Status tab", "key": "s"}
+        ]
+      },
+      {
+        "group": "Sailing Mode",
+        "single_select": true,
+        "tags": [
+          {"id": "sail:auto",   "label": "Auto (destination set)", "key": "a"},
+          {"id": "sail:manual", "label": "Manual steering",        "key": "m"}
+        ]
+      },
+      {
+        "group": "Conditions",
+        "tags": [
+          {"id": "time:day",      "label": "Daytime",  "key": "d"},
+          {"id": "time:night",    "label": "Night",    "key": "n"},
+          {"id": "weather:rain",  "label": "Rain",     "key": "r"},
+          {"id": "weather:snow",  "label": "Snow",     "key": "w"}
+        ]
+      },
+      {
+        "group": "Training — Shoreline (ship-relative)",
+        "_comment": "Multi-select. Three independent binaries describing where land sits RELATIVE TO THE SHIP — NOT relative to the screen. A frontal wall fills the screen left-to-right but is NOT on the ship's port/starboard; tag it as ahead only. A river puts land on the ship's port AND starboard beams; tag both, do NOT tag ahead unless the channel curves so the bow is also blocked. Tagging combos: open sea = none; coastal sail with land on left = port; river/strait = port + starboard; wall ahead = ahead; bay wrapping from one side = ahead + that side; river curve = all three. Migrated from old S1-S7 schema on 2026-05-27.",
+        "tags": [
+          {"id": "shore:land_ahead",     "label": "Land AHEAD — bow blocked (would hit if going straight)",         "key": "4"},
+          {"id": "shore:land_port",      "label": "Land on PORT beam — coast to ship's LEFT (would hit turning left)",  "key": "2"},
+          {"id": "shore:land_starboard", "label": "Land on STARBOARD beam — coast to ship's RIGHT (would hit turning right)", "key": "3"},
+          {"id": "shore:faint_distant",  "label": "Faint distant land on horizon (far ahead, no decision yet)",     "key": "7"}
+        ]
+      },
+      {
+        "group": "Training — Port Beam (B1-B6)",
+        "_comment": "YOLO beam class. NOT single-select: a frame can have e.g. B1 (bright tall beam) and B5 (low visibility) simultaneously.",
+        "tags": [
+          {"id": "yolo:B1_beam_bright_tall", "label": "B1 Bright+tall beam (undiscovered)",  "key": "q"},
+          {"id": "yolo:B2_beam_dim_short",   "label": "B2 Dim/short beam (known port)"},
+          {"id": "yolo:B3_beam_edge",        "label": "B3 Beam at frame edge"},
+          {"id": "yolo:B4_beam_multiple",    "label": "B4 Multiple beams visible"},
+          {"id": "yolo:B5_beam_low_vis",     "label": "B5 Beam in rain/fog"},
+          {"id": "yolo:B6_beam_night",       "label": "B6 Beam at night"}
+        ]
+      },
+      {
+        "group": "Training — Reef (R1-R6)",
+        "_comment": "YOLO reef class. Hitting a reef changes the ship's heading. Not single-select.",
+        "tags": [
+          {"id": "yolo:R1_reef_ahead",        "label": "R1 Reef ahead (collision path)", "key": "e"},
+          {"id": "yolo:R2_reef_side",         "label": "R2 Reef to side (no collision)"},
+          {"id": "yolo:R3_reef_scattered",    "label": "R3 Reefs scattered"},
+          {"id": "yolo:R4_reef_near_coast",   "label": "R4 Reef near coastline"},
+          {"id": "yolo:R5_reef_low_light",    "label": "R5 Reef sunset/night"},
+          {"id": "yolo:R6_reef_fog_rain",     "label": "R6 Reef in fog/rain"}
+        ]
+      },
+      {
+        "group": "Training — Floating Ice (I1-I4)",
+        "_comment": "YOLO floating_ice negative-action class. White slabs; DON'T avoid them. Explicit class so the model doesn't confuse them with reefs.",
+        "tags": [
+          {"id": "yolo:I1_ice_single",      "label": "I1 Single ice slab",            "key": "z"},
+          {"id": "yolo:I2_ice_multiple",    "label": "I2 Multiple ice slabs"},
+          {"id": "yolo:I3_ice_with_reef",   "label": "I3 Ice + reefs same frame"},
+          {"id": "yolo:I4_ice_varied_light","label": "I4 Ice in different lighting"}
+        ]
+      },
+      {
+        "group": "Training — Occlusion notes",
+        "_comment": "Flags that say 'an important thing for training is partially hidden by translucent UI'. Training pipeline can use these to either exclude the frame, weight it differently, or use it as an augmentation-style example. Multi-select.",
+        "tags": [
+          {"id": "yolo:occ_right_panel_land", "label": "Land hidden by right panel", "key": "x"},
+          {"id": "yolo:occ_right_panel_beam", "label": "Beam hidden by right panel"},
+          {"id": "yolo:occ_right_panel_reef", "label": "Reef hidden by right panel"},
+          {"id": "yolo:occ_other",            "label": "Other occlusion (note details)"}
+        ]
+      },
+      {
+        "group": "Training — Mini-map content",
+        "_comment": "Multi-select tags for what is rendered in the mini-map (top-right radar). The mini-map sees a wider 360° area than the 3D sea view, so it can legitimately show land/ports/fleets that aren't visible in the main camera — that disagreement IS the leading-indicator signal we want to train on, not a labelling mistake.",
+        "tags": [
+          {"id": "minimap:land",                 "label": "Land visible in mini-map"},
+          {"id": "minimap:port_anchor",          "label": "Port marker (anchor)"},
+          {"id": "minimap:village_building",     "label": "Village marker (building)"},
+          {"id": "minimap:settlement_name_text", "label": "Port/village name text rendered"},
+          {"id": "minimap:fleet_merchant",       "label": "Merchant fleet (white diamond)"},
+          {"id": "minimap:fleet_pirate_regular", "label": "Regular pirate (yellow side-facing head)"},
+          {"id": "minimap:fleet_pirate_special", "label": "Special pirate (yellow front-facing head, mustache)"},
+          {"id": "minimap:player_neutral",       "label": "Neutral player (white asterisk)"},
+          {"id": "minimap:player_friend",        "label": "Friend player (orange asterisk)"},
+          {"id": "minimap:player_guild",         "label": "Guild player (green asterisk)"},
+          {"id": "minimap:player_hostile",       "label": "Hostile player (purple asterisk, bad karma)"},
+          {"id": "minimap:undiscovered_marker",  "label": "??? undiscovered location marker"}
+        ]
+      }
+    ],
+    "port_overworld": [
+      {
+        "group": "Right Panel",
+        "single_select": true,
+        "tags": [
+          {"id": "right_panel:tasks",     "label": "Tasks tab",     "key": "t"},
+          {"id": "right_panel:buildings", "label": "Buildings tab", "key": "b"},
+          {"id": "right_panel:players",   "label": "Players tab",   "key": "p"},
+          {"id": "right_panel:location",  "label": "Location tab",  "key": "l"}
+        ]
+      },
+      {
+        "group": "Conditions",
+        "tags": [
+          {"id": "time:day",     "label": "Daytime", "key": "d"},
+          {"id": "time:night",   "label": "Night",   "key": "n"},
+          {"id": "weather:rain", "label": "Rain",    "key": "r"}
+        ]
+      }
+    ],
+    "building_interior": [
+      {
+        "group": "Building Type",
+        "single_select": true,
+        "_comment": "Same vocabulary as sub_menu's Parent Building group (kept in sync deliberately).  Aliases (palace/castle, cathedral/temple/sanctuary/church) are kept as DISTINCT tags here — the layout loader resolves them via memory/knowledge/building_aliases.json.",
+        "tags": [
+          {"id": "building:harbor",         "label": "Harbor",         "key": "h"},
+          {"id": "building:inn",            "label": "Inn",            "key": "i"},
+          {"id": "building:market",         "label": "Market",         "key": "m"},
+          {"id": "building:bank",           "label": "Bank",           "key": "b"},
+          {"id": "building:shipyard",       "label": "Shipyard",       "key": "y"},
+          {"id": "building:castle",         "label": "Castle",         "key": "c"},
+          {"id": "building:church",         "label": "Church",         "key": "u"},
+          {"id": "building:bureau",         "label": "Bureau",         "key": "g"},
+          {"id": "building:union",          "label": "Union",          "key": "n"},
+          {"id": "building:item_shop",      "label": "Item Shop",      "key": "t"},
+          {"id": "building:estate",         "label": "Estate",         "key": "a"},
+          {"id": "building:fortune_teller", "label": "Fortune Teller", "key": "f"},
+          {"id": "building:palace",         "label": "Palace",         "key": "l"},
+          {"id": "building:cathedral",      "label": "Cathedral",      "key": "d"},
+          {"id": "building:temple",         "label": "Temple",         "key": "k"},
+          {"id": "building:sanctuary",      "label": "Sanctuary",      "key": "v"}
+        ]
+      }
+    ],
+    "sub_menu": [
+      {
+        "group": "Parent Building",
+        "single_select": true,
+        "_comment": "Required: tag every sub_menu with the parent building. Layout-generation tooling and the validator in tests/test_label_schema.py expect every sub_menu to have a building:X tag. Different in-game names that share sub-menu layouts (e.g. palace/castle, cathedral/temple/sanctuary/church) are kept as DISTINCT tags here — the layout loader resolves them to canonical layout files via memory/knowledge/building_aliases.json.",
+        "tags": [
+          {"id": "building:harbor",         "label": "Harbor",         "key": "h"},
+          {"id": "building:inn",            "label": "Inn",            "key": "i"},
+          {"id": "building:market",         "label": "Market",         "key": "m"},
+          {"id": "building:bank",           "label": "Bank",           "key": "b"},
+          {"id": "building:shipyard",       "label": "Shipyard",       "key": "y"},
+          {"id": "building:castle",         "label": "Castle",         "key": "c"},
+          {"id": "building:church",         "label": "Church",         "key": "u"},
+          {"id": "building:bureau",         "label": "Bureau",         "key": "g"},
+          {"id": "building:union",          "label": "Union",          "key": "n"},
+          {"id": "building:item_shop",      "label": "Item Shop",      "key": "t"},
+          {"id": "building:estate",         "label": "Estate",         "key": "a"},
+          {"id": "building:fortune_teller", "label": "Fortune Teller", "key": "f"},
+          {"id": "building:palace",         "label": "Palace",         "key": "l"},
+          {"id": "building:cathedral",      "label": "Cathedral",      "key": "d"},
+          {"id": "building:temple",         "label": "Temple",         "key": "k"},
+          {"id": "building:sanctuary",      "label": "Sanctuary",      "key": "v"}
+        ]
+      },
+      {
+        "group": "Action",
+        "single_select": true,
+        "tags": [
+          {"id": "action:supply",   "label": "Supply",   "key": "s"},
+          {"id": "action:purchase", "label": "Purchase", "key": "p"},
+          {"id": "action:sell",     "label": "Sell",     "key": "e"},
+          {"id": "action:explore",  "label": "Explore",  "key": "x"},
+          {"id": "action:repair",   "label": "Repair",   "key": "r"}
+        ]
+      }
+    ],
+    "world_map": [
+      {
+        "group": "State",
+        "tags": [
+          {"id": "state:city_info_open", "label": "City info panel open", "key": "c"},
+          {"id": "state:route_preview",  "label": "Route preview",        "key": "r"}
+        ]
+      }
+    ],
+    "port_arrival_overlay": [
+      {
+        "group": "Details",
+        "single_select": true,
+        "tags": [
+          {"id": "detail:first_visit", "label": "First visit (discovery notice)", "key": "f"},
+          {"id": "detail:returning",   "label": "Returning visit",                "key": "r"}
+        ]
+      }
+    ]
+  }
+}

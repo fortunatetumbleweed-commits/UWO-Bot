@@ -1,0 +1,21 @@
+{
+  "purpose": "City services navigation menu for Tripoli's Harbor district, listing available facilities such as Market, Shipyard, Bank, Inn, Sanctuary, Union, and Bureau",
+  "full_text": "I always pray and donate before setting sail, just in case. [Menu options: Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau]",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "2d8cb908841af877",
+  "goal_intent": null,
+  "cached_at": "2026-05-21T15:09:13.862008+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "City services navigation menu for Tripoli's Harbor district, listing available facilities such as Market, Shipyard, Bank, Inn, Sanctuary, Union, and Bureau",
+    "full_text": "I always pray and donate before setting sail, just in case. [Menu options: Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau]",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

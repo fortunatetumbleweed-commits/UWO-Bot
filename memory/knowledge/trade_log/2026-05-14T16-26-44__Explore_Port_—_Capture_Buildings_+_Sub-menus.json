@@ -1,0 +1,19 @@
+{
+  "task_name": "Explore Port — Capture Buildings + Sub-menus",
+  "started_at": "2026-05-14T16:26:44.013208+00:00",
+  "ended_at": "2026-05-14T17:26:04.639915+00:00",
+  "elapsed_seconds": 3560.626707,
+  "rounds_completed": 1,
+  "total_profit": 0,
+  "ducats_per_hour": 0.0,
+  "steps": [
+    {
+      "action": "explore_port",
+      "port": "london",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 3487.716540333,
+      "notes": "visited 7/11; locked=0; session=data/sessions/explore_london_2026-05-14_16-27-15"
+    }
+  ]
+}

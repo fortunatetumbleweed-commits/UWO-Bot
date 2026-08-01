@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation panel showing nearby ports/landmarks with distances, current season/time, and wind/weather conditions while sailing in the Pacific Ocean",
+  "full_text": "C/TW 10 | 27.0 | Coordinates: 41,81,39,42 | Autumn Oct Night | ??? Approx. 23.1km | ??? Approx. 422.5km | ??? Approx. 431.1km | Odesa Approx. 822.2km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "0ba4c0dfc91473e0",
+  "goal_intent": null,
+  "cached_at": "2026-05-28T13:37:53.455882+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Navigation panel showing nearby ports/landmarks with distances, current season/time, and wind/weather conditions while sailing in the Pacific Ocean",
+    "full_text": "C/TW 10 | 27.0 | Coordinates: 41,81,39,42 | Autumn Oct Night | ??? Approx. 23.1km | ??? Approx. 422.5km | ??? Approx. 431.1km | Odesa Approx. 822.2km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

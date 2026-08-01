@@ -1,0 +1,21 @@
+{
+  "purpose": "Fleet status panel showing the durability, crew complement, and life totals for each of the player's 7 ships while sailing near Berber Village in Spring/May daytime",
+  "full_text": "Berber Village (coords 25.20, -14.90) | Season: Spring, Month: May, Daytime | Ship stats — Durability / Crew / Life: 1) 5,046/5,046 171/337 41/70 | 2) 5,033/5,033 114/540 40/70 | 3) 4,724/4,724 122/250 38/70 | 4) 4,177/4,177 153/314 40/70 | 5) 3,827/3,827 139/321 40/70 | 6) 4,433/4,433 126/271 35/70 | 7) 4,586/4,586 128/242 35/70",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "f1f279c4455bd767",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T21:24:46.483764+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Fleet status panel showing the durability, crew complement, and life totals for each of the player's 7 ships while sailing near Berber Village in Spring/May daytime",
+    "full_text": "Berber Village (coords 25.20, -14.90) | Season: Spring, Month: May, Daytime | Ship stats — Durability / Crew / Life: 1) 5,046/5,046 171/337 41/70 | 2) 5,033/5,033 114/540 40/70 | 3) 4,724/4,724 122/250 38/70 | 4) 4,177/4,177 153/314 40/70 | 5) 3,827/3,827 139/321 40/70 | 6) 4,433/4,433 126/271 35/70 | 7) 4,586/4,586 128/242 35/70",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

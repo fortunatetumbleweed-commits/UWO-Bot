@@ -1,0 +1,21 @@
+{
+  "purpose": "An NPC dialogue bubble from a weary market worker complaining about their quota, overlapping with the Market building tooltip showing its trading hours (00:00–23:59) and function, plus a partially visible NPC hint about black markets only open at late hours",
+  "full_text": "I just want to fulfill my quota and go home. Market. 00:00–23:59. Buy and sell Trade Goods. Note that some items are sold in black markets that only open at late hours.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "f2358cf5075ff217",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T17:40:14.807494+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "An NPC dialogue bubble from a weary market worker complaining about their quota, overlapping with the Market building tooltip showing its trading hours (00:00–23:59) and function, plus a partially visible NPC hint about black markets only open at late hours",
+    "full_text": "I just want to fulfill my quota and go home. Market. 00:00–23:59. Buy and sell Trade Goods. Note that some items are sold in black markets that only open at late hours.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

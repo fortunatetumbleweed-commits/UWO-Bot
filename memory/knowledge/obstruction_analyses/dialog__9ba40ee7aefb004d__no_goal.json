@@ -1,0 +1,21 @@
+{
+  "purpose": "The main HUD overlay showing the player's ship status panel (resources, load capacity, food, ammo) and the right-side action menu — this is the standard in-game interface, not a blocking dialog",
+  "full_text": "Ship | Blue Gem 100,325 | Red Gem 3,436 | Mates | Energy 599/539 | Total Load Capacity 2,923/4,066 | Food 103 | Ammo | Journal | Dispatch | Sailing Log | Voyage",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "dialog",
+  "structural_hash": "9ba40ee7aefb004d",
+  "goal_intent": null,
+  "cached_at": "2026-05-21T16:23:47.465398+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The main HUD overlay showing the player's ship status panel (resources, load capacity, food, ammo) and the right-side action menu — this is the standard in-game interface, not a blocking dialog",
+    "full_text": "Ship | Blue Gem 100,325 | Red Gem 3,436 | Mates | Energy 599/539 | Total Load Capacity 2,923/4,066 | Food 103 | Ammo | Journal | Dispatch | Sailing Log | Voyage",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

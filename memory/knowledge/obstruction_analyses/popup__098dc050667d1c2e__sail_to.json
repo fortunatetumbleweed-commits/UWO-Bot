@@ -1,0 +1,21 @@
+{
+  "purpose": "A skill/activity point summary overlay is showing the accumulated experience or action counts for Sea Exploration, Explore Land, Fishing, and Cannot Salvage activities performed during the current voyage segment",
+  "full_text": "Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "098dc050667d1c2e",
+  "goal_intent": "sail_to",
+  "cached_at": "2026-05-24T00:59:05.489754+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A skill/activity point summary overlay is showing the accumulated experience or action counts for Sea Exploration, Explore Land, Fishing, and Cannot Salvage activities performed during the current voyage segment",
+    "full_text": "Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

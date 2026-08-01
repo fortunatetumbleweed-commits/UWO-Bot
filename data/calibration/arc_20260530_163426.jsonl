@@ -1,0 +1,17 @@
+{"t_s": 2.153856540999996, "phase": "stopped_boundary", "speed_kt": null, "heading_deg": 309.5658411961844, "lat": 35.32, "lon": 16.23}
+{"t_s": 1.9462037090000024, "phase": "accel", "speed_kt": null, "heading_deg": 304.46358701866325, "lat": null, "lon": null}
+{"t_s": 5.1832758749999925, "phase": "accel", "speed_kt": null, "heading_deg": 310.7413577713739, "lat": null, "lon": null}
+{"t_s": 8.514077708999992, "phase": "accel", "speed_kt": null, "heading_deg": 311.9582159175112, "lat": null, "lon": null}
+{"t_s": 11.897813749999997, "phase": "accel", "speed_kt": null, "heading_deg": 302.05704162571413, "lat": null, "lon": null}
+{"t_s": 1.821938541999998, "phase": "turn_pre", "speed_kt": null, "heading_deg": 122.26465223495262, "lat": null, "lon": null}
+{"t_s": 8.653536459000009, "phase": "turn_seg0", "speed_kt": null, "heading_deg": 1.9723550387514024, "lat": null, "lon": null}
+{"t_s": 15.818618209000007, "phase": "turn_seg1", "speed_kt": null, "heading_deg": 1.9723550387514024, "lat": null, "lon": null}
+{"t_s": 22.81692345900001, "phase": "turn_seg2", "speed_kt": null, "heading_deg": 1.9723550387514024, "lat": null, "lon": null}
+{"t_s": 25.49511562500001, "phase": "turn_post", "speed_kt": null, "heading_deg": 185.0019430461622, "lat": null, "lon": null}
+{"t_s": 2.165393999999992, "phase": "stopped_boundary_2", "speed_kt": null, "heading_deg": 184.14740891201677, "lat": 34.95, "lon": 15.9}
+{"t_s": 8.487840083000009, "phase": "start_w_rudder_pre", "speed_kt": null, "heading_deg": 184.72686080872901, "lat": null, "lon": null}
+{"t_s": 15.313702916000011, "phase": "start_w_rudder_seg0", "speed_kt": null, "heading_deg": 137.39145005340987, "lat": null, "lon": null}
+{"t_s": 22.390760166000007, "phase": "start_w_rudder_seg1", "speed_kt": null, "heading_deg": 125.87197651787125, "lat": null, "lon": null}
+{"t_s": 29.293575040999997, "phase": "start_w_rudder_seg2", "speed_kt": null, "heading_deg": 83.88553981616496, "lat": null, "lon": null}
+{"t_s": 31.967688333000012, "phase": "start_w_rudder_post", "speed_kt": null, "heading_deg": 113.97604903574336, "lat": null, "lon": null}
+{"t_s": 34.815672291, "phase": "end_hud", "speed_kt": null, "heading_deg": 115.39218849827103, "lat": 34.41, "lon": 16.21}

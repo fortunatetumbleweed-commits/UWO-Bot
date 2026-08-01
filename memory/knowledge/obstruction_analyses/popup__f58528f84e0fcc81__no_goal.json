@@ -1,0 +1,21 @@
+{
+  "purpose": "The city services side-panel for Tripoli is open, listing all available port facilities (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) along with the current in-game date and time.",
+  "full_text": "Spring Apr 06:02 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "f58528f84e0fcc81",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T02:26:57.632023+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The city services side-panel for Tripoli is open, listing all available port facilities (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) along with the current in-game date and time.",
+    "full_text": "Spring Apr 06:02 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

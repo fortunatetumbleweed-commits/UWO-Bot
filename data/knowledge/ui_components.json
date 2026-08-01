@@ -1,0 +1,257 @@
+{
+  "_comment": "Visual UI component vocabulary for UWO. Each entry describes a reusable visual element that appears across one or more screen types. The bot identifies components by appearance (via OmniParser or template matching), not by pixel coordinates. Add new components as they are discovered.",
+
+  "components": [
+
+    {
+      "id": "market_good_tile",
+      "label": "Market Good Tile",
+      "description": "A rectangular tile representing a single tradable good in the market. Contains an item illustration, the good's name, the available stock count, and the current price with a coin (ducat) icon.",
+      "visual_elements": {
+        "item_image":   "square illustration of the good (food, cloth, metal, etc.) in the upper portion",
+        "name_label":   "text name of the good below or overlaid on the image",
+        "stock_count":  "small number indicating available quantity, typically top-right corner of tile",
+        "price":        "number with a gold coin icon (ducat symbol), typically bottom of tile",
+        "trend_arrow":  "optional up/down arrow or colour tint indicating price direction"
+      },
+      "appears_on":   ["sub_menu"],
+      "meaning":      "Tappable market listing. Tap to open buy/sell quantity dialog (dialog_transaction).",
+      "ocr_targets":  ["name_label", "stock_count", "price"],
+      "notes":        "Price below 90% of index = buy candidate; above 110% = sell candidate. Tile may be greyed out if stock is 0 or player lacks funds."
+    },
+
+    {
+      "id": "fishing_hook_icon",
+      "label": "Fishing Hook Icon",
+      "description": "A fishing hook icon that appears while sailing, indicating the player can enter Fishing Mode.",
+      "visual_elements": {
+        "icon": "stylised fishing hook shape, typically in a circular button"
+      },
+      "appears_on":   ["sea"],
+      "meaning":      "Tap to enter Fishing Mode. Bot should ignore unless fishing is part of the current routine.",
+      "notes":        "Only visible while on a sailing ship. Not present in port or during sailing_idle."
+    },
+
+    {
+      "id": "supply_days_indicator",
+      "label": "Supplies Remaining Indicator",
+      "description": "Shows how many days of supplies the fleet has left. Appears in the top-left chrome area of the sea screen.",
+      "visual_elements": {
+        "icon":  "food/supply icon (e.g. bread, barrel)",
+        "value": "number of days remaining as text"
+      },
+      "appears_on":   ["sea"],
+      "meaning":      "Days of supplies left. Bot must compare against voyage ETA before setting sail. If supplies < ETA, go to Harbor and resupply first.",
+      "ocr_targets":  ["value"],
+      "notes":        "Critical check at voyage start. Located top-left of sea chrome."
+    },
+
+    {
+      "id": "voyage_eta_bar",
+      "label": "Voyage ETA Bar",
+      "description": "Bottom-centre bar showing the destination port name and estimated travel time when auto-sailing to a set destination.",
+      "visual_elements": {
+        "destination_name": "port name text",
+        "ship_icon":        "small ship icon separating destination from ETA",
+        "eta_value":        "number + 'days' or 'hours' label"
+      },
+      "appears_on":   ["sea"],
+      "meaning":      "Active voyage in progress. Absent during manual sailing (no destination set). Bot reads destination + ETA to decide whether supplies are sufficient.",
+      "ocr_targets":  ["destination_name", "eta_value"],
+      "notes":        "Presence of this bar distinguishes auto_sailing from manual_sailing sub-state."
+    },
+
+    {
+      "id": "back_arrow_button",
+      "label": "Back Arrow Button",
+      "description": "Left-pointing arrow in the top-left corner. Navigates back to the previous screen.",
+      "visual_elements": {
+        "icon": "← arrow, usually inside a small rounded rectangle or circle"
+      },
+      "appears_on":   ["port_map", "building_interior", "sub_menu", "world_map", "sea"],
+      "meaning":      "Tap to go back one level. Bot uses this to exit any screen and return toward port_overworld or sea.",
+      "notes":        "Absent on port_overworld (hamburger is there instead). Also absent on loading and sailing_idle screens."
+    },
+
+    {
+      "id": "home_button",
+      "label": "Home Button",
+      "description": "House icon (⌂) in the top-right corner. Returns directly to the overworld (port or sea) from anywhere.",
+      "visual_elements": {
+        "icon": "house / home symbol ⌂"
+      },
+      "appears_on":   ["port_map", "building_interior", "sub_menu", "world_map", "dialog_transaction", "main_menu"],
+      "meaning":      "Tap to jump directly to port_overworld or sea, bypassing the back-navigation chain.",
+      "notes":        "Faster than repeated back-arrow taps when deeply nested. Bot can use as emergency 'return to overworld'."
+    },
+
+    {
+      "id": "hamburger_menu_button",
+      "label": "Hamburger Menu Button",
+      "description": "Three horizontal lines (≡) in the top-right corner of the overworld screens. Opens the main menu.",
+      "visual_elements": {
+        "icon": "≡ three stacked horizontal lines"
+      },
+      "appears_on":   ["port_overworld", "sea"],
+      "meaning":      "Tap to open main_menu panel. Icon changes to X when menu is open.",
+      "notes":        "Unique to port_overworld and sea — strongest single signal for classifying those two screens."
+    },
+
+    {
+      "id": "main_menu_close_button",
+      "label": "Main Menu Close (X) Button",
+      "description": "X icon replacing the hamburger button when the main menu is open.",
+      "visual_elements": {
+        "icon": "✕ or × in the top-right corner"
+      },
+      "appears_on":   ["main_menu"],
+      "meaning":      "Tap to close the main menu and return to the underlying overworld.",
+      "notes":        "Key classifier signal for main_menu screen type."
+    },
+
+    {
+      "id": "world_map_globe_button",
+      "label": "World Map Globe Button",
+      "description": "Globe icon in the bottom-left of the port map screen. Opens the world map.",
+      "visual_elements": {
+        "icon":  "globe / Earth icon",
+        "label": "'World Map' text label beneath the icon"
+      },
+      "appears_on":   ["port_map"],
+      "meaning":      "Tap to open world_map for inter-port navigation.",
+      "notes":        "Unique to port_map — only screen with this button. Key differentiator for port_map classification."
+    },
+
+    {
+      "id": "mini_map",
+      "label": "Mini Map",
+      "description": "Small overhead map thumbnail in the right panel showing the current area (port layout or sea region). Tapping it opens the full port map or sea map.",
+      "visual_elements": {
+        "map_thumbnail": "small overhead view with port buildings or sea/coastline",
+        "player_dot":    "marker indicating current player position"
+      },
+      "appears_on":   ["port_overworld", "sea"],
+      "meaning":      "Tap to open port_map (in port) or zoom sea map (at sea).",
+      "notes":        "Part of the right panel chrome. Position stable across frames."
+    },
+
+    {
+      "id": "npc_portrait",
+      "label": "NPC / Character Portrait",
+      "description": "Large illustrated portrait of an NPC or building owner occupying the upper-centre area of the screen during dialogue. Always accompanied by a dialogue text box at the bottom-centre.",
+      "visual_elements": {
+        "portrait":   "detailed character illustration, upper-centre, typically half to two-thirds screen height",
+        "name_label": "character title/name above the text box (e.g. 'Harbor Official', 'Market Owner')"
+      },
+      "appears_on":   ["building_npc_overlay"],
+      "meaning":      "Blocking dialogue in progress. Bot must tap to advance text or select a response option.",
+      "notes":        "Portrait presence is the primary signal distinguishing building_npc_overlay from building_interior ambient greeting (where the NPC is part of the scene, not a full overlay)."
+    },
+
+    {
+      "id": "dialogue_text_box",
+      "label": "Dialogue Text Box",
+      "description": "Rectangular text area at the bottom-centre of the screen showing NPC speech. Has a speaker name/title label at the top of the box.",
+      "visual_elements": {
+        "speaker_label": "NPC name or role at the top of the box (e.g. 'Harbor Official')",
+        "speech_text":   "dialogue text in the main box area",
+        "advance_cue":   "tap indicator (blinking arrow or 'tap to continue') when more text follows"
+      },
+      "appears_on":   ["building_npc_overlay", "building_interior"],
+      "meaning":      "In building_npc_overlay: blocking — tap to advance. In building_interior: ambient — comes and goes automatically, non-blocking.",
+      "ocr_targets":  ["speaker_label", "speech_text"],
+      "notes":        "Same visual component in both contexts; behaviour differs. Bot should only act on it in building_npc_overlay context."
+    },
+
+    {
+      "id": "confirm_cancel_buttons",
+      "label": "Confirm / Cancel Button Pair",
+      "description": "A pair of buttons (often colour-coded: green/blue for confirm, grey/red for cancel) at the bottom of a dialog_transaction or dialog_system popup.",
+      "visual_elements": {
+        "confirm_btn": "prominent coloured button with text like 'Confirm', 'OK', 'Buy', 'Supply'",
+        "cancel_btn":  "muted button with text like 'Cancel', 'Back', 'Close'"
+      },
+      "appears_on":   ["dialog_transaction", "dialog_system"],
+      "meaning":      "Bot taps confirm to proceed with the action, cancel to abort.",
+      "notes":        "Confirm is typically larger or more prominently coloured. Bot should default to confirm in automated routines unless conditions are not met (e.g. price too high)."
+    },
+
+    {
+      "id": "tab_bar",
+      "label": "Tab Bar",
+      "description": "A row of tabs at the top of a sub_menu screen, switching between content categories. Example: Harbor Supply tabs (Custom / Adventure / Trade / Combat) or Market category tabs.",
+      "visual_elements": {
+        "tabs":         "row of labelled buttons, active tab visually highlighted",
+        "active_tab":   "brighter colour, underline, or raised appearance"
+      },
+      "appears_on":   ["sub_menu"],
+      "meaning":      "Tap a tab to switch the content panel below it. OCR the tab labels to identify which sub-menu type this is.",
+      "ocr_targets":  ["tab labels"],
+      "notes":        "Presence of a tab bar is a strong visual signal for sub_menu vs dialog_transaction (which never has tabs)."
+    },
+
+    {
+      "id": "price_trend_badge",
+      "label": "Price Event / Trend Badge",
+      "description": "A small badge or label overlaid on a market good tile or market header indicating an active price event (Soaring, Plunging, Major Trend, etc.).",
+      "visual_elements": {
+        "badge_text":  "event name text (e.g. 'Soaring', 'Major Trend')",
+        "badge_color": "typically red for falling, green/gold for rising"
+      },
+      "appears_on":   ["sub_menu"],
+      "meaning":      "A price event is active on this good. Bot should prioritise goods with favourable event badges.",
+      "ocr_targets":  ["badge_text"],
+      "notes":        "Major Trend badges are especially valuable — prices can be 200-300% of normal."
+    },
+
+    {
+      "id": "character_display",
+      "label": "Character / Company Display Widget",
+      "description": "Bottom-centre widget in port_overworld showing the player's character model with company identity labels floating above. Present whenever the player is on foot in a port.",
+      "visual_elements": {
+        "character_model": "animated 3-D character sprite, bottom-centre of screen",
+        "company_name":    "text label above the character head",
+        "national_flag":   "small flag icon next to the company name, indicating the player's nation",
+        "guild_name":      "text label above the company name, only visible if the player has joined a guild",
+        "appellation":     "title/appellation text, only visible if the player has earned one"
+      },
+      "appears_on":   ["port_overworld"],
+      "meaning":      "Identifies whose character this is. Bot should not interact with this widget. Useful as a visual anchor confirming port_overworld screen type.",
+      "ocr_targets":  ["company_name", "guild_name", "appellation"],
+      "notes":        "Labels above the character can be multilingual (guild names may be in any script). The widget sits directly above the company_level_bar. Replaced by ship_display when at sea."
+    },
+
+    {
+      "id": "ship_display",
+      "label": "Ship / Company Display Widget",
+      "description": "Bottom-centre widget in the sea screen showing the player's ship model with company identity labels floating above — the sailing equivalent of character_display.",
+      "visual_elements": {
+        "ship_model":    "3-D ship sprite, bottom-centre of screen; style depends on ship type",
+        "company_name":  "text label above the ship",
+        "national_flag": "small flag icon next to the company name",
+        "guild_name":    "text label above the company name, only if in a guild",
+        "appellation":   "title text, only if earned"
+      },
+      "appears_on":   ["sea"],
+      "meaning":      "Visual confirmation the player is at sea. Ship model style can hint at fleet strength but bot does not need to parse it. Widget sits above the voyage_eta_bar (if present) and above the company_level_bar.",
+      "ocr_targets":  ["company_name"],
+      "notes":        "Layout mirrors character_display but renders a ship instead of a character. The voyage_eta_bar appears between the ship and the company_level_bar only when a destination is set."
+    },
+
+    {
+      "id": "company_level_bar",
+      "label": "Company Level Progress Bar",
+      "description": "Thin horizontal XP-style progress bar at the very bottom centre of the screen showing the player's company level and progress toward the next level. Present on both port_overworld and sea.",
+      "visual_elements": {
+        "level_number": "current company level, displayed at the left end of the bar",
+        "fill_bar":     "coloured fill showing progress toward next level (left = 0%, right = 100%)",
+        "xp_label":     "optional current/max XP text overlaid on or beside the bar"
+      },
+      "appears_on":   ["port_overworld", "sea"],
+      "meaning":      "Informational — bot reads level to determine which activities are unlocked. No tap action on the bar itself.",
+      "ocr_targets":  ["level_number", "xp_label"],
+      "notes":        "Positioned at the very bottom centre, below character_display (port) or ship_display (sea). Acts as a persistent anchor for confirming either of those two screen types."
+    }
+
+  ]
+}

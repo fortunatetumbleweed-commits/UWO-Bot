@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation panel showing the mini-map, current season/time, and a list of nearby ports with distances — this is the standard sailing HUD sidebar, not a true popup",
+  "full_text": "C/HW | Wind: 0.0 | Map showing Tripoli area | Coordinates: 33,29,13,09 | Season: Winter, Month: Dec, Time: Night | Tripoli Approx. 14.7km | ??? Approx. 430.4km | ??? Approx. 473km | Benghazi Approx. 542.6km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "b219a30129485f2e",
+  "goal_intent": null,
+  "cached_at": "2026-05-30T04:57:48.858875+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Navigation panel showing the mini-map, current season/time, and a list of nearby ports with distances — this is the standard sailing HUD sidebar, not a true popup",
+    "full_text": "C/HW | Wind: 0.0 | Map showing Tripoli area | Coordinates: 33,29,13,09 | Season: Winter, Month: Dec, Time: Night | Tripoli Approx. 14.7km | ??? Approx. 430.4km | ??? Approx. 473km | Benghazi Approx. 542.6km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

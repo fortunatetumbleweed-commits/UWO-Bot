@@ -1,0 +1,21 @@
+{
+  "purpose": "A news/patch-notes dropdown overlay showing recent game updates (New Admiral Vittorio Sartori, Investment Season 6) and notices about minimum investment amount changes, triggered from the Perk attendance screen's notification bell.",
+  "full_text": "Updates — May 13 Patch Notes (added on 5/14 16:17 UTC+9), 4 days ago. April 8 Patch Note (Updated on 4/10 11:00 UTC+9), 2026.04.06. Mar. 11 Patch Note (Added on 5/6 19:37), 2026.03.09. Notices — Notice Regarding Minimum Investment Amount, 7 hours ago. Background: Vittorio Sartori New Admiral Update. Investment Season 6. Attendance Time (UTC+09:00) 2026.05.13 – 2026.06.09, Day 7.",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "7be941b4cf454cb9",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T16:22:13.159039+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "A news/patch-notes dropdown overlay showing recent game updates (New Admiral Vittorio Sartori, Investment Season 6) and notices about minimum investment amount changes, triggered from the Perk attendance screen's notification bell.",
+    "full_text": "Updates — May 13 Patch Notes (added on 5/14 16:17 UTC+9), 4 days ago. April 8 Patch Note (Updated on 4/10 11:00 UTC+9), 2026.04.06. Mar. 11 Patch Note (Added on 5/6 19:37), 2026.03.09. Notices — Notice Regarding Minimum Investment Amount, 7 hours ago. Background: Vittorio Sartori New Admiral Update. Investment Season 6. Attendance Time (UTC+09:00) 2026.05.13 – 2026.06.09, Day 7.",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

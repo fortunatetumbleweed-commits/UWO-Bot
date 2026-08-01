@@ -1,0 +1,21 @@
+{
+  "purpose": "A voyage activity summary popup displaying the counts of Sea Exploration, Explore Land, Fishing, and Cannot Salvage actions performed during the current sailing trip",
+  "full_text": "Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "aef80aea77a94170",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T13:51:53.600420+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A voyage activity summary popup displaying the counts of Sea Exploration, Explore Land, Fishing, and Cannot Salvage actions performed during the current sailing trip",
+    "full_text": "Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

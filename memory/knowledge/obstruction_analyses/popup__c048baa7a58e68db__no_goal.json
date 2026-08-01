@@ -1,0 +1,21 @@
+{
+  "purpose": "A tooltip popup describing the Bank building in Las Palmas, explaining it can safeguard riches, offer savings accounts with interest, or sell insurance plans.",
+  "full_text": "Bank — 00:00-23:59 — Keep your riches safe, sign up for a savings account to earn interest, or purchase an insurance plan. Spring Apr 22:08 | Harbor | Market | Shipyard | Bank | Inn | Sanctuary | Union | Bureau",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "c048baa7a58e68db",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T16:48:07.928886+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A tooltip popup describing the Bank building in Las Palmas, explaining it can safeguard riches, offer savings accounts with interest, or sell insurance plans.",
+    "full_text": "Bank — 00:00-23:59 — Keep your riches safe, sign up for a savings account to earn interest, or purchase an insurance plan. Spring Apr 22:08 | Harbor | Market | Shipyard | Bank | Inn | Sanctuary | Union | Bureau",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

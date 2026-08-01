@@ -1,0 +1,21 @@
+{
+  "purpose": "The Bank building tooltip has appeared, describing the Bank's services (savings accounts and insurance plans), while a nearby NPC named TaylorFP is speaking about gifts earned through exploration — this is an informational building popup triggered by proximity or tap near the Bank in London.",
+  "full_text": "Bank. 00:00-23:59. Keep your riches safe, sign up for a savings account to earn interest, or purchase an insurance plan. TaylorFP says: Is there anyone who would dislike a gift that was earned through exploration?",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "2aff6889919e1747",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T20:53:15.531507+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Bank building tooltip has appeared, describing the Bank's services (savings accounts and insurance plans), while a nearby NPC named TaylorFP is speaking about gifts earned through exploration — this is an informational building popup triggered by proximity or tap near the Bank in London.",
+    "full_text": "Bank. 00:00-23:59. Keep your riches safe, sign up for a savings account to earn interest, or purchase an insurance plan. TaylorFP says: Is there anyone who would dislike a gift that was earned through exploration?",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

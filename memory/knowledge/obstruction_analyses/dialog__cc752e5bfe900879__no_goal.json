@@ -1,0 +1,21 @@
+{
+  "purpose": "This is the main game HUD/navigation overlay showing the player's ship status, resources (Ducats, Gems, Energy), cargo load, and quick-access menu buttons — not a dialog obstruction, but the persistent in-game interface including the action menu panel on the right side of the screen",
+  "full_text": "Ship | Blue Gem 100,043 | Red Gem 3,436 | Mates | Energy 599 / 539 | Total Load Capacity 2,595/4,066 | Journal | Food 78 | Ammo 0 | Dispatch | Sailing Log | Voyage",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "dialog",
+  "structural_hash": "cc752e5bfe900879",
+  "goal_intent": null,
+  "cached_at": "2026-05-20T21:00:08.265288+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "This is the main game HUD/navigation overlay showing the player's ship status, resources (Ducats, Gems, Energy), cargo load, and quick-access menu buttons — not a dialog obstruction, but the persistent in-game interface including the action menu panel on the right side of the screen",
+    "full_text": "Ship | Blue Gem 100,043 | Red Gem 3,436 | Mates | Energy 599 / 539 | Total Load Capacity 2,595/4,066 | Journal | Food 78 | Ammo 0 | Dispatch | Sailing Log | Voyage",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

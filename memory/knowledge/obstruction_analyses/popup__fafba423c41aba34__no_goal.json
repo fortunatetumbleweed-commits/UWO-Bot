@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation panel showing nearby ports and distances, with a mini-map displaying the current position near Tripoli in the Mediterranean during Winter/December daytime",
+  "full_text": "C/HW | 10 | 0.0 | Tripoli (33,24,13,10) | Winter Dec Daytime | Tripoli Approx. 10km | ??? Approx. 433.2km | ??? Approx. 477.6km | Benghazi Approx. 540.8km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "fafba423c41aba34",
+  "goal_intent": null,
+  "cached_at": "2026-05-30T01:35:22.263619+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Navigation panel showing nearby ports and distances, with a mini-map displaying the current position near Tripoli in the Mediterranean during Winter/December daytime",
+    "full_text": "C/HW | 10 | 0.0 | Tripoli (33,24,13,10) | Winter Dec Daytime | Tripoli Approx. 10km | ??? Approx. 433.2km | ??? Approx. 477.6km | Benghazi Approx. 540.8km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

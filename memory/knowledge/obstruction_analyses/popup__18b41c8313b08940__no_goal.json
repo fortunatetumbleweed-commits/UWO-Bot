@@ -1,0 +1,21 @@
+{
+  "purpose": "Mini-map navigation panel showing the player's current location near Benghazi and a list of nearby ports/landmarks with approximate distances",
+  "full_text": "HW 10 | Wind: 0.0 | Benghazi (32.53, 19.95) | Anchor: Benghazi | Nearby: ??? Approx. 533.2km, ??? Approx. 558.4km, ??? Approx. 678.6km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "18b41c8313b08940",
+  "goal_intent": null,
+  "cached_at": "2026-05-28T18:47:39.652494+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Mini-map navigation panel showing the player's current location near Benghazi and a list of nearby ports/landmarks with approximate distances",
+    "full_text": "HW 10 | Wind: 0.0 | Benghazi (32.53, 19.95) | Anchor: Benghazi | Nearby: ??? Approx. 533.2km, ??? Approx. 558.4km, ??? Approx. 678.6km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

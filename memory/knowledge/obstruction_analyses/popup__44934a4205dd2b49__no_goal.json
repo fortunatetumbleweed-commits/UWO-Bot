@@ -1,0 +1,21 @@
+{
+  "purpose": "A nearby NPC fleet ('Aztec Searchers') encounter panel showing the activities and skill levels of that fleet, including Sea Exploration, Explore Land, Fishing, and a Cannot Salvage notice",
+  "full_text": "Aztec Searchers — Sea Exploration x780, Explore Land x1,535, Fishing x968, Cannot Salvage x140",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "44934a4205dd2b49",
+  "goal_intent": null,
+  "cached_at": "2026-05-20T21:52:47.164175+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A nearby NPC fleet ('Aztec Searchers') encounter panel showing the activities and skill levels of that fleet, including Sea Exploration, Explore Land, Fishing, and a Cannot Salvage notice",
+    "full_text": "Aztec Searchers — Sea Exploration x780, Explore Land x1,535, Fishing x968, Cannot Salvage x140",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

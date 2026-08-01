@@ -1,0 +1,21 @@
+{
+  "purpose": "The right-side navigation panel showing the mini-map, current season/time, and a list of nearby ports with distances (Tripoli ~13km, unknown ports at ~430.7km and ~474.8km, Benghazi ~541km) — this is a persistent HUD panel, not a blocking popup",
+  "full_text": "TW | 10 | 12 | Wind: 0.0 | 3A | 04 | Autumn Nov Night | Tripoli 33.27,13.10 | Tripoli Approx. 13km | ??? Approx. 430.7km | ??? Approx. 474.8km | Benghazi Approx. 541km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "bbf1f7b02f61a1fc",
+  "goal_intent": null,
+  "cached_at": "2026-05-29T00:16:59.469858+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The right-side navigation panel showing the mini-map, current season/time, and a list of nearby ports with distances (Tripoli ~13km, unknown ports at ~430.7km and ~474.8km, Benghazi ~541km) — this is a persistent HUD panel, not a blocking popup",
+    "full_text": "TW | 10 | 12 | Wind: 0.0 | 3A | 04 | Autumn Nov Night | Tripoli 33.27,13.10 | Tripoli Approx. 13km | ??? Approx. 430.7km | ??? Approx. 474.8km | Benghazi Approx. 541km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

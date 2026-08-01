@@ -1,0 +1,21 @@
+{
+  "purpose": "An informational tooltip explaining the Energy currency system, showing daily charge costs, company level increase costs, and the player's current maximum Energy capacity",
+  "full_text": "Energy — Currency required for using various contents. Daily Charge: 77. Company LV Increase: 78. Receive Energy: 50. Max 539 available to own. It's a peaceful village. Amity: Neutral 60,000/100,000. Status Effect Details. Weekly Reward: None.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "a5e114f7f18ef0d2",
+  "goal_intent": "sail_to",
+  "cached_at": "2026-05-24T01:05:17.075306+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "An informational tooltip explaining the Energy currency system, showing daily charge costs, company level increase costs, and the player's current maximum Energy capacity",
+    "full_text": "Energy — Currency required for using various contents. Daily Charge: 77. Company LV Increase: 78. Receive Energy: 50. Max 539 available to own. It's a peaceful village. Amity: Neutral 60,000/100,000. Status Effect Details. Weekly Reward: None.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "The Black Market shop screen is open, displaying nine purchasable items (building materials, promotion tools, face deco, materials, blueprints, and contracts) with their prices and stock quantities, awaiting the player to select and purchase items.",
+  "full_text": "Black Market | Until Refresh 20:30:39 | Refresh cost: 100 diamonds | Gear | Tool | Black Market | Sell | Medium Keel (Building Materials) 0/5 x67 — 30 diamonds | Rosewood Mast (Building Materials) 0/10 x729 — 5 diamonds | Wooden Astrolabe (Promotion Tool) 0/3 x1,951 — 1,197 gold | Ghost's Mask (Face Deco) 0/5 x0 — 60 diamonds | B Grade Parts Request Letter (Material) 0/5 x86 — 37 diamonds | B Grade Processed Metal (Material) 0/5 x496 — 5 diamonds | Buss Blueprint (Blueprint) 0/5 x31 — 9 diamonds | Balboa Orid Contract (Contract) 0/5 x0 — 5 diamonds | Elizabeth Vigée Le Brun Contract (Contract) 0/5 x0 — 5 diamonds | Language Effect: Black Market Price Discount | Put In Bulk | Cart: Please select an item to purchase. Purchase Price: 0",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "dd271958a010077b",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T18:29:46.805792+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Black Market shop screen is open, displaying nine purchasable items (building materials, promotion tools, face deco, materials, blueprints, and contracts) with their prices and stock quantities, awaiting the player to select and purchase items.",
+    "full_text": "Black Market | Until Refresh 20:30:39 | Refresh cost: 100 diamonds | Gear | Tool | Black Market | Sell | Medium Keel (Building Materials) 0/5 x67 — 30 diamonds | Rosewood Mast (Building Materials) 0/10 x729 — 5 diamonds | Wooden Astrolabe (Promotion Tool) 0/3 x1,951 — 1,197 gold | Ghost's Mask (Face Deco) 0/5 x0 — 60 diamonds | B Grade Parts Request Letter (Material) 0/5 x86 — 37 diamonds | B Grade Processed Metal (Material) 0/5 x496 — 5 diamonds | Buss Blueprint (Blueprint) 0/5 x31 — 9 diamonds | Balboa Orid Contract (Contract) 0/5 x0 — 5 diamonds | Elizabeth Vigée Le Brun Contract (Contract) 0/5 x0 — 5 diamonds | Language Effect: Black Market Price Discount | Put In Bulk | Cart: Please select an item to purchase. Purchase Price: 0",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

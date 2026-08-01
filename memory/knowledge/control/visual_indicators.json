@@ -1,0 +1,202 @@
+{
+  "_note": "Visual semantic dictionary for the small visual elements in UWO that carry consistent meaning across screens — colored buttons, status indicators, attention badges, and other small graphical cues with stable interpretation.  Hand-authored from gameplay observation.  Read by perception code (where detectors exist) and by Claude-guided prompts as ground-truth context.  Pure data — no logic.  Add or refine entries here when a new indicator is observed or an existing one is found wrong; pure config — no code change required to update.",
+
+  "indicators": {
+
+    "red_dot": {
+      "_note": "Small filled red circle that overlays an icon or menu item when there is something the player should look at.  Universal 'needs attention' badge — same icon with vs without the dot is the SAME element, just in two different states.",
+      "appearance": "small filled red circle (precise pixel size to be measured — see open_questions)",
+      "position":   "upper-right of the parent element.  For sub-menu items inside buildings the dot sits SLIGHTLY ABOVE the row of the menu item itself, in the upper-right corner.",
+      "meaning":    "this item has pending content / a blocker requiring action / unread items / unclaimed rewards / a state-change worth investigating",
+      "absence_means": "no pending action for this item — does not necessarily mean 'all good', just that the game has nothing urgent to flag",
+      "is_a_state_not_a_different_element": "same element with vs without the dot is one entity.  Detection logic must NOT treat icon+dot and icon+no-dot as separate elements; the tap target and behaviour are identical.",
+      "appears_at": [
+        {
+          "location":   "top_right_icon_bar icons (mail, perk_event, pass, etc.)",
+          "examples":   "mail icon shows the dot when there are uncollected rewards in the mailbox; perk_event icon shows the dot when a new perk or daily event is available; etc.",
+          "reference":  "ui_conventions.json:top_right_icon_bar.common_traits.red_dot_is_a_state_not_a_different_icon"
+        },
+        {
+          "location":   "main menu items (Guild, Auction, Combat, Collection, …) opened via top_right_icon_bar.icons[hamburger]",
+          "examples":   "main-menu items receive the dot when their respective sub-system has new content / unread items / collectible rewards.  See ui_signals.json:main_menu_item_ids for the full list of main-menu items; the main_menu screen itself is not yet documented in ui_conventions.json (open_question).",
+          "reference":  "ui_signals.json:main_menu_item_ids"
+        },
+        {
+          "location":   "sub-menu items inside building screens (left-side menu list under the title)",
+          "examples":   "the 'Recruit Crew' sub-menu item at the Inn shows the dot when the fleet has 'not enough crew'; presumably similar for other action-required sub-menus.",
+          "reference":  "ui_conventions.json:building_screens.sub_menu_list.red_dot_indicator"
+        },
+        {
+          "location":   "tabs inside popups / dialogs (e.g. the 'Perk' and 'Event' tabs in the perk_event_popup title bar)",
+          "examples":   "the perk_event_popup's Perk tab shows a red dot when there are unclaimed perks; the Event tab shows one when there are new events to view.  Same state-of-element semantics as elsewhere — not a separate tab, just a marked state.",
+          "reference":  "ui_conventions.json:dialog_layout.dialog_styles.perk_event_popup.title_bar"
+        }
+      ],
+      "detection_approach": "small red color blob (HSV around hue 0 / 175-179, saturation high, value medium-high) located at the upper-right corner relative to a known parent element bbox.  Detector implementation TODO; should be cheap (small kernel + red mask + corner constraint).",
+      "consumed_by": [
+        "TODO — claude_guided_loop success criterion (e.g. recruit_crew dialog: red dot on Recruit Crew menu gone => action complete)",
+        "TODO — proactive maintenance loops (e.g. check mail icon for red dot daily and collect rewards)",
+        "currently used as a CONCEPT in Claude prompts but not as an automated detector"
+      ]
+    },
+
+    "yellow_button": {
+      "_note": "Primary positive-action button convention.  Whenever a screen requires the player to commit to an action, the action button is yellow (sometimes called gold).  Universal across all UWO buttons of this role.",
+      "appearance":      "solid yellow / amber rectangular button with text (and sometimes an icon — e.g. ducat amount for buy/sell/recruit cost)",
+      "color_range_hsv": "approximate hue 15-35, saturation >= 100, value >= 150.  Source: actions/sail_actions.py:_find_yellow_button.",
+      "size":            "varies by screen but typically a substantial primary-action button (>= 4000 px² at 2400x1080).  _find_yellow_button uses a MIN_AREA filter to avoid false positives on small yellow icons / decorations.",
+      "meaning":         "primary action — confirms or executes the player's intent on this screen",
+      "examples": [
+        "Depart Now / Supply Departure (harbor)",
+        "Recruit (recruit_crew sub-menu)",
+        "Purchase / Sell (market basket and confirm dialogs)",
+        "OK / Confirm on confirmation dialogs",
+        "Browse on arrival_panel_open_prompt (the 'enter the city now' button)",
+        "Go To City (world_map bottom-center)"
+      ],
+      "absence_at_expected_location_means": "the action is currently unavailable — see disabled_grayed_button.  This 'absence-of-yellow' signal is what _ensure_fleet_ready uses as a fleet-not-ready check independent of any specific blocker text.",
+      "detection_approach": "actions/sail_actions.py:_find_yellow_button — HSV mask, contour finding, minimum-area filter; supports optional region constraints (x_min, x_max, y_min, y_max) to disambiguate when multiple yellow buttons may appear",
+      "consumed_by": [
+        "actions/sail_actions.py:_find_yellow_button",
+        "actions/sail_actions.py:_ensure_fleet_ready (presence-of-yellow as readiness signal)",
+        "brain/recovery.py post-step adaptation (yellow button visible after tap_primary_action ⇒ guided loop fires)",
+        "brain/claude_guidance.py (visual_hint='yellow' in tap actions; resolved via _find_yellow_button before label-based search)"
+      ]
+    },
+
+    "disabled_sub_menu_unusable_label": {
+      "_note": "Conditional sub-menu items in the LEFT panel of building screens carry a small red 'unusable' label overlaid on the menu item when the sub-menu's precondition is not met.  Distinct from disabled_grayed_button (which applies to yellow primary action buttons) — this is the sub-menu version: same vertical-list position, but with a red text overlay indicating the sub-menu cannot be entered right now.",
+      "appearance":   "small red text label (e.g. 'unusable') rendered on top of or directly above the sub-menu item, plus the sub-menu text itself often rendering in a muted/red shade",
+      "appears_at":   "left-panel sub-menu items in any building screen — confirmed at the Inn's 'Hire' sub-menu when no unhired mates are currently visiting",
+      "meaning":      "the sub-menu's precondition is not met; tapping it will not navigate.  Investigate the precondition rather than retrying the tap.",
+      "tap_response": "tapping a sub-menu in this state surfaces the disabled_sub_menu_tap_response_blue_ribbon transient message (see below) — does NOT navigate into the sub-menu.",
+      "consumed_by":  "TODO — pre-tap detector that masks 'unusable' sub-menus from consideration in the resolution planner"
+    },
+
+    "disabled_sub_menu_tap_response_blue_ribbon": {
+      "_note": "Transient post-tap message that fires briefly after tapping a sub-menu marked 'unusable'.  Informational; does NOT block subsequent input.  HARD to capture in a single OCR snapshot because the message is short-lived.",
+      "appearance":  "blue ribbon-like background with short text describing why the action was rejected (e.g. 'No mate to hire' when the inn's Hire sub-menu is tapped while no unhired mates are present)",
+      "duration":    "transient — appears for ~1-2 seconds and disappears",
+      "meaning":     "the sub-menu the user tried to enter is currently locked, with a brief explanation",
+      "implication": "a single-frame perceive() may miss this entirely because of the short visibility window.  Multi-frame sampling around a tap is needed if the bot wants to read it.",
+      "better_path": "the disabled_sub_menu_unusable_label on the sub-menu item itself is the AUTHORITATIVE pre-tap gate — bot should read THAT before tapping rather than relying on the post-tap blue ribbon.  This entry is documented so the bot can recognise the ribbon if captured (e.g. for diagnostic logging) but should not depend on it for control flow.",
+      "consumed_by": "TODO — diagnostic-only logging if captured"
+    },
+
+    "disabled_grayed_button": {
+      "_note": "When a primary action is unavailable, the button is rendered desaturated/gray instead of yellow.  Tapping a gray button is a no-op (the original 'blind tap on Depart Now' bug spent minutes tapping nothing).",
+      "appearance":   "same shape and position as the yellow button it replaces, but with a desaturated gray fill",
+      "meaning":      "the action is currently unavailable — typically because of a blocker (insufficient crew/supply/funds, prerequisites not met, etc.)",
+      "implication":  "do NOT tap a gray button as if it were the yellow primary action — the tap will not do anything, and the bot will sit there waiting for state change.  Investigate WHY the button is gray (read surrounding context, check for blocking_signals from KB) and resolve the blocker first.",
+      "historical_significance": "the bot's pre-FSM 'blind tap on Depart Now' era spent minutes tapping a grayed-out button with no awareness — see docs/journey_not_enough_crew.md prequel.  This indicator's existence is one of the most-load-bearing pieces of grammar in the game's UI.",
+      "detection_approach": "two complementary signals: (a) ABSENCE of yellow at the expected button location is itself a signal — already used by _ensure_fleet_ready; (b) explicit gray-color detection in the same region.  (a) is what the bot currently relies on; (b) would be a future hardening if context-specific gray detection becomes useful.",
+      "consumed_by": [
+        "actions/sail_actions.py:_ensure_fleet_ready — absence-of-yellow is treated as 'fleet not ready' signal even when no specific blocker text is matched"
+      ],
+      "open_question": "exact gray HSV range — currently the bot uses absence-of-yellow as the proxy.  If explicit gray detection becomes useful, the threshold range needs to be measured."
+    },
+
+    "threshold_status_bar": {
+      "_note": "Horizontal bar that displays both a fill level AND a state colour.  The COLOUR is the semantic signal — RED while the underlying value is BELOW a threshold (a blocker is active); GREEN once the value is AT OR ABOVE the threshold (no longer blocking).  This is NOT a fill gauge: 'green' does not mean 'full', it means 'sufficient'.",
+      "appearance": "horizontal bar with a fill that varies in length proportional to current/max, and a colour that varies based on threshold satisfaction",
+      "color_states": {
+        "red":   "current value is BELOW the minimum threshold required for the action — blocker active",
+        "green": "current value is AT OR ABOVE the minimum threshold — blocker resolved (the value need NOT be at maximum; just sufficient)"
+      },
+      "examples": [
+        {
+          "context": "recruit_crew dialog inside the Inn",
+          "bar":     "per-ship crew bar",
+          "red":     "ship below minimum crew → fleet cannot depart with this configuration",
+          "green":   "ship at or above minimum crew → no longer blocking departure.  Note: minimum is sufficient for trade voyages; a FULL crew is only needed for combat, not trade.  So 'green' is the goal for the trade bot, not 'completely full'."
+        }
+      ],
+      "key_distinction_from_a_progress_bar": "a progress_bar (e.g. level XP) goes from empty to full and the colour is consistent throughout — it represents fill level.  A threshold_status_bar represents threshold satisfaction; the colour conveys the semantic, not the fill level.  The bar's length conveys the absolute value, the colour conveys whether it crosses the gate.",
+      "value_to_bot": [
+        "the GREEN colour is the cleanest proximal success signal for blocker-resolution flows — once the per-ship bars in the recruit dialog turn green, the 'not enough crew' blocker is resolved without needing to re-navigate to the harbour to verify",
+        "the RED colour, conversely, is a clean signal that a blocker is still present even before reading any error text"
+      ],
+      "detection_approach": "TODO — HSV color mask within a known bar region; classify as red vs green based on dominant hue (red ~0/175-179 vs green ~50-70).  The bar's bbox is parent-context-dependent (inside the recruit dialog the per-ship bars are stacked vertically in the right panel)",
+      "consumed_by":  "TODO — claude_guided_loop local success check (cf. docs/journey_not_enough_crew.md F3 proximal verification discussion)",
+      "open_questions": "are there intermediate colour states between red and green (e.g. yellow/orange for 'caution but not blocking')?  Not yet observed — assumed binary red/green for now.  Worth verifying with other examples (supply bars, hull integrity, etc.)"
+    },
+
+    "task_completed_green_background": {
+      "_note": "Translucent green background applied to an item in the task list when the task is finished and rewards are claimable.  Same family of state-overlay-on-existing-element semantics as red_dot — the row is the same row, the green background is the 'done, claim me' state.",
+      "appearance": "translucent green fill behind a task-list item; the underlying text and icon remain visible through the tint",
+      "appears_at": "the tasks tab in the right panel of port_overworld and sea_overworld (cf. ui_conventions.json:port_overworld.right_panel.tabs.tasks and sea_overworld.right_panel.tabs.tasks).  Same tab content, parallel structure across both overworlds.",
+      "meaning":    "this task has been completed.  Tapping the row claims the rewards (and presumably removes or strikes-through the row afterwards).",
+      "absence_means": "the task is not yet completed — neutral background.",
+      "interaction_value": "the bot can periodically scan the tasks list, identify any rows with the green background, and tap each to harvest free rewards.  Combined with the mail-icon red-dot scan, this is the second 'free passive income' loop the bot can run.",
+      "is_a_state_not_a_different_element": "same row, two states (neutral vs done).  Detection should treat them as one element.",
+      "detection_approach": "TODO — translucent green HSV mask within the task-tab item region.  'Translucent' means the bar is detectable by colour but at lower saturation than a solid green button or threshold bar — threshold tuning may need adjustment.",
+      "consumed_by": "TODO — periodic task-harvest loop"
+    },
+
+    "progress_bar": {
+      "_note": "Linear fill bar that goes from empty to full as a value approaches its maximum.  Distinct from threshold_status_bar — the colour is FIXED (does not change to convey state) and only the fill length conveys the value.",
+      "appearance": "horizontal bar with a coloured fill that grows from one end as a numeric value increases toward maximum",
+      "color":      "ALWAYS YELLOW for the only progress bar observed so far (the player level XP bar).  Yellow here is part of the bar's visual identity — distinct from yellow_button which means primary-action.  The progress bar is much thinner and longer than a button, so visual confusion is unlikely.",
+      "examples": [
+        "player level progress (current XP toward next level) at the bottom-center of sea_overworld — see ui_conventions.json:sea_overworld.player_ship_overlay.level_progress_bar.  This is the only progress bar observed so far."
+      ],
+      "meaning": "progress toward a target — typically not action-relevant in the short term; useful for long-term tracking",
+      "consumed_by": "TODO — periodic capture into a progression log when growth tracking is implemented",
+      "open_question": "are there other progress bars beyond the level XP bar?  Combat / mate skill / expertise bars likely exist but have not been observed in this round."
+    },
+
+    "shrouded_with_spinning_lights": {
+      "_note": "Visual indicator placed on the sea_overworld at a port's position when the fleet has spotted the port from a distance but not yet visited it.  Pairs with the 'Oh, a new port!' sailor speech bubble.  Same port renders as ??? on the world_map until first visit (see world_map.port_discovery_state).",
+      "appearance":  "small icon at the port location surrounded by spinning / animating light effects",
+      "meaning":     "a new port has been detected at this position but not yet entered",
+      "interaction": "tap to set sail toward the port; or sail manually close enough to see the on-screen 'Enter New City' label",
+      "detection_approach": "TODO — geometric (bright animated lights at port-icon positions on sea_overworld).  Animation makes single-frame detection less reliable; multi-frame sampling may be needed.",
+      "consumed_by":  "TODO — exploration logic when implemented",
+      "reference":    "ui_conventions.json:world_map.port_discovery_state.spotted_but_unvisited"
+    },
+
+    "fog_of_war_cloud": {
+      "_note": "World_map overlay covering sea regions the fleet has not yet sailed into.  Documented structurally in ui_conventions.json:world_map.fog_of_war.",
+      "appearance": "cloud-textured overlay obscuring the underlying coastlines and ports",
+      "meaning":    "this region is unexplored",
+      "behavior":   "permanent — sailing into a clouded region uncovers it for good and the cloud does not return",
+      "detection_approach": "TODO — likely a low-saturation high-brightness color blob detection on the world_map view.  Distinguish from the open sea (which is also high-brightness but more saturated and has visible features).",
+      "consumed_by": "TODO — exploration logic and route planning when implemented",
+      "reference":   "ui_conventions.json:world_map.fog_of_war"
+    },
+
+    "highlighted_sub_menu_item": {
+      "_note": "Inside building screens, the currently-selected sub-menu item has a visual highlight.  Subtle and not always reliably detectable; the SCREEN TITLE change is the more reliable signal of which sub-menu is active.",
+      "appearance": "subtle background or accent change on the selected item — exact treatment varies by building type and may not be uniform",
+      "meaning":    "this is the currently active sub-menu / tab",
+      "more_reliable_alternative_signal": "screen_chrome.screen_title.behavior — the title changes to the sub-menu's name when one is selected.  Title comparison is the canonical signal.  The visual highlight is at best a redundant hint; lean on the title.",
+      "exception":  "the Shop screen does NOT change the title on sub-menu selection (see ui_conventions.json:screen_chrome.screen_title.known_inconsistency_in_shop) — the visual highlight may be the only available signal there.",
+      "detection_approach": "low priority for general use; specific implementation only needed for the Shop exception when that becomes relevant"
+    }
+  },
+
+  "consumers": {
+    "_note": "Code paths that consume these indicators.  Some exist; most are TODO.",
+    "actions/sail_actions.py:_find_yellow_button":          "yellow_button detection (HSV + contour + minimum area)",
+    "actions/sail_actions.py:_ensure_fleet_ready":          "absence-of-yellow as 'fleet not ready' signal (consumes yellow_button + disabled_grayed_button concepts)",
+    "brain/recovery.py post-step adaptation":               "yellow button visible after tap_primary_action ⇒ Claude-guided loop fires",
+    "brain/claude_guidance.py":                             "visual_hint values 'yellow', 'gold', 'gray' map onto these indicators via the resolver",
+    "TODO disabled_sub_menu_unusable_label detector":        "red-text-overlay near a left-panel sub-menu item — drives pre-tap masking so the resolution planner skips locked sub-menus",
+    "TODO red_dot detector":                                 "small-blob detector at upper-right of parent element bboxes",
+    "TODO threshold_status_bar detector":                    "red-vs-green classifier inside known bar regions",
+    "TODO task_completed_green_background detector":         "translucent green mask within task-tab item rows; drives a periodic task-harvest loop",
+    "TODO fog_of_war detector":                              "world_map exploration tracking",
+    "TODO shrouded_with_spinning_lights detector":           "sea_overworld new-port-spotted tracking"
+  },
+
+  "open_questions": [
+    "Red dot exact pixel size and HSV thresholds — measure from a captured frame",
+    "Threshold status bar intermediate states — is there a yellow/orange 'warning' band between red and green, or just a binary toggle?",
+    "Other threshold status bars beyond the recruit_crew per-ship bars — supply (water/food) bars, hull integrity bars, mate loyalty bars, etc.  Each may follow the same red/green pattern or may differ.",
+    "Disabled-button gray HSV range — currently the bot uses absence-of-yellow; explicit gray detection would need a measurement",
+    "Other progress bars beyond the level XP bar — combat skill, expertise, etc.",
+    "Fog-of-war cloud HSV thresholds for reliable world_map detection",
+    "Shrouded-with-spinning-lights animation period — affects multi-frame sampling rate",
+    "Are there other small visual indicators not yet captured?  Likely candidates: arrows / pointers indicating tutorial highlights (used by the ? tutorial walker mentioned in ui_conventions.json), countdown / timer overlays on time-limited events"
+  ]
+}

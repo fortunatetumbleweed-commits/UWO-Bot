@@ -1,0 +1,21 @@
+{
+  "purpose": "The city menu panel for Tripoli's harbor district is open, listing all available port facilities such as Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, and Bureau",
+  "full_text": "Spring Mar 15:20 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "53ecb33161251d04",
+  "goal_intent": null,
+  "cached_at": "2026-05-21T15:07:39.730271+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The city menu panel for Tripoli's harbor district is open, listing all available port facilities such as Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, and Bureau",
+    "full_text": "Spring Mar 15:20 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

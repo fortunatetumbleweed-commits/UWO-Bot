@@ -1,0 +1,21 @@
+{
+  "purpose": "The Bureau building tooltip has appeared, describing that the Bureau allows players to develop the city through investments and view investment rankings.",
+  "full_text": "Bureau. 00:00-23:59. Develop the city by making investments and view the current investment rankings.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "c1e2663a398c3893",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T20:26:31.731631+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Bureau building tooltip has appeared, describing that the Bureau allows players to develop the city through investments and view investment rankings.",
+    "full_text": "Bureau. 00:00-23:59. Develop the city by making investments and view the current investment rankings.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

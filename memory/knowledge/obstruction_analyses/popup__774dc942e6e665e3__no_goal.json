@@ -1,0 +1,21 @@
+{
+  "purpose": "The city navigation panel for Tripoli is open, listing all available port facilities the player can visit (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) along with the current in-game season and time.",
+  "full_text": "Spring Mar 14:08 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "774dc942e6e665e3",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T00:06:56.344756+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The city navigation panel for Tripoli is open, listing all available port facilities the player can visit (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) along with the current in-game season and time.",
+    "full_text": "Spring Mar 14:08 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

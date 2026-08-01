@@ -1,0 +1,16 @@
+name: trade_btween_ondon_port_royal
+start_port: Btween Ondon
+rounds: 999
+loop:
+  - action: sell_all
+    port: Btween Ondon
+  - action: buy_all
+    port: Btween Ondon
+  - action: sail_to
+    destination: Port Royal
+  - action: sell_all
+    port: Port Royal
+  - action: buy_all
+    port: Port Royal
+  - action: sail_to
+    destination: Btween Ondon

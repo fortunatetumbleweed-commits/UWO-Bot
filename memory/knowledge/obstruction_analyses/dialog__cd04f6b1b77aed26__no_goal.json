@@ -1,0 +1,21 @@
+{
+  "purpose": "Fleet status panel showing the durability, crew count, and life of all 7 ships in the player's fleet while sailing in the Atlantic Ocean near Berber Village during Spring/May/Night conditions",
+  "full_text": "C/TW | 9 | 10 | 5 | Berber Village | 25.20, -14.90 | Spring | May | Daytime | Durability | Crew | Life | 1: 5,046/5,046 171/337 41/70 | 2: 5,033/5,033 114/540 40/70 | 3: 4,724/4,724 122/250 38/70 | 4: 4,177/4,177 153/314 40/70 | 5: 3,827/3,827 139/321 40/70 | 6: 4,433/4,433 126/271 35/70 | 7: 4,586/4,586 128/242 35/70",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "cd04f6b1b77aed26",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T21:26:02.158103+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Fleet status panel showing the durability, crew count, and life of all 7 ships in the player's fleet while sailing in the Atlantic Ocean near Berber Village during Spring/May/Night conditions",
+    "full_text": "C/TW | 9 | 10 | 5 | Berber Village | 25.20, -14.90 | Spring | May | Daytime | Durability | Crew | Life | 1: 5,046/5,046 171/337 41/70 | 2: 5,033/5,033 114/540 40/70 | 3: 4,724/4,724 122/250 38/70 | 4: 4,177/4,177 153/314 40/70 | 5: 3,827/3,827 139/321 40/70 | 6: 4,433/4,433 126/271 35/70 | 7: 4,586/4,586 128/242 35/70",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

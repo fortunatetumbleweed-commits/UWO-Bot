@@ -1,0 +1,20 @@
+{
+  "_note": "World map and city info panel parsing keywords.",
+
+  "city_info_title_keywords": ["city info", "city"],
+
+  "city_info_skip_labels": ["city info", "city", "info", "world map"],
+
+  "culture_keywords": [
+    "culture", "islamic", "christian", "buddhist",
+    "hindu", "ottoman", "arabic", "nation", "country"
+  ],
+
+  "facility_keywords": [
+    "harbor", "harbour", "market", "bank", "inn",
+    "shipyard", "castle", "bureau", "church", "cathedral",
+    "guild", "tavern", "palace", "warehouse", "exchange"
+  ],
+
+  "tax_keywords": ["tax"]
+}

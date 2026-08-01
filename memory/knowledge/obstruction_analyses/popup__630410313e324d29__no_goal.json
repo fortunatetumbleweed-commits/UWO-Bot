@@ -1,0 +1,21 @@
+{
+  "purpose": "The Insurance screen is open, showing the player's currently purchased LV 1 insurance policy (30% rate, 50,000 max compensation, free daily fee) alongside available upgrade tiers LV 2–LV 5 with increasing compensation limits, rates, and daily fees.",
+  "full_text": "Insurance. LV 1 Purchased. Maximum Compensation 50,000 Rate 30%. Daily Insurance Fee 0. LV 2 Maximum Compensation 250,000 Rate 40%. Daily Insurance Fee 950. LV 3 Maximum Compensation 500,000 Rate 50%. Daily Insurance Fee 1,045. LV 4 Maximum Compensation 1,250,000 Rate 60%. Daily Insurance Fee 1,710. LV 5 Maximum Compensation 3,700,000 Rate 65%. Daily Insurance Fee 2,755. Recommended Maximum Compensation Rate.",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "630410313e324d29",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T15:11:04.462004+00:00",
+  "visit_count": 6,
+  "raw_api_response": {
+    "purpose": "The Insurance screen is open, showing the player's currently purchased LV 1 insurance policy (30% rate, 50,000 max compensation, free daily fee) alongside available upgrade tiers LV 2–LV 5 with increasing compensation limits, rates, and daily fees.",
+    "full_text": "Insurance. LV 1 Purchased. Maximum Compensation 50,000 Rate 30%. Daily Insurance Fee 0. LV 2 Maximum Compensation 250,000 Rate 40%. Daily Insurance Fee 950. LV 3 Maximum Compensation 500,000 Rate 50%. Daily Insurance Fee 1,045. LV 4 Maximum Compensation 1,250,000 Rate 60%. Daily Insurance Fee 1,710. LV 5 Maximum Compensation 3,700,000 Rate 65%. Daily Insurance Fee 2,755. Recommended Maximum Compensation Rate.",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

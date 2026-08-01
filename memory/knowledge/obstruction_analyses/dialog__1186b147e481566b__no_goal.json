@@ -1,0 +1,21 @@
+{
+  "purpose": "The city navigation panel for Las Palmas is open, showing all available port facilities (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) along with the current in-game date (Spring, May 14:12) and Pass status.",
+  "full_text": "Pass 10 | Spring May 14:12 | Harbor | Market | Shipyard | Bank | Inn | Sanctuary | Union | Bureau",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "1186b147e481566b",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T21:07:54.634803+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The city navigation panel for Las Palmas is open, showing all available port facilities (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) along with the current in-game date (Spring, May 14:12) and Pass status.",
+    "full_text": "Pass 10 | Spring May 14:12 | Harbor | Market | Shipyard | Bank | Inn | Sanctuary | Union | Bureau",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

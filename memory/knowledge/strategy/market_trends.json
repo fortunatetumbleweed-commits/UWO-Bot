@@ -1,0 +1,53 @@
+{
+  "_note": "Server-wide Major Trends. Seeded from CLAUDE.md. Budget depletes at 0% or after 1 hour.",
+  "_floor_note": "After budget depletes, prices stay 100–125% — safe to sell even after trend ends.",
+  "_budget_note": "Budget size depends on concurrent players, city location, and trend type.",
+
+  "trends": [
+    {
+      "type": "festival",
+      "duration_hrs": 2,
+      "affected_goods": ["foods", "seasonings", "luxuries"],
+      "example_prices_pct": [299, 319],
+      "strategy": "sell affected goods, buy before trend if below 90%"
+    },
+    {
+      "type": "plague",
+      "duration_hrs": 3,
+      "affected_goods": ["sundries", "medicines", "textiles"],
+      "example_prices_pct": [242, 262],
+      "notes": "Ginseng (medicines specialty) notably high at 242–262%"
+    },
+    {
+      "type": "flood",
+      "duration_hrs": 5,
+      "affected_goods": ["foods", "wares", "fabrics"]
+    },
+    {
+      "type": "war",
+      "duration_hrs": 7,
+      "affected_goods": ["livestock", "weapons", "firearms"]
+    },
+    {
+      "type": "sponsor",
+      "duration_hrs": 11,
+      "affected_goods": ["dyes", "crafts", "artworks"]
+    },
+    {
+      "type": "development",
+      "duration_hrs": 13,
+      "affected_goods": ["wares", "ores", "liquors", "foods"]
+    },
+    {
+      "type": "boom",
+      "duration_hrs": 17,
+      "affected_goods": ["metals", "artworks", "jewelries"],
+      "example_prices_pct": [151, 171]
+    },
+    {
+      "type": "extravagance",
+      "duration_hrs": 19,
+      "affected_goods": ["crafts", "spices", "perfumes"]
+    }
+  ]
+}

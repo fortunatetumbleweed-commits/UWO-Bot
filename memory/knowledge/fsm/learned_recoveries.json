@@ -1,0 +1,923 @@
+[
+  {
+    "id": "market_building_top_menu",
+    "category": "flow_step",
+    "description": "Bot is at the Market building top menu showing Purchase/Sell options. Active flow is market_purchase, so tap Purchase to proceed into the purchase flow.",
+    "detection_keywords": [
+      "Market",
+      "Purchase",
+      "Sell",
+      "Trade Points",
+      "Market Owner",
+      "Trust is the lifeline"
+    ],
+    "actions": [
+      {
+        "type": "find_and_tap",
+        "label": "Purchase",
+        "x": 0,
+        "y": 0,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0
+      }
+    ],
+    "learned_at": "2026-04-28T19:08:14.999768+00:00"
+  },
+  {
+    "id": "market_purchase_tap_purchase_button",
+    "category": "flow_step",
+    "description": "Bot is on the Trade Goods purchase screen with items already selected/in basket. The orange 'Purchase' button is visible in the bottom-right corner of the Purchase panel (~2330, 1050). Tap it to confirm and execute the purchase transaction.",
+    "detection_keywords": [
+      "Purchase",
+      "Trade Goods on Sale",
+      "Neg. Chance",
+      "Success Rate",
+      "Tax",
+      "Put In Bulk",
+      "Apply Load Ratio"
+    ],
+    "actions": [
+      {
+        "type": "tap",
+        "label": "",
+        "x": 2330,
+        "y": 1050,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0
+      }
+    ],
+    "learned_at": "2026-04-29T02:32:43.754995+00:00"
+  },
+  {
+    "id": "harbor_not_enough_crew_recruit",
+    "category": "flow_step",
+    "description": "When harbor departure is blocked by 'Not Enough Crew', tap '+ Recruit Crew' submenu (top-left of harbor screen) to resolve before departing. The Recruit Crew link is visible at approximately (123, 185) in half-res = (246, 370) in full-res.",
+    "detection_keywords": [
+      "Not Enough Crew",
+      "Recruit Crew",
+      "Depart Now",
+      "Harbor Official",
+      "well-prepared before setting sail"
+    ],
+    "actions": [
+      {
+        "type": "tap",
+        "label": "",
+        "x": 246,
+        "y": 370,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      }
+    ],
+    "learned_at": "2026-04-29T13:26:04.613816+00:00",
+    "confidence": "low",
+    "failure_count": 1,
+    "last_failed_at": "2026-05-02T04:37:12.289209+00:00"
+  },
+  {
+    "id": "harbor_recruit_crew",
+    "category": "flow_step",
+    "description": "Harbor Recruit Crew screen. The right panel shows 953 crew to recruit for 218,714 gold. Tap the gold 'Recruit' button at bottom-right of the panel (~1118, 897 in original resolution). Flow should be classified as recruit_crew, not market_purchase. The Recruit button is the large golden button in the bottom-right panel.",
+    "detection_keywords": [
+      "Recruit Crew",
+      "Standby Crew",
+      "Fleet Crew Size",
+      "Normal Recruit",
+      "Emergency Recruit",
+      "Redistribute Crew"
+    ],
+    "actions": [
+      {
+        "type": "tap",
+        "label": "",
+        "x": 1118,
+        "y": 897,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      }
+    ],
+    "learned_at": "2026-04-29T13:29:55.221895+00:00",
+    "confidence": "low",
+    "failure_count": 1,
+    "last_failed_at": "2026-05-01T21:43:12.688589+00:00"
+  },
+  {
+    "id": "harbor_departure_not_enough_crew",
+    "category": "flow_step",
+    "description": "When Harbor departure screen shows 'Not Enough Crew' and Depart Now is disabled, tap '+ Recruit Crew' menu item (top-left of harbor screen) to open crew recruitment. The Recruit Crew option is visible at approximately (123, 185) in half-res = (246, 370) in full-res.",
+    "detection_keywords": [
+      "Not Enough Crew",
+      "Depart Now",
+      "Recruit Crew",
+      "Harbor"
+    ],
+    "actions": [
+      {
+        "type": "tap",
+        "label": "",
+        "x": 246,
+        "y": 370,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      }
+    ],
+    "learned_at": "2026-04-29T14:27:18.108820+00:00",
+    "confidence": "low",
+    "failure_count": 1,
+    "last_failed_at": "2026-05-01T21:36:00.313587+00:00"
+  },
+  {
+    "id": "market_purchase_confirm_dialog",
+    "category": "flow_step",
+    "description": "Confirm Purchase dialog appears after selecting items in market. Contains item list with costs and an OK button to confirm. OK button is at bottom-right of the dialog, Cancel at bottom-left.",
+    "detection_keywords": [
+      "Confirm Purchase",
+      "Total Price",
+      "Cancel",
+      "OK",
+      "Purchase Cost",
+      "Tax"
+    ],
+    "actions": [
+      {
+        "type": "tap",
+        "label": "",
+        "x": 1306,
+        "y": 976,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      }
+    ],
+    "learned_at": "2026-04-29T14:55:36.376362+00:00"
+  },
+  {
+    "id": "market_purchase_empty_basket_exit",
+    "category": "flow_step",
+    "description": "When on the Purchase screen the Purchase button shows 0 cost and is disabled, the basket is empty. No items selected. Operator instructs to leave the market. Press Back to exit the purchase screen and move to the next task.",
+    "detection_keywords": [
+      "Purchase",
+      "Trade Goods on Sale",
+      "basket empty",
+      "0 gold",
+      "Purchase button disabled"
+    ],
+    "actions": [
+      {
+        "type": "press_back",
+        "label": "",
+        "x": 0,
+        "y": 0,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      }
+    ],
+    "learned_at": "2026-04-29T15:07:07.990540+00:00"
+  },
+  {
+    "id": "interview_screen_navigate_back_to_recruit",
+    "category": "unknown_state",
+    "description": "Bot was on the Interview screen inside the Inn with an active crew member panel open. Bot's flow was incorrectly set to market_purchase. Operator instructed: press Back twice to exit interview and party sub-menu back to Inn top menu, then tap Recruit Crew menu item.",
+    "detection_keywords": [
+      "Interview",
+      "Geographer",
+      "Loyalty",
+      "Gift",
+      "Incentive",
+      "Bonus",
+      "Contract Obtain Chance"
+    ],
+    "actions": [
+      {
+        "type": "tap",
+        "label": "",
+        "x": 60,
+        "y": 45,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "wait",
+        "label": "",
+        "x": 0,
+        "y": 0,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "tap",
+        "label": "",
+        "x": 60,
+        "y": 45,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "wait",
+        "label": "",
+        "x": 0,
+        "y": 0,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "find_and_tap",
+        "label": "Recruit Crew",
+        "x": 0,
+        "y": 0,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      }
+    ],
+    "learned_at": "2026-04-29T23:21:40.586835+00:00"
+  },
+  {
+    "id": "insufficient_crew_blocking_departure",
+    "category": "flow_step",
+    "description": "The Load Capacity shows 651/4,066 which means only 651 out of 4,066 capacity is used. Water is full (326/326), Food is f",
+    "detection_keywords": [
+      "recruit crew",
+      "crew",
+      "departure",
+      "supply",
+      "days supplied"
+    ],
+    "actions": [
+      {
+        "type": "tap",
+        "label": "",
+        "x": 120,
+        "y": 368,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      }
+    ],
+    "learned_at": "2026-04-29T23:26:31.165844+00:00"
+  },
+  {
+    "id": "recruit_crew_confirm_notice",
+    "category": "flow_step",
+    "description": "Recruit Crew confirmation dialog (Notice popup) appears when player initiates crew hiring. Dialog shows crew count and cost. Tap OK button (right button) to confirm recruitment. OK button is at approximately center-right of the dialog.",
+    "detection_keywords": [
+      "Notice",
+      "Recruit",
+      "Crew",
+      "OK",
+      "Cancel",
+      "3,456"
+    ],
+    "actions": [
+      {
+        "type": "tap",
+        "label": "",
+        "x": 1302,
+        "y": 812,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      }
+    ],
+    "learned_at": "2026-05-01T12:16:05.338850+00:00"
+  },
+  {
+    "id": "recruit_crew_confirmation_dialog",
+    "category": "flow_step",
+    "description": "Recruit Crew confirmation dialog appears after selecting crew count and tapping Recruit. Shows cost and crew count. Tap OK (right button) to confirm hiring. Bot was incorrectly perceiving state as sea_cinematic.",
+    "detection_keywords": [
+      "Notice",
+      "Recruit",
+      "Crew?",
+      "Cancel",
+      "OK",
+      "181,224"
+    ],
+    "actions": [
+      {
+        "type": "tap",
+        "label": "",
+        "x": 1302,
+        "y": 812,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      }
+    ],
+    "learned_at": "2026-05-01T17:59:53.601346+00:00"
+  },
+  {
+    "id": "not_enough_crew",
+    "category": "flow_step",
+    "description": "The right panel explicitly shows 'Not Enough Crew' with a red X, and the 'Depart Now' button is greyed out/disabled. The",
+    "detection_keywords": [
+      "not enough crew",
+      "recruit crew",
+      "0/326",
+      "depart now"
+    ],
+    "actions": [
+      {
+        "type": "tap",
+        "label": "",
+        "x": 246,
+        "y": 370,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "find_and_tap",
+        "label": "Recruit",
+        "x": 0,
+        "y": 0,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "find_and_tap",
+        "label": "Confirm",
+        "x": 0,
+        "y": 0,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "find_and_tap",
+        "label": "Depart Now",
+        "x": 0,
+        "y": 0,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      }
+    ],
+    "learned_at": "2026-05-02T23:03:26.603911+00:00",
+    "confidence": "low",
+    "failure_count": 1,
+    "last_failed_at": "2026-05-02T23:06:47.245508+00:00"
+  },
+  {
+    "id": "not_enough_crew_harbor",
+    "category": "flow_step",
+    "description": "The screen clearly shows 'Not Enough Crew' in the departure panel on the right side, and the 'Depart Now' button is gray",
+    "detection_keywords": [
+      "not enough crew",
+      "recruit crew",
+      "depart now",
+      "harbor official"
+    ],
+    "actions": [
+      {
+        "type": "tap",
+        "label": "",
+        "x": 122,
+        "y": 370,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "find_and_tap",
+        "label": "Recruit Crew",
+        "x": 0,
+        "y": 0,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "find_and_tap",
+        "label": "Recruit",
+        "x": 0,
+        "y": 0,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "find_and_tap",
+        "label": "Distribute and Redistribute Crew",
+        "x": 0,
+        "y": 0,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "find_and_tap",
+        "label": "Depart Now",
+        "x": 0,
+        "y": 0,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      }
+    ],
+    "learned_at": "2026-05-04T21:54:34.294148+00:00",
+    "confidence": "low",
+    "failure_count": 1,
+    "last_failed_at": "2026-05-04T22:01:25.916681+00:00"
+  },
+  {
+    "id": "not_enough_crew_and_supply",
+    "category": "flow_step",
+    "description": "The departure button is disabled because the ship has 'Not Enough Crew' as shown in element idx 16. The food/water suppl",
+    "detection_keywords": [
+      "Not Enough Crew",
+      "0/232",
+      "Recruit Crew",
+      "Supply"
+    ],
+    "actions": [
+      {
+        "type": "find_and_tap",
+        "label": "Recruit Crew",
+        "x": 0,
+        "y": 0,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "tap",
+        "label": "",
+        "x": 2156,
+        "y": 809,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "find_and_tap",
+        "label": "Supply",
+        "x": 0,
+        "y": 0,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "tap",
+        "label": "",
+        "x": 2156,
+        "y": 809,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "find_and_tap",
+        "label": "Depart Now",
+        "x": 0,
+        "y": 0,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      }
+    ],
+    "learned_at": "2026-05-13T16:02:37.855761+00:00",
+    "confidence": "low",
+    "failure_count": 1,
+    "last_failed_at": "2026-05-13T16:14:12.047227+00:00"
+  },
+  {
+    "id": "not_enough_crew_and_ship_life",
+    "category": "flow_step",
+    "description": "Two blockers are shown: 'Not Enough Crew' and 'Not enough Ship Life'. The crew issue can be resolved by tapping 'Recruit",
+    "detection_keywords": [
+      "Not Enough Crew",
+      "Not enough Ship Life",
+      "Recruit Crew",
+      "Repair"
+    ],
+    "actions": [
+      {
+        "type": "find_and_tap",
+        "label": "Recruit Crew",
+        "x": 0,
+        "y": 0,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "tap",
+        "label": "",
+        "x": 2154,
+        "y": 630,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "find_and_tap",
+        "label": "Repair",
+        "x": 0,
+        "y": 0,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "find_and_tap",
+        "label": "Not enough Ship Life",
+        "x": 0,
+        "y": 0,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "find_and_tap",
+        "label": "Depart Now",
+        "x": 0,
+        "y": 0,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      }
+    ],
+    "learned_at": "2026-05-13T17:32:22.471781+00:00"
+  },
+  {
+    "id": "not_enough_ship_life",
+    "category": "flow_step",
+    "description": "The UI shows 'Not enough Ship Life' as a warning blocking the 'Depart Now' button. The 'Depart Now' button is grayed out",
+    "detection_keywords": [
+      "not enough ship life",
+      "repair",
+      "ship life",
+      "durability"
+    ],
+    "actions": [
+      {
+        "type": "find_and_tap",
+        "label": "Not enough Ship Life",
+        "x": 0,
+        "y": 0,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "find_and_tap",
+        "label": "Harbor 16,270,197,169 82,366 Supply Repair Recruit Crew E1",
+        "x": 0,
+        "y": 0,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "press_back",
+        "label": "",
+        "x": 0,
+        "y": 0,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      }
+    ],
+    "learned_at": "2026-05-13T17:33:41.295325+00:00"
+  },
+  {
+    "id": "not_enough_ship_life_repair",
+    "category": "flow_step",
+    "description": "The UI shows 'Not enough Ship Life' warning on the departure panel, which is preventing the 'Depart Now' button from bei",
+    "detection_keywords": [
+      "not enough ship life",
+      "repair",
+      "ship life",
+      "depart now"
+    ],
+    "actions": [
+      {
+        "type": "find_and_tap",
+        "label": "16,270,197,169 82,366 Supply Repair Recruit Crew",
+        "x": 0,
+        "y": 0,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "tap",
+        "label": "",
+        "x": 99,
+        "y": 131,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "tap",
+        "label": "",
+        "x": 2155,
+        "y": 906,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "find_and_tap",
+        "label": "Not enough Ship Life",
+        "x": 0,
+        "y": 0,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "tap",
+        "label": "",
+        "x": 99,
+        "y": 131,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "tap",
+        "label": "",
+        "x": 2154,
+        "y": 835,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      }
+    ],
+    "learned_at": "2026-05-13T18:05:13.630369+00:00",
+    "confidence": "low",
+    "failure_count": 1,
+    "last_failed_at": "2026-05-13T18:34:39.412427+00:00"
+  },
+  {
+    "id": "insufficient_crew_harbor",
+    "category": "flow_step",
+    "description": "The departure button is disabled. The player is at level 92 in Tripoli harbor. The most common blocker in this game is i",
+    "detection_keywords": [
+      "crew",
+      "recruit",
+      "departure",
+      "disabled"
+    ],
+    "actions": [
+      {
+        "type": "find_and_tap",
+        "label": "Harbor",
+        "x": 0,
+        "y": 0,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "tap",
+        "label": "",
+        "x": 200,
+        "y": 160,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "tap",
+        "label": "",
+        "x": 400,
+        "y": 160,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "tap",
+        "label": "",
+        "x": 600,
+        "y": 160,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "tap",
+        "label": "",
+        "x": 1200,
+        "y": 600,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      },
+      {
+        "type": "tap",
+        "label": "",
+        "x": 800,
+        "y": 160,
+        "x2": 0,
+        "y2": 0,
+        "seconds": 1.0,
+        "x_min": -1,
+        "y_min": -1,
+        "x_max": -1,
+        "y_max": -1
+      }
+    ],
+    "learned_at": "2026-05-21T22:26:23.777010+00:00"
+  }
+]

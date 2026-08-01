@@ -1,0 +1,21 @@
+{
+  "purpose": "Mini-map navigation panel showing nearby port distances, current season (Spring), month (Mar), and time of day (Daytime) while sailing near Tripoli in the Atlantic Ocean",
+  "full_text": "Tripoli approx. 11.6 km — Spring, Mar, Daytime — wind/current indicators 0.0, 44",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "6b0a409e784e8fd2",
+  "goal_intent": null,
+  "cached_at": "2026-05-21T14:55:19.923248+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Mini-map navigation panel showing nearby port distances, current season (Spring), month (Mar), and time of day (Daytime) while sailing near Tripoli in the Atlantic Ocean",
+    "full_text": "Tripoli approx. 11.6 km — Spring, Mar, Daytime — wind/current indicators 0.0, 44",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

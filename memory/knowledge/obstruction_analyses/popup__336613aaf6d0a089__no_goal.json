@@ -1,0 +1,21 @@
+{
+  "purpose": "A floating activity-summary panel showing accumulated counts for Sea Exploration, Cannot Land, Fishing, and Cannot Salvage actions performed during the current voyage leg near another player's ship (TaylorFP).",
+  "full_text": "Sea Exploration x780 | Cannot Land x1,535 | Fishing x968 | Cannot Salvage x140",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "336613aaf6d0a089",
+  "goal_intent": null,
+  "cached_at": "2026-05-21T22:43:04.788766+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A floating activity-summary panel showing accumulated counts for Sea Exploration, Cannot Land, Fishing, and Cannot Salvage actions performed during the current voyage leg near another player's ship (TaylorFP).",
+    "full_text": "Sea Exploration x780 | Cannot Land x1,535 | Fishing x968 | Cannot Salvage x140",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

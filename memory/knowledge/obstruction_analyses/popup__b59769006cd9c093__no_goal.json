@@ -1,0 +1,21 @@
+{
+  "purpose": "A Fortune Teller NPC interaction window has opened in London, displaying a New Year greeting ('Happy 2026') and an NPC dialogue about straining to speak English, alongside the city navigation menu",
+  "full_text": "Fortune Teller. Happy 2026. I'm about to strain my tongue from trying to speak in English! Harbor, Market, Shipyard, Bank, Inn, Cathedral, Venturer Association, Item Shop.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "b59769006cd9c093",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T16:55:33.882361+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A Fortune Teller NPC interaction window has opened in London, displaying a New Year greeting ('Happy 2026') and an NPC dialogue about straining to speak English, alongside the city navigation menu",
+    "full_text": "Fortune Teller. Happy 2026. I'm about to strain my tongue from trying to speak in English! Harbor, Market, Shipyard, Bank, Inn, Cathedral, Venturer Association, Item Shop.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

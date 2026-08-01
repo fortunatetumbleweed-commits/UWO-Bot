@@ -1,0 +1,21 @@
+{
+  "purpose": "An in-game news panel showing recent patch notes and maintenance notices from the game's official update feed, unrelated to any active sailing or trading goal",
+  "full_text": "Updates: May 13 Patch Notes (5/20 07:53 Added) 2026.05.11 — April 8 Patch Note (Updated on 4/10 11:00 UTC+9) 2026.04.06 — Mar. 11 Patch Note (Added on 5/6 19:37) 2026.03.09. Notices: 05/21 Notice of Maintenance Completion 2 days ago. Featured content: Vittorio Sartori New Admiral Update; Investment Season 6.",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "540cb0c3c27fe06f",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T15:13:17.756301+00:00",
+  "visit_count": 3,
+  "raw_api_response": {
+    "purpose": "An in-game news panel showing recent patch notes and maintenance notices from the game's official update feed, unrelated to any active sailing or trading goal",
+    "full_text": "Updates: May 13 Patch Notes (5/20 07:53 Added) 2026.05.11 — April 8 Patch Note (Updated on 4/10 11:00 UTC+9) 2026.04.06 — Mar. 11 Patch Note (Added on 5/6 19:37) 2026.03.09. Notices: 05/21 Notice of Maintenance Completion 2 days ago. Featured content: Vittorio Sartori New Admiral Update; Investment Season 6.",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Bank Deposit/Withdrawal dialog allowing the player to deposit or withdraw gold coins between their wallet (17,923,665,401 gold) and their savings account (currently 0 balance)",
+  "full_text": "Account Balance: 0 | Balance: 17,923,665,401 | Deposit: 0 | [Deposit] [Withdrawal] buttons with denominations 10B, 1B, 100M | Deposit button",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "b35379e10b86ea53",
+  "goal_intent": null,
+  "cached_at": "2026-05-17T01:50:55.036213+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Bank Deposit/Withdrawal dialog allowing the player to deposit or withdraw gold coins between their wallet (17,923,665,401 gold) and their savings account (currently 0 balance)",
+    "full_text": "Account Balance: 0 | Balance: 17,923,665,401 | Deposit: 0 | [Deposit] [Withdrawal] buttons with denominations 10B, 1B, 100M | Deposit button",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

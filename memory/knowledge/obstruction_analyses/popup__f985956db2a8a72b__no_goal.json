@@ -1,0 +1,21 @@
+{
+  "purpose": "Another player (TaylorFP) has posted a speech bubble in London saying they are struggling to communicate in English, visible as an in-game chat or emote overlay near the Fortune Teller building",
+  "full_text": "I'm about to strain my tongue from trying to speak in English!",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "f985956db2a8a72b",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T16:52:57.104068+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Another player (TaylorFP) has posted a speech bubble in London saying they are struggling to communicate in English, visible as an in-game chat or emote overlay near the Fortune Teller building",
+    "full_text": "I'm about to strain my tongue from trying to speak in English!",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "The player's character status panel is open, displaying currency balances (Ducats, Blue Gems, Red Gems), energy, and cargo load capacity alongside the main navigation menu — this is the standard in-port HUD overlay, not a blocking dialog",
+  "full_text": "Ship | 100,225 Blue Gems | 3,436 Red Gems | Mates | Energy 596 / 539 | Total Load Capacity 1,653/4,066 | Food 153 | Ammo 0 | Journal | Dispatch | Sailing Log",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "dialog",
+  "structural_hash": "55094ea9a746c704",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T02:49:40.144936+00:00",
+  "visit_count": 12,
+  "raw_api_response": {
+    "purpose": "The player's character status panel is open, displaying currency balances (Ducats, Blue Gems, Red Gems), energy, and cargo load capacity alongside the main navigation menu — this is the standard in-port HUD overlay, not a blocking dialog",
+    "full_text": "Ship | 100,225 Blue Gems | 3,436 Red Gems | Mates | Energy 596 / 539 | Total Load Capacity 1,653/4,066 | Food 153 | Ammo 0 | Journal | Dispatch | Sailing Log",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "A New Year 2026 celebratory overlay is displayed in London near the Palace, showing another player (TaylorFP) and a seasonal greeting, while the right-side navigation panel (Harbor, Market, Shipyard, Bank, etc.) remains visible beneath it",
+  "full_text": "Happy 2026. Player TaylorFP (guild: 淡墨桜) is present in London. In-game time: Autumn, Sep, 07:20. Nearby facilities: Harbor, Market, Shipyard, Bank, Inn, Cathedral, Venturer Association, Item Shop, Union, Bureau. Player level: LV 92, 8.46% XP. Location: Atlantic Ocean (coordinates 4.05N, 41.29E). Real time: 12:39.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "1ecdf7866bab733b",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T16:39:46.443662+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A New Year 2026 celebratory overlay is displayed in London near the Palace, showing another player (TaylorFP) and a seasonal greeting, while the right-side navigation panel (Harbor, Market, Shipyard, Bank, etc.) remains visible beneath it",
+    "full_text": "Happy 2026. Player TaylorFP (guild: 淡墨桜) is present in London. In-game time: Autumn, Sep, 07:20. Nearby facilities: Harbor, Market, Shipyard, Bank, Inn, Cathedral, Venturer Association, Item Shop, Union, Bureau. Player level: LV 92, 8.46% XP. Location: Atlantic Ocean (coordinates 4.05N, 41.29E). Real time: 12:39.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "A seasonal greeting overlay ('Happy 2026') is displayed over the London city screen, alongside the standard city navigation menu (Harbor, Market, Shipyard, Bank, Inn, Cathedral, Venturer Association, Item Shop, Union) and another player's character tag (TaylorFP).",
+  "full_text": "Happy 2026. TaylorFP. Autumn Sep 08:34. Harbor, Market, Shipyard, Bank, Inn, Cathedral, Venturer Association, Item Shop, Union. LV 92 8.46% Atlantic Ocean.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "fc24fd8335a18b59",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T16:52:22.809751+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A seasonal greeting overlay ('Happy 2026') is displayed over the London city screen, alongside the standard city navigation menu (Harbor, Market, Shipyard, Bank, Inn, Cathedral, Venturer Association, Item Shop, Union) and another player's character tag (TaylorFP).",
+    "full_text": "Happy 2026. TaylorFP. Autumn Sep 08:34. Harbor, Market, Shipyard, Bank, Inn, Cathedral, Venturer Association, Item Shop, Union. LV 92 8.46% Atlantic Ocean.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

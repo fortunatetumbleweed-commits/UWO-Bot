@@ -1,0 +1,21 @@
+{
+  "purpose": "Bank Deposit/Withdrawal panel is open, allowing the player to deposit or withdraw gold coins between their wallet and savings account",
+  "full_text": "Account Balance: 0 | Balance: 17,350,139,742 | Deposit: 0 | Deposit [10B] [1B] [100M] [calculator] — Withdrawal [calculator] [100M] [1B] [10B] | Deposit button",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "089a2211659aaa4d",
+  "goal_intent": null,
+  "cached_at": "2026-05-16T00:24:51.895080+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Bank Deposit/Withdrawal panel is open, allowing the player to deposit or withdraw gold coins between their wallet and savings account",
+    "full_text": "Account Balance: 0 | Balance: 17,350,139,742 | Deposit: 0 | Deposit [10B] [1B] [100M] [calculator] — Withdrawal [calculator] [100M] [1B] [10B] | Deposit button",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

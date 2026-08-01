@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation panel showing the minimap, current season/time (Autumn, October, Night), current port (Benghazi, Nearby), and a list of nearby undiscovered or unnamed ports with approximate distances",
+  "full_text": "C/HW | 10 10 | 0.0 | Benghazi | 32,53,19,95 | 1Y | Autumn Oct Night | Benghazi Nearby | ??? Approx. 533.2km | ??? Approx. 558.4km | ??? Approx. 678.6km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "31044a8243d5f7ef",
+  "goal_intent": null,
+  "cached_at": "2026-05-28T18:48:16.927014+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Navigation panel showing the minimap, current season/time (Autumn, October, Night), current port (Benghazi, Nearby), and a list of nearby undiscovered or unnamed ports with approximate distances",
+    "full_text": "C/HW | 10 10 | 0.0 | Benghazi | 32,53,19,95 | 1Y | Autumn Oct Night | Benghazi Nearby | ??? Approx. 533.2km | ??? Approx. 558.4km | ??? Approx. 678.6km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

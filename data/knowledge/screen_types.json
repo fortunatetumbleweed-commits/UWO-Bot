@@ -1,0 +1,383 @@
+{
+  "_comment": "Screen type definitions for the UWO screen classifier.",
+  "_comment2": "chrome_signature describes the persistent UI controls visible on each screen.",
+  "_comment3": "These are the signals the classifier learns from. Edit as new screens are discovered.",
+  "_comment_ocr": "OCR note: the game UI language follows the user's language setting (e.g. English). However, other players' names, guild names, and chat text can appear in ANY script — Chinese, Japanese, Korean, Russian (Cyrillic), Arabic, etc. OCR on port name (top-left) and building names is safe to assume the user's language. OCR on player names, chat bubbles, or the 'nearby players' panel must handle multilingual text. Use PaddleOCR (multilingual model) rather than a Latin-only engine for those regions.",
+
+  "screen_types": [
+    {
+      "id": "port_overworld",
+      "label": "Port Overworld",
+      "description": "Character is standing or walking inside a port. The background is a realistic 3D city scene: cobblestone streets, period-accurate buildings (stone facades, arched doorways, market stalls), decorative flora (flower boxes, trees), and ambient animals (dogs, donkeys, chickens). The scene cycles through a day/night cycle and can display weather effects — rain, snow, or clear sky. Other player characters and NPC pedestrians walk through the scene. The chrome UI overlays this animated background.",
+      "chrome_signature": {
+        "top_left":     "port name text, no back arrow",
+        "top_right":    "hamburger menu (≡) — shared with sea; opening it shows main_menu",
+        "right_panel":  "tab bar (tasks/buildings/people/location) + mini map + building list or nearby players",
+        "bottom_left":  "empty (game world)",
+        "bottom_center": "player character model with company name, national flag, guild name (if in guild), and appellation/title (if earned) displayed above the character; company level progress bar at very bottom centre"
+      },
+      "key_differentiator": "character model (not ship) at bottom centre; right panel shows buildings list; port name top-left with no back arrow",
+      "top_level_screen": true,
+      "notes": "One of two top-level screens (the other is sea). Every other screen in the game can be backed out to either port_overworld or sea. Background changes constantly — day/night cycle, weather transitions, NPC/player movement, animal animations — but the chrome layout stays fixed. Dedup and classification should use chrome regions only; the game-world background is not a reliable signal."
+    },
+    {
+      "id": "port_map",
+      "label": "Port Map",
+      "description": "Clean grayscale overhead map of the current port showing all buildings as labeled icons. Opened by tapping the mini map centre.",
+      "chrome_signature": {
+        "top_left":     "back arrow + port name",
+        "top_right":    "home button (⌂)",
+        "right_panel":  "absent — port map covers the full screen",
+        "bottom_left":  "globe icon + 'World Map' label — unique to this screen"
+      },
+      "key_differentiator": "world map button bottom-left — only screen that has it",
+      "notes": "Very clean screen. Good OCR target for building label extraction."
+    },
+    {
+      "id": "building_interior",
+      "label": "Building Interior",
+      "description": "Character is inside a building. The building owner NPC is visible in the scene. Top-left shows building name. The NPC periodically shows an ambient text box at the bottom-centre (e.g. 'Market Owner: Welcome! I have many goods for sale.') — this text comes and goes with different messages and is NOT blocking.",
+      "chrome_signature": {
+        "top_left":     "back arrow + building name (e.g. 'Harbor', 'Market', 'Shipyard')",
+        "top_right":    "home button (⌂)",
+        "right_panel":  "absent or building-specific content",
+        "bottom_left":  "empty",
+        "bottom_center": "optional ambient NPC text box — appears/disappears, cycles through different greeting texts"
+      },
+      "key_differentiator": "back arrow + building name top-left; NPC owner visible in scene; ambient text box may or may not be present",
+      "notes": "Label as building_interior whether the NPC text box is visible or not — it is ambient and non-blocking. Distinguished from building_npc_overlay: in building_interior the NPC is part of the scene and the text box comes and goes automatically; in building_npc_overlay a portrait dominates the screen and the dialogue is player-triggered and blocking."
+    },
+    {
+      "id": "sub_menu",
+      "label": "Sub Menu",
+      "description": "A full nested screen within a building — e.g. the Supply screen in Harbor (tabs: Custom/Adventure/Trade/Combat + Set Ration), the Purchase screen in Market, the Explore screen in Bureau. Fills the whole building frame; has tabs, lists, or rich controls. The back arrow in top-left always navigates back.",
+      "chrome_signature": {
+        "top_left":     "back arrow + action name (e.g. 'Supply', 'Purchase', 'Explore')",
+        "top_right":    "home button (⌂)",
+        "right_panel":  "absent or menu-specific content",
+        "bottom_left":  "empty"
+      },
+      "key_differentiator": "back arrow + named action title top-left; full-screen content with tabs or lists; no darkened overlay behind it",
+      "example_flow": "Harbor → tap Supply → sub_menu (supply tabs) → tap Set Ration → dialog_transaction (ration popup) → confirm → building_npc_overlay ('Supplies purchased') → back to building_interior",
+      "notes": "All building sub-menus share this class. OCR on the top-left title identifies the specific action after classification. Distinguished from dialog_transaction: sub_menu fills the whole screen with rich tab/list UI and has a back arrow; dialog_transaction is a smaller overlay with a darkened background and only confirm/cancel choices."
+    },
+    {
+      "id": "sea",
+      "label": "Sea / Sailing",
+      "description": "Character's fleet is actively sailing on open water. The background is a realistic 3D sea scene: animated ocean waves, sky with clouds, sun or moon depending on time of day, and weather effects (rain, snow, or clear). The horizon may show coastlines, distant cliffs, or landmasses. Visible landmarks include ports (clusters of buildings on the shore) and villages (smaller settlements the fleet can enter). Other player and NPC fleets may be visible on the water. The chrome UI overlays this animated background. After ~1 minute of no interaction the screen transitions to sailing_idle (cinematic screensaver).",
+      "chrome_signature": {
+        "top_left":     "supplies remaining indicator — shows how many days of supplies the fleet has left (critical for long voyages)",
+        "top_right":    "hamburger menu (≡) — shared with port_overworld; opening it shows main_menu",
+        "right_panel":  "tab bar + mini map, content shows nearby fleets and ports instead of buildings and players",
+        "bottom_left":  "navigation controls (compass/heading dial or directional buttons) — unique to sea screens",
+        "bottom_center": "ship model with company name, national flag, guild name (if in guild), and appellation/title (if earned) displayed above the ship (same widget as port_overworld but shows ship instead of character); beneath the ship: destination name + ETA bar e.g. 'Bremen 🚢 3 days' ONLY when a destination is set on the world map — absent during manual sailing; company level progress bar at very bottom centre"
+      },
+      "key_differentiator": "navigation controls bottom-left (unique to sea); ship model (not character) at bottom centre; supplies indicator top-left instead of port name",
+      "top_level_screen": true,
+      "sub_states": {
+        "auto_sailing": "Destination selected on world map. Bottom-center shows destination name + ETA. Bot should OCR supplies vs ETA, then wait for arrival.",
+        "manual_sailing": "No destination set. Player steers with rudder (bottom-left), screen taps, or arrow/WASD keys. No ETA shown. Bot should not attempt manual sailing — if detected, set a destination via world map instead."
+      },
+      "bot_actions": [
+        "Detect sub-state: bottom-center ETA bar present → auto_sailing; absent → manual_sailing.",
+        "auto_sailing entry: OCR top-left supplies days and bottom-center ETA days. If supplies < ETA abort and resupply at harbor first.",
+        "auto_sailing in progress: no action needed — wait for port_loading or sailing_idle transition.",
+        "manual_sailing detected: bot should open world map and set a destination rather than attempting to steer manually."
+      ],
+      "notes": "Both sub-states are classified as 'sea' — the classifier does not need to distinguish them. Sub-state is determined afterwards by checking for the ETA bar (L2 OCR on bottom-center region). Right panel layout matches port_overworld but content differs. Background is highly variable (weather, time of day, coastlines, nearby ships) so classification must rely on chrome signals, not the sea scene itself."
+    },
+    {
+      "id": "world_map",
+      "label": "World Map",
+      "description": "Global map showing all known ports and sea routes. Opened from the port map via the globe icon (bottom-left), or from the sea screen.",
+      "chrome_signature": {
+        "top_left":     "back arrow + 'World Map' title",
+        "top_right":    "home button (⌂)",
+        "right_panel":  "absent or port list/filter panel",
+        "bottom_left":  "empty or zoom controls"
+      },
+      "key_differentiator": "title reads 'World Map', full-screen map view with no game world behind it",
+      "notes": "TBD — needs verification from live screenshots. Port icons and sea route lines visible."
+    },
+    {
+      "id": "port_loading",
+      "label": "Port Loading — Info Card",
+      "description": "First phase of entering a port. A static full-screen artwork/illustration of the port with its name and key facts overlaid. No chrome. Appears immediately after leaving sea.",
+      "chrome_signature": {
+        "top_left":     "absent",
+        "top_right":    "absent",
+        "right_panel":  "absent",
+        "bottom_left":  "absent"
+      },
+      "key_differentiator": "no chrome, port artwork with text info card — distinct from the 3D world scene that follows",
+      "notes": "Static image — safe to dedup heavily. Transitions to port_arrival_overlay within 1-3 seconds."
+    },
+    {
+      "id": "port_arrival_overlay",
+      "label": "Port Arrival — City Overlay",
+      "description": "Second phase of entering a port. The 3D port world is already rendered and visible, but an overlay panel showing city information covers the centre. Chrome not yet shown.",
+      "chrome_signature": {
+        "top_left":     "absent",
+        "top_right":    "absent",
+        "right_panel":  "absent",
+        "bottom_left":  "absent"
+      },
+      "overlay_content": {
+        "port_name":        "Port name — in the user's game language (safe for standard OCR)",
+        "city_stats":       "Population, specialties, trade goods — user's language",
+        "mayor":            "Mayor's name — the player who invested most in this port in the previous week; rotates weekly; player-generated name, any script",
+        "top_investors":    "List of top investing players — player names, any script",
+        "top_guild":        "Top investing guild name — guild names, any script"
+      },
+      "key_differentiator": "3D game world visible in background, full-width city info overlay in centre, no chrome",
+      "notes": "Bot should use this screen to read port city stats (user's language, standard OCR). Mayor and investor names are player-generated — use PaddleOCR multilingual or skip if not needed. Tap or wait to dismiss; transitions to port_overworld once chrome appears."
+    },
+    {
+      "id": "loading",
+      "label": "Loading Screen",
+      "description": "Generic loading transition — progress bar or spinning animation, no game world visible. Appears when entering a building for the first time, loading a distant area, etc.",
+      "chrome_signature": {
+        "top_left":     "absent",
+        "top_right":    "absent",
+        "right_panel":  "absent",
+        "bottom_left":  "absent"
+      },
+      "key_differentiator": "no chrome, no game world, loading indicator present",
+      "notes": "Brief — 1-3 seconds. Distinct from port_loading (no artwork) and sailing_idle (no ship cinematic)."
+    },
+    {
+      "id": "sailing_idle",
+      "label": "Sailing — Idle Cinematic",
+      "description": "Screensaver-style cinematic triggered when the player is idle while at sea. Shows the ship sailing from different dramatic camera angles. No chrome visible. Resumes normal sea view on any input.",
+      "chrome_signature": {
+        "top_left":     "absent",
+        "top_right":    "absent",
+        "right_panel":  "absent",
+        "bottom_left":  "absent"
+      },
+      "key_differentiator": "no chrome, cinematic ship footage from varying angles — NOT a loading screen",
+      "notes": "Superficially similar to loading (no chrome) but visually very different — dramatic sea/sky cinematics. Previously mislabeled as 'loading'; should be its own class. Bot should send an input tap to dismiss and return to sea view."
+    },
+    {
+      "id": "result_screen",
+      "label": "Result / Level-Up Screen",
+      "description": "Interstitial screen shown after completing an action (trade, quest, battle, village exploration). Displays outcome: goods sold, ducats earned, mate level-ups, skill unlocks, exploration discoveries / acquired items, etc. Appears as a full-screen or large panel — village exploration variant is titled 'Exploration Result' with Crew Size / Supplies / Discoveries / Acquired columns and an OK button.",
+      "chrome_signature": {
+        "top_left":     "absent or confirm button",
+        "top_right":    "absent",
+        "right_panel":  "absent",
+        "bottom_left":  "absent"
+      },
+      "key_differentiator": "structured results panel with level-up animations or transaction summary; no main chrome",
+      "notes": "Bot must wait for this screen to appear and then tap to dismiss before continuing. Multiple result screens can chain (e.g. sell → profit summary → mate level-up)."
+    },
+    {
+      "id": "dialog_gameplay",
+      "label": "Dialog — Gameplay Transaction",
+      "description": "A popup that is a step within a player-initiated building action. Always overlays a building interior or sub_menu background (dimmed). Examples: buy/sell quantity selector, number pad for manual amount entry, Set Ration popup, repair confirmation, hire mate dialog.",
+      "chrome_signature": {
+        "top_left":     "dimmed — building or sub_menu chrome faintly visible behind dark overlay",
+        "top_right":    "dimmed home button faintly visible",
+        "right_panel":  "absent or dimmed",
+        "bottom_left":  "absent"
+      },
+      "key_differentiator": "building interior visible (dimmed) behind the overlay; popup contains item details, quantity slider, number pad, or confirm/cancel — bot caused this popup through a prior action",
+      "bot_action":   "Read quantity/price fields, set appropriate amount, tap confirm. Cancel if conditions not met (e.g. price too high, insufficient ducats).",
+      "notes": "Includes OS-style quantity/number-pad popups that appear during transactions — visual style doesn't matter, context does. Distinct from sub_menu (full screen, has tabs/back arrow). Distinct from dialog_system (system-pushed, not caused by bot action)."
+    },
+    {
+      "id": "dialog_reward",
+      "label": "Dialog — Reward Collection",
+      "description": "A system-pushed popup delivering rewards to the player. Examples: event completion rewards, login bonus, achievement rewards, trade point rewards, investment returns. Bot did not initiate this — the game is giving something.",
+      "chrome_signature": {
+        "top_left":     "dimmed or absent — underlying screen behind overlay",
+        "top_right":    "dimmed or absent",
+        "right_panel":  "absent",
+        "bottom_left":  "absent"
+      },
+      "key_differentiator": "reward items displayed (coins, gems, chests, items) with a Collect / OK button; no quantity input; system-initiated not player-initiated",
+      "bot_action":   "Tap Collect or OK to claim rewards and dismiss. No decision needed.",
+      "notes": "May appear immediately after completing a building transaction (e.g. Trade Points reward after selling) — still dialog_reward since the game pushed it. May chain with result_screen."
+    },
+    {
+      "id": "dialog_shop",
+      "label": "Dialog — Shop",
+      "description": "Event shop, seasonal shop, or app shop (real-money purchases). Player browses items buyable with event tokens, blue gems, or real money. More complex UI than a simple confirm popup — has item grid, currency balance, and individual buy buttons.",
+      "chrome_signature": {
+        "top_left":     "dimmed or absent",
+        "top_right":    "dimmed or absent",
+        "right_panel":  "absent",
+        "bottom_left":  "absent"
+      },
+      "key_differentiator": "shop item grid with special currency icons (blue gems, event tokens) or real-money prices; multiple browsable items; close/X button",
+      "bot_action":   "Dismiss immediately. Bot must never spend real money. Event token / blue gem spending deferred until explicit strategy is implemented.",
+      "notes": "Visually richer than dialog_reward (item grid, currency display). May be triggered by event popups or by tapping shop icons in announcements."
+    },
+    {
+      "id": "building_npc_overlay",
+      "label": "Building NPC Overlay",
+      "description": "Transient NPC speech overlay that appears AFTER a transaction inside a building (e.g. 'The crew is ready' at the harbor; 'Hmm; never mind.' at the market sell screen). The NPC art is drawn as a large central image ON TOP of the underlying sub_menu screen, with quoted speech text and (sometimes) a speaker-name button. NOT a Dialog — there is no dark-brown title bar and no X close button. Strictly distinct from the ambient building-interior NPC where the NPC is part of the scene.",
+      "chrome_signature": {
+        "top_left":     "dimmed or absent — underlying sub_menu visible",
+        "top_right":    "dimmed or absent",
+        "right_panel":  "underlying sub_menu chrome visible behind overlay",
+        "bottom_left":  "absent",
+        "bottom_center": "large NPC art with speech text and speaker-name label"
+      },
+      "key_differentiator": "large central NPC art icon (≥ 20% of screen area) + speaker label + quoted speech text — appears post-transaction, no title bar, no X close",
+      "notes": "Bot taps to advance or chooses a response. Distinct from building_interior ambient greeting: building_npc_overlay is action-triggered and blocking; the ambient greeting text box comes and goes automatically and does not block interaction. Also used for post-action confirmations e.g. 'Harbor Official: Supplies have been purchased'. RENAMED from npc_dialogue 2026-05-18 — see docs/dialog_and_event_models.md."
+    },
+    {
+      "id": "story_npc_conversation",
+      "label": "Story NPC Conversation",
+      "description": "MMORPG story-system NPC conversation. Shows an NPC portrait with dialogue text similar to building_npc_overlay, but wrapped in the story system rather than a post-transaction overlay. The KEYSTONE signal is a top-right control bar with three controls: Auto, Dialog History, Skip. Sometimes the NPC is a building NPC (e.g. Union request dialogues), but the wrapping is the story system.",
+      "chrome_signature": {
+        "top_left":     "dimmed or absent — story-system takeover",
+        "top_right":    "Auto / Dialog History / Skip control bar (keystone signal)",
+        "right_panel":  "absent",
+        "bottom_left":  "absent",
+        "bottom_center": "NPC art with dialogue text"
+      },
+      "key_differentiator": "Auto / Dialog History / Skip control bar in top-right — only this screen has it. Without that bar, an NPC + dialogue is building_npc_overlay instead.",
+      "notes": "Bot taps anywhere or Skip to advance. Distinct from building_npc_overlay: same NPC + speech shape but with the story-system top-right controls. See docs/dialog_and_event_models.md."
+    },
+    {
+      "id": "negotiation",
+      "label": "Negotiation Panel",
+      "description": "A non-dismissable info card in the centre and a vertical column of LARGE action buttons on the right side. The info card itself has NO X close and NO buttons inside it — the action buttons live outside the card, on the right edge. The buttons are significantly larger than regular dialog buttons. Covers at least two distinct gameplay flows that share this exact layout: (1) trade-market negotiation (price haggle); (2) village exploration confirmation (e.g. 'Use 3 to start the exploration?' with Yes/No, accompanied by NPC portraits + a speech bubble on the left). The NPC portraits + speech in (2) are decorative — bot interaction is identical to the trade flow: pick one of the right-side action buttons.",
+      "chrome_signature": {
+        "top_left":     "dimmed or absent — negotiation takeover",
+        "top_right":    "dimmed or absent",
+        "right_panel":  "VERTICAL column of LARGE action buttons (much bigger than ~70 px standard dialog button)",
+        "bottom_left":  "absent",
+        "bottom_center": "non-dismissable info card with negotiation context (no X, no inline buttons)"
+      },
+      "key_differentiator": "info card centred + large right-side action buttons — info card itself is NOT dismissable (no X, no inline buttons). NOT a Dialog (Dialog has X close and/or inline action buttons).",
+      "notes": "Bot chooses one of the large right-side action buttons; goal context decides which. The info card stays visible until an action is chosen. Multiple frames previously labelled dialog_gameplay belong here — see docs/dialog_and_event_models.md."
+    },
+    {
+      "id": "level_up",
+      "label": "Level-Up Screen",
+      "description": "Full-screen celebratory takeover when something levels up. Three subtypes share this layout: (1) company level up, (2) company expertise level up (Adventure / Trade / Combat — may include a mate list showing mates that also levelled up on the same expertise), and (3) mate skill unlocked (a mate reaches a level that unlocks a new effect/skill). No tabs, no multi-item claim grid — simpler than event/perk popups.",
+      "chrome_signature": {
+        "top_left":     "absent — full-screen takeover",
+        "top_right":    "absent",
+        "right_panel":  "absent",
+        "bottom_left":  "absent",
+        "bottom_center": "headline text (Level Up / Adventure Up / Trade Up / Combat Up / Skill Unlocked) and optional mate list below"
+      },
+      "key_differentiator": "single celebratory message (no tabs, no claim grid) — distinguishes from event/perk popups. Tap anywhere outside the optional mate list dismisses.",
+      "notes": "Bot dismisses by tapping anywhere outside the mate list bbox (if a mate list is present); any tap dismisses if there is no list. Tapping a mate in the list selects them rather than dismissing. Several frames previously labelled in mixed dialog_* categories belong here — see docs/dialog_and_event_models.md."
+    },
+    {
+      "id": "announcement",
+      "label": "Announcement / Info Overlay",
+      "description": "Full-screen or large-panel game/server announcement modal — event start banners, login bonuses, season announcements, guild notices, limited-time offers. Covers most of the screen so the underlying game world is dimmed or partially obscured. This is a MODAL overlay (blocks interaction until dismissed) — distinct from non-blocking overlay notices (see below). Dismissed by tapping OK/Close or tapping anywhere outside the panel.",
+      "chrome_signature": {
+        "top_left":     "dimmed overworld or sea chrome behind overlay",
+        "top_right":    "dimmed — mail/notification icon may be visible",
+        "right_panel":  "dimmed overworld right panel behind overlay",
+        "bottom_left":  "dimmed"
+      },
+      "key_differentiator": "event artwork, banner, or info card covering most of the screen — no character portrait, no explicit input fields",
+      "notes": "Bot should dismiss immediately (tap OK or tap anywhere) and resume. No reading needed. May appear at login, on event start, or when collecting rewards. Distinct from dialog_system (has explicit OK/Cancel buttons) and building_npc_overlay (has character portrait). NOT the same as non-blocking overlay notices (first-visit discoveries, achievement pops, level-ups) — those appear briefly on top of the scene without changing the screen type and do not need explicit dismissal."
+    },
+    {
+      "id": "dialog_game_notice",
+      "label": "Dialog — Game Notice",
+      "description": "Game-triggered notice dialog — shown after the game completes or detects something during gameplay. Examples: sale result summary, purchase confirmation, post-action notifications. Overlays a dimmed background. Dismissed by tapping OK or anywhere outside.",
+      "chrome_signature": {
+        "top_left":     "dimmed underlying screen",
+        "top_right":    "dimmed underlying screen",
+        "right_panel":  "dimmed or absent",
+        "bottom_left":  "absent"
+      },
+      "key_differentiator": "game-triggered text/result content with OK or close button — caused by a gameplay event (sale, purchase, quest completion), not by the player initiating a transaction",
+      "bot_action":   "Tap OK or Close to dismiss and continue.",
+      "notes": "Previously mislabeled as dialog_system. Distinct from dialog_gameplay (player-initiated transaction popups) and dialog_system (game system daily news). Distinct from dialog_reward (has reward item imagery)."
+    },
+    {
+      "id": "dialog_system",
+      "label": "Dialog — System (Daily News)",
+      "description": "The game's daily news modal, titled 'Main'. Appears once per day on the first overworld-to-overworld transition or on first game start of the day. Contains news, patch notes, or server announcements. CANNOT be dismissed by tapping outside — must tap the X button located at the top-RIGHT corner of the dialog (outside the dialog frame itself). May appear stacked on top of a dialog_reward or announcement — the daily news dialog is always the topmost and must be dismissed first before the underlying dialog becomes interactive.",
+      "chrome_signature": {
+        "top_left":     "dimmed underlying screen",
+        "top_right":    "X close button just outside the dialog frame (top-right of dialog, outside the border)",
+        "right_panel":  "dimmed or absent",
+        "bottom_left":  "absent"
+      },
+      "key_differentiator": "title reads 'Main'; X button is OUTSIDE the dialog frame at top-right; tapping outside the dialog or inside it does not dismiss it — only the external X works",
+      "bot_action":   "Locate and tap the X button at the top-right of the dialog (outside the dialog border). After dismissal, check if another dialog (dialog_reward, announcement) is now visible underneath and handle it normally — those can be dismissed by tapping their own X or anywhere outside.",
+      "notes": "Appears at most once per day. The stacked case (daily news on top of event reward) is normal — dismiss daily news first via its external X, then dismiss the reward dialog via its internal X or tap outside. After all dialogs cleared, call where_am_i() to re-derive current state before continuing."
+    },
+    {
+      "id": "dialog_android",
+      "label": "Dialog — Android System",
+      "description": "Android OS native dialog, not part of the game UI. Appears when the network connection is unstable or lost. Has the native Android visual style (white card, system font). After dismissal the game reloads automatically.",
+      "chrome_signature": {
+        "top_left":     "absent — native Android dialog has no game chrome",
+        "top_right":    "absent",
+        "right_panel":  "absent",
+        "bottom_left":  "absent"
+      },
+      "key_differentiator": "native Android dialog visual style — white card with system font, clearly not the game's own UI; appears over a darkened game background",
+      "bot_action":   "Tap OK to dismiss. Expect the game to reload — wait for port_overworld or sea to reappear before continuing.",
+      "notes": "Caused by unstable network. After tapping OK the game reloads; bot must not assume it is still at the same location. Call where_am_i() after reload to re-derive current state before resuming any task."
+    },
+    {
+      "id": "main_menu",
+      "label": "Main Menu",
+      "description": "The game's top-level navigation panel, opened by tapping the hamburger icon (≡) in the top-right of port_overworld or sea. Shows grouped menu items: Fleet, Ships, Build, Missions, Guild, Auctions, Company, Settings, etc. The underlying game world remains visible behind the panel.",
+      "chrome_signature": {
+        "top_left":     "port name or fleet/route info (same as underlying screen)",
+        "top_right":    "X button — hamburger icon replaced by X when menu is open",
+        "right_panel":  "replaced by the menu panel with grouped items",
+        "bottom_left":  "empty or navigation controls (if opened from sea)"
+      },
+      "key_differentiator": "X button top-right instead of hamburger (≡); right panel replaced by scrollable grouped menu list",
+      "notes": "Can be opened from both port_overworld and sea — the underlying world is still visible at left. Closing it returns to whichever top-level screen it was opened from. Bot should read the menu items as a nav map for reaching Fleet/Guild/Company screens."
+    },
+    {
+      "id": "task_progress",
+      "label": "Task Progress Overlay",
+      "description": "Transient overlay showing a long-running task in progress — e.g. village exploration. A central artwork card (e.g. the village name with a painted scene of the location) sits over the underlying sub_menu, with a labeled progress bar at the bottom of the card (e.g. 'Exploring 58/100'). No buttons, no X to dismiss; the overlay closes itself when the progress bar reaches its maximum, transitioning to a result_screen.",
+      "chrome_signature": {
+        "top_left":     "dimmed underlying sub_menu (back arrow + action title visible behind)",
+        "top_right":    "dimmed underlying sub_menu (home button visible behind)",
+        "right_panel":  "dimmed underlying sub_menu chrome visible behind",
+        "bottom_left":  "absent",
+        "bottom_center": "centered artwork card with title (e.g. village name) and a labeled progress bar (e.g. 'Exploring 58/100') near the bottom of the card"
+      },
+      "key_differentiator": "centered artwork card + labeled progress bar; no buttons; underlying sub_menu visible (dimmed) behind",
+      "bot_action": "Wait. The overlay auto-dismisses when the progress bar fills. Bot should not tap it. After auto-dismiss the screen transitions to a result_screen (for exploration: 'Exploration Result').",
+      "notes": "First example captured 2026-05-21 — village exploration. Same shape is likely reused for other long-running tasks; broaden as more examples appear. Distinct from loading (no artwork, generic spinner) and port_loading (port-entry artwork without progress bar)."
+    },
+    {
+      "id": "village",
+      "label": "Village",
+      "description": "Character is inside a discovered village — the small settlements scattered across the world map (e.g. Berber Village, Yoruba Village). Reached from sea via the world-map 'Move to Village' button. The screen layout is exactly the same shape as building_interior: a back arrow + village name top-left, a home button top-right, and a right-side panel listing the village's sub-menu items. Barter is one of those sub-menu items; tapping it opens a sub_menu screen the same way tapping Purchase in a Market does. Background is a 3D village scene (huts/tents/locals) with day/night and weather effects.",
+      "chrome_signature": {
+        "top_left":     "back arrow + village name (e.g. 'Berber Village')",
+        "top_right":    "home button (⌂)",
+        "right_panel":  "sub-menu items list (Barter and possibly others — TBD from live capture)",
+        "bottom_left":  "empty",
+        "bottom_center": "optional ambient NPC text box, same shape as building_interior"
+      },
+      "key_differentiator": "back arrow + village name top-left; right-side sub-menu list shaped like a building_interior but located on the world map via Move to Village (not via the in-port building list)",
+      "notes": "Villages share the building_interior layout but are reached from sea, not from a port. Each village's barter inventory is fixed by culture (see memory/knowledge/world_map/village_coordinates.json — 'barters' field). The sub-menu items inside a village (Barter, others TBD) live in the right-side menu and produce sub_menu screens identical in shape to a building's sub_menus. TBD: capture a live village frame to enumerate the full set of sub-menu items beyond Barter."
+    },
+    {
+      "id": "other",
+      "label": "Other / Unknown",
+      "description": "Any screen not in active scope — auction house, event shops, game shop (real-money purchases), guild screens, battle/combat UI, tutorial overlays, and anything else not yet categorised. Also used for genuinely unknown screens during capture sessions.",
+      "chrome_signature": {
+        "top_left":     "varies — usually back arrow present",
+        "top_right":    "varies",
+        "right_panel":  "varies",
+        "bottom_left":  "varies"
+      },
+      "key_differentiator": "does not match any known pattern",
+      "notes": "Bot strategy: tap the back arrow (or home button) to exit and return to port_overworld. No need to understand or interact with the content. These screens are intentionally deferred until the bot can play the core game loop well. Review Queue can surface new unknowns for reclassification later."
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "An NPC speech bubble from a Fortune Teller in London's town square is visible, along with ambient NPC dialogue about island fighting and emergency ship provisioning, plus a player character named TaylorFP displaying a 'Happy 2026' seasonal banner — these are passive world dialogue overlays, not a blocking popup",
+  "full_text": "Fortune Teller. Happy 2026. TaylorFP. I'm about to strain my tongue from trying to speak in English!",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "1b90970e183a292b",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T16:57:22.014578+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "An NPC speech bubble from a Fortune Teller in London's town square is visible, along with ambient NPC dialogue about island fighting and emergency ship provisioning, plus a player character named TaylorFP displaying a 'Happy 2026' seasonal banner — these are passive world dialogue overlays, not a blocking popup",
+    "full_text": "Fortune Teller. Happy 2026. TaylorFP. I'm about to strain my tongue from trying to speak in English!",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

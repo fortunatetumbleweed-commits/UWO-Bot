@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation panel showing nearby port distances from current position near Tripoli in the Mediterranean, with seasonal and time-of-day indicators (Spring, March, Night)",
+  "full_text": "TW 10 | 0.0 | Tripoli 33,23,13,04 | Spring | Mar | Night | Tripoli Approx 11.6km | Syracuse Approx 436.6km | Approx 476.8km | Benghazi Approx 545.5km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "cc4878435358edee",
+  "goal_intent": null,
+  "cached_at": "2026-05-21T14:55:54.288769+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Navigation panel showing nearby port distances from current position near Tripoli in the Mediterranean, with seasonal and time-of-day indicators (Spring, March, Night)",
+    "full_text": "TW 10 | 0.0 | Tripoli 33,23,13,04 | Spring | Mar | Night | Tripoli Approx 11.6km | Syracuse Approx 436.6km | Approx 476.8km | Benghazi Approx 545.5km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

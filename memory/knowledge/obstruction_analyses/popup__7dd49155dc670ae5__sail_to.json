@@ -1,0 +1,21 @@
+{
+  "purpose": "A nearby player's ship (TaylorFP) encounter panel showing their recent activity stats (Sea Exploration, Explore Land, Fishing, Salvage) along with a New Year greeting overlay — this is a player info/encounter popup triggered by proximity to another player's vessel",
+  "full_text": "Happy 2026. Player: TaylorFP. Sea Exploration x780, Explore Land x1,535, Fishing x968, Cannot Salvage x140. Hull: 80, Sail: 86.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "7dd49155dc670ae5",
+  "goal_intent": "sail_to",
+  "cached_at": "2026-05-24T05:38:05.235065+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A nearby player's ship (TaylorFP) encounter panel showing their recent activity stats (Sea Exploration, Explore Land, Fishing, Salvage) along with a New Year greeting overlay — this is a player info/encounter popup triggered by proximity to another player's vessel",
+    "full_text": "Happy 2026. Player: TaylorFP. Sea Exploration x780, Explore Land x1,535, Fishing x968, Cannot Salvage x140. Hull: 80, Sail: 86.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

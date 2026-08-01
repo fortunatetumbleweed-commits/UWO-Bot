@@ -1,0 +1,21 @@
+{
+  "purpose": "The navigation/map side panel is open, showing nearby ports and their distances — Tripoli (nearby), two unknown locations (~453 km and ~479 km), Benghazi (~544 km), and two more unknown locations — along with the current season (Autumn, November, Night) and ship action menu options (Sea Exploration, Explore Land, Fishing, Cannot Salvage).",
+  "full_text": "TW | Dead Villagers | Tripoli [33.21, 13.05] | Autumn Nov Night | Tripoli: Nearby | ??? Approx 453.1km | ??? Approx 479km | Benghazi Approx 544.2km | ??? Approx 699.3km | ??? Approx 804.5km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "9c94eaa2f447988d",
+  "goal_intent": null,
+  "cached_at": "2026-05-29T13:40:50.993969+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The navigation/map side panel is open, showing nearby ports and their distances — Tripoli (nearby), two unknown locations (~453 km and ~479 km), Benghazi (~544 km), and two more unknown locations — along with the current season (Autumn, November, Night) and ship action menu options (Sea Exploration, Explore Land, Fishing, Cannot Salvage).",
+    "full_text": "TW | Dead Villagers | Tripoli [33.21, 13.05] | Autumn Nov Night | Tripoli: Nearby | ??? Approx 453.1km | ??? Approx 479km | Benghazi Approx 544.2km | ??? Approx 699.3km | ??? Approx 804.5km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

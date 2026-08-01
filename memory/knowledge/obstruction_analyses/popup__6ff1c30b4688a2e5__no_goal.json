@@ -1,0 +1,21 @@
+{
+  "purpose": "Minimap/navigation panel showing nearby landmarks, current season/time, and distances to upcoming ports along the player's route",
+  "full_text": "10 | 27.0 kw | Coordinates: 42.40, 34.83 | Autumn, Oct, Daytime | Ardele Pillagers Approx. 50.4km | ??? Approx. 288.4km | ??? Approx. 388.8km | ??? Approx. 512.2km",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "6ff1c30b4688a2e5",
+  "goal_intent": null,
+  "cached_at": "2026-05-28T13:38:29.297118+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Minimap/navigation panel showing nearby landmarks, current season/time, and distances to upcoming ports along the player's route",
+    "full_text": "10 | 27.0 kw | Coordinates: 42.40, 34.83 | Autumn, Oct, Daytime | Ardele Pillagers Approx. 50.4km | ??? Approx. 288.4km | ??? Approx. 388.8km | ??? Approx. 512.2km",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "A player encounter result screen showing TaylorFP's ship activity summary, displaying accumulated points for Sea Exploration, Explore Land, Fishing, and Cannot Salvage actions after an encounter in Lawless Waters",
+  "full_text": "Happy 2026. TaylorFP: Sea Exploration x780, Explore Land x1,535, Fishing x968, Cannot Salvage x140",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "284a104aac9bb925",
+  "goal_intent": null,
+  "cached_at": "2026-05-19T18:39:45.711929+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A player encounter result screen showing TaylorFP's ship activity summary, displaying accumulated points for Sea Exploration, Explore Land, Fishing, and Cannot Salvage actions after an encounter in Lawless Waters",
+    "full_text": "Happy 2026. TaylorFP: Sea Exploration x780, Explore Land x1,535, Fishing x968, Cannot Salvage x140",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

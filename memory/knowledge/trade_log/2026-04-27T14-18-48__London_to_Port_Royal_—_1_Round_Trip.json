@@ -1,0 +1,91 @@
+{
+  "task_name": "London to Port Royal — 1 Round Trip",
+  "started_at": "2026-04-27T14:18:48.205275+00:00",
+  "ended_at": "2026-04-27T15:43:10.458060+00:00",
+  "elapsed_seconds": 5062.252785,
+  "rounds_completed": 1,
+  "total_profit": 1802827,
+  "ducats_per_hour": 1282072.9180555926,
+  "steps": [
+    {
+      "action": "sell_all",
+      "port": "?",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 32.2123205,
+      "notes": "sold 0 goods  +0d"
+    },
+    {
+      "action": "buy_all",
+      "port": "London",
+      "ok": true,
+      "profit": -965525,
+      "duration_s": 366.12436425000004,
+      "notes": "bought 6 goods  -965,525d (→Lisboa)"
+    },
+    {
+      "action": "sail_to",
+      "port": "Lisboa",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 562.349595041,
+      "notes": "arrived"
+    },
+    {
+      "action": "sail_to",
+      "port": "Las Palmas",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 482.58138733300007,
+      "notes": "arrived"
+    },
+    {
+      "action": "sail_to",
+      "port": "Port Royal",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 881.315773583,
+      "notes": "arrived"
+    },
+    {
+      "action": "sell_all",
+      "port": "Port Royal",
+      "ok": true,
+      "profit": 3312151,
+      "duration_s": 115.39365662499995,
+      "notes": "sold 1 goods  +3,312,151d"
+    },
+    {
+      "action": "buy_all",
+      "port": "Port Royal",
+      "ok": true,
+      "profit": -543799,
+      "duration_s": 337.128231833,
+      "notes": "bought 3 goods  -543,799d (→Las Palmas)"
+    },
+    {
+      "action": "sail_to",
+      "port": "Las Palmas",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 1117.9319648340002,
+      "notes": "arrived"
+    },
+    {
+      "action": "sail_to",
+      "port": "Lisbon",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 461.987684875,
+      "notes": "arrived"
+    },
+    {
+      "action": "sail_to",
+      "port": "London",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 524.1320538330001,
+      "notes": "arrived"
+    }
+  ]
+}

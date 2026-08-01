@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation sidebar panel showing the minimap, current season/time, and a list of nearby landmarks with approximate distances — this is a persistent HUD element, not a true popup obstruction",
+  "full_text": "Wind: 7.0 kw. Time: 8:00:33. Dry Season, Mar, Daytime. Bari Village Approx. 258.2km. ??? Approx. 852.4km. Nubia Village Approx. 1,529.3km. Cairo Approx. 2,215.8km. ??? Approx. 2,324.5km. Port Said Approx. 2,447.7km.",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "f5edc2dffed687d8",
+  "goal_intent": null,
+  "cached_at": "2026-06-02T04:34:02.239793+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Navigation sidebar panel showing the minimap, current season/time, and a list of nearby landmarks with approximate distances — this is a persistent HUD element, not a true popup obstruction",
+    "full_text": "Wind: 7.0 kw. Time: 8:00:33. Dry Season, Mar, Daytime. Bari Village Approx. 258.2km. ??? Approx. 852.4km. Nubia Village Approx. 1,529.3km. Cairo Approx. 2,215.8km. ??? Approx. 2,324.5km. Port Said Approx. 2,447.7km.",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

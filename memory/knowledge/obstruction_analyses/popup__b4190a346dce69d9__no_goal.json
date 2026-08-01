@@ -1,0 +1,21 @@
+{
+  "purpose": "An NPC or location tooltip at the Palace in London is providing flavour text about Britain being the name of the big island",
+  "full_text": "Palace — Every island has its own name! The big one is called Britain!",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "b4190a346dce69d9",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T16:40:18.093567+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "An NPC or location tooltip at the Palace in London is providing flavour text about Britain being the name of the big island",
+    "full_text": "Palace — Every island has its own name! The big one is called Britain!",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

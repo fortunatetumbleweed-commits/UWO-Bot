@@ -1,0 +1,21 @@
+{
+  "purpose": "A New Year 2026 greeting overlay has appeared from another player's ship (TaylorFP) encountered at sea, displaying their activity stats such as Sea Exploration, Explore Land, Fishing, and Cannot Salvage counts for the encounter or season",
+  "full_text": "Happy 2026! Player TaylorFP — Sea Exploration x780, Explore Land x1,535, Fishing x968, Cannot Salvage x140",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "6fe0b82c0e04950b",
+  "goal_intent": null,
+  "cached_at": "2026-05-20T18:53:42.688071+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A New Year 2026 greeting overlay has appeared from another player's ship (TaylorFP) encountered at sea, displaying their activity stats such as Sea Exploration, Explore Land, Fishing, and Cannot Salvage counts for the encounter or season",
+    "full_text": "Happy 2026! Player TaylorFP — Sea Exploration x780, Explore Land x1,535, Fishing x968, Cannot Salvage x140",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

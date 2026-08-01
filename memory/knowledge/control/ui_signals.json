@@ -1,0 +1,335 @@
+{
+  "_note": "Navigation state detection keywords. Edit here — no code changes needed.",
+  "sea_hud_tokens": [
+    "days of sailing",
+    "lawless waters",
+    "dangerous waters",
+    "safe waters",
+    "tail wind",
+    " tw ",
+    " hw ",
+    "wind speed"
+  ],
+  "loading_screen_keywords": [
+    "entering",
+    "preparing",
+    "loading"
+  ],
+  "sea_notice_keywords": [
+    "system notice",
+    "new voyage",
+    "announcement",
+    "a new",
+    "main",
+    "attendance",
+    "perk event",
+    "login reward"
+  ],
+  "zone_words": [
+    "waters",
+    "ocean",
+    "lawless",
+    "dangerous",
+    "safe water",
+    "waiter",
+    "waiters"
+  ],
+  "main_menu_keywords": [
+    "guild",
+    "auction",
+    "combat",
+    "collection",
+    "lighthouse",
+    "assault",
+    "production",
+    "enhance",
+    "rank",
+    "friend"
+  ],
+  "harbor_panel_keywords": [
+    "supply departure",
+    "depart now",
+    "crew size",
+    "load capacity"
+  ],
+  "world_map_title_keywords": [
+    "world map"
+  ],
+  "exit_game_keywords": [
+    "exit game",
+    "leave game",
+    "quit game",
+    "exit the game",
+    "do you want to exit"
+  ],
+  "flow_detection_order": [
+    [
+      "market_purchase",
+      "result"
+    ],
+    [
+      "market_sell",
+      "result"
+    ],
+    [
+      "market_purchase",
+      "confirm"
+    ],
+    [
+      "market_purchase",
+      "negotiate"
+    ],
+    [
+      "market_sell",
+      "negotiate"
+    ],
+    [
+      "market_purchase",
+      "basket"
+    ],
+    [
+      "learned_building__sea_cinematic__20260501T173946Z",
+      "step_1"
+    ],
+    [
+      "learned_building__sea_cinematic__20260501T192302Z",
+      "step_1"
+    ],
+    [
+      "learned_port_overworld__building__20260502T042633Z",
+      "step_1"
+    ],
+    [
+      "learned_building__building__20260502T062847Z",
+      "step_1"
+    ],
+    [
+      "learned_building__building__20260502T065814Z",
+      "step_1"
+    ],
+    [
+      "learned_building__port_overworld__20260502T115915Z",
+      "step_1"
+    ],
+    [
+      "learned_building__port_overworld__20260502T115915Z",
+      "step_2"
+    ],
+    [
+      "learned_building__building__20260502T121309Z",
+      "step_1"
+    ],
+    [
+      "learned_building__building__20260502T123959Z",
+      "step_1"
+    ],
+    [
+      "learned_building__building__20260502T130027Z",
+      "step_1"
+    ],
+    [
+      "learned_building__building__20260502T131848Z",
+      "step_1"
+    ],
+    [
+      "learned_building__building__20260502T133159Z",
+      "step_1"
+    ],
+    [
+      "learned_building__building__20260502T134852Z",
+      "step_1"
+    ],
+    [
+      "learned_building__building__20260502T173311Z",
+      "step_1"
+    ],
+    [
+      "learned_building__building__20260502T173311Z",
+      "step_2"
+    ],
+    [
+      "learned_building__building__20260502T173311Z",
+      "step_3"
+    ]
+  ],
+  "main_menu_item_ids": [
+    {
+      "id": "guild",
+      "labels": [
+        "guild",
+        "guild hall"
+      ]
+    },
+    {
+      "id": "auction",
+      "labels": [
+        "auction"
+      ]
+    },
+    {
+      "id": "combat",
+      "labels": [
+        "combat"
+      ]
+    },
+    {
+      "id": "collection",
+      "labels": [
+        "collection"
+      ]
+    },
+    {
+      "id": "lighthouse",
+      "labels": [
+        "lighthouse"
+      ]
+    },
+    {
+      "id": "assault",
+      "labels": [
+        "assault"
+      ]
+    },
+    {
+      "id": "production",
+      "labels": [
+        "production"
+      ]
+    },
+    {
+      "id": "enhance",
+      "labels": [
+        "enhance"
+      ]
+    },
+    {
+      "id": "rank",
+      "labels": [
+        "rank"
+      ]
+    },
+    {
+      "id": "friend",
+      "labels": [
+        "friend"
+      ]
+    }
+  ],
+  "port_overworld_overlay_keywords": [
+    "discovery",
+    "new port",
+    "new village",
+    "new landmark",
+    "achievement",
+    "level up",
+    "trade point",
+    "login reward",
+    "perk event",
+    "attendance",
+    "union request",
+    "system notice"
+  ],
+  "sea_state_keywords": {
+    "active_sailing": [
+      "days of sailing",
+      "tail wind",
+      "wind speed",
+      "tw ",
+      "hw "
+    ],
+    "cinematic_idle": [],
+    "encounter": [
+      "battle",
+      "pirates",
+      "enemy fleet",
+      "combat"
+    ],
+    "region_arrival": [
+      "entered",
+      "arriving",
+      "discovered sea region"
+    ]
+  },
+  "world_map_ui_keywords": {
+    "city_selected": [
+      "city info",
+      "go to city",
+      "port info"
+    ],
+    "route_active": [
+      "route",
+      "voyage",
+      "days"
+    ],
+    "zoom_hint": [
+      "pinch",
+      "zoom"
+    ]
+  },
+  "building_name_variants": {
+    "harbor": [
+      "harbor",
+      "harbour"
+    ],
+    "market": [
+      "market"
+    ],
+    "bank": [
+      "bank"
+    ],
+    "inn": [
+      "inn",
+      "tavern"
+    ],
+    "shipyard": [
+      "shipyard"
+    ],
+    "castle": [
+      "castle"
+    ],
+    "cathedral": [
+      "cathedral",
+      "church"
+    ],
+    "sanctuary": [
+      "sanctuary"
+    ],
+    "bureau": [
+      "bureau"
+    ],
+    "guild": [
+      "guild",
+      "guild hall"
+    ],
+    "palace": [
+      "palace"
+    ],
+    "warehouse": [
+      "warehouse"
+    ],
+    "exchange": [
+      "exchange"
+    ],
+    "union": [
+      "union"
+    ],
+    "item_shop": [
+      "item shop",
+      "shop",
+      "item"
+    ],
+    "fortune_teller": [
+      "fortune teller"
+    ],
+    "blacksmith": [
+      "blacksmith"
+    ],
+    "estate": [
+      "estate",
+      "mercator estate"
+    ],
+    "port_authority": [
+      "port authority"
+    ]
+  }
+}

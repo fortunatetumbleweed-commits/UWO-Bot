@@ -1,0 +1,21 @@
+{
+  "purpose": "A 'Booming city' trade event notification is alerting the player that an undiscovered city near the English Channel / North Sea region (near London, Dover, Calais) is currently experiencing a economic boom, presenting a trade opportunity",
+  "full_text": "Booming is occurring in an undiscovered city. London, Dover, ???, Calais",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "2d7e54f40a00d909",
+  "goal_intent": "sail_to",
+  "cached_at": "2026-05-24T20:38:42.476198+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A 'Booming city' trade event notification is alerting the player that an undiscovered city near the English Channel / North Sea region (near London, Dover, Calais) is currently experiencing a economic boom, presenting a trade opportunity",
+    "full_text": "Booming is occurring in an undiscovered city. London, Dover, ???, Calais",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

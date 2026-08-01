@@ -1,0 +1,14 @@
+{
+  "name": "standard_nile_descent",
+  "description": "Canonical Cairo→Y-tip descent of the in-game Nile, captured human-piloted on 2026-06-06 via tools/capture_voyage.py.  Use as the reference path for evaluate_voyage.py.  Outbound leg only — the human turned back at the southern lake; clipping at tick 800 keeps the comparison one-way.",
+  "session": "reference_nile_full_20260606_141824",
+  "outbound_end_tick": 800,
+  "tolerance_km": 5.0,
+  "lookahead": 1500,
+  "landmarks": [
+    {"name": "Cairo (start)", "approx_lat": 30.15, "approx_lon": 30.63, "ref_tick": 1},
+    {"name": "Nubia (village overlay region)", "approx_lat": 25.0, "approx_lon": 32.0, "ref_tick_approx": 130},
+    {"name": "Big bend", "approx_lat": 14.0, "approx_lon": 33.3, "ref_tick_approx": 360},
+    {"name": "Y-tip / southern lake", "approx_lat": 0.0, "approx_lon": 32.57, "ref_tick_approx": 786}
+  ]
+}

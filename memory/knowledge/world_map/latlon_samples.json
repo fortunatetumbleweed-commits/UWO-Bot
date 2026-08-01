@@ -1,0 +1,42 @@
+[
+  {
+    "port": "lisboa",
+    "lat": 38.97,
+    "lon": -11.77,
+    "cat_x": 4397,
+    "cat_y": 1772,
+    "captured_at": "2026-05-21T15:41:53"
+  },
+  {
+    "port": "tripoli",
+    "lat": 33.98,
+    "lon": 13.72,
+    "cat_x": 5035,
+    "cat_y": 1966,
+    "captured_at": "2026-05-21T15:42:14"
+  },
+  {
+    "port": "alexandria",
+    "lat": 32.56,
+    "lon": 28.82,
+    "cat_x": 5459,
+    "cat_y": 2022,
+    "captured_at": "2026-05-21T15:42:31"
+  },
+  {
+    "port": "kozhikode",
+    "lat": 11.64,
+    "lon": 73.04,
+    "cat_x": 6754,
+    "cat_y": 2624,
+    "captured_at": "2026-05-21T15:43:16"
+  },
+  {
+    "port": "amsterdam",
+    "lat": 53.34,
+    "lon": 1.88,
+    "cat_x": 4807,
+    "cat_y": 1213,
+    "captured_at": "2026-05-21T15:43:41"
+  }
+]

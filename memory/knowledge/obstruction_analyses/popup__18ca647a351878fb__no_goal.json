@@ -1,0 +1,21 @@
+{
+  "purpose": "The Item Shop building tooltip has appeared in London, describing that this location sells gear for mates and essential sailing tools, available all day (00:00–23:59).",
+  "full_text": "Item Shop. 00:00–23:59. Buy gear for mates along with various tools that are essential for sailing.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "18ca647a351878fb",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T18:33:55.946589+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Item Shop building tooltip has appeared in London, describing that this location sells gear for mates and essential sailing tools, available all day (00:00–23:59).",
+    "full_text": "Item Shop. 00:00–23:59. Buy gear for mates along with various tools that are essential for sailing.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Exit Game confirmation dialog asking the player whether to quit the session, noting that Auto Sail will keep the fleet moving if enabled",
+  "full_text": "Exit Game? Your fleet will continue to its destination if you are using Auto Sail.",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "overlay",
+  "structural_hash": "085cfd818c1f2751",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T23:33:13.267917+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Exit Game confirmation dialog asking the player whether to quit the session, noting that Auto Sail will keep the fleet moving if enabled",
+    "full_text": "Exit Game? Your fleet will continue to its destination if you are using Auto Sail.",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "The game is asking the player to confirm quitting the session, noting that any active Auto Sail voyage will continue to its destination if the game is exited",
+  "full_text": "Exit Game? Your fleet will continue to its destination if you are using Auto Sail.",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "76586824269fb9ff",
+  "goal_intent": "sail_to",
+  "cached_at": "2026-05-24T05:43:43.640703+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The game is asking the player to confirm quitting the session, noting that any active Auto Sail voyage will continue to its destination if the game is exited",
+    "full_text": "Exit Game? Your fleet will continue to its destination if you are using Auto Sail.",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

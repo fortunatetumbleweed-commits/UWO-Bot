@@ -1,0 +1,21 @@
+{
+  "purpose": "An activity/skill panel showing the player's current sea activities (Sea Exploration, Explore Land, Fishing, Salvage) and their accumulated counts, likely a context menu that appeared near the player's ship",
+  "full_text": "Sea Exploration x0 | Explore Land x0 | Fishing x0 | Cannot Salvage x0",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "88887417558e22f3",
+  "goal_intent": null,
+  "cached_at": "2026-05-31T14:58:45.316826+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "An activity/skill panel showing the player's current sea activities (Sea Exploration, Explore Land, Fishing, Salvage) and their accumulated counts, likely a context menu that appeared near the player's ship",
+    "full_text": "Sea Exploration x0 | Explore Land x0 | Fishing x0 | Cannot Salvage x0",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

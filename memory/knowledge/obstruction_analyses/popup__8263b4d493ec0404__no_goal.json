@@ -1,0 +1,21 @@
+{
+  "purpose": "An NPC or tooltip dialogue bubble is explaining that the British Isles have individual island names and that the main island is called Britain, providing geographical lore about the London region",
+  "full_text": "Every island has its own name! The big one is called Britain!",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "8263b4d493ec0404",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T16:41:17.594039+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "An NPC or tooltip dialogue bubble is explaining that the British Isles have individual island names and that the main island is called Britain, providing geographical lore about the London region",
+    "full_text": "Every island has its own name! The big one is called Britain!",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

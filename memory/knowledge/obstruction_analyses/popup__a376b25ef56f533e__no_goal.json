@@ -1,0 +1,21 @@
+{
+  "purpose": "Village Info panel for Berber Village showing current Amity level (Neutral, 60,000/100,000), Daily Barter Progress (0/4), Village Status (Envoy preparing to send to a big city), and Weekly Reward locked due to insufficient Amity",
+  "full_text": "Village Info — Berber Village. Base | Explore | Barter. Neutral. Amity: 60,000/100,000. Daily Barter Progress: 0/4. Village Status: Envoy — Preparing to send out an envoy to a big city. Weekly Reward: Not Enough Amity.",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "a376b25ef56f533e",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T03:23:02.263870+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Village Info panel for Berber Village showing current Amity level (Neutral, 60,000/100,000), Daily Barter Progress (0/4), Village Status (Envoy preparing to send to a big city), and Weekly Reward locked due to insufficient Amity",
+    "full_text": "Village Info — Berber Village. Base | Explore | Barter. Neutral. Amity: 60,000/100,000. Daily Barter Progress: 0/4. Village Status: Envoy — Preparing to send out an envoy to a big city. Weekly Reward: Not Enough Amity.",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

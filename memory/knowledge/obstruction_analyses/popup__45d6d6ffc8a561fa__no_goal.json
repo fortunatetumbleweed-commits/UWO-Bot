@@ -1,0 +1,21 @@
+{
+  "purpose": "The Dismantle screen is open, displaying a list of ships in the player's dock available to be dismantled for Build EXP, showing ship names, types, and the Western or Eastern Build EXP each would yield upon dismantling.",
+  "full_text": "Dismantle | Gold: 16,758,149,874 | Gems: 87,566 | 3,360 | 681 | Western Build LV 1,178,848 / 1,341,680 | Dock ships available: Improved Flying Cloud (Western Build EXP +2,830), Golden Louchuan (Eastern Build EXP +2,830), Improved Adler (Western Build EXP +4,940), 改良型アドラー2 / Improved Adler (Western Build EXP +4,940), Improved Exploration / Improved Exploration Atakebune (Eastern Build EXP +3,512), Improved Flying Cloud (Western Build EXP +2,830), Improved Ingermanland (Western Build EXP +8,940), Improved Bucentaur (Western Build EXP +8,940), Improved Bucentaur2 / Improved Bucentaur (Western Build EXP +8,940), Improved Manila Gal3 / Improved Manila Galleon (Western Build EXP +4,940), Improved Manila Gall / Improved Manila Galleon (Western Build EXP +4,940), Improved Manila Gal4 / Improved Manila Galleon (Western Build EXP +4,940), Improved Manila Gal5 / Improved Manila Galleon (Western Build EXP +4,940), Improved Ingermanland2 (Western Build EXP +8,940), Improved Zheng Cheng / Improved Zheng Chenggong Hainan Ship (Eastern Build EXP +8,940), Golden Exploration Atakebune (Western Build EXP +3,512).",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "45d6d6ffc8a561fa",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T18:43:12.923111+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Dismantle screen is open, displaying a list of ships in the player's dock available to be dismantled for Build EXP, showing ship names, types, and the Western or Eastern Build EXP each would yield upon dismantling.",
+    "full_text": "Dismantle | Gold: 16,758,149,874 | Gems: 87,566 | 3,360 | 681 | Western Build LV 1,178,848 / 1,341,680 | Dock ships available: Improved Flying Cloud (Western Build EXP +2,830), Golden Louchuan (Eastern Build EXP +2,830), Improved Adler (Western Build EXP +4,940), 改良型アドラー2 / Improved Adler (Western Build EXP +4,940), Improved Exploration / Improved Exploration Atakebune (Eastern Build EXP +3,512), Improved Flying Cloud (Western Build EXP +2,830), Improved Ingermanland (Western Build EXP +8,940), Improved Bucentaur (Western Build EXP +8,940), Improved Bucentaur2 / Improved Bucentaur (Western Build EXP +8,940), Improved Manila Gal3 / Improved Manila Galleon (Western Build EXP +4,940), Improved Manila Gall / Improved Manila Galleon (Western Build EXP +4,940), Improved Manila Gal4 / Improved Manila Galleon (Western Build EXP +4,940), Improved Manila Gal5 / Improved Manila Galleon (Western Build EXP +4,940), Improved Ingermanland2 (Western Build EXP +8,940), Improved Zheng Cheng / Improved Zheng Chenggong Hainan Ship (Eastern Build EXP +8,940), Golden Exploration Atakebune (Western Build EXP +3,512).",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

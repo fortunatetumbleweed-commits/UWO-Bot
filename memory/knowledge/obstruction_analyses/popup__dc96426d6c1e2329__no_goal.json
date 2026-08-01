@@ -1,0 +1,21 @@
+{
+  "purpose": "The mini-map and nearby port/location panel showing the ship's current position in the Atlantic Ocean near Las Palmas, with a list of nearby ports and their distances",
+  "full_text": "HW 0.0 | Las Palmas (28.01, -15.87) | Spring, Apr, Daytime | Las Palmas Approx. 18.4km | Berber Village Approx. 253.1km | Fishing x968 | Cannot Salvage x140 | Madeira Approx. 320.8km | Arguin Approx. 671.8km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "dc96426d6c1e2329",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T14:22:02.468978+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The mini-map and nearby port/location panel showing the ship's current position in the Atlantic Ocean near Las Palmas, with a list of nearby ports and their distances",
+    "full_text": "HW 0.0 | Las Palmas (28.01, -15.87) | Spring, Apr, Daytime | Las Palmas Approx. 18.4km | Berber Village Approx. 253.1km | Fishing x968 | Cannot Salvage x140 | Madeira Approx. 320.8km | Arguin Approx. 671.8km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

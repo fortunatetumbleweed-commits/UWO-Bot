@@ -1,0 +1,21 @@
+{
+  "purpose": "A skill or achievement progress summary popup showing accumulated counts for Sea Exploration, Explore Land, Fishing, and Cannot Salvage actions performed during this voyage or session",
+  "full_text": "Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "77b211fb223f85cb",
+  "goal_intent": null,
+  "cached_at": "2026-05-19T16:55:39.017327+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A skill or achievement progress summary popup showing accumulated counts for Sea Exploration, Explore Land, Fishing, and Cannot Salvage actions performed during this voyage or session",
+    "full_text": "Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

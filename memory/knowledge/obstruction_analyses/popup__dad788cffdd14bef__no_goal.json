@@ -1,0 +1,21 @@
+{
+  "purpose": "The Recruit Crew panel is open, showing fleet crew capacity (793/1676), standby crew available (939 Ming), and crew recruitment controls allowing the player to recruit up to 883 additional crew members across their ships.",
+  "full_text": "Min Crew 171 | Standby Crew 939 Ming | Recruit Crew 0/883 | Min / Max Waiting Time / Max | Emergency Recruit: 0 | Normal Recruit: 0 | Recruit | Ship crew statuses: 77/191 (Min 75), 99/223 (Min 98), 99/209 (Min 98), 91/203 (Min 90), 126/271",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "dad788cffdd14bef",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T20:33:10.461336+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The Recruit Crew panel is open, showing fleet crew capacity (793/1676), standby crew available (939 Ming), and crew recruitment controls allowing the player to recruit up to 883 additional crew members across their ships.",
+    "full_text": "Min Crew 171 | Standby Crew 939 Ming | Recruit Crew 0/883 | Min / Max Waiting Time / Max | Emergency Recruit: 0 | Normal Recruit: 0 | Recruit | Ship crew statuses: 77/191 (Min 75), 99/223 (Min 98), 99/209 (Min 98), 91/203 (Min 90), 126/271",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

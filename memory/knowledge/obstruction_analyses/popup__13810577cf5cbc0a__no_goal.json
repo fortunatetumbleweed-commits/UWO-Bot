@@ -1,0 +1,21 @@
+{
+  "purpose": "A Bank building tooltip in London describing the Bank's services (savings account, insurance, and safe storage), displayed when the player's cursor or tap hovers over the Bank building.",
+  "full_text": "Bank. 00:00-23:59. Keep your riches safe, sign up for a savings account to earn interest, or purchase an insurance plan.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "13810577cf5cbc0a",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T18:06:45.313425+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A Bank building tooltip in London describing the Bank's services (savings account, insurance, and safe storage), displayed when the player's cursor or tap hovers over the Bank building.",
+    "full_text": "Bank. 00:00-23:59. Keep your riches safe, sign up for a savings account to earn interest, or purchase an insurance plan.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

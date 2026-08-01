@@ -1,0 +1,21 @@
+{
+  "purpose": "New Year celebration event banners ('Happy 2025' and 'Happy 2626') are displaying as floating overlays in the London Harbor area, alongside the standard city navigation menu listing Harbor, Market, Shipyard, Bank, Inn, Cathedral, Venturer Association, and Item Shop",
+  "full_text": "Harbor — Happy 2025 | Happy 2626 — Autumn Sep 00:08 — Harbor | Market | Shipyard | Bank | Inn | Cathedral | Venturer Association | Item Shop — Players: Piracy, TaylorFP, Teasongdong",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "32f7286da5673116",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T16:36:11.437911+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "New Year celebration event banners ('Happy 2025' and 'Happy 2626') are displaying as floating overlays in the London Harbor area, alongside the standard city navigation menu listing Harbor, Market, Shipyard, Bank, Inn, Cathedral, Venturer Association, and Item Shop",
+    "full_text": "Harbor — Happy 2025 | Happy 2626 — Autumn Sep 00:08 — Harbor | Market | Shipyard | Bank | Inn | Cathedral | Venturer Association | Item Shop — Players: Piracy, TaylorFP, Teasongdong",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

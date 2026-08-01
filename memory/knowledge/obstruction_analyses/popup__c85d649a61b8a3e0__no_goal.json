@@ -1,0 +1,21 @@
+{
+  "purpose": "A Union building tooltip is displayed in London, showing the Union's operating hours and function of completing requests to earn rewards, Fame, and EXP, while an NPC speech bubble mentions purchasing profitable goods nearby",
+  "full_text": "Union. 00:00-23:59. Complete requests to earn rewards, Fame, and EXP. It may have cost a lot, but I'm glad I picked up the goods that are more profitable.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "c85d649a61b8a3e0",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T17:46:02.870463+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A Union building tooltip is displayed in London, showing the Union's operating hours and function of completing requests to earn rewards, Fame, and EXP, while an NPC speech bubble mentions purchasing profitable goods nearby",
+    "full_text": "Union. 00:00-23:59. Complete requests to earn rewards, Fame, and EXP. It may have cost a lot, but I'm glad I picked up the goods that are more profitable.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

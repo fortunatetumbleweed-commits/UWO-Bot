@@ -1,0 +1,21 @@
+{
+  "purpose": "A Harbor building tooltip has appeared showing the Harbor's operating hours and function, allowing the player to enter and supply their fleet before setting sail from London",
+  "full_text": "Harbor | 00:00-23:59 | Supply your fleet and set sail.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "69841bbab3736780",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T20:35:34.027605+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A Harbor building tooltip has appeared showing the Harbor's operating hours and function, allowing the player to enter and supply their fleet before setting sail from London",
+    "full_text": "Harbor | 00:00-23:59 | Supply your fleet and set sail.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

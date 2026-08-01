@@ -1,0 +1,21 @@
+{
+  "purpose": "The Bureau building tooltip has appeared, explaining that the Bureau is used to develop the city through investments and view investment rankings, available all day (00:00–23:59).",
+  "full_text": "Bureau. 00:00-23:59. Develop the city by making investments and view the current investment rankings.",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "793b7ca3ddcc3549",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T15:00:43.091663+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Bureau building tooltip has appeared, explaining that the Bureau is used to develop the city through investments and view investment rankings, available all day (00:00–23:59).",
+    "full_text": "Bureau. 00:00-23:59. Develop the city by making investments and view the current investment rankings.",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

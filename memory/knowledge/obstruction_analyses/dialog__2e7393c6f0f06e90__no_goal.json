@@ -1,0 +1,21 @@
+{
+  "purpose": "An NPC provides regional flavor dialogue comparing language requirements in northern versus southern/Arabic-speaking trade areas",
+  "full_text": "You need to know a lot of languages in the north. Here, you only need to know Arabic.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "2e7393c6f0f06e90",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T02:43:41.671000+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "An NPC provides regional flavor dialogue comparing language requirements in northern versus southern/Arabic-speaking trade areas",
+    "full_text": "You need to know a lot of languages in the north. Here, you only need to know Arabic.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

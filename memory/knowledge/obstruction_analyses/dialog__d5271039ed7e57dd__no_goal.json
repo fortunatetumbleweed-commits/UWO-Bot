@@ -1,0 +1,21 @@
+{
+  "purpose": "The in-game bank's Deposit/Withdrawal dialog is open, allowing the player to deposit gold coins from their wallet (currently 17,350,170,578 gold) into their savings account (currently holding 0 gold)",
+  "full_text": "Account Balance: 0 | Balance: 17,350,170,578 | Deposit: 0 | Deposit [10B] [1B] [100M] [🖩] — Withdrawal [🖩] [100M] [1B] [10B] | Deposit button",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "d5271039ed7e57dd",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T22:46:32.535553+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The in-game bank's Deposit/Withdrawal dialog is open, allowing the player to deposit gold coins from their wallet (currently 17,350,170,578 gold) into their savings account (currently holding 0 gold)",
+    "full_text": "Account Balance: 0 | Balance: 17,350,170,578 | Deposit: 0 | Deposit [10B] [1B] [100M] [🖩] — Withdrawal [🖩] [100M] [1B] [10B] | Deposit button",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

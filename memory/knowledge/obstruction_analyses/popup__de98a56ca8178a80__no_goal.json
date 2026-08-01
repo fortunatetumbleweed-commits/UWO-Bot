@@ -1,0 +1,21 @@
+{
+  "purpose": "The port's district navigation menu is open, listing all available facilities in Las Palmas (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) along with the current in-game date and time.",
+  "full_text": "Spring May 20:16 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "de98a56ca8178a80",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T19:23:03.293757+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The port's district navigation menu is open, listing all available facilities in Las Palmas (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) along with the current in-game date and time.",
+    "full_text": "Spring May 20:16 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

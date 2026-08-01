@@ -1,0 +1,21 @@
+{
+  "purpose": "Tooltip overlay explaining the Energy currency system, showing daily charge costs, company level increase cost, energy receive amount, and maximum ownable energy for this village",
+  "full_text": "Energy — Currency required for using various contents. Daily Charge: 77. Company LV Increase: 78. Receive Energy: 50. Max 539 available to own. It's a peaceful village.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "38de1665d0da6888",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T20:17:55.435979+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Tooltip overlay explaining the Energy currency system, showing daily charge costs, company level increase cost, energy receive amount, and maximum ownable energy for this village",
+    "full_text": "Energy — Currency required for using various contents. Daily Charge: 77. Company LV Increase: 78. Receive Energy: 50. Max 539 available to own. It's a peaceful village.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

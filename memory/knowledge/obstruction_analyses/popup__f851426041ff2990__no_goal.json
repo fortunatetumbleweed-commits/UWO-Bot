@@ -1,0 +1,21 @@
+{
+  "purpose": "Mini-map and nearby port distance panel showing current sea position near Tripoli with a list of discoverable ports (Tripoli 13.8 km, unknown ports at 431.8 km and 473.9 km, Benghazi at 543.3 km) along with seasonal/time info (Autumn, November, Daytime)",
+  "full_text": "TW | 10 | 0.0 K | Tripoli | 33,27,13,08 | Autumn Nov Daytime | Tripoli Approx. 13.8km | ??? Approx. 431.8km | ??? Approx. 473.9km | Benghazi Approx. 543.3km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "f851426041ff2990",
+  "goal_intent": null,
+  "cached_at": "2026-05-29T19:56:37.893205+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Mini-map and nearby port distance panel showing current sea position near Tripoli with a list of discoverable ports (Tripoli 13.8 km, unknown ports at 431.8 km and 473.9 km, Benghazi at 543.3 km) along with seasonal/time info (Autumn, November, Daytime)",
+    "full_text": "TW | 10 | 0.0 K | Tripoli | 33,27,13,08 | Autumn Nov Daytime | Tripoli Approx. 13.8km | ??? Approx. 431.8km | ??? Approx. 473.9km | Benghazi Approx. 543.3km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

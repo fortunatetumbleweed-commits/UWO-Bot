@@ -1,0 +1,41 @@
+# tasks/trade_ceylon_aceh.yaml
+#
+# Trade route: Ceylon ↔ Aceh, 1 round trip
+# Starting assumption: bot is on the Ceylon port overworld with cargo hold empty
+# (or with goods to sell — sell_all runs first either way)
+#
+# Each round trip:
+#   Ceylon  → sell all → buy recommended goods → sail to Aceh
+#   Aceh    → sell all → buy recommended goods → sail to Ceylon
+
+name: "Ceylon ↔ Aceh Trade — 1 Round Trip"
+description: >
+  Buy at each port and sell at the other, 1 full round trip.
+  Report total ducat gain/loss and any unrecognized screens.
+
+start_port: Ceylon      # assert (warn if wrong, don't abort)
+rounds: 1
+
+loop:
+  - action: sell_all
+    note: "Sell whatever cargo we arrived with"
+
+  - action: buy_all
+    note: "Buy recommended goods at current port"
+
+  - action: sail_to
+    destination: Aceh
+
+  - action: sell_all
+    note: "Sell Ceylon goods at Aceh"
+
+  - action: buy_all
+    note: "Buy recommended goods at Aceh"
+
+  - action: sail_to
+    destination: Ceylon
+
+report:
+  - profit_loss       # total ducats gained / lost across all rounds
+  - per_round         # breakdown per round trip
+  - unrecognized_scenes  # screens where where_am_i() returned 'unknown' or mis-classified

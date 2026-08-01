@@ -1,0 +1,21 @@
+{
+  "purpose": "A Limited-time Request offering a Rare mission to escort or move Redbeard Hayreddin to Candia is available for acceptance during the current event period (May 12 – Jun 8, 2026), rewarding special event currency upon completion.",
+  "full_text": "Request in Progress — Limited (Rare) Redbeard Hayreddin: Move to Candia. Estimated duration: 3 weeks. [Accept]",
+  "dismissal": "tap_accept",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "689ce16dd4098eaf",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T20:46:02.051242+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A Limited-time Request offering a Rare mission to escort or move Redbeard Hayreddin to Candia is available for acceptance during the current event period (May 12 – Jun 8, 2026), rewarding special event currency upon completion.",
+    "full_text": "Request in Progress — Limited (Rare) Redbeard Hayreddin: Move to Candia. Estimated duration: 3 weeks. [Accept]",
+    "dismissal": "tap_accept",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

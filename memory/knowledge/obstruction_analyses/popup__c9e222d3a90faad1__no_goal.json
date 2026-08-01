@@ -1,0 +1,21 @@
+{
+  "purpose": "The city navigation panel for Tripoli is open, showing available port facilities such as Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, and Bureau",
+  "full_text": "Spring Mar 16:34 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "c9e222d3a90faad1",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T00:08:09.763742+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The city navigation panel for Tripoli is open, showing available port facilities such as Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, and Bureau",
+    "full_text": "Spring Mar 16:34 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

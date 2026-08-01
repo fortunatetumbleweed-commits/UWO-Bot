@@ -1,0 +1,21 @@
+{
+  "purpose": "The Recruit Crew panel is open, showing standby crew availability (1040 Ming crew), fleet crew capacity (1,394/2,740), and recruitment cost options (Emergency Recruit at 13,648,824 gold or Normal Recruit at 224,640 gold) for distributing crew across the player's ships.",
+  "full_text": "Standby Crew: 1040 Ming. Recruit Crew: 1,394 / 2,740. Min | Max Waiting Time | Max. Emergency Recruit: 13,648,824. Normal Recruit: 224,640. Recruit cost: 13,873,464.",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "395cc1b73677a625",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T16:15:15.949546+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The Recruit Crew panel is open, showing standby crew availability (1040 Ming crew), fleet crew capacity (1,394/2,740), and recruitment cost options (Emergency Recruit at 13,648,824 gold or Normal Recruit at 224,640 gold) for distributing crew across the player's ships.",
+    "full_text": "Standby Crew: 1040 Ming. Recruit Crew: 1,394 / 2,740. Min | Max Waiting Time | Max. Emergency Recruit: 13,648,824. Normal Recruit: 224,640. Recruit cost: 13,873,464.",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

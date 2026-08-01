@@ -1,0 +1,21 @@
+{
+  "purpose": "The city services panel for Tripoli's harbour district is open, listing all available facilities such as Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, and Bureau, along with the current in-game season and time.",
+  "full_text": "Spring Mar 23:00 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "548428bf0ec3204e",
+  "goal_intent": null,
+  "cached_at": "2026-05-21T16:35:20.819011+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The city services panel for Tripoli's harbour district is open, listing all available facilities such as Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, and Bureau, along with the current in-game season and time.",
+    "full_text": "Spring Mar 23:00 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

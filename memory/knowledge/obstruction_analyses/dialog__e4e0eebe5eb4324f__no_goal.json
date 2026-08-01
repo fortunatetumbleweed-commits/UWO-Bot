@@ -1,0 +1,21 @@
+{
+  "purpose": "City Info panel for London (the Capital) is open, showing its mayor, monopolizing guild (Piracy), market/shipyard tax rates, and disguise status for the North Sea region",
+  "full_text": "City Info — Capital: London (Safe Waters). Base | Trade | Facility | Invest. Mayor: Liothean. Monopolizing Guild: Piracy. Market Event Schedule: There is no Market Event. Status: Capital — Market Tax 41%, Shipyard Tax 25%. Disguise: North Sea 14/30. Dev. LV (tabs follow).",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "e4e0eebe5eb4324f",
+  "goal_intent": null,
+  "cached_at": "2026-05-19T18:43:04.980108+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "City Info panel for London (the Capital) is open, showing its mayor, monopolizing guild (Piracy), market/shipyard tax rates, and disguise status for the North Sea region",
+    "full_text": "City Info — Capital: London (Safe Waters). Base | Trade | Facility | Invest. Mayor: Liothean. Monopolizing Guild: Piracy. Market Event Schedule: There is no Market Event. Status: Capital — Market Tax 41%, Shipyard Tax 25%. Disguise: North Sea 14/30. Dev. LV (tabs follow).",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

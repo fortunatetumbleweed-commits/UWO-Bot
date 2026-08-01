@@ -1,0 +1,21 @@
+{
+  "purpose": "A tooltip popup describing the Union building's function — completing requests to earn rewards, Fame, and EXP — appeared when the player hovered over or approached the Union in London",
+  "full_text": "Union. 00:00-23:59. Complete requests to earn rewards, Fame, and EXP.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "d5959a92cce97e2e",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T20:47:30.935637+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A tooltip popup describing the Union building's function — completing requests to earn rewards, Fame, and EXP — appeared when the player hovered over or approached the Union in London",
+    "full_text": "Union. 00:00-23:59. Complete requests to earn rewards, Fame, and EXP.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

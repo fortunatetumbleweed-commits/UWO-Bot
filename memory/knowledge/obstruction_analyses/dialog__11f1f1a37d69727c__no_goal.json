@@ -1,0 +1,21 @@
+{
+  "purpose": "An NPC dialogue bubble informs the player that there is a large desert between the current location and South Africa, providing geographical/navigation context.",
+  "full_text": "There is a large desert between here and South Africa.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "11f1f1a37d69727c",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T16:43:45.881715+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "An NPC dialogue bubble informs the player that there is a large desert between the current location and South Africa, providing geographical/navigation context.",
+    "full_text": "There is a large desert between here and South Africa.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

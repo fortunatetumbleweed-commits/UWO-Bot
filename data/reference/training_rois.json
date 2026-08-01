@@ -1,0 +1,51 @@
+{
+  "_meta": {
+    "purpose": "Geographic regions of interest for stratified training sampling. Each ROI defines a lat/lon bbox; ticks falling inside get tagged with the ROI name and sampled at a target rate to counter the natural class imbalance (channel ticks dominate by ~95%).",
+    "lookup_rule": "When a tick falls inside multiple bboxes, the SMALLER-AREA ROI wins (more specific). Currently this matters for barri_village ⊂ y_tip.",
+    "margin_deg": 0.05,
+    "outlier_rejection": "Per-ROI bboxes were computed from tick ranges with k=4 MAD rejection on lat/lon. Outlier ticks (likely OCR-poisoned readings) are listed per-ROI for traceability.",
+    "source_session": "ai_nav_2026-06-24T20-49-36"
+  },
+  "cairo_outflow": {
+    "lat": [28.38, 30.12],
+    "lon": [30.18, 30.71],
+    "tick_ranges": [[1, 25]],
+    "rejected_outlier_ticks": [],
+    "notes": "Lake-like outflow region right outside Cairo. Wide-water hugging substrate."
+  },
+  "nubia_village": {
+    "lat": [21.39, 23.21],
+    "lon": [31.01, 32.50],
+    "tick_ranges": [[96, 124]],
+    "rejected_outlier_ticks": [100],
+    "notes": "Village overlay region. HUD lat/lon often occluded by village sprite; heading detector is also prone to misreads here. KEEP uncertain ticks for training — perception-stress examples."
+  },
+  "the_bend": {
+    "lat": [16.95, 19.37],
+    "lon": [30.61, 34.15],
+    "tick_ranges": [[154, 233]],
+    "rejected_outlier_ticks": [199, 200],
+    "notes": "Main Sudan bend — Nile swings west then climbs east. Includes one human-noted turn-around inside the range. Sharp shore-tangent flips characteristic of tight bends."
+  },
+  "y_tip": {
+    "lat": [7.46, 10.05],
+    "lon": [31.19, 33.62],
+    "tick_ranges": [[384, 424]],
+    "rejected_outlier_ticks": [],
+    "notes": "Y-tip junction (the one branch on the Nile). Trains 'turn left at junction' under the strict-labeling rule. Overlaps with barri_village; lookup picks the smaller area."
+  },
+  "barri_village": {
+    "lat": [7.04, 8.97],
+    "lon": [31.19, 31.61],
+    "tick_ranges": [[410, 428]],
+    "rejected_outlier_ticks": [],
+    "notes": "Village overlay region inside the Y-tip area. Same village-occlusion characteristics as Nubia. Nested inside y_tip bbox; lookup priority must pick barri_village for ticks in the intersection."
+  },
+  "lake_end": {
+    "lat": [-0.05, 2.34],
+    "lon": [31.95, 34.57],
+    "tick_ranges": [[475, 531]],
+    "rejected_outlier_ticks": [475, 476],
+    "notes": "Lake at the Nile origin (Lake Victoria region). Open-water terminal — shoreline circumnavigation pattern, no defined channel direction. The hardest topology for the current planner."
+  }
+}

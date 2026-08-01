@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation panel showing the ship's current position near Tripoli, nearby port distances, and sailing conditions (Autumn, November, Night) — this is the standard minimap/compass sidebar, not a blocking popup",
+  "full_text": "TW | 10 | 0.0 kw | 3A | Tripoli 33,29,13,09 | Autumn Nov Night | Anchor Tripoli Approx. 15.2km | ??? Approx. 430km | ??? Approx. 472.5km | Anchor Benghazi Approx. 542.7km | ??? Approx. 652.9km | ??? Approx. 797.1km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "f8355470191b7e71",
+  "goal_intent": null,
+  "cached_at": "2026-05-29T02:06:12.758469+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Navigation panel showing the ship's current position near Tripoli, nearby port distances, and sailing conditions (Autumn, November, Night) — this is the standard minimap/compass sidebar, not a blocking popup",
+    "full_text": "TW | 10 | 0.0 kw | 3A | Tripoli 33,29,13,09 | Autumn Nov Night | Anchor Tripoli Approx. 15.2km | ??? Approx. 430km | ??? Approx. 472.5km | Anchor Benghazi Approx. 542.7km | ??? Approx. 652.9km | ??? Approx. 797.1km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

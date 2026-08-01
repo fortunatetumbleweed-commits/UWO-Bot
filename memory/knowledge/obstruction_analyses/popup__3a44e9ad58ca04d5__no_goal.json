@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation panel showing nearby ports and their approximate distances from the player's current position in the Atlantic Ocean, along with current season, month, and time of day",
+  "full_text": "C/TW 9 10 7 | 27.0 | Coordinates: 44.26, -20.40 | Season: Winter, Month: Feb, Time: Night | Lusitanian Village Approx. 926.2km | Porto Approx. 950.2km | Azores Approx. 967.1km | Lisboa Approx. 1,061.7km",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "3a44e9ad58ca04d5",
+  "goal_intent": null,
+  "cached_at": "2026-05-20T22:34:43.482606+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Navigation panel showing nearby ports and their approximate distances from the player's current position in the Atlantic Ocean, along with current season, month, and time of day",
+    "full_text": "C/TW 9 10 7 | 27.0 | Coordinates: 44.26, -20.40 | Season: Winter, Month: Feb, Time: Night | Lusitanian Village Approx. 926.2km | Porto Approx. 950.2km | Azores Approx. 967.1km | Lisboa Approx. 1,061.7km",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

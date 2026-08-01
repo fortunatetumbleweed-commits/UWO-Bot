@@ -1,0 +1,130 @@
+{
+  "_doc": "Catalogue of recognized UI element types in Uncharted Waters Origin.  Distinguishes the persistent 'game control overlay' (chrome — always present across scenes) from gameplay-world overlays (proximity-triggered, transient, NOT modal dialogs).  Used by the perceive layer to avoid mistreating in-world overlays as blocking dialogs.",
+
+  "categories": {
+
+    "chrome": {
+      "description": "Persistent UI elements that sit on top of every gameplay scene at fixed screen positions.  Always present, never modal, always actionable.  Used by the rule-based classifier as the primary state-detection signal.",
+      "elements": {
+        "port_name_panel": {
+          "description": "Top-left corner shows the current port name (e.g. 'Plymouth', 'Karibib') when in port_overworld.  Persistent overlay, always visible at port_overworld.",
+          "screen_region": "top-left, x=0..0.35*w, y=0..80",
+          "visible_in": ["port_overworld"],
+          "actionable": false
+        },
+        "sea_hud": {
+          "description": "Top-left area when at sea — shows date, days remaining, ETA, ship name.  Hidden during sea_cinematic (idle) view.",
+          "screen_region": "top-left",
+          "visible_in": ["sea"],
+          "actionable": false
+        },
+        "world_map_title": {
+          "description": "When the world map is open, the top-left shows 'World Map' title text.",
+          "screen_region": "top-left",
+          "visible_in": ["world_map"],
+          "actionable": false
+        },
+        "right_panel": {
+          "description": "Right edge of port_overworld: tab bar (tasks/buildings/people/location) + mini-map + scrollable building list.  Always present at port_overworld even when the building name plate or NPC bubbles overlay the scene.",
+          "screen_region": "right edge, x>=0.85*w",
+          "visible_in": ["port_overworld"],
+          "actionable": true,
+          "notes": "Tapping a building entry in the list = navigating to that building (same outcome as tapping the building's name plate in-world)."
+        },
+        "home_button": {
+          "description": "Top-right corner when inside a building or on the world map.  Single tap returns to port_overworld.",
+          "screen_region": "top-right corner",
+          "visible_in": ["building", "port_map", "world_map"],
+          "actionable": true
+        },
+        "back_arrow": {
+          "description": "Top-left arrow inside buildings, sub-menus, port map.  One level back.",
+          "screen_region": "top-left",
+          "visible_in": ["building", "sub_menu", "port_map"],
+          "actionable": true
+        },
+        "hamburger_menu": {
+          "description": "Top-right (port_overworld only).  Opens main menu.",
+          "screen_region": "top-right",
+          "visible_in": ["port_overworld"],
+          "actionable": true
+        }
+      }
+    },
+
+    "in_world_overlays": {
+      "description": "Gameplay-world overlays that appear at positions relative to the character (always centred on screen) or specific in-world objects.  Proximity-triggered: appear when the character is close, disappear when the character moves away.  NOT modal dialogs — they don't block the chrome and don't require dismissal.  PHASE 5b: these are recognised explicitly so perceive() doesn't mistake them for blocking dialogs.",
+      "elements": {
+        "building_name_plate": {
+          "description": "A small horizontal pill above each building's door showing an icon + the building name (e.g. 'Harbor', 'Inn').  Always visible at port_overworld for buildings within camera range.  Two display states: small (compact pill, ~80px tall) and expanded (large white panel showing title + business hours + short description) — expansion is triggered when the character is at the door.",
+          "appearance": [
+            "small state: white-background horizontal pill, ~80-100px tall, contains building icon + name text",
+            "expanded state: large white-background panel, ~200-300px tall, contains title with icon + 'HH:MM-HH:MM' business-hours line + short description sentence"
+          ],
+          "screen_region": "varies — anchored to building door in world space, typically upper-half of screen",
+          "actionable": true,
+          "tap_behavior": "Tapping any name plate (small or expanded) makes the character run to that building's door and enter.  Equivalent to tapping the building entry in the right-panel building list, or tapping the building icon on the port map.",
+          "auto_clear": false,
+          "important_for_perceive": "Both display states look like white-panel dialogs to a rule-based classifier; expanded state especially because of its large size.  Moondream can also confuse the expanded state with a 'modal dialog' when asked the generic 'is there a dialog?' question.  Use targeted questions ('Are there building name plates visible?') for reliable detection.  These do NOT block the bot — perceive should still classify as port_overworld, not unknown / dialog."
+        },
+        "npc_speech_bubble": {
+          "description": "Free-form quoted speech text shown above NPC characters and other players in the overworld.  Appears periodically (every few seconds) and auto-clears after a few seconds.  Not tappable as a dismissal — taps land on whatever is behind the bubble (often the player or world tile).",
+          "appearance": [
+            "white-background rounded rectangle with quoted speech text",
+            "may appear above any NPC character or other player visible on screen",
+            "text content is narrative / dialogue / hints, e.g. 'I'm going to buy this and head south right away.', 'The area around here has been a center of trade for many years.'"
+          ],
+          "screen_region": "varies — anchored to NPC in world space",
+          "actionable": false,
+          "tap_behavior": "Tapping it has no dismissal effect — the tap passes through to whatever is below.  In particular, tapping near a building (because the bubble is positioned over a building entrance) WILL navigate the bot to that building, possibly the wrong one.",
+          "auto_clear": true,
+          "auto_clear_seconds": "1-3",
+          "important_for_perceive": "Looks like a dialog to rule-based classifiers but is NOT a modal.  Auto-clears within seconds.  Phase 5a debounce on handle_unknown_blocking specifically catches this case — by the time the debounce threshold (3 same-sig perceives) is reached, the bubble has cleared.  Phase 5b (this file): classifier recognises port_overworld even when a bubble is visible, so handle_unknown_blocking is never invoked."
+        },
+        "proximity_action_button": {
+          "description": "Tappable action prompt that appears when the character walks within range of a special interactable in the overworld — e.g. smugglers, special NPCs, environmental objects.  Equivalent to the expanded-state name plate but for non-building targets.",
+          "appearance": [
+            "white-background button with action text (e.g. 'Talk', 'Trade', 'Inspect')",
+            "anchored to the interactable in world space"
+          ],
+          "screen_region": "varies — relative to character, typically just above or beside",
+          "actionable": true,
+          "tap_behavior": "Tap to engage the action.",
+          "auto_clear": "when character moves out of range",
+          "notes": "Not yet directly handled by the bot.  Documented here as the third member of the in-world overlay category alongside name plates and speech bubbles."
+        },
+        "destination_trail": {
+          "description": "Visual indicator on the ground showing the path the character will take after a destination tap (e.g. dashed line or footprint marks).  Visible while the character is running toward a tapped destination.",
+          "appearance": "dashed path / footprints on the ground tile",
+          "screen_region": "world space, ground level around character",
+          "actionable": false,
+          "auto_clear": "when character reaches destination",
+          "important_for_perceive": "Indicates the bot has issued a destination tap and the character is in motion.  No action required."
+        }
+      }
+    },
+
+    "modal_dialogs": {
+      "description": "True blocking overlays that REQUIRE explicit dismissal.  Distinct from in-world overlays in three ways: (a) they obscure the chrome (port_name area, right_panel), (b) they have explicit OK / Cancel / Confirm buttons, (c) they don't auto-clear.  Examples: confirmation dialogs (Recruit Crew confirm), notice popups (Daily Login Reward), system alerts (Android connection unstable).",
+      "examples": [
+        "Recruit Crew confirmation: 'Recruit 110 crew for 23,760 gold? OK / Cancel'",
+        "Daily Login Reward popup: 'Login Reward — Collect / Close'",
+        "Android connection unstable warning: 'Notice / The connection status is unstable / OK'",
+        "Daily News popup: LINE web viewer with article text + small round X close button outside the panel"
+      ],
+      "important_for_perceive": "These DO block the chrome.  When perceive sees has_home=False AND has_right_panel=False AND there's a panel-with-buttons in the centre, it's a real modal — handle_unknown_blocking is appropriate.  When perceive sees overworld chrome STILL visible AND a centre-screen panel, it's an in-world overlay (name plate / NPC bubble), not a modal."
+    }
+  },
+
+  "phase_5b_perceive_rules": {
+    "description": "Decision rules added in Phase 5b for the _classify_nav_state fallback path.",
+    "rules": [
+      "1. If port_name OCR succeeds AND right_panel detected → port_overworld (rule-based, no vision).",
+      "2. If port_name OCR succeeds but right_panel template miss → port_overworld with vision confirmation (Moondream 'is in town?' yes).",
+      "3. If port_name OCR fails (e.g. obscured by an overlay) but Moondream 'is in town?' returns yes AND 'is open ocean?' returns no → port_overworld_with_overlay (new sub-state of port_overworld; signals to caller that an in-world overlay is likely visible, no action needed).",
+      "4. If Moondream 'is in town?' returns no AND 'is open ocean?' returns yes → sea_cinematic.",
+      "5. Otherwise → unknown (real candidate for handle_unknown_blocking)."
+    ],
+    "rationale": "The previous fallback path went straight from 'rule-based fail' to 'Moondream is_at_sea check' to 'unknown'.  When the bot was at port_overworld with an NPC bubble or name plate obscuring chrome, the Moondream sea-check correctly said 'no' but the classifier then returned 'unknown' which triggered handle_unknown_blocking — leading to harmful auto-actions (tap that landed on a name plate, entered the wrong building).  Adding the 'is in town?' question as a positive port_overworld signal closes that gap."
+  }
+}

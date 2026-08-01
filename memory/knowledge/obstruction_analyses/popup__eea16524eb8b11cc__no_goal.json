@@ -1,0 +1,21 @@
+{
+  "purpose": "Game is prompting the player to confirm exiting the application, noting that any active Auto Sail voyage will continue in the background if confirmed",
+  "full_text": "Exit Game? Your fleet will continue to its destination if you are using Auto Sail.",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "eea16524eb8b11cc",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T16:39:19.324042+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Game is prompting the player to confirm exiting the application, noting that any active Auto Sail voyage will continue in the background if confirmed",
+    "full_text": "Exit Game? Your fleet will continue to its destination if you are using Auto Sail.",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

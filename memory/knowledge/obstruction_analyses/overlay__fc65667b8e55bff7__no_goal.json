@@ -1,0 +1,21 @@
+{
+  "purpose": "Game is asking the player to confirm they want to exit/quit the game, noting that any active Auto Sail voyage will continue running while offline",
+  "full_text": "Exit Game? Your fleet will continue to its destination if you are using Auto Sail.",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "overlay",
+  "structural_hash": "fc65667b8e55bff7",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T22:33:22.174871+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Game is asking the player to confirm they want to exit/quit the game, noting that any active Auto Sail voyage will continue running while offline",
+    "full_text": "Exit Game? Your fleet will continue to its destination if you are using Auto Sail.",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

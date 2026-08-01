@@ -1,0 +1,21 @@
+{
+  "purpose": "An activity summary popup showing the player's accumulated counts for Sea Exploration, Explore Land, Fishing, and Cannot Salvage actions performed during this sailing session or event period",
+  "full_text": "Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "c448633ad87160ee",
+  "goal_intent": null,
+  "cached_at": "2026-05-21T21:35:13.139566+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "An activity summary popup showing the player's accumulated counts for Sea Exploration, Explore Land, Fishing, and Cannot Salvage actions performed during this sailing session or event period",
+    "full_text": "Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

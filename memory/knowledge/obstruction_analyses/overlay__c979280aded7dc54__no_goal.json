@@ -1,0 +1,21 @@
+{
+  "purpose": "A Palace Soldier is greeting and directing members of the TaylorFP company to approach, likely as an entry announcement or company-related palace event prompt",
+  "full_text": "Welcome! Members of the TaylorFP company, please come this way.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "overlay",
+  "structural_hash": "c979280aded7dc54",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T21:47:45.478397+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A Palace Soldier is greeting and directing members of the TaylorFP company to approach, likely as an entry announcement or company-related palace event prompt",
+    "full_text": "Welcome! Members of the TaylorFP company, please come this way.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,59 @@
+# Training data — sessions and labels can be large; not committed
+data/sessions/
+data/labels.jsonl
+
+# Heading-CNN training pipeline — derived data, regenerable from
+# data/sessions/ via tools/mine_heading_labels + extract_ship_sprites
+# + sample_minimap_backgrounds.  Model weights at data/heading_cnn/
+# ARE committed so production can load them.
+data/heading_labels/
+data/heading_sprites/
+data/heading_backgrounds/
+data/heading_samples_review/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Third-party model weights — downloaded at runtime, not ours to commit
+vision/models/
+
+# Bot-generated knowledge base — runtime data; will commit once self-learning matures
+# Hand-authored files (culture_rules.py, config/) are tracked separately below.
+memory/knowledge/building_types/
+memory/knowledge/buildings/
+memory/knowledge/flows/
+memory/knowledge/interactions/
+memory/knowledge/markets/
+memory/knowledge/ports/
+memory/knowledge/scenes/
+memory/knowledge/screens/
+memory/knowledge/learned_fingerprints/
+memory/knowledge/port_map_tap_offsets.json
+memory/discoveries/screenshots/
+
+# Debug / runtime artifacts
+debug_capture.png
+debug_*.png
+*.png
+!vision/assets/**/*.png
+memory/logs/
+memory/discoveries/*.json
+
+# Keep directory structure
+!memory/discoveries/.gitkeep
+!vision/assets/screens/.gitkeep
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+models/screen_classifier/
+data/rl/
+models/

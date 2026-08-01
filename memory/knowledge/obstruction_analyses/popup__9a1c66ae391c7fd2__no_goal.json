@@ -1,0 +1,21 @@
+{
+  "purpose": "The Gear shop panel is displaying available equipment for purchase, including weapons and accessories such as the Agate Ring, Rondel Dagger, Zweihänder, and Tourmaline Oorbel, with their quantities and gold prices — this is the standard shop browsing view, not a blocking popup",
+  "full_text": "Armor | Accessory | Mate Appearance — Agate Ring (Accessory) x6: 43,200 gold | Rondel Dagger (Weapon) x4: 2,700 gold",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "9a1c66ae391c7fd2",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T22:52:37.561636+00:00",
+  "visit_count": 6,
+  "raw_api_response": {
+    "purpose": "The Gear shop panel is displaying available equipment for purchase, including weapons and accessories such as the Agate Ring, Rondel Dagger, Zweihänder, and Tourmaline Oorbel, with their quantities and gold prices — this is the standard shop browsing view, not a blocking popup",
+    "full_text": "Armor | Accessory | Mate Appearance — Agate Ring (Accessory) x6: 43,200 gold | Rondel Dagger (Weapon) x4: 2,700 gold",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

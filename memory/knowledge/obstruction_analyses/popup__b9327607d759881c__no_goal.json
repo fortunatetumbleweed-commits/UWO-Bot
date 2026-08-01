@@ -1,0 +1,21 @@
+{
+  "purpose": "A nearby ship's activity summary panel showing TaylorFP's accumulated voyage achievements (Sea Exploration, Explore Land, Fishing, Cannot Salvage counts) along with a distance list of nearby ports relative to the current position near Tripoli",
+  "full_text": "Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140 | Nearby ports: Tripoli ~11.5km, Syracuse ~454.4km, Tunis ~478.4km, Benghazi ~547.2km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "b9327607d759881c",
+  "goal_intent": null,
+  "cached_at": "2026-05-21T17:18:29.110343+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A nearby ship's activity summary panel showing TaylorFP's accumulated voyage achievements (Sea Exploration, Explore Land, Fishing, Cannot Salvage counts) along with a distance list of nearby ports relative to the current position near Tripoli",
+    "full_text": "Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140 | Nearby ports: Tripoli ~11.5km, Syracuse ~454.4km, Tunis ~478.4km, Benghazi ~547.2km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

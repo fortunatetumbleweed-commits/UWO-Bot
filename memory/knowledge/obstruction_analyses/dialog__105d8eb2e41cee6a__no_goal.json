@@ -1,0 +1,21 @@
+{
+  "purpose": "A Company Info panel has been opened for another player named Kage4 of the RoyalNavy faction (Level 53), showing social interaction options such as Whisper, Block, Friend Request, and Friendly Match",
+  "full_text": "Company Info — Kage4, RoyalNavy, LV 53. Options: Admiral Info, Fleet Info, Placement Info, Whisper, Block, Friend Request, Friendly Match",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "105d8eb2e41cee6a",
+  "goal_intent": null,
+  "cached_at": "2026-05-19T18:58:45.650978+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A Company Info panel has been opened for another player named Kage4 of the RoyalNavy faction (Level 53), showing social interaction options such as Whisper, Block, Friend Request, and Friendly Match",
+    "full_text": "Company Info — Kage4, RoyalNavy, LV 53. Options: Admiral Info, Fleet Info, Placement Info, Whisper, Block, Friend Request, Friendly Match",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

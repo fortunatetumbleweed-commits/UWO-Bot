@@ -1,0 +1,21 @@
+{
+  "purpose": "The Union Requests panel is open, displaying a list of available missions (Rare and standard) that the player can accept for rewards including currency, fame, and EXP — currently showing five requests such as Suspicious Voyage, Wealth of the Netherlands, Duke's Love of Wine, Collect debt in Las Palmas, and Collect debt in Venice",
+  "full_text": "Request in Progress (10 available). Rare: Suspicious Voyage — Move to Inn in Ancona [Accept]. Rare: Wealth of the Netherlands — Move to Bank in Amsterdam [Accept]. Rare: Duke's Love of Wine — Move to Bureau in Saint Petersburg [Accept]. Collect debt in Las Palmas (50d) — Move to Inn in Las Palmas [Accept]. Collect debt in Venice (65d) — Move to Inn in Venice [Accept].",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "f020ef64b09797bf",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T17:41:52.805016+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The Union Requests panel is open, displaying a list of available missions (Rare and standard) that the player can accept for rewards including currency, fame, and EXP — currently showing five requests such as Suspicious Voyage, Wealth of the Netherlands, Duke's Love of Wine, Collect debt in Las Palmas, and Collect debt in Venice",
+    "full_text": "Request in Progress (10 available). Rare: Suspicious Voyage — Move to Inn in Ancona [Accept]. Rare: Wealth of the Netherlands — Move to Bank in Amsterdam [Accept]. Rare: Duke's Love of Wine — Move to Bureau in Saint Petersburg [Accept]. Collect debt in Las Palmas (50d) — Move to Inn in Las Palmas [Accept]. Collect debt in Venice (65d) — Move to Inn in Venice [Accept].",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

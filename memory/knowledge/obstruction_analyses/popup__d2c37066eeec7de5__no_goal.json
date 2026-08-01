@@ -1,0 +1,21 @@
+{
+  "purpose": "An NPC at the London Palace is providing lore dialogue explaining that the island is named Britain",
+  "full_text": "Every island has its own name! The big one is called Britain!",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "d2c37066eeec7de5",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T19:56:11.131416+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "An NPC at the London Palace is providing lore dialogue explaining that the island is named Britain",
+    "full_text": "Every island has its own name! The big one is called Britain!",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

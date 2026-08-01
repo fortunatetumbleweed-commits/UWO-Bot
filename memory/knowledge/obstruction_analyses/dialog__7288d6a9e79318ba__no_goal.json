@@ -1,0 +1,21 @@
+{
+  "purpose": "This is the main game HUD/navigation screen showing the player's ship (TaylorFP, LV 92) sailing in the Atlantic Ocean with resource stats and action menu buttons — no actual dialog obstruction is present; the classifier has incorrectly flagged the standard game UI as an obstruction",
+  "full_text": "Ship Mates Journal Dispatch | Blue Gem 100,225 | Red Gem 3,436 | Energy 596/539 | Total Load Capacity 1,701/4,066 | Food 177 | Ammo 0 | Sailing Log | Voyage",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "dialog",
+  "structural_hash": "7288d6a9e79318ba",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T04:40:03.735456+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "This is the main game HUD/navigation screen showing the player's ship (TaylorFP, LV 92) sailing in the Atlantic Ocean with resource stats and action menu buttons — no actual dialog obstruction is present; the classifier has incorrectly flagged the standard game UI as an obstruction",
+    "full_text": "Ship Mates Journal Dispatch | Blue Gem 100,225 | Red Gem 3,436 | Energy 596/539 | Total Load Capacity 1,701/4,066 | Food 177 | Ammo 0 | Sailing Log | Voyage",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

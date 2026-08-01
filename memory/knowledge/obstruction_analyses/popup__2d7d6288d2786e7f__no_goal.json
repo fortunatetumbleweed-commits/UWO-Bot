@@ -1,0 +1,21 @@
+{
+  "purpose": "A contextual action menu has appeared over an ocean exploration spot, showing available activities the player can perform at this location: Sea Exploration, Explore Land, Fishing, and a greyed-out Cannot Salvage option with their respective skill or resource multipliers.",
+  "full_text": "Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "2d7d6288d2786e7f",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T15:20:40.060178+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A contextual action menu has appeared over an ocean exploration spot, showing available activities the player can perform at this location: Sea Exploration, Explore Land, Fishing, and a greyed-out Cannot Salvage option with their respective skill or resource multipliers.",
+    "full_text": "Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

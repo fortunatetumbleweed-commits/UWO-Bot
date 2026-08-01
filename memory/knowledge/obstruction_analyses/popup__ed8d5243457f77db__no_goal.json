@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation panel showing nearby port distances and current sailing context (Cairo nearby, Port Said ~230km, season/time info) — this is a persistent map/navigation sidebar, not a blocking popup",
+  "full_text": "C/TW 10 | 0.0 kw | Cairo | Coordinates: 30,15,30,62 | Winter, Feb, Night | Cairo: Nearby | ??? Approx. 115.4km | Port Said Approx. 230.5km | ??? Approx. 388.2km | Beirut Approx. 535.3km | ??? Approx. 590.6km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "ed8d5243457f77db",
+  "goal_intent": null,
+  "cached_at": "2026-06-01T18:55:36.402756+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Navigation panel showing nearby port distances and current sailing context (Cairo nearby, Port Said ~230km, season/time info) — this is a persistent map/navigation sidebar, not a blocking popup",
+    "full_text": "C/TW 10 | 0.0 kw | Cairo | Coordinates: 30,15,30,62 | Winter, Feb, Night | Cairo: Nearby | ??? Approx. 115.4km | Port Said Approx. 230.5km | ??? Approx. 388.2km | Beirut Approx. 535.3km | ??? Approx. 590.6km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

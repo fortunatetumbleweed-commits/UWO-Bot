@@ -1,0 +1,21 @@
+{
+  "purpose": "Consecutive Combat setup dialog allowing the player to configure automated back-to-back sea battles against selected enemy nationalities, setting level range, combat count, and auto-use item options before starting the combat sequence",
+  "full_text": "Consecutive Combat. Attacking Company LV: Minimum LV 1/110, Max LV 20/110. Targeted Nationality: [various flags selected including Pirates]. Settings: Auto Use Fast [ON], Use diamonds on Auto Use Fast [OFF], Auto Use Salvage Tool [ON]. Combat Count: 1 stamina is used for each Combat. Free Consecutive Combat: 200/200. Combat count set to 200/1,611. Min | Max. Predicted Amount: 0. Cancel | Start.",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "2930e36e3548f897",
+  "goal_intent": null,
+  "cached_at": "2026-05-28T13:36:28.814090+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Consecutive Combat setup dialog allowing the player to configure automated back-to-back sea battles against selected enemy nationalities, setting level range, combat count, and auto-use item options before starting the combat sequence",
+    "full_text": "Consecutive Combat. Attacking Company LV: Minimum LV 1/110, Max LV 20/110. Targeted Nationality: [various flags selected including Pirates]. Settings: Auto Use Fast [ON], Use diamonds on Auto Use Fast [OFF], Auto Use Salvage Tool [ON]. Combat Count: 1 stamina is used for each Combat. Free Consecutive Combat: 200/200. Combat count set to 200/1,611. Min | Max. Predicted Amount: 0. Cancel | Start.",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation panel showing nearby ports and distances, along with a minimap overlay displaying the ship's current position near Cairo in winter/night conditions",
+  "full_text": "HW 10 | 0.0 | Cairo | 30,15,30,59 | Winter Jan Night | Cairo Approx. 10.6km | ??? Approx. 113.7km | Port Said Approx. 230.7km | ??? Approx. 388.5km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "db461641ee7559ef",
+  "goal_intent": null,
+  "cached_at": "2026-05-31T12:22:56.300523+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Navigation panel showing nearby ports and distances, along with a minimap overlay displaying the ship's current position near Cairo in winter/night conditions",
+    "full_text": "HW 10 | 0.0 | Cairo | 30,15,30,59 | Winter Jan Night | Cairo Approx. 10.6km | ??? Approx. 113.7km | Port Said Approx. 230.7km | ??? Approx. 388.5km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

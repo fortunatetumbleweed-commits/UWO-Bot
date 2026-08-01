@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase screen at a port market is open, displaying available trade goods (Whisky, Steel, Flannel, Wheat, Duck, Brass, Cowhide, Bronze, Butter) with their quantities, price percentages, and gold values — this is the standard trading interface, not an obstruction overlay.",
+  "full_text": "Whisky (Liquor) 239 | Specialties 108% 1,495 — Steel (Wares) 339 | Specialties 111% 1,475 — Flannel (Fabrics) 175 | Specialties 98% 905 — Wheat (Food) 1,973 | 99% 103 — Duck (Livestock) 1,191 | 101% 178 — Brass (Wares) 586 | 99% 616 — Cowhide (Wares) 818 | 109% 335 — Bronze (Wares) 623 | 96% 481 — Butter (Seasoning) 2,848 | 103% 186",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "eb87674e28d6454c",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T15:02:20.066664+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase screen at a port market is open, displaying available trade goods (Whisky, Steel, Flannel, Wheat, Duck, Brass, Cowhide, Bronze, Butter) with their quantities, price percentages, and gold values — this is the standard trading interface, not an obstruction overlay.",
+    "full_text": "Whisky (Liquor) 239 | Specialties 108% 1,495 — Steel (Wares) 339 | Specialties 111% 1,475 — Flannel (Fabrics) 175 | Specialties 98% 905 — Wheat (Food) 1,973 | 99% 103 — Duck (Livestock) 1,191 | 101% 178 — Brass (Wares) 586 | 99% 616 — Cowhide (Wares) 818 | 109% 335 — Bronze (Wares) 623 | 96% 481 — Butter (Seasoning) 2,848 | 103% 186",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

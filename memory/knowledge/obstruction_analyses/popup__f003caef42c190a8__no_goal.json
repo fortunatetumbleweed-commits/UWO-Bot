@@ -1,0 +1,21 @@
+{
+  "purpose": "A radial skill/action menu has appeared on the ship showing accumulated voyage activity counts (Sea Exploration, Explore Land, Fishing, Cannot Salvage) — this is the contextual action wheel that pops up when tapping the ship or sea tile during sailing",
+  "full_text": "Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "f003caef42c190a8",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T14:01:28.027938+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A radial skill/action menu has appeared on the ship showing accumulated voyage activity counts (Sea Exploration, Explore Land, Fishing, Cannot Salvage) — this is the contextual action wheel that pops up when tapping the ship or sea tile during sailing",
+    "full_text": "Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

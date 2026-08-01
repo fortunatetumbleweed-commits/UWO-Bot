@@ -1,0 +1,21 @@
+{
+  "purpose": "An NPC in Las Palmas is delivering flavour dialogue about the Netherlands and recounting a story about a mate staging a mutiny, part of an ambient conversation sequence in port",
+  "full_text": "One day, these experiences will become the strength of the Netherlands. I remember the time my mate staged a mutiny against me…",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "3e0322accdad0605",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T23:32:12.452287+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "An NPC in Las Palmas is delivering flavour dialogue about the Netherlands and recounting a story about a mate staging a mutiny, part of an ambient conversation sequence in port",
+    "full_text": "One day, these experiences will become the strength of the Netherlands. I remember the time my mate staged a mutiny against me…",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

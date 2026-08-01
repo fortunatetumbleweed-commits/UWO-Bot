@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation panel showing the minimap, current season/time, and a list of nearby ports and landmarks with approximate distances from the player's current position in the Atlantic Ocean near Las Palmas",
+  "full_text": "Las Palmas (coordinates 28.04, -15.96) — Spring, Apr, Night. Nearby locations: Las Palmas approx 15.4km, Berber Village approx 257.7km, Madeira approx 315.4km, Arguin approx 674.1km",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "237d6d0b5d6cfd59",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T16:57:28.017248+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Navigation panel showing the minimap, current season/time, and a list of nearby ports and landmarks with approximate distances from the player's current position in the Atlantic Ocean near Las Palmas",
+    "full_text": "Las Palmas (coordinates 28.04, -15.96) — Spring, Apr, Night. Nearby locations: Las Palmas approx 15.4km, Berber Village approx 257.7km, Madeira approx 315.4km, Arguin approx 674.1km",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

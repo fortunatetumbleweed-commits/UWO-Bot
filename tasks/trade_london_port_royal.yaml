@@ -1,0 +1,39 @@
+name: "London to Port Royal — 1 Round Trip"
+description: "London to Port Royal (via Lisbon, Las Palmas)"
+
+start_port: London
+rounds: 1
+
+loop:
+  # ── Forward leg: London → Port Royal ──
+  - action: sell_all
+    port: London
+    note: "Sell cargo at London"
+  - action: buy_all
+    port: London
+    note: "Buy recommended goods at London"
+  - action: sail_to
+    destination: Lisboa
+  - action: sail_to
+    destination: Las Palmas
+  - action: sail_to
+    destination: Port Royal
+
+  # ── Return leg: Port Royal → London ──
+  - action: sell_all
+    port: Port Royal
+    note: "Sell cargo at Port Royal"
+  - action: buy_all
+    port: Port Royal
+    note: "Buy recommended goods at Port Royal"
+  - action: sail_to
+    destination: Las Palmas
+  - action: sail_to
+    destination: Lisbon
+  - action: sail_to
+    destination: London
+
+report:
+  - profit_loss
+  - per_round
+  - unrecognized_scenes

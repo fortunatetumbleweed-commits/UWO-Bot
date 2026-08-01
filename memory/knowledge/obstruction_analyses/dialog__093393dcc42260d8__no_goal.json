@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation panel showing nearby ports and their distances from the ship's current position in the Atlantic Ocean, along with seasonal/time context (Spring, May, Daytime)",
+  "full_text": "C/TW | 27.0 | Spring May Daytime | Berber Village Approx 77.2km | Las Palmas Approx 171.3km | Madeira Approx 494.6km | Arguin Approx 522.1km | Casablanca Approx 909.2km | Bathurst Approx 1,080.3km | Coordinates: 25.92, -15.20 Atlantic Ocean",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "093393dcc42260d8",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T21:15:59.442866+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Navigation panel showing nearby ports and their distances from the ship's current position in the Atlantic Ocean, along with seasonal/time context (Spring, May, Daytime)",
+    "full_text": "C/TW | 27.0 | Spring May Daytime | Berber Village Approx 77.2km | Las Palmas Approx 171.3km | Madeira Approx 494.6km | Arguin Approx 522.1km | Casablanca Approx 909.2km | Bathurst Approx 1,080.3km | Coordinates: 25.92, -15.20 Atlantic Ocean",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "The city navigation side-panel for Casablanca port is open, listing all available city facilities (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Bureau, Fortune Teller) along with the current in-game date and time.",
+  "full_text": "Spring May 20:22 — Harbor (00:00–23:59, Supply your fleet and set sail) | Market | Shipyard | Bank (this port is filled with sorrow) | Inn | Sanctuary | Bureau | Fortune Teller",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "b66f0b114c4a3d29",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T16:47:29.800408+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The city navigation side-panel for Casablanca port is open, listing all available city facilities (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Bureau, Fortune Teller) along with the current in-game date and time.",
+    "full_text": "Spring May 20:22 — Harbor (00:00–23:59, Supply your fleet and set sail) | Market | Shipyard | Bank (this port is filled with sorrow) | Inn | Sanctuary | Bureau | Fortune Teller",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

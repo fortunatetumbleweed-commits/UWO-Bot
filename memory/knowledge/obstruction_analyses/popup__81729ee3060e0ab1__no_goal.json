@@ -1,0 +1,21 @@
+{
+  "purpose": "City navigation menu listing available facilities in Las Palmas, with the Bank tooltip shown as the player hovers over or approaches the Bank building",
+  "full_text": "Spring Apr 01:02 | Harbor | Market | Shipyard | Bank | Inn | Sanctuary | Union | Bureau",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "81729ee3060e0ab1",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T16:49:19.527717+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "City navigation menu listing available facilities in Las Palmas, with the Bank tooltip shown as the player hovers over or approaches the Bank building",
+    "full_text": "Spring Apr 01:02 | Harbor | Market | Shipyard | Bank | Inn | Sanctuary | Union | Bureau",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

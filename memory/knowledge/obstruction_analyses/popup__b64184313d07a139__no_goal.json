@@ -1,0 +1,21 @@
+{
+  "purpose": "A Cathedral building tooltip has appeared in London, explaining that players can participate in religious activities during any hour to gain beneficial buff effects.",
+  "full_text": "Cathedral. 00:00-23:59. Participate in religious activities to gain beneficial effects.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "b64184313d07a139",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T17:01:29.621736+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A Cathedral building tooltip has appeared in London, explaining that players can participate in religious activities during any hour to gain beneficial buff effects.",
+    "full_text": "Cathedral. 00:00-23:59. Participate in religious activities to gain beneficial effects.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

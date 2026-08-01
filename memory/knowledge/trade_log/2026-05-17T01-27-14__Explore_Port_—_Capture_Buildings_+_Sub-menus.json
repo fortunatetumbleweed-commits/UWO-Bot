@@ -1,0 +1,19 @@
+{
+  "task_name": "Explore Port — Capture Buildings + Sub-menus",
+  "started_at": "2026-05-17T01:27:14.382742+00:00",
+  "ended_at": "2026-05-17T02:54:50.251840+00:00",
+  "elapsed_seconds": 5255.869098,
+  "rounds_completed": 1,
+  "total_profit": 0,
+  "ducats_per_hour": 0.0,
+  "steps": [
+    {
+      "action": "explore_port",
+      "port": "Amsterdanted",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 3628.481294375,
+      "notes": "visited 8/12; locked=0; session=data/sessions/explore_amsterdanted_2026-05-17_01-27-48"
+    }
+  ]
+}

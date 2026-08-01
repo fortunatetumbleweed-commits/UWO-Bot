@@ -1,0 +1,21 @@
+{
+  "purpose": "The right-side navigation panel showing the mini-map, current season/time, and nearby port distances in the Atlantic Ocean near Port Royal",
+  "full_text": "C/TW 0.0 Royal 3↓ 17.78, -77.55 2> Dry Season Feb Night | Port Royal Approx. 12.5km | Southside Approx. 300.4km | Santiago de Cuba Approx. 339.8km | Ciguayo Village Approx. 435.6km",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "9ab093db2e2264ed",
+  "goal_intent": null,
+  "cached_at": "2026-05-20T21:59:14.433411+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The right-side navigation panel showing the mini-map, current season/time, and nearby port distances in the Atlantic Ocean near Port Royal",
+    "full_text": "C/TW 0.0 Royal 3↓ 17.78, -77.55 2> Dry Season Feb Night | Port Royal Approx. 12.5km | Southside Approx. 300.4km | Santiago de Cuba Approx. 339.8km | Ciguayo Village Approx. 435.6km",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

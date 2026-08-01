@@ -1,0 +1,21 @@
+{
+  "purpose": "An Energy currency tooltip overlay has appeared, showing the player's current Energy balance, daily charge, and how Energy is earned — this is an informational popup about the Energy resource system.",
+  "full_text": "Energy — Currency required for using various contents. Daily Charge: 77. Company LV Increase: 78. Receive Energy: 50. Max 539 available to own. It's a peaceful village. Amity: Neutral 60,000/100,000. Status Effect Details. Achievement Reward: None. Weekly Reward: None. Discoveries.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "a60b3d90a9c111ed",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T19:44:25.890945+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "An Energy currency tooltip overlay has appeared, showing the player's current Energy balance, daily charge, and how Energy is earned — this is an informational popup about the Energy resource system.",
+    "full_text": "Energy — Currency required for using various contents. Daily Charge: 77. Company LV Increase: 78. Receive Energy: 50. Max 539 available to own. It's a peaceful village. Amity: Neutral 60,000/100,000. Status Effect Details. Achievement Reward: None. Weekly Reward: None. Discoveries.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

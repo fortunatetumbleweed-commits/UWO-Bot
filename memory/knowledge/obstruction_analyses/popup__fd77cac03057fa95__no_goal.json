@@ -1,0 +1,21 @@
+{
+  "purpose": "The Bank building's information tooltip is displayed, describing the Bank's services including savings accounts and insurance plans, available all day in London.",
+  "full_text": "Bank. 00:00-23:59. Keep your riches safe, sign up for a savings account to earn interest, or purchase an insurance plan.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "fd77cac03057fa95",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T16:16:07.913222+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Bank building's information tooltip is displayed, describing the Bank's services including savings accounts and insurance plans, available all day in London.",
+    "full_text": "Bank. 00:00-23:59. Keep your riches safe, sign up for a savings account to earn interest, or purchase an insurance plan.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

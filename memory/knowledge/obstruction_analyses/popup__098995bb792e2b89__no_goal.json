@@ -1,0 +1,21 @@
+{
+  "purpose": "The Invest panel showing private company investment rankings with Industry, Commerce, and Military level 10 investment options, their current point totals, dividend rates, and rewards — with calculations due in 1 day",
+  "full_text": "Dividend 5% Industry LV 10 8,681,309 Invest | Dividend 4% Commerce LV 10 8,658,286 Invest | Dividend 4% Military LV 10 8,689,999 Invest | Dividend 4% Until Calculations 1d left",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "098995bb792e2b89",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T20:23:02.322711+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Invest panel showing private company investment rankings with Industry, Commerce, and Military level 10 investment options, their current point totals, dividend rates, and rewards — with calculations due in 1 day",
+    "full_text": "Dividend 5% Industry LV 10 8,681,309 Invest | Dividend 4% Commerce LV 10 8,658,286 Invest | Dividend 4% Military LV 10 8,689,999 Invest | Dividend 4% Until Calculations 1d left",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

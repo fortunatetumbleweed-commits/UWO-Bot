@@ -1,0 +1,21 @@
+{
+  "purpose": "The city navigation menu for Las Palmas is open, listing all available port facilities such as Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, and Bureau.",
+  "full_text": "trading, so Harbors are always changing. Market Shipyard Bank Inn Sanctuary Union Bureau",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "e67c1b5dbbd6e415",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T16:45:12.102120+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The city navigation menu for Las Palmas is open, listing all available port facilities such as Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, and Bureau.",
+    "full_text": "trading, so Harbors are always changing. Market Shipyard Bank Inn Sanctuary Union Bureau",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

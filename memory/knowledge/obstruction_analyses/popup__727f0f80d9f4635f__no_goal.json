@@ -1,0 +1,21 @@
+{
+  "purpose": "The mini-map navigation panel showing nearby ports and distances, with current location near Tripoli during Winter/December/Night conditions",
+  "full_text": "C/TW 10 17 | 0.0 | 3? | Tripoli 33,38,13,02 | Winter Dec Night | Tripoli Approx. 24.8km | ??? Approx. 426.9km | ??? Approx. 463km | Benghazi Approx. 549.3km | ??? Approx. 643.4km | ??? Approx. 788.5km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "727f0f80d9f4635f",
+  "goal_intent": null,
+  "cached_at": "2026-05-30T01:48:31.158061+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The mini-map navigation panel showing nearby ports and distances, with current location near Tripoli during Winter/December/Night conditions",
+    "full_text": "C/TW 10 17 | 0.0 | 3? | Tripoli 33,38,13,02 | Winter Dec Night | Tripoli Approx. 24.8km | ??? Approx. 426.9km | ??? Approx. 463km | Benghazi Approx. 549.3km | ??? Approx. 643.4km | ??? Approx. 788.5km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

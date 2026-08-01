@@ -1,0 +1,21 @@
+{
+  "purpose": "The minimap/navigation panel showing nearby ports and landmarks with distances, current season/time, and available sea actions (Sea Exploration, Fishing, Salvage) — this is the standard in-sea HUD overlay displaying nearby port list and action menu for the ship 'Tumbler'",
+  "full_text": "TW 10 | 0.0 | Coordinates 33,05,33,83 | Autumn Oct Night | ??? Approx 102.1km | Beirut Approx 154.8km | Fishing x0 | Cannot Salvage x0 | Port Said Approx 183.7km | ??? Approx 355.6km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "39becc01309c74fa",
+  "goal_intent": null,
+  "cached_at": "2026-05-28T18:07:37.299977+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The minimap/navigation panel showing nearby ports and landmarks with distances, current season/time, and available sea actions (Sea Exploration, Fishing, Salvage) — this is the standard in-sea HUD overlay displaying nearby port list and action menu for the ship 'Tumbler'",
+    "full_text": "TW 10 | 0.0 | Coordinates 33,05,33,83 | Autumn Oct Night | ??? Approx 102.1km | Beirut Approx 154.8km | Fishing x0 | Cannot Salvage x0 | Port Said Approx 183.7km | ??? Approx 355.6km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

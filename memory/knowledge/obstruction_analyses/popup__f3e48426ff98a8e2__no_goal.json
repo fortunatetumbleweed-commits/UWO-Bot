@@ -1,0 +1,21 @@
+{
+  "purpose": "A tooltip popup describing the Union facility in London, which accepts requests in exchange for rewards, Fame, and EXP — available all day (00:00–23:59).",
+  "full_text": "Union. Available 00:00–23:59. Complete requests to earn rewards, Fame, and EXP.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "f3e48426ff98a8e2",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T14:48:02.546803+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A tooltip popup describing the Union facility in London, which accepts requests in exchange for rewards, Fame, and EXP — available all day (00:00–23:59).",
+    "full_text": "Union. Available 00:00–23:59. Complete requests to earn rewards, Fame, and EXP.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

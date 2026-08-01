@@ -1,0 +1,896 @@
+{
+  "source": "voyage.tw — js/json.js (var discovery, filtered m=='village') + js/lang_4.js (English names), fetched 2026-05-20",
+  "license_note": "Data extracted from fan-made UWO reference site; for personal bot use only.",
+  "coord_system": {
+    "description": "Game-internal world coordinates, same as ports.  Higher x = east, higher y = south.",
+    "x_range": [
+      329,
+      9906
+    ],
+    "y_range": [
+      186,
+      4696
+    ]
+  },
+  "schema": {
+    "name": "English display name",
+    "id": "voyage.tw discovery id (discov*)",
+    "x": "game x",
+    "y": "game y",
+    "rank": "discovery rank (string '1'-'4')",
+    "culture_tag": "disfav* — culture / faction tag affecting barter",
+    "barters": "list of barter recipe ids (cross-ref barter_arr)"
+  },
+  "villages": {
+    "amis": {
+      "name": "Amis Village",
+      "id": "discov19d029",
+      "x": 8092,
+      "y": 2295,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter131",
+        "barter132"
+      ]
+    },
+    "apache": {
+      "name": "Apache Village",
+      "id": "discov19d030",
+      "x": 1545,
+      "y": 2019,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter083",
+        "barter084",
+        "barter085"
+      ]
+    },
+    "atlantic oceanisland in the south": {
+      "name": "Atlantic Ocean﹐Island In The South",
+      "id": "discov19d007",
+      "x": 4454,
+      "y": 4043,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": []
+    },
+    "baganda": {
+      "name": "Baganda Village",
+      "id": "discov19d014",
+      "x": 5653,
+      "y": 2891,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter021",
+        "barter022",
+        "barter023",
+        "barter024"
+      ]
+    },
+    "bantu": {
+      "name": "Bantu Village",
+      "id": "discov19d016",
+      "x": 5067,
+      "y": 2672,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter044",
+        "barter045",
+        "barter046"
+      ]
+    },
+    "bari": {
+      "name": "Bari Village",
+      "id": "discov19d015",
+      "x": 5567,
+      "y": 2713,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter017",
+        "barter018",
+        "barter019",
+        "barter020"
+      ]
+    },
+    "berber": {
+      "name": "Berber Village",
+      "id": "discov19d018",
+      "x": 4289,
+      "y": 2212,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter042",
+        "barter043"
+      ]
+    },
+    "bermuda island": {
+      "name": "Bermuda Island Village",
+      "id": "discov01c025",
+      "x": 2897,
+      "y": 1893,
+      "rank": "2",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter108",
+        "barter109",
+        "barter110",
+        "barter111"
+      ]
+    },
+    "boror": {
+      "name": "Bororó Village",
+      "id": "discov19d019",
+      "x": 3293,
+      "y": 3475,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter062",
+        "barter063",
+        "barter064",
+        "barter065"
+      ]
+    },
+    "buan": {
+      "name": "Buan Village",
+      "id": "discov19d020",
+      "x": 8208,
+      "y": 1864,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter127",
+        "barter128",
+        "barter129",
+        "barter130"
+      ]
+    },
+    "burma": {
+      "name": "Burma Village",
+      "id": "discov19d017",
+      "x": 7320,
+      "y": 2414,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter124",
+        "barter125",
+        "barter126",
+        "barter907"
+      ]
+    },
+    "cheyenne": {
+      "name": "Cheyenne Village",
+      "id": "discov19d022",
+      "x": 1851,
+      "y": 1582,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter066",
+        "barter067",
+        "barter068",
+        "barter069"
+      ]
+    },
+    "chinook": {
+      "name": "Chinook Village",
+      "id": "discov19d040",
+      "x": 1278,
+      "y": 1357,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter090",
+        "barter091"
+      ]
+    },
+    "chukchi": {
+      "name": "Chukchi Village",
+      "id": "discov19d056",
+      "x": 9906,
+      "y": 524,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": []
+    },
+    "ciguayo": {
+      "name": "Ciguayo Village",
+      "id": "discov19d026",
+      "x": 2683,
+      "y": 2387,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter074",
+        "barter075",
+        "barter076",
+        "barter901"
+      ]
+    },
+    "coahuila y tejas": {
+      "name": "Coahuila Y Tejas Village",
+      "id": "discov19d044",
+      "x": 1992,
+      "y": 2315,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter097",
+        "barter098",
+        "barter099"
+      ]
+    },
+    "comanche": {
+      "name": "Comanche Village",
+      "id": "discov19d043",
+      "x": 2070,
+      "y": 2079,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter094",
+        "barter095",
+        "barter096"
+      ]
+    },
+    "dene": {
+      "name": "Dene Village",
+      "id": "discov19cT174",
+      "x": 1130,
+      "y": 392,
+      "rank": "2",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter174",
+        "barter175",
+        "barter176"
+      ]
+    },
+    "echizen": {
+      "name": "Echizen Village",
+      "id": "discov19d033",
+      "x": 8490,
+      "y": 1886,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter136",
+        "barter137",
+        "barter138"
+      ]
+    },
+    "emishi": {
+      "name": "Emishi Village",
+      "id": "discov19d032",
+      "x": 8671,
+      "y": 1762,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter133",
+        "barter134",
+        "barter135"
+      ]
+    },
+    "frankish": {
+      "name": "Frankish Village",
+      "id": "discov19cT238",
+      "x": 4950,
+      "y": 1440,
+      "rank": "2",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter910"
+      ]
+    },
+    "guarani": {
+      "name": "Guarani Village",
+      "id": "discov19d002",
+      "x": 3150,
+      "y": 3781,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter058",
+        "barter059"
+      ]
+    },
+    "hawaiian": {
+      "name": "Hawaiian Village",
+      "id": "discov19d059",
+      "x": 329,
+      "y": 2360,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": []
+    },
+    "hutu": {
+      "name": "Hutu Village",
+      "id": "discov19d051",
+      "x": 5281,
+      "y": 2970,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter050",
+        "barter051",
+        "barter052"
+      ]
+    },
+    "indian oceanisland in the west": {
+      "name": "Indian Ocean﹐Island In The West",
+      "id": "discov19d038",
+      "x": 6327,
+      "y": 3394,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter030",
+        "barter031",
+        "barter032"
+      ]
+    },
+    "inuit": {
+      "name": "Inuit Village",
+      "id": "discov19d037",
+      "x": 3437,
+      "y": 834,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": []
+    },
+    "jvaro": {
+      "name": "Jívaro Village",
+      "id": "discov19d052",
+      "x": 2568,
+      "y": 3141,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter104",
+        "barter105",
+        "barter106",
+        "barter107"
+      ]
+    },
+    "kalkatungu": {
+      "name": "Kalkatungu Village",
+      "id": "discov19d055",
+      "x": 8815,
+      "y": 3515,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter156",
+        "barter157"
+      ]
+    },
+    "ket": {
+      "name": "Ket Village",
+      "id": "discov19cT151",
+      "x": 7070,
+      "y": 688,
+      "rank": "2",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter169",
+        "barter170",
+        "barter171"
+      ]
+    },
+    "khmer": {
+      "name": "Khmer Village",
+      "id": "discov19d046",
+      "x": 7574,
+      "y": 2629,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter147",
+        "barter148",
+        "barter149"
+      ]
+    },
+    "kurd": {
+      "name": "Kurd Village",
+      "id": "discov19d045",
+      "x": 5658,
+      "y": 1651,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter009",
+        "barter010"
+      ]
+    },
+    "kyungheung": {
+      "name": "Kyungheung Village",
+      "id": "discov19d001",
+      "x": 8293,
+      "y": 1704,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter112",
+        "barter113",
+        "barter114"
+      ]
+    },
+    "kyushu": {
+      "name": "Kyushu Village",
+      "id": "discov19d003",
+      "x": 8372,
+      "y": 2023,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter115",
+        "barter116"
+      ]
+    },
+    "long-eared": {
+      "name": "Long-eared Village",
+      "id": "discov19d005",
+      "x": 1690,
+      "y": 3741,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": []
+    },
+    "malagasy": {
+      "name": "Malagasy Village",
+      "id": "discov19d009",
+      "x": 5937,
+      "y": 3519,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter033",
+        "barter034",
+        "barter035",
+        "barter903"
+      ]
+    },
+    "malay": {
+      "name": "Malay Village",
+      "id": "discov19d010",
+      "x": 7530,
+      "y": 3036,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter117",
+        "barter118",
+        "barter119"
+      ]
+    },
+    "malinke": {
+      "name": "Malinke Village",
+      "id": "discov19d011",
+      "x": 4440,
+      "y": 2663,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter047",
+        "barter048",
+        "barter049"
+      ]
+    },
+    "maori": {
+      "name": "Maori Village",
+      "id": "discov19d012",
+      "x": 9480,
+      "y": 4312,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter120",
+        "barter121",
+        "barter122",
+        "barter123"
+      ]
+    },
+    "melanesian": {
+      "name": "Melanesian Village",
+      "id": "discov19d058",
+      "x": 8554,
+      "y": 3105,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter158",
+        "barter159",
+        "barter160"
+      ]
+    },
+    "mura": {
+      "name": "Mura Village",
+      "id": "discov19d013",
+      "x": 2940,
+      "y": 3122,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter060",
+        "barter061"
+      ]
+    },
+    "nauo": {
+      "name": "Nauo Village",
+      "id": "discov19d053",
+      "x": 8357,
+      "y": 3866,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter150",
+        "barter151",
+        "barter152"
+      ]
+    },
+    "nenets": {
+      "name": "Nenets village",
+      "id": "discov19cT148",
+      "x": 6377,
+      "y": 435,
+      "rank": "2",
+      "culture_tag": "disfav18",
+      "barters": []
+    },
+    "nubia": {
+      "name": "Nubia Village",
+      "id": "discov19d006",
+      "x": 5603,
+      "y": 2300,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter014",
+        "barter015",
+        "barter016"
+      ]
+    },
+    "oriya": {
+      "name": "Oriya Village",
+      "id": "discov19d034",
+      "x": 7073,
+      "y": 2396,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter141",
+        "barter142",
+        "barter143",
+        "barter181",
+        "barter908"
+      ]
+    },
+    "pawnee": {
+      "name": "Pawnee Village",
+      "id": "discov19d049",
+      "x": 2102,
+      "y": 1547,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter102",
+        "barter103",
+        "barter902"
+      ]
+    },
+    "polar regionsbay of snowy mountains": {
+      "name": "Polar Regions﹐Bay Of Snowy Mountains",
+      "id": "discov19d004",
+      "x": 2857,
+      "y": 678,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": []
+    },
+    "polar regionsisland of snowy mountains": {
+      "name": "Polar Regions﹐Island of Snowy Mountains",
+      "id": "discov19cT149",
+      "x": 8585,
+      "y": 206,
+      "rank": "2",
+      "culture_tag": "disfav18",
+      "barters": []
+    },
+    "qashqai": {
+      "name": "Qashqai Village",
+      "id": "discov19d041",
+      "x": 6180,
+      "y": 2157,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter028",
+        "barter029"
+      ]
+    },
+    "quechuas": {
+      "name": "Quechuas Village",
+      "id": "discov19d042",
+      "x": 2717,
+      "y": 3434,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter092",
+        "barter093",
+        "barter180"
+      ]
+    },
+    "ruhr": {
+      "name": "Ruhr Village",
+      "id": "discov19d008",
+      "x": 6040,
+      "y": 1952,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter025",
+        "barter026",
+        "barter027"
+      ]
+    },
+    "san": {
+      "name": "San Village",
+      "id": "discov19d021",
+      "x": 5106,
+      "y": 3620,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter036",
+        "barter037"
+      ]
+    },
+    "shona": {
+      "name": "Shona Village",
+      "id": "discov19d023",
+      "x": 5427,
+      "y": 3444,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter054",
+        "barter055",
+        "barter056",
+        "barter057",
+        "barter904"
+      ]
+    },
+    "sinhalese": {
+      "name": "Sinhalese village",
+      "id": "discov19cT209",
+      "x": 6771,
+      "y": 2955,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter177",
+        "barter178",
+        "barter179"
+      ]
+    },
+    "sioux": {
+      "name": "Sioux Village",
+      "id": "discov19d024",
+      "x": 1987,
+      "y": 1204,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter070",
+        "barter071",
+        "barter072",
+        "barter073"
+      ]
+    },
+    "sirion": {
+      "name": "Sirionó Village",
+      "id": "discov19d027",
+      "x": 3048,
+      "y": 3409,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter077",
+        "barter078",
+        "barter079",
+        "barter080"
+      ]
+    },
+    "smi": {
+      "name": "Sámi",
+      "id": "discov19d057",
+      "x": 4971,
+      "y": 614,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter001",
+        "barter002",
+        "barter003",
+        "barter004"
+      ]
+    },
+    "svear": {
+      "name": "Svear Village",
+      "id": "discov19d025",
+      "x": 5202,
+      "y": 726,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter005",
+        "barter006",
+        "barter007",
+        "barter008",
+        "barter909"
+      ]
+    },
+    "the new worldisland in the west": {
+      "name": "The New World﹐Island In The West",
+      "id": "discov19d028",
+      "x": 2163,
+      "y": 2994,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter081",
+        "barter082"
+      ]
+    },
+    "thule": {
+      "name": "Thule Village",
+      "id": "discov19cT173",
+      "x": 1644,
+      "y": 186,
+      "rank": "2",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter172",
+        "barter173"
+      ]
+    },
+    "tongatapu island": {
+      "name": "Tongatapu Island Village",
+      "id": "discov19cT118",
+      "x": 9780,
+      "y": 3584,
+      "rank": "2",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter161",
+        "barter162",
+        "barter163",
+        "barter164"
+      ]
+    },
+    "tucano": {
+      "name": "Tucano Village",
+      "id": "discov19d047",
+      "x": 2945,
+      "y": 2941,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter100",
+        "barter101"
+      ]
+    },
+    "turk": {
+      "name": "Turk Village",
+      "id": "discov19d048",
+      "x": 5688,
+      "y": 1830,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter011",
+        "barter012",
+        "barter013"
+      ]
+    },
+    "witoto": {
+      "name": "Witoto Village",
+      "id": "discov19d036",
+      "x": 2587,
+      "y": 3002,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter086",
+        "barter087",
+        "barter088",
+        "barter089"
+      ]
+    },
+    "yahgan": {
+      "name": "Yahgan Village",
+      "id": "discov19d031",
+      "x": 2750,
+      "y": 4696,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": []
+    },
+    "yakut": {
+      "name": "Yakut village",
+      "id": "discov19cT150",
+      "x": 8433,
+      "y": 771,
+      "rank": "2",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter165",
+        "barter166",
+        "barter167",
+        "barter168"
+      ]
+    },
+    "yangtze rivertujia": {
+      "name": "Yangtze River﹐Tujia Village",
+      "id": "discov19d039",
+      "x": 7895,
+      "y": 2058,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter139",
+        "barter140",
+        "barter906"
+      ]
+    },
+    "yawuru": {
+      "name": "Yawuru Village",
+      "id": "discov19d054",
+      "x": 8066,
+      "y": 3486,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter153",
+        "barter154",
+        "barter155"
+      ]
+    },
+    "yellow riverhan": {
+      "name": "Yellow River﹐Han Village",
+      "id": "discov19d050",
+      "x": 7893,
+      "y": 1896,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter144",
+        "barter145",
+        "barter146",
+        "barter905"
+      ]
+    },
+    "yoruba": {
+      "name": "Yoruba Village",
+      "id": "discov19d035",
+      "x": 4808,
+      "y": 2664,
+      "rank": "1",
+      "culture_tag": "disfav18",
+      "barters": [
+        "barter039",
+        "barter040",
+        "barter041"
+      ]
+    }
+  }
+}

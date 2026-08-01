@@ -1,0 +1,21 @@
+{
+  "purpose": "Bank Deposit/Withdrawal interface allowing the player to move gold coins between their wallet and savings account",
+  "full_text": "Account Balance: 0 | Balance: 18,433,765,371 | Deposit: 0 | Deposit [10B] [1B] [100M] [calculator] | Withdrawal [calculator] [100M] [1B] [10B] | Deposit button",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "7f649f0a6b855e04",
+  "goal_intent": null,
+  "cached_at": "2026-05-18T04:44:27.009270+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Bank Deposit/Withdrawal interface allowing the player to move gold coins between their wallet and savings account",
+    "full_text": "Account Balance: 0 | Balance: 18,433,765,371 | Deposit: 0 | Deposit [10B] [1B] [100M] [calculator] | Withdrawal [calculator] [100M] [1B] [10B] | Deposit button",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

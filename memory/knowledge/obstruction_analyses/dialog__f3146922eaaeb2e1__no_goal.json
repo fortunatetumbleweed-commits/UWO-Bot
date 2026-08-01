@@ -1,0 +1,21 @@
+{
+  "purpose": "The port location menu for Las Palmas is open, listing all visitable venues in the port such as Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, and Bureau.",
+  "full_text": "Spring May 12:56 — Harbor | Market | Harbor (Shipyard) | Bank | Inn | Sanctuary | Union | Bureau",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "f3146922eaaeb2e1",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T21:07:16.743315+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The port location menu for Las Palmas is open, listing all visitable venues in the port such as Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, and Bureau.",
+    "full_text": "Spring May 12:56 — Harbor | Market | Harbor (Shipyard) | Bank | Inn | Sanctuary | Union | Bureau",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

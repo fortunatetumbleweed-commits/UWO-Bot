@@ -1,0 +1,19 @@
+{
+  "task_name": "Explore Port — Capture Buildings + Sub-menus",
+  "started_at": "2026-05-16T01:26:20.616000+00:00",
+  "ended_at": "2026-05-16T01:29:34.807435+00:00",
+  "elapsed_seconds": 194.191435,
+  "rounds_completed": 0,
+  "total_profit": 0,
+  "ducats_per_hour": 0.0,
+  "steps": [
+    {
+      "action": "explore_port",
+      "port": "home -",
+      "ok": false,
+      "profit": 0,
+      "duration_s": 117.494419209,
+      "notes": "visited 0/13; locked=0; session=data/sessions/explore_home_-_2026-05-16_01-27-37"
+    }
+  ]
+}

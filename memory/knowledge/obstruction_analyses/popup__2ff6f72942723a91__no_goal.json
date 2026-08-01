@@ -1,0 +1,21 @@
+{
+  "purpose": "The mini-map panel on the right side is displaying nearby port/location information, showing the ship's current position near Benghazi along with a list of unknown ports at various distances, plus seasonal/time indicators (Autumn, October, Night).",
+  "full_text": "C/HW 10 | 0.0 | Benghazi 32,53,19,95 | Autumn Oct Night | Benghazi Nearby | ??? Approx 533.2km | ??? Approx 558.4km | ??? Approx 678.6km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "2ff6f72942723a91",
+  "goal_intent": null,
+  "cached_at": "2026-05-28T18:47:02.914897+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The mini-map panel on the right side is displaying nearby port/location information, showing the ship's current position near Benghazi along with a list of unknown ports at various distances, plus seasonal/time indicators (Autumn, October, Night).",
+    "full_text": "C/HW 10 | 0.0 | Benghazi 32,53,19,95 | Autumn Oct Night | Benghazi Nearby | ??? Approx 533.2km | ??? Approx 558.4km | ??? Approx 678.6km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

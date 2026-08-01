@@ -1,0 +1,57 @@
+{
+  "_note": "Company growth strategy. Seeded from CLAUDE.md. Updated as the bot learns.",
+
+  "growth_loop": "earn_ducats → buy_better_gear_ships → unlock_new_routes → discover_more → earn_more",
+
+  "sea_region_progression": [
+    {"level": 1, "regions": ["home_waters"],              "requirements": "none — no restrictions"},
+    {"level": 2, "regions": ["west_africa", "caribbean"], "requirements": "basic ship"},
+    {"level": 3, "regions": ["south_atlantic"],           "requirements": "moderate supply capacity"},
+    {"level": 4, "regions": ["indian_ocean", "east_asia"],"requirements": "high supply management"},
+    {"level": 5, "regions": ["pacific"],                  "requirements": "high seaworthiness + momentum"},
+    {"level": 6, "regions": ["arctic"],                   "requirements": "ice-breaking capability"}
+  ],
+
+  "sea_region_hud_names": [
+    "Mediterranean Sea", "North Sea", "Baltic Sea",
+    "Atlantic Ocean", "South Atlantic", "Caribbean Sea",
+    "West African Coast", "Gulf of Guinea",
+    "Indian Ocean", "Arabian Sea", "Bay of Bengal",
+    "East China Sea", "South China Sea", "Sea of Japan",
+    "Pacific Ocean", "South Pacific",
+    "Arctic Ocean", "Barents Sea",
+    "Lawless Waters", "Dangerous Waters", "Safe Waters"
+  ],
+
+  "growth_tracks": {
+    "adventure": {
+      "reward":  "blue_gems (discovery ranking)",
+      "sources": ["first_visit_discoveries", "sailing_distance", "entering_cities", "union_requests"],
+      "priority": "secondary — happens passively while trading"
+    },
+    "trade": {
+      "reward":  "ducats + trade_points",
+      "sources": ["market_transactions", "trade_requests", "specialty_bonuses"],
+      "priority": "primary — main income source"
+    },
+    "combat": {
+      "reward":  "naval_power + combat_fame",
+      "sources": ["union_requests", "naval_victories", "defeating_enemies"],
+      "priority": "tertiary — opportunistic (repel support when eligible)"
+    }
+  },
+
+  "repel_support": {
+    "condition": "fleet_combat_power >= 1.3x enemy",
+    "cost_standard": "5 repel supports",
+    "cost_area_occupation": "4",
+    "cost_monopoly": "3",
+    "free_source": "complete all daily tasks (max 300 free repels)",
+    "limitations": ["does not work vs powerful opponents", "does not work vs event fleets", "does not work vs quest targets"]
+  },
+
+  "daily_tasks": {
+    "value": "Completing all daily tasks earns free repel supports (up to 300)",
+    "bot_priority": "complete when possible — repels enable free combat victories"
+  }
+}

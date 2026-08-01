@@ -1,0 +1,21 @@
+{
+  "purpose": "A nearby-ports navigation panel listing anchorage locations in the Eastern Mediterranean, showing distances to ports such as Athens, Antalya, Nicosia, Candia, Benghazi, Port Said, Alexandria, Cairo, and Suez",
+  "full_text": "Athens | Antalya | Nicosia | Candia | Benghazi | Port Said | Alexandria | Cairo | Suez",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "5c80851f8c89895e",
+  "goal_intent": null,
+  "cached_at": "2026-05-21T21:40:25.646515+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A nearby-ports navigation panel listing anchorage locations in the Eastern Mediterranean, showing distances to ports such as Athens, Antalya, Nicosia, Candia, Benghazi, Port Said, Alexandria, Cairo, and Suez",
+    "full_text": "Athens | Antalya | Nicosia | Candia | Benghazi | Port Said | Alexandria | Cairo | Suez",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

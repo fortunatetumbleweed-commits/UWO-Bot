@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation sidebar showing nearby port distances and current world position, season, and time-of-day while sailing toward Port Royal",
+  "full_text": "C/TW | 9 | 10 | 7 | [map] 4.3 | Royal | 3+ | 17.80, -77.57 | Dry Season Feb Daytime | Port Royal Approx: 13.3km | Southside Approx: 299.4km | Santiago de Cuba Approx: 338.8km | Ciguayo Village Approx: 436.3km",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "d5c5358aeed4e045",
+  "goal_intent": null,
+  "cached_at": "2026-05-20T22:05:57.499354+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Navigation sidebar showing nearby port distances and current world position, season, and time-of-day while sailing toward Port Royal",
+    "full_text": "C/TW | 9 | 10 | 7 | [map] 4.3 | Royal | 3+ | 17.80, -77.57 | Dry Season Feb Daytime | Port Royal Approx: 13.3km | Southside Approx: 299.4km | Santiago de Cuba Approx: 338.8km | Ciguayo Village Approx: 436.3km",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "The port services side-panel for Casablanca is open, listing available facilities such as Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Bureau, and Fortune Teller, along with the current in-game date (Spring, May, 04:24).",
+  "full_text": "Spring May 04:24 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Bureau, Fortune Teller",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "db8c72a5e66f5c7c",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T15:38:46.951842+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The port services side-panel for Casablanca is open, listing available facilities such as Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Bureau, and Fortune Teller, along with the current in-game date (Spring, May, 04:24).",
+    "full_text": "Spring May 04:24 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Bureau, Fortune Teller",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

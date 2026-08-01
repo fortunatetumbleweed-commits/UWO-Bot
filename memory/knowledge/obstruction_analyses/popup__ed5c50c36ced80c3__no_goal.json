@@ -1,0 +1,21 @@
+{
+  "purpose": "Town navigation sidebar for Las Palmas showing available port facilities including Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, and Bureau, with a Bank tooltip popup explaining savings and insurance services",
+  "full_text": "Bank (00:00-23:59) — Keep your riches safe, sign up for a savings account to earn interest, or purchase an insurance plan. Spring Apr 19:12 | Harbor | Market | Shipyard | Bank | Inn | Sanctuary | Union | Bureau | I learned all th[is related] to maritime tr[ade] back in Amste[rdam]",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "ed5c50c36ced80c3",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T16:46:36.073297+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Town navigation sidebar for Las Palmas showing available port facilities including Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, and Bureau, with a Bank tooltip popup explaining savings and insurance services",
+    "full_text": "Bank (00:00-23:59) — Keep your riches safe, sign up for a savings account to earn interest, or purchase an insurance plan. Spring Apr 19:12 | Harbor | Market | Shipyard | Bank | Inn | Sanctuary | Union | Bureau | I learned all th[is related] to maritime tr[ade] back in Amste[rdam]",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

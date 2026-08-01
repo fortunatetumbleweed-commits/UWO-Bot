@@ -1,0 +1,21 @@
+{
+  "purpose": "A Limited-time Request offering the Rare contract 'Redbeard Hayreddin – Move to Candia' is presented for the player to accept or ignore before the event period ends",
+  "full_text": "Request in Progress (10 diamonds cost) | Rare | Redbeard Hayreddin – Move to Candia | Duration: 3 Weeks | Accept",
+  "dismissal": "tap_accept",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "83aa62d79589654a",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T22:43:00.220950+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A Limited-time Request offering the Rare contract 'Redbeard Hayreddin – Move to Candia' is presented for the player to accept or ignore before the event period ends",
+    "full_text": "Request in Progress (10 diamonds cost) | Rare | Redbeard Hayreddin – Move to Candia | Duration: 3 Weeks | Accept",
+    "dismissal": "tap_accept",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

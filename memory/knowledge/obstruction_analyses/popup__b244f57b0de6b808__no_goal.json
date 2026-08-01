@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation panel showing nearby port distances and current sailing conditions (season, time of day) — this is the standard at-sea navigation sidebar, not a blocking popup",
+  "full_text": "C/TW fleet tab showing level 10 ships. Current position near Tripoli (33,30,13,04). Season: Winter, Jan, Daytime. Nearest ports: Tripoli approx. 17.4km, unknown port approx. 431.3km, unknown port approx. 470.4km, Benghazi approx. 546.5km, unknown port approx. 650.8km, unknown port approx. 795.8km.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "b244f57b0de6b808",
+  "goal_intent": null,
+  "cached_at": "2026-05-31T04:49:06.269567+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Navigation panel showing nearby port distances and current sailing conditions (season, time of day) — this is the standard at-sea navigation sidebar, not a blocking popup",
+    "full_text": "C/TW fleet tab showing level 10 ships. Current position near Tripoli (33,30,13,04). Season: Winter, Jan, Daytime. Nearest ports: Tripoli approx. 17.4km, unknown port approx. 431.3km, unknown port approx. 470.4km, Benghazi approx. 546.5km, unknown port approx. 650.8km, unknown port approx. 795.8km.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Tooltip popup describing the Cathedral building in London, showing it is open all day (00:00–23:59) and allows players to participate in religious activities for beneficial effects",
+  "full_text": "Cathedral. 00:00–23:59. Participate in religious activities to gain beneficial effects.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "6209bb96322b5c15",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T14:52:15.476974+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Tooltip popup describing the Cathedral building in London, showing it is open all day (00:00–23:59) and allows players to participate in religious activities for beneficial effects",
+    "full_text": "Cathedral. 00:00–23:59. Participate in religious activities to gain beneficial effects.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

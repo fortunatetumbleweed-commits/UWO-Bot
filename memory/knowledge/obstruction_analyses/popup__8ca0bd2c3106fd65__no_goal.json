@@ -1,0 +1,21 @@
+{
+  "purpose": "The Bank building info popup describes the Bank's services (savings account and insurance), while an NPC speech bubble warns the player about floating mines at sea",
+  "full_text": "Bank (00:00-23:59): Keep your riches safe, sign up for a savings account to earn interest, or purchase an insurance plan. NPC: Mines float on the water, so you should be careful not to run into one.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "8ca0bd2c3106fd65",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T14:43:29.687356+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Bank building info popup describes the Bank's services (savings account and insurance), while an NPC speech bubble warns the player about floating mines at sea",
+    "full_text": "Bank (00:00-23:59): Keep your riches safe, sign up for a savings account to earn interest, or purchase an insurance plan. NPC: Mines float on the water, so you should be careful not to run into one.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

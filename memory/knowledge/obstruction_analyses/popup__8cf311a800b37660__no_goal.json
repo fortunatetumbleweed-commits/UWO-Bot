@@ -1,0 +1,21 @@
+{
+  "purpose": "Minimap/navigation panel showing nearby port distances (Varna ~140km, Odesa ~279km, and undiscovered locations) along with current season, month, and time of day",
+  "full_text": "C/TW | 10 | 27.0 | 3? | Coordinates: 43.97, 29.23 | Autumn | Oct | Daytime | Varna Approx. 140.4km | Odesa Approx. 279.2km | ??? Approx. 345.3km | ??? Approx. 467.4km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "8cf311a800b37660",
+  "goal_intent": null,
+  "cached_at": "2026-05-28T13:20:25.800651+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Minimap/navigation panel showing nearby port distances (Varna ~140km, Odesa ~279km, and undiscovered locations) along with current season, month, and time of day",
+    "full_text": "C/TW | 10 | 27.0 | 3? | Coordinates: 43.97, 29.23 | Autumn | Oct | Daytime | Varna Approx. 140.4km | Odesa Approx. 279.2km | ??? Approx. 345.3km | ??? Approx. 467.4km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

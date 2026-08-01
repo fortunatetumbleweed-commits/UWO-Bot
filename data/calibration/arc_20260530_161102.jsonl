@@ -1,0 +1,12 @@
+{"t_s": 2.336663166000001, "phase": "stopped_boundary", "speed_kt": null, "heading_deg": 0.6561891162063489, "lat": null, "lon": null}
+{"t_s": 1.9400990410000105, "phase": "accel", "speed_kt": null, "heading_deg": 0.5500333999637519, "lat": null, "lon": null}
+{"t_s": 5.53580658300001, "phase": "accel", "speed_kt": null, "heading_deg": 0.5500333999637519, "lat": null, "lon": null}
+{"t_s": 9.112069040999998, "phase": "accel", "speed_kt": null, "heading_deg": 0.6561891162063489, "lat": null, "lon": null}
+{"t_s": 12.89859379100001, "phase": "accel", "speed_kt": null, "heading_deg": 0.5500333999637519, "lat": null, "lon": null}
+{"t_s": 2.136851875000005, "phase": "turn_pre", "speed_kt": null, "heading_deg": 0.5500333999637519, "lat": null, "lon": null}
+{"t_s": 34.403900332999996, "phase": "turn_seg0", "speed_kt": null, "heading_deg": 0.39935792878230814, "lat": null, "lon": null}
+{"t_s": 67.311741375, "phase": "turn_seg1", "speed_kt": null, "heading_deg": 0.5500333999637519, "lat": null, "lon": null}
+{"t_s": 99.51140525, "phase": "turn_seg2", "speed_kt": null, "heading_deg": 1.500430710693081, "lat": null, "lon": null}
+{"t_s": 102.716954708, "phase": "turn_post", "speed_kt": null, "heading_deg": 1.500430710693081, "lat": null, "lon": null}
+{"t_s": 2.189548708000018, "phase": "stopped_boundary_2", "speed_kt": null, "heading_deg": 0.4672207090800953, "lat": null, "lon": null}
+{"t_s": 30.996592040999985, "phase": "start_w_rudder_pre", "speed_kt": null, "heading_deg": 1.0674180878338007, "lat": null, "lon": null}

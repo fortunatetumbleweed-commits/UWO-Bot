@@ -1,0 +1,21 @@
+{
+  "purpose": "The mini-map navigation panel is displayed on the right side of the screen, showing the ship's current position near Las Palmas and listing distances to nearby ports and landmarks in the Atlantic Ocean.",
+  "full_text": "HW 10 | Wind: 0.0 | Speed: 1v | Las Palmas (28.04, -15.96) | Season: Spring, Month: Apr, Time: Daytime | Las Palmas Approx. 15.4km | Berber Village Approx. 257.7km | Madeira Approx. 315.4km | Arguin Approx. 674.1km",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "8ba2c0379c27b1e8",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T16:58:20.415308+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The mini-map navigation panel is displayed on the right side of the screen, showing the ship's current position near Las Palmas and listing distances to nearby ports and landmarks in the Atlantic Ocean.",
+    "full_text": "HW 10 | Wind: 0.0 | Speed: 1v | Las Palmas (28.04, -15.96) | Season: Spring, Month: Apr, Time: Daytime | Las Palmas Approx. 15.4km | Berber Village Approx. 257.7km | Madeira Approx. 315.4km | Arguin Approx. 674.1km",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

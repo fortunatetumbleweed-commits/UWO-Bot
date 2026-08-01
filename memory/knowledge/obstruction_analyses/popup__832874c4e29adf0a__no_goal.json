@@ -1,0 +1,21 @@
+{
+  "purpose": "A radial action menu has appeared over another ship or point of interest, presenting available interactions such as Sea Exploration, Explore Land, Fishing, and Cannot Salvage, while the right panel shows the nearby port distance list around the Mediterranean (Tripoli, Syracuse, Tunis, Benghazi).",
+  "full_text": "Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140. Nearby ports: Tripoli (approx. 11.2 km), Syracuse (approx. 434.3 km), Tunis (approx. 476.5 km), Benghazi (approx. 543.2 km). Season: Spring.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "832874c4e29adf0a",
+  "goal_intent": null,
+  "cached_at": "2026-05-21T18:56:03.012233+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A radial action menu has appeared over another ship or point of interest, presenting available interactions such as Sea Exploration, Explore Land, Fishing, and Cannot Salvage, while the right panel shows the nearby port distance list around the Mediterranean (Tripoli, Syracuse, Tunis, Benghazi).",
+    "full_text": "Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140. Nearby ports: Tripoli (approx. 11.2 km), Syracuse (approx. 434.3 km), Tunis (approx. 476.5 km), Benghazi (approx. 543.2 km). Season: Spring.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

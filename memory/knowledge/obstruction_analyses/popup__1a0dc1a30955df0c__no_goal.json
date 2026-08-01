@@ -1,0 +1,21 @@
+{
+  "purpose": "A New Year celebration popup (Happy 2026) is displaying another player's (TaylorFP) activity summary or encounter card, showing their Sea Exploration, Explore Land, Fishing, and Cannot Salvage action counts near the player's current position in the Atlantic Ocean",
+  "full_text": "Happy 2026 — 淡墨桜 TaylorFP | Sea Exploration ×780 | Explore Land ×1,535 | Fishing ×968 | Cannot Salvage ×140",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "1a0dc1a30955df0c",
+  "goal_intent": null,
+  "cached_at": "2026-05-19T17:54:45.234458+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A New Year celebration popup (Happy 2026) is displaying another player's (TaylorFP) activity summary or encounter card, showing their Sea Exploration, Explore Land, Fishing, and Cannot Salvage action counts near the player's current position in the Atlantic Ocean",
+    "full_text": "Happy 2026 — 淡墨桜 TaylorFP | Sea Exploration ×780 | Explore Land ×1,535 | Fishing ×968 | Cannot Salvage ×140",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

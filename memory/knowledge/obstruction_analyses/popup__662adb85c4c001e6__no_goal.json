@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation panel showing nearby port distances from current position near Algiers in the Atlantic Ocean, during Spring/April/Night conditions",
+  "full_text": "C/TW 10 | 27.0 | Algiers 37,06,2 22 | Spring Apr Night | Algiers Approx 56.1km | Palma Approx 249.9km | Valencia Approx 297.2km | Barcelona Approx 423.2km",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "662adb85c4c001e6",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T03:45:05.574955+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Navigation panel showing nearby port distances from current position near Algiers in the Atlantic Ocean, during Spring/April/Night conditions",
+    "full_text": "C/TW 10 | 27.0 | Algiers 37,06,2 22 | Spring Apr Night | Algiers Approx 56.1km | Palma Approx 249.9km | Valencia Approx 297.2km | Barcelona Approx 423.2km",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

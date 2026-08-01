@@ -1,0 +1,21 @@
+{
+  "purpose": "An encounter summary overlay showing the results of sailing activities (Sea Exploration, Fishing, Cannot Land, Cannot Salvage) along with a New Year greeting from another player named TaylorFP",
+  "full_text": "Happy 2026 ~ TaylorFP: Sea Exploration x780, Cannot Land x1,535, Fishing x968, Cannot Salvage x140",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "75e57e84ff472d17",
+  "goal_intent": null,
+  "cached_at": "2026-05-21T22:57:47.699272+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "An encounter summary overlay showing the results of sailing activities (Sea Exploration, Fishing, Cannot Land, Cannot Salvage) along with a New Year greeting from another player named TaylorFP",
+    "full_text": "Happy 2026 ~ TaylorFP: Sea Exploration x780, Cannot Land x1,535, Fishing x968, Cannot Salvage x140",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

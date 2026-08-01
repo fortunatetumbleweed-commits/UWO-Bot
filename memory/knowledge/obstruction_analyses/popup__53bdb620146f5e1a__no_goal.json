@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase market screen showing available trade goods (Steel, Flannel, Duck, Brass, Bronze, Butter) with their prices and stock levels — no actual obstruction is present, this is the normal trading interface awaiting item selection",
+  "full_text": "Steel Wares 341 Specialties 99% 1,315 | Flannel Fabrics 176 Specialties 104% 961 | Duck Livestock 1,197 101% 178 | Brass Wares 589 104% 647 | Bronze Wares 627 106% 531 | Butter Seasoning 2,863 96% 173",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "53bdb620146f5e1a",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T22:36:49.541182+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase market screen showing available trade goods (Steel, Flannel, Duck, Brass, Bronze, Butter) with their prices and stock levels — no actual obstruction is present, this is the normal trading interface awaiting item selection",
+    "full_text": "Steel Wares 341 Specialties 99% 1,315 | Flannel Fabrics 176 Specialties 104% 961 | Duck Livestock 1,197 101% 178 | Brass Wares 589 104% 647 | Bronze Wares 627 106% 531 | Butter Seasoning 2,863 96% 173",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

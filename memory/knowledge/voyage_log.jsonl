@@ -1,0 +1,113 @@
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-04-27T23:50:36.615410+00:00", "arrived_at": "2026-04-27T23:53:10.530811+00:00", "sailing_time_s": 153.9, "ok": false}
+{"type": "leg", "from": "Port Royal", "to": "london", "departed_at": "2026-04-27T23:54:43.031479+00:00", "arrived_at": "2026-04-27T23:57:18.978047+00:00", "sailing_time_s": 155.9, "ok": false}
+{"type": "round", "ports": ["London"], "profit": 6834963, "elapsed_s": 814.5, "ducats_per_hour": 30209722.2, "recorded_at": "2026-04-27T23:57:18.980555+00:00"}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-04-27T23:58:50.181786+00:00", "arrived_at": "2026-04-28T00:01:23.089347+00:00", "sailing_time_s": 152.9, "ok": false}
+{"type": "leg", "from": "Port Royal", "to": "london", "departed_at": "2026-04-28T00:02:59.409380+00:00", "arrived_at": "2026-04-28T00:05:34.922116+00:00", "sailing_time_s": 155.5, "ok": false}
+{"type": "round", "ports": ["London"], "profit": 0, "elapsed_s": 495.9, "ducats_per_hour": 0.0, "recorded_at": "2026-04-28T00:05:34.923896+00:00"}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-04-28T00:07:08.158876+00:00", "arrived_at": "2026-04-28T00:09:42.402515+00:00", "sailing_time_s": 154.2, "ok": false}
+{"type": "leg", "from": "Port Royal", "to": "london", "departed_at": "2026-04-28T00:11:14.706344+00:00", "arrived_at": "2026-04-28T00:13:53.216264+00:00", "sailing_time_s": 158.5, "ok": false}
+{"type": "round", "ports": ["London"], "profit": 0, "elapsed_s": 498.3, "ducats_per_hour": 0.0, "recorded_at": "2026-04-28T00:13:53.217650+00:00"}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-04-28T00:15:22.563563+00:00", "arrived_at": "2026-04-28T00:17:56.413693+00:00", "sailing_time_s": 153.9, "ok": false}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-04-28T12:33:54.596382+00:00", "arrived_at": "2026-04-28T12:34:06.611459+00:00", "sailing_time_s": 12.0, "ok": true}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-04-28T13:02:14.081449+00:00", "arrived_at": "2026-04-28T13:04:10.136909+00:00", "sailing_time_s": 116.1, "ok": false}
+{"type": "leg", "from": "Port Royal", "to": "london", "departed_at": "2026-04-28T13:07:29.971703+00:00", "arrived_at": "2026-04-28T13:13:23.820875+00:00", "sailing_time_s": 353.8, "ok": true}
+{"type": "round", "ports": ["London", "london"], "profit": -1720538, "elapsed_s": 1060.5, "ducats_per_hour": -5840471.8, "recorded_at": "2026-04-28T13:13:23.821489+00:00"}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-04-28T13:20:42.101574+00:00", "arrived_at": "2026-04-28T13:39:41.428421+00:00", "sailing_time_s": 1139.3, "ok": true}
+{"type": "leg", "from": "Port Royal", "to": "london", "departed_at": "2026-04-28T13:46:21.334590+00:00", "arrived_at": "2026-04-28T13:47:34.049052+00:00", "sailing_time_s": 72.7, "ok": false}
+{"type": "round", "ports": ["London", "london", "port royal"], "profit": -629409, "elapsed_s": 2050.2, "ducats_per_hour": -1105179.1, "recorded_at": "2026-04-28T13:47:34.054268+00:00"}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-04-28T13:53:46.569552+00:00", "arrived_at": "2026-04-28T13:53:58.776772+00:00", "sailing_time_s": 12.2, "ok": true}
+{"type": "leg", "from": "Port Royal", "to": "london", "departed_at": "2026-04-28T14:01:37.894653+00:00", "arrived_at": "2026-04-28T14:04:35.912111+00:00", "sailing_time_s": 178.0, "ok": false}
+{"type": "round", "ports": ["London", "port royal", "port royal"], "profit": -3867358, "elapsed_s": 1021.8, "ducats_per_hour": -13624880.2, "recorded_at": "2026-04-28T14:04:35.915965+00:00"}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-04-28T14:08:38.792188+00:00", "arrived_at": "2026-04-28T14:09:57.414187+00:00", "sailing_time_s": 78.6, "ok": false}
+{"type": "leg", "from": "Port Royal", "to": "london", "departed_at": "2026-04-28T14:20:47.614625+00:00", "arrived_at": "2026-04-28T14:24:04.334652+00:00", "sailing_time_s": 196.7, "ok": false}
+{"type": "round", "ports": ["London", "port royal"], "profit": -4001624, "elapsed_s": 1168.4, "ducats_per_hour": -12329383.3, "recorded_at": "2026-04-28T14:24:04.337959+00:00"}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-04-28T14:28:07.956567+00:00", "arrived_at": "2026-04-28T14:37:54.466279+00:00", "sailing_time_s": 586.5, "ok": true}
+{"type": "leg", "from": "Port Royal", "to": "london", "departed_at": "2026-04-28T14:44:29.772293+00:00", "arrived_at": "2026-04-28T14:45:41.259401+00:00", "sailing_time_s": 71.5, "ok": false}
+{"type": "round", "ports": ["London", "port royal"], "profit": -4293389, "elapsed_s": 1296.9, "ducats_per_hour": -11917633.9, "recorded_at": "2026-04-28T14:45:41.261767+00:00"}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-04-28T14:51:16.919663+00:00", "arrived_at": "2026-04-28T14:51:28.619976+00:00", "sailing_time_s": 11.7, "ok": true}
+{"type": "leg", "from": "Port Royal", "to": "london", "departed_at": "2026-04-28T14:56:46.980248+00:00", "arrived_at": "2026-04-28T14:59:50.318388+00:00", "sailing_time_s": 183.3, "ok": false}
+{"type": "round", "ports": ["London", "port royal", "port royal"], "profit": -8521794, "elapsed_s": 849.1, "ducats_per_hour": -36132475.7, "recorded_at": "2026-04-28T14:59:50.321183+00:00"}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-04-28T15:02:53.014409+00:00", "arrived_at": "2026-04-28T15:03:48.617940+00:00", "sailing_time_s": 55.6, "ok": false}
+{"type": "leg", "from": "Port Royal", "to": "London", "departed_at": "2026-04-28T18:37:03.586678+00:00", "arrived_at": "2026-04-28T18:56:30.226523+00:00", "sailing_time_s": 1166.6, "ok": true}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-04-28T19:08:16.320120+00:00", "arrived_at": "2026-04-28T19:12:29.132757+00:00", "sailing_time_s": 252.8, "ok": false}
+{"type": "leg", "from": "Azores", "to": "London", "departed_at": "2026-04-28T19:57:53.716960+00:00", "arrived_at": "2026-04-28T20:00:35.528107+00:00", "sailing_time_s": 161.8, "ok": false}
+{"type": "leg", "from": "Azores", "to": "London", "departed_at": "2026-04-28T23:25:10.895778+00:00", "arrived_at": "2026-04-28T23:28:30.748869+00:00", "sailing_time_s": 199.9, "ok": false}
+{"type": "leg", "from": "Azores", "to": "London", "departed_at": "2026-04-29T14:09:15.345561+00:00", "arrived_at": "2026-04-29T14:27:18.116861+00:00", "sailing_time_s": 1082.8, "ok": false}
+{"type": "leg", "from": "Azores", "to": "London", "departed_at": "2026-04-29T19:43:39.749375+00:00", "arrived_at": "2026-04-29T19:47:34.013438+00:00", "sailing_time_s": 234.3, "ok": false}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-04-29T20:05:46.199149+00:00", "arrived_at": "2026-04-29T20:09:54.710009+00:00", "sailing_time_s": 248.5, "ok": false}
+{"type": "leg", "from": "Port Royal", "to": "london", "departed_at": "2026-04-29T20:19:19.144773+00:00", "arrived_at": "2026-04-29T20:23:25.798386+00:00", "sailing_time_s": 246.7, "ok": false}
+{"type": "round", "ports": ["London"], "profit": 0, "elapsed_s": 1679.4, "ducats_per_hour": 0.0, "recorded_at": "2026-04-29T20:24:45.675392+00:00"}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-04-29T20:32:36.591708+00:00", "arrived_at": "2026-04-29T20:36:42.867709+00:00", "sailing_time_s": 246.3, "ok": false}
+{"type": "leg", "from": "Port Royal", "to": "london", "departed_at": "2026-04-29T20:45:52.620031+00:00", "arrived_at": "2026-04-29T20:47:50.327645+00:00", "sailing_time_s": 117.7, "ok": false}
+{"type": "round", "ports": ["London"], "profit": 0, "elapsed_s": 1419.3, "ducats_per_hour": 0.0, "recorded_at": "2026-04-29T20:48:25.025995+00:00"}
+{"type": "leg", "from": "Azores", "to": "London", "departed_at": "2026-04-29T21:25:46.206279+00:00", "arrived_at": "2026-04-29T21:37:19.092134+00:00", "sailing_time_s": 692.9, "ok": false}
+{"type": "leg", "from": "Azores", "to": "London", "departed_at": "2026-04-30T15:22:21.173677+00:00", "arrived_at": "2026-04-30T16:43:46.601891+00:00", "sailing_time_s": 4885.4, "ok": true}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-04-30T16:52:48.240739+00:00", "arrived_at": "2026-04-30T17:17:59.145838+00:00", "sailing_time_s": 1510.9, "ok": true}
+{"type": "leg", "from": "Port Royal", "to": "london", "departed_at": "2026-04-30T17:30:46.444136+00:00", "arrived_at": "2026-04-30T17:52:20.927428+00:00", "sailing_time_s": 1294.5, "ok": true}
+{"type": "round", "ports": ["London", "London", "port royal", "london"], "profit": -1398405, "elapsed_s": 4114.3, "ducats_per_hour": -1223592.5, "recorded_at": "2026-04-30T17:52:20.929527+00:00"}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-04-30T18:04:29.340414+00:00", "arrived_at": "2026-04-30T18:27:34.330908+00:00", "sailing_time_s": 1385.0, "ok": true}
+{"type": "leg", "from": "Port Royal", "to": "london", "departed_at": "2026-04-30T18:37:21.175819+00:00", "arrived_at": "2026-04-30T19:00:19.917595+00:00", "sailing_time_s": 1378.7, "ok": true}
+{"type": "round", "ports": ["London", "port royal", "london", "port royal", "london"], "profit": -2482873, "elapsed_s": 4079.0, "ducats_per_hour": -2191316.0, "recorded_at": "2026-04-30T19:00:19.919887+00:00"}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-04-30T19:11:23.957879+00:00", "arrived_at": "2026-04-30T19:33:57.690760+00:00", "sailing_time_s": 1353.7, "ok": true}
+{"type": "leg", "from": "Port Royal", "to": "london", "departed_at": "2026-04-30T19:44:53.316900+00:00", "arrived_at": "2026-04-30T20:06:46.459128+00:00", "sailing_time_s": 1313.1, "ok": true}
+{"type": "round", "ports": ["London", "port royal", "london", "port royal", "london"], "profit": -2270289, "elapsed_s": 3986.5, "ducats_per_hour": -2050161.2, "recorded_at": "2026-04-30T20:06:46.461414+00:00"}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-04-30T22:25:13.868859+00:00", "arrived_at": "2026-04-30T23:34:31.487981+00:00", "sailing_time_s": 4157.6, "ok": true}
+{"type": "leg", "from": "Port Royal", "to": "london", "departed_at": "2026-04-30T23:47:53.292437+00:00", "arrived_at": "2026-05-01T00:12:33.526352+00:00", "sailing_time_s": 1480.2, "ok": true}
+{"type": "round", "ports": ["London", "port royal", "london"], "profit": 2943937, "elapsed_s": 7265.2, "ducats_per_hour": 1458768.4, "recorded_at": "2026-05-01T00:12:33.527886+00:00"}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-05-01T00:25:59.532286+00:00", "arrived_at": "2026-05-01T00:53:08.533706+00:00", "sailing_time_s": 1629.0, "ok": true}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-05-01T01:48:11.854598+00:00", "arrived_at": "2026-05-01T02:51:29.239543+00:00", "sailing_time_s": 3797.4, "ok": true}
+{"type": "leg", "from": "Port Royal", "to": "london", "departed_at": "2026-05-01T03:04:47.143124+00:00", "arrived_at": "2026-05-01T03:27:32.097769+00:00", "sailing_time_s": 1365.0, "ok": true}
+{"type": "round", "ports": ["London", "port royal", "london"], "profit": 2473500, "elapsed_s": 6793.5, "ducats_per_hour": 1310745.8, "recorded_at": "2026-05-01T03:27:32.101745+00:00"}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-05-01T03:37:07.350370+00:00", "arrived_at": "2026-05-01T04:00:13.275767+00:00", "sailing_time_s": 1385.9, "ok": true}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-05-01T04:49:03.538748+00:00", "arrived_at": "2026-05-01T12:50:22.190282+00:00", "sailing_time_s": 28878.7, "ok": true}
+{"type": "leg", "from": "Port Royal", "to": "london", "departed_at": "2026-05-01T13:00:05.341123+00:00", "arrived_at": "2026-05-01T13:23:13.465294+00:00", "sailing_time_s": 1388.1, "ok": true}
+{"type": "round", "ports": ["London", "port royal", "london"], "profit": -2868987, "elapsed_s": 31677.0, "ducats_per_hour": -326052.5, "recorded_at": "2026-05-01T13:23:13.469239+00:00"}
+{"type": "leg", "from": "Santa Island", "to": "London", "departed_at": "2026-05-01T17:30:51.742667+00:00", "arrived_at": "2026-05-01T18:19:44.134500+00:00", "sailing_time_s": 2932.4, "ok": true}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-05-02T06:18:00.917478+00:00", "arrived_at": "2026-05-02T13:56:01.700502+00:00", "sailing_time_s": 27480.8, "ok": false}
+{"type": "leg", "from": "Port Royal", "to": "london", "departed_at": "2026-05-02T14:11:02.986734+00:00", "arrived_at": "2026-05-02T14:11:48.811217+00:00", "sailing_time_s": 45.8, "ok": true}
+{"type": "round", "ports": ["London", "london"], "profit": -2808385, "elapsed_s": 29004.6, "ducats_per_hour": -348571.8, "recorded_at": "2026-05-02T14:11:48.814888+00:00"}
+{"type": "leg", "from": "Plymouth", "to": "London", "departed_at": "2026-05-04T15:05:41.721973+00:00", "arrived_at": "2026-05-04T15:45:21.510392+00:00", "sailing_time_s": 2379.8, "ok": true}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-05-04T15:54:15.683020+00:00", "arrived_at": "2026-05-04T16:19:46.754759+00:00", "sailing_time_s": 1531.1, "ok": true}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-05-04T17:01:05.305487+00:00", "arrived_at": "2026-05-04T17:37:58.760581+00:00", "sailing_time_s": 2213.5, "ok": true}
+{"type": "leg", "from": "Port Royal", "to": "london", "departed_at": "2026-05-04T19:22:35.066898+00:00", "arrived_at": "2026-05-04T23:07:31.704578+00:00", "sailing_time_s": 13496.6, "ok": false}
+{"type": "round", "ports": ["London", "port royal"], "profit": -1455064, "elapsed_s": 22311.8, "ducats_per_hour": -234773.9, "recorded_at": "2026-05-04T23:08:16.106013+00:00"}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-05-04T23:17:58.508000+00:00", "arrived_at": "2026-05-04T23:18:22.208288+00:00", "sailing_time_s": 23.7, "ok": true}
+{"type": "leg", "from": "Southside", "to": "London", "departed_at": "2026-05-13T15:56:30.115580+00:00", "arrived_at": "2026-05-13T16:53:19.746867+00:00", "sailing_time_s": 3409.6, "ok": true}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-05-13T17:13:06.327482+00:00", "arrived_at": "2026-05-13T18:35:04.960725+00:00", "sailing_time_s": 4918.6, "ok": false}
+{"type": "round", "ports": [], "profit": 0, "elapsed_s": 3487.7, "ducats_per_hour": 0.0, "recorded_at": "2026-05-14T17:26:04.638992+00:00"}
+{"type": "round", "ports": [], "profit": 0, "elapsed_s": 3626.8, "ducats_per_hour": 0.0, "recorded_at": "2026-05-14T21:35:19.234022+00:00"}
+{"type": "round", "ports": [], "profit": 0, "elapsed_s": 2008.2, "ducats_per_hour": 0.0, "recorded_at": "2026-05-14T23:36:37.787094+00:00"}
+{"type": "round", "ports": [], "profit": 0, "elapsed_s": 25.3, "ducats_per_hour": 0.0, "recorded_at": "2026-05-15T04:34:44.165652+00:00"}
+{"type": "round", "ports": [], "profit": 0, "elapsed_s": 2065.0, "ducats_per_hour": 0.0, "recorded_at": "2026-05-15T12:32:24.100551+00:00"}
+{"type": "round", "ports": [], "profit": 0, "elapsed_s": 1835.4, "ducats_per_hour": 0.0, "recorded_at": "2026-05-15T15:12:58.533337+00:00"}
+{"type": "round", "ports": [], "profit": 0, "elapsed_s": 507.5, "ducats_per_hour": 0.0, "recorded_at": "2026-05-15T16:23:30.517819+00:00"}
+{"type": "round", "ports": [], "profit": 0, "elapsed_s": 6022.0, "ducats_per_hour": 0.0, "recorded_at": "2026-05-15T18:48:44.569595+00:00"}
+{"type": "round", "ports": [], "profit": 0, "elapsed_s": 4647.3, "ducats_per_hour": 0.0, "recorded_at": "2026-05-15T21:07:48.537833+00:00"}
+{"type": "round", "ports": [], "profit": 0, "elapsed_s": 4525.3, "ducats_per_hour": 0.0, "recorded_at": "2026-05-15T22:58:55.210553+00:00"}
+{"type": "round", "ports": [], "profit": 0, "elapsed_s": 2800.5, "ducats_per_hour": 0.0, "recorded_at": "2026-05-16T00:46:18.439428+00:00"}
+{"type": "round", "ports": [], "profit": 0, "elapsed_s": 117.5, "ducats_per_hour": 0.0, "recorded_at": "2026-05-16T01:29:34.806472+00:00"}
+{"type": "round", "ports": [], "profit": 0, "elapsed_s": 110.3, "ducats_per_hour": 0.0, "recorded_at": "2026-05-16T02:02:43.312678+00:00"}
+{"type": "round", "ports": [], "profit": 0, "elapsed_s": 4391.3, "ducats_per_hour": 0.0, "recorded_at": "2026-05-16T03:42:56.758559+00:00"}
+{"type": "round", "ports": [], "profit": 0, "elapsed_s": 3628.5, "ducats_per_hour": 0.0, "recorded_at": "2026-05-17T02:54:50.250636+00:00"}
+{"type": "round", "ports": [], "profit": 0, "elapsed_s": 2229.5, "ducats_per_hour": 0.0, "recorded_at": "2026-05-18T05:02:33.680144+00:00"}
+{"type": "leg", "from": "Whether It'S In", "to": "London", "departed_at": "2026-05-19T02:58:49.682398+00:00", "arrived_at": "2026-05-19T03:11:48.233096+00:00", "sailing_time_s": 778.6, "ok": true}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-05-19T17:49:07.893202+00:00", "arrived_at": "2026-05-19T18:19:18.655160+00:00", "sailing_time_s": 1810.8, "ok": true}
+{"type": "leg", "from": "Port Royal", "to": "london", "departed_at": "2026-05-19T18:33:54.813856+00:00", "arrived_at": "2026-05-19T18:59:33.543361+00:00", "sailing_time_s": 1538.7, "ok": true}
+{"type": "round", "ports": ["London", "port royal", "london"], "profit": -4602647, "elapsed_s": 5035.7, "ducats_per_hour": -3290402.8, "recorded_at": "2026-05-19T18:59:33.545172+00:00"}
+{"type": "leg", "from": "Ceylon", "to": "London", "departed_at": "2026-05-20T01:53:37.995110+00:00", "arrived_at": "2026-05-20T02:08:08.140462+00:00", "sailing_time_s": 870.1, "ok": true}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-05-20T20:00:27.252452+00:00", "arrived_at": "2026-05-20T20:25:17.457300+00:00", "sailing_time_s": 1490.2, "ok": true}
+{"type": "leg", "from": "Port Royal", "to": "London", "departed_at": "2026-05-20T22:15:36.054281+00:00", "arrived_at": "2026-05-20T22:40:35.245157+00:00", "sailing_time_s": 1499.2, "ok": true}
+{"type": "round", "ports": ["Cairo"], "profit": 0, "elapsed_s": 1986.9, "ducats_per_hour": 0.0, "recorded_at": "2026-06-03T05:20:35.764075+00:00"}
+{"type": "round", "ports": ["Cairo"], "profit": 0, "elapsed_s": 30.3, "ducats_per_hour": 0.0, "recorded_at": "2026-06-03T13:59:33.719364+00:00"}
+{"type": "round", "ports": ["Cairo"], "profit": 0, "elapsed_s": 1716.4, "ducats_per_hour": 0.0, "recorded_at": "2026-06-03T14:31:39.092822+00:00"}
+{"type": "round", "ports": ["Cairo"], "profit": 0, "elapsed_s": 173.8, "ducats_per_hour": 0.0, "recorded_at": "2026-06-03T18:42:37.135951+00:00"}
+{"type": "round", "ports": ["Cairo"], "profit": 0, "elapsed_s": 2251.1, "ducats_per_hour": 0.0, "recorded_at": "2026-06-03T20:09:36.467455+00:00"}
+{"type": "round", "ports": ["Cairo"], "profit": 0, "elapsed_s": 236.4, "ducats_per_hour": 0.0, "recorded_at": "2026-06-03T21:10:35.853852+00:00"}
+{"type": "round", "ports": ["Cairo"], "profit": 0, "elapsed_s": 1006.2, "ducats_per_hour": 0.0, "recorded_at": "2026-06-03T21:37:47.028457+00:00"}
+{"type": "round", "ports": ["Cairo"], "profit": 0, "elapsed_s": 1866.1, "ducats_per_hour": 0.0, "recorded_at": "2026-06-03T22:32:27.343213+00:00"}
+{"type": "round", "ports": ["Cairo"], "profit": 0, "elapsed_s": 1347.0, "ducats_per_hour": 0.0, "recorded_at": "2026-06-03T23:17:15.544198+00:00"}
+{"type": "round", "ports": ["Cairo"], "profit": 0, "elapsed_s": 169.5, "ducats_per_hour": 0.0, "recorded_at": "2026-06-03T23:52:26.228565+00:00"}
+{"type": "round", "ports": ["Cairo"], "profit": 0, "elapsed_s": 1432.6, "ducats_per_hour": 0.0, "recorded_at": "2026-06-04T00:34:58.471939+00:00"}
+{"type": "round", "ports": ["Cairo"], "profit": 0, "elapsed_s": 203.2, "ducats_per_hour": 0.0, "recorded_at": "2026-06-04T03:03:13.894110+00:00"}
+{"type": "round", "ports": ["Cairo"], "profit": 0, "elapsed_s": 2377.3, "ducats_per_hour": 0.0, "recorded_at": "2026-06-04T19:49:21.869759+00:00"}
+{"type": "round", "ports": ["Cairo"], "profit": 0, "elapsed_s": 2656.1, "ducats_per_hour": 0.0, "recorded_at": "2026-06-07T00:45:54.209493+00:00"}

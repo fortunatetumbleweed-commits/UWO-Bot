@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is open, showing the player's gear and tool inventory available for sale at a port merchant, with tabs for Gear, Tool, and a search filter — no items have been added to the Sales List yet",
+  "full_text": "Gear | Tool | Search",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "a4f76aa250fa3bf9",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T18:31:41.598586+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Sell screen is open, showing the player's gear and tool inventory available for sale at a port merchant, with tabs for Gear, Tool, and a search filter — no items have been added to the Sales List yet",
+    "full_text": "Gear | Tool | Search",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

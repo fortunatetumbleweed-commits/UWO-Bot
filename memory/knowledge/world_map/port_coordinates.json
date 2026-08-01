@@ -1,0 +1,2800 @@
+{
+  "source": "voyage.tw — js/json.js (json_city) + js/lang_4.js (English names), fetched 2026-05-12",
+  "license_note": "Data extracted from fan-made UWO reference site; for personal bot use only.",
+  "coord_system": {
+    "description": "Game-internal world coordinates.  Higher x = east, higher y = south.  Roughly 30–35 game-units per real-world degree.",
+    "x_range": [
+      34,
+      9610
+    ],
+    "y_range": [
+      123,
+      4792
+    ]
+  },
+  "anchors": {
+    "_comment": "Spot-check anchors useful for runtime calibration of pixels-per-game-unit at a given zoom level.  Pick two visible ports, measure their pixel separation, derive scale.",
+    "london": {
+      "x": 4680,
+      "y": 1210
+    },
+    "lisboa": {
+      "x": 4397,
+      "y": 1772
+    },
+    "port_royal": {
+      "x": 2504,
+      "y": 2429
+    },
+    "southside": {
+      "x": 2384,
+      "y": 2387
+    },
+    "aceh": {
+      "x": 7307,
+      "y": 2779
+    }
+  },
+  "ports": {
+    "athens": {
+      "name": "Athens",
+      "id": "town8301",
+      "x": 5328,
+      "y": 1786,
+      "size": 3,
+      "langs": [
+        "lang140",
+        "lang60"
+      ],
+      "trade_zone": "13",
+      "price_zone": "41"
+    },
+    "lisboa": {
+      "name": "Lisboa",
+      "id": "town1301",
+      "x": 4397,
+      "y": 1772,
+      "size": 3,
+      "langs": [
+        "lang10"
+      ],
+      "trade_zone": "65",
+      "price_zone": "57"
+    },
+    "porto": {
+      "name": "Porto",
+      "id": "town2205",
+      "x": 4414,
+      "y": 1640,
+      "size": 2,
+      "langs": [
+        "lang10"
+      ],
+      "trade_zone": "65",
+      "price_zone": "57"
+    },
+    "faro": {
+      "name": "Faro",
+      "id": "town1102",
+      "x": 4430,
+      "y": 1820,
+      "size": 1,
+      "langs": [
+        "lang10",
+        "lang20"
+      ],
+      "trade_zone": "65",
+      "price_zone": "57"
+    },
+    "seville": {
+      "name": "Seville",
+      "id": "town1302",
+      "x": 4481,
+      "y": 1848,
+      "size": 3,
+      "langs": [
+        "lang20"
+      ],
+      "trade_zone": "64",
+      "price_zone": "57"
+    },
+    "casablanca": {
+      "name": "Casablanca",
+      "id": "town1101",
+      "x": 4440,
+      "y": 1937,
+      "size": 1,
+      "langs": [
+        "lang150",
+        "lang10"
+      ],
+      "trade_zone": "66",
+      "price_zone": "57"
+    },
+    "ceuta": {
+      "name": "Ceuta",
+      "id": "town1204",
+      "x": 4524,
+      "y": 1880,
+      "size": 2,
+      "langs": [
+        "lang150",
+        "lang10"
+      ],
+      "trade_zone": "66",
+      "price_zone": "57"
+    },
+    "marseille": {
+      "name": "Marseille",
+      "id": "town5302",
+      "x": 4809,
+      "y": 1581,
+      "size": 3,
+      "langs": [
+        "lang40"
+      ],
+      "trade_zone": "9",
+      "price_zone": "57"
+    },
+    "montpellier": {
+      "name": "Montpellier",
+      "id": "town5101",
+      "x": 4762,
+      "y": 1590,
+      "size": 1,
+      "langs": [
+        "lang40"
+      ],
+      "trade_zone": "9",
+      "price_zone": "57"
+    },
+    "genoa": {
+      "name": "Genoa",
+      "id": "town5303",
+      "x": 4916,
+      "y": 1542,
+      "size": 3,
+      "langs": [
+        "lang80",
+        "lang40"
+      ],
+      "trade_zone": "10",
+      "price_zone": "57"
+    },
+    "barcelona": {
+      "name": "Barcelona",
+      "id": "town1202",
+      "x": 4707,
+      "y": 1673,
+      "size": 2,
+      "langs": [
+        "lang20",
+        "lang40"
+      ],
+      "trade_zone": "64",
+      "price_zone": "57"
+    },
+    "calvi": {
+      "name": "Calvi",
+      "id": "town5104",
+      "x": 4900,
+      "y": 1622,
+      "size": 1,
+      "langs": [
+        "lang40",
+        "lang80"
+      ],
+      "trade_zone": "42",
+      "price_zone": "57"
+    },
+    "palma": {
+      "name": "Palma",
+      "id": "town1103",
+      "x": 4735,
+      "y": 1737,
+      "size": 1,
+      "langs": [
+        "lang20"
+      ],
+      "trade_zone": "42",
+      "price_zone": "57"
+    },
+    "valencia": {
+      "name": "Valencia",
+      "id": "town1203",
+      "x": 4661,
+      "y": 1748,
+      "size": 2,
+      "langs": [
+        "lang20"
+      ],
+      "trade_zone": "64",
+      "price_zone": "57"
+    },
+    "pisa": {
+      "name": "Pisa",
+      "id": "town5202",
+      "x": 4943,
+      "y": 1578,
+      "size": 2,
+      "langs": [
+        "lang80"
+      ],
+      "trade_zone": "10",
+      "price_zone": "57"
+    },
+    "naples": {
+      "name": "Naples",
+      "id": "town5301",
+      "x": 5051,
+      "y": 1682,
+      "size": 3,
+      "langs": [
+        "lang80",
+        "lang20"
+      ],
+      "trade_zone": "10",
+      "price_zone": "57"
+    },
+    "sassari": {
+      "name": "Sassari",
+      "id": "town5102",
+      "x": 4893,
+      "y": 1691,
+      "size": 1,
+      "langs": [
+        "lang40",
+        "lang10"
+      ],
+      "trade_zone": "42",
+      "price_zone": "57"
+    },
+    "cagliari": {
+      "name": "Cagliari",
+      "id": "town5103",
+      "x": 4911,
+      "y": 1766,
+      "size": 1,
+      "langs": [
+        "lang40",
+        "lang20"
+      ],
+      "trade_zone": "42",
+      "price_zone": "57"
+    },
+    "algiers": {
+      "name": "Algiers",
+      "id": "town1205",
+      "x": 4748,
+      "y": 1825,
+      "size": 2,
+      "langs": [
+        "lang150",
+        "lang60"
+      ],
+      "trade_zone": "66",
+      "price_zone": "57"
+    },
+    "venice": {
+      "name": "Venice",
+      "id": "town6301",
+      "x": 4991,
+      "y": 1514,
+      "size": 3,
+      "langs": [
+        "lang80"
+      ],
+      "trade_zone": "10",
+      "price_zone": "57"
+    },
+    "istanbul": {
+      "name": "Istanbul",
+      "id": "town8302",
+      "x": 5438,
+      "y": 1678,
+      "size": 3,
+      "langs": [
+        "lang60"
+      ],
+      "trade_zone": "13",
+      "price_zone": "41"
+    },
+    "tunis": {
+      "name": "Tunis",
+      "id": "town5201",
+      "x": 4966,
+      "y": 1816,
+      "size": 2,
+      "langs": [
+        "lang150"
+      ],
+      "trade_zone": "66",
+      "price_zone": "57"
+    },
+    "london": {
+      "name": "London",
+      "id": "town3301",
+      "x": 4680,
+      "y": 1210,
+      "size": 3,
+      "langs": [
+        "lang30"
+      ],
+      "trade_zone": "70",
+      "price_zone": "37"
+    },
+    "amsterdam": {
+      "name": "Amsterdam",
+      "id": "town3302",
+      "x": 4807,
+      "y": 1213,
+      "size": 3,
+      "langs": [
+        "lang100"
+      ],
+      "trade_zone": "3",
+      "price_zone": "37"
+    },
+    "nantes": {
+      "name": "Nantes",
+      "id": "town2201",
+      "x": 4596,
+      "y": 1434,
+      "size": 2,
+      "langs": [
+        "lang40",
+        "lang30"
+      ],
+      "trade_zone": "2",
+      "price_zone": "37"
+    },
+    "dublin": {
+      "name": "Dublin",
+      "id": "town2202",
+      "x": 4484,
+      "y": 1135,
+      "size": 2,
+      "langs": [
+        "lang30",
+        "lang80"
+      ],
+      "trade_zone": "1",
+      "price_zone": "37"
+    },
+    "hamburg": {
+      "name": "Hamburg",
+      "id": "town3303",
+      "x": 4913,
+      "y": 1132,
+      "size": 3,
+      "langs": [
+        "lang50"
+      ],
+      "trade_zone": "4",
+      "price_zone": "37"
+    },
+    "syracuse": {
+      "name": "Syracuse",
+      "id": "town6202",
+      "x": 5087,
+      "y": 1814,
+      "size": 2,
+      "langs": [
+        "lang80"
+      ],
+      "trade_zone": "10",
+      "price_zone": "57"
+    },
+    "alexandria": {
+      "name": "Alexandria",
+      "id": "town7301",
+      "x": 5459,
+      "y": 2022,
+      "size": 3,
+      "langs": [
+        "lang150",
+        "lang60"
+      ],
+      "trade_zone": "13",
+      "price_zone": "41"
+    },
+    "candia": {
+      "name": "Candia",
+      "id": "town7203",
+      "x": 5350,
+      "y": 1882,
+      "size": 2,
+      "langs": [
+        "lang140",
+        "lang150"
+      ],
+      "trade_zone": "41",
+      "price_zone": "41"
+    },
+    "nicosia": {
+      "name": "Nicosia",
+      "id": "town7101",
+      "x": 5584,
+      "y": 1884,
+      "size": 1,
+      "langs": [
+        "lang140",
+        "lang60"
+      ],
+      "trade_zone": "41",
+      "price_zone": "41"
+    },
+    "jaffa": {
+      "name": "Jaffa",
+      "id": "town7104",
+      "x": 5629,
+      "y": 1990,
+      "size": 1,
+      "langs": [
+        "lang150",
+        "lang60"
+      ],
+      "trade_zone": "41",
+      "price_zone": "41"
+    },
+    "den helder": {
+      "name": "Den Helder",
+      "id": "town3101",
+      "x": 4777,
+      "y": 1188,
+      "size": 1,
+      "langs": [
+        "lang100"
+      ],
+      "trade_zone": "3",
+      "price_zone": "37"
+    },
+    "bremen": {
+      "name": "Bremen",
+      "id": "town3201",
+      "x": 4871,
+      "y": 1154,
+      "size": 2,
+      "langs": [
+        "lang50",
+        "lang100"
+      ],
+      "trade_zone": "4",
+      "price_zone": "37"
+    },
+    "ragusa": {
+      "name": "Ragusa",
+      "id": "town6201",
+      "x": 5150,
+      "y": 1610,
+      "size": 3,
+      "langs": [
+        "lang80"
+      ],
+      "trade_zone": "10",
+      "price_zone": "57"
+    },
+    "san juan": {
+      "name": "San Juan",
+      "id": "town10105",
+      "x": 2825,
+      "y": 2409,
+      "size": 1,
+      "langs": [
+        "lang260",
+        "lang270"
+      ],
+      "trade_zone": "16",
+      "price_zone": "60"
+    },
+    "santo domingo": {
+      "name": "Santo Domingo",
+      "id": "town10201",
+      "x": 2712,
+      "y": 2419,
+      "size": 2,
+      "langs": [
+        "lang260"
+      ],
+      "trade_zone": "16",
+      "price_zone": "60"
+    },
+    "copenhagen": {
+      "name": "Copenhagen",
+      "id": "town4302",
+      "x": 5012,
+      "y": 1069,
+      "size": 3,
+      "langs": [
+        "lang120",
+        "lang110"
+      ],
+      "trade_zone": "5",
+      "price_zone": "37"
+    },
+    "oslo": {
+      "name": "Oslo",
+      "id": "town4203",
+      "x": 4969,
+      "y": 888,
+      "size": 2,
+      "langs": [
+        "lang110",
+        "lang120"
+      ],
+      "trade_zone": "5",
+      "price_zone": "37"
+    },
+    "edinburgh": {
+      "name": "Edinburgh",
+      "id": "town3203",
+      "x": 4600,
+      "y": 1013,
+      "size": 2,
+      "langs": [
+        "lang30"
+      ],
+      "trade_zone": "1",
+      "price_zone": "37"
+    },
+    "bordeaux": {
+      "name": "Bordeaux",
+      "id": "town2203",
+      "x": 4629,
+      "y": 1515,
+      "size": 2,
+      "langs": [
+        "lang40"
+      ],
+      "trade_zone": "2",
+      "price_zone": "37"
+    },
+    "plymouth": {
+      "name": "Plymouth",
+      "id": "town2206",
+      "x": 4573,
+      "y": 1274,
+      "size": 2,
+      "langs": [
+        "lang30"
+      ],
+      "trade_zone": "70",
+      "price_zone": "37"
+    },
+    "bristol": {
+      "name": "Bristol",
+      "id": "town2204",
+      "x": 4545,
+      "y": 1238,
+      "size": 2,
+      "langs": [
+        "lang30"
+      ],
+      "trade_zone": "70",
+      "price_zone": "37"
+    },
+    "calais": {
+      "name": "Calais",
+      "id": "town3204",
+      "x": 4696,
+      "y": 1288,
+      "size": 2,
+      "langs": [
+        "lang40",
+        "lang30"
+      ],
+      "trade_zone": "70",
+      "price_zone": "37"
+    },
+    "stockholm": {
+      "name": "Stockholm",
+      "id": "town4202",
+      "x": 5189,
+      "y": 882,
+      "size": 2,
+      "langs": [
+        "lang70"
+      ],
+      "trade_zone": "5",
+      "price_zone": "37"
+    },
+    "timbuktu": {
+      "name": "Timbuktu",
+      "id": "town12301",
+      "x": 4582,
+      "y": 2498,
+      "size": 3,
+      "langs": [
+        "lang160"
+      ],
+      "trade_zone": "21",
+      "price_zone": "21"
+    },
+    "groningen": {
+      "name": "Groningen",
+      "id": "town3103",
+      "x": 4819,
+      "y": 1164,
+      "size": 1,
+      "langs": [
+        "lang100",
+        "lang50"
+      ],
+      "trade_zone": "3",
+      "price_zone": "37"
+    },
+    "antwerp": {
+      "name": "Antwerp",
+      "id": "town3202",
+      "x": 4738,
+      "y": 1263,
+      "size": 2,
+      "langs": [
+        "lang100",
+        "lang30"
+      ],
+      "trade_zone": "3",
+      "price_zone": "37"
+    },
+    "veracruz": {
+      "name": "Veracruz",
+      "id": "town9201",
+      "x": 2009,
+      "y": 2397,
+      "size": 2,
+      "langs": [
+        "lang230",
+        "lang220"
+      ],
+      "trade_zone": "17",
+      "price_zone": "60"
+    },
+    "trujillo": {
+      "name": "Trujillo",
+      "id": "town9202",
+      "x": 2280,
+      "y": 2485,
+      "size": 2,
+      "langs": [
+        "lang230",
+        "lang220"
+      ],
+      "trade_zone": "17",
+      "price_zone": "60"
+    },
+    "portobelo": {
+      "name": "Portobelo",
+      "id": "town9203",
+      "x": 2445,
+      "y": 2660,
+      "size": 2,
+      "langs": [
+        "lang240",
+        "lang260"
+      ],
+      "trade_zone": "17",
+      "price_zone": "60"
+    },
+    "saint petersburg": {
+      "name": "Saint Petersburg",
+      "id": "town4301",
+      "x": 5445,
+      "y": 841,
+      "size": 3,
+      "langs": [
+        "lang90",
+        "lang70"
+      ],
+      "trade_zone": "68",
+      "price_zone": "37"
+    },
+    "cape town": {
+      "name": "Cape Town",
+      "id": "town13204",
+      "x": 5199,
+      "y": 3964,
+      "size": 2,
+      "langs": [
+        "lang180"
+      ],
+      "trade_zone": "22",
+      "price_zone": "22"
+    },
+    "benguela": {
+      "name": "Benguela",
+      "id": "town13105",
+      "x": 5027,
+      "y": 3291,
+      "size": 1,
+      "langs": [
+        "lang160",
+        "lang180"
+      ],
+      "trade_zone": "23",
+      "price_zone": "22"
+    },
+    "elmina": {
+      "name": "Elmina",
+      "id": "town12202",
+      "x": 4624,
+      "y": 2800,
+      "size": 1,
+      "langs": [
+        "lang160"
+      ],
+      "trade_zone": "21",
+      "price_zone": "21"
+    },
+    "abidjan": {
+      "name": "Abidjan",
+      "id": "town12201",
+      "x": 4543,
+      "y": 2793,
+      "size": 1,
+      "langs": [
+        "lang160"
+      ],
+      "trade_zone": "21",
+      "price_zone": "21"
+    },
+    "dover": {
+      "name": "Dover",
+      "id": "town3102",
+      "x": 4667,
+      "y": 1254,
+      "size": 1,
+      "langs": [
+        "lang30",
+        "lang100"
+      ],
+      "trade_zone": "70",
+      "price_zone": "37"
+    },
+    "kozhikode": {
+      "name": "Kozhikode",
+      "id": "town15301",
+      "x": 6754,
+      "y": 2624,
+      "size": 3,
+      "langs": [
+        "lang200"
+      ],
+      "trade_zone": "26",
+      "price_zone": "58"
+    },
+    "goa": {
+      "name": "Goa",
+      "id": "town15201",
+      "x": 6715,
+      "y": 2492,
+      "size": 2,
+      "langs": [
+        "lang200"
+      ],
+      "trade_zone": "26",
+      "price_zone": "58"
+    },
+    "muscat": {
+      "name": "Muscat",
+      "id": "town14201",
+      "x": 6280,
+      "y": 2258,
+      "size": 2,
+      "langs": [
+        "lang150"
+      ],
+      "trade_zone": "24",
+      "price_zone": "58"
+    },
+    "aden": {
+      "name": "Aden",
+      "id": "town14203",
+      "x": 5910,
+      "y": 2579,
+      "size": 2,
+      "langs": [
+        "lang150"
+      ],
+      "trade_zone": "24",
+      "price_zone": "58"
+    },
+    "jeddah": {
+      "name": "Jeddah",
+      "id": "town14206",
+      "x": 5748,
+      "y": 2331,
+      "size": 2,
+      "langs": [
+        "lang150"
+      ],
+      "trade_zone": "24",
+      "price_zone": "58"
+    },
+    "edo": {
+      "name": "Edo",
+      "id": "town22301",
+      "x": 8533,
+      "y": 1916,
+      "size": 3,
+      "langs": [
+        "lang350"
+      ],
+      "trade_zone": "32",
+      "price_zone": "54"
+    },
+    "sakai": {
+      "name": "Sakai",
+      "id": "town22101",
+      "x": 8425,
+      "y": 1945,
+      "size": 1,
+      "langs": [
+        "lang350"
+      ],
+      "trade_zone": "32",
+      "price_zone": "54"
+    },
+    "nagasaki": {
+      "name": "Nagasaki",
+      "id": "town22201",
+      "x": 8270,
+      "y": 1987,
+      "size": 2,
+      "langs": [
+        "lang350"
+      ],
+      "trade_zone": "32",
+      "price_zone": "54"
+    },
+    "buenos aires": {
+      "name": "Buenos Aires",
+      "id": "town11104",
+      "x": 3038,
+      "y": 3976,
+      "size": 1,
+      "langs": [
+        "lang250",
+        "lang210"
+      ],
+      "trade_zone": "19",
+      "price_zone": "18"
+    },
+    "kochi": {
+      "name": "Kochi",
+      "id": "town15101",
+      "x": 6780,
+      "y": 2680,
+      "size": 1,
+      "langs": [
+        "lang200"
+      ],
+      "trade_zone": "26",
+      "price_zone": "58"
+    },
+    "quanzhou": {
+      "name": "Quanzhou",
+      "id": "town19202",
+      "x": 7965,
+      "y": 2231,
+      "size": 2,
+      "langs": [
+        "lang340"
+      ],
+      "trade_zone": "75",
+      "price_zone": "53"
+    },
+    "jakarta": {
+      "name": "Jakarta",
+      "id": "town17201",
+      "x": 7634,
+      "y": 3106,
+      "size": 2,
+      "langs": [
+        "lang330"
+      ],
+      "trade_zone": "72",
+      "price_zone": "50"
+    },
+    "malaca": {
+      "name": "Malaca",
+      "id": "town17301",
+      "x": 7512,
+      "y": 2880,
+      "size": 3,
+      "langs": [
+        "lang290",
+        "lang330"
+      ],
+      "trade_zone": "27",
+      "price_zone": "59"
+    },
+    "lima": {
+      "name": "Lima",
+      "id": "town11301",
+      "x": 2529,
+      "y": 3289,
+      "size": 3,
+      "langs": [
+        "lang210"
+      ],
+      "trade_zone": "18",
+      "price_zone": "18"
+    },
+    "tumbes": {
+      "name": "Tumbes",
+      "id": "town11107",
+      "x": 2421,
+      "y": 3038,
+      "size": 1,
+      "langs": [
+        "lang210"
+      ],
+      "trade_zone": "18",
+      "price_zone": "18"
+    },
+    "copiapó": {
+      "name": "Copiapó",
+      "id": "town11106",
+      "x": 2689,
+      "y": 3723,
+      "size": 1,
+      "langs": [
+        "lang210"
+      ],
+      "trade_zone": "18",
+      "price_zone": "18"
+    },
+    "palembang": {
+      "name": "Palembang",
+      "id": "town17105",
+      "x": 7581,
+      "y": 2997,
+      "size": 1,
+      "langs": [
+        "lang330"
+      ],
+      "trade_zone": "72",
+      "price_zone": "50"
+    },
+    "pangkal pinang": {
+      "name": "Pangkal Pinang",
+      "id": "town17106",
+      "x": 7639,
+      "y": 3010,
+      "size": 1,
+      "langs": [
+        "lang330"
+      ],
+      "trade_zone": "72",
+      "price_zone": "50"
+    },
+    "kuching": {
+      "name": "Kuching",
+      "id": "town18109",
+      "x": 7730,
+      "y": 2893,
+      "size": 1,
+      "langs": [
+        "lang290"
+      ],
+      "trade_zone": "74",
+      "price_zone": "50"
+    },
+    "peking": {
+      "name": "Peking",
+      "id": "town19301",
+      "x": 7947,
+      "y": 1752,
+      "size": 3,
+      "langs": [
+        "lang340"
+      ],
+      "trade_zone": "29",
+      "price_zone": "53"
+    },
+    "massawa": {
+      "name": "Massawa",
+      "id": "town14102",
+      "x": 5760,
+      "y": 2491,
+      "size": 1,
+      "langs": [
+        "lang150"
+      ],
+      "trade_zone": "67",
+      "price_zone": "58"
+    },
+    "dhofar": {
+      "name": "Dhofar",
+      "id": "town14101",
+      "x": 6169,
+      "y": 2458,
+      "size": 1,
+      "langs": [
+        "lang150"
+      ],
+      "trade_zone": "24",
+      "price_zone": "58"
+    },
+    "socotra": {
+      "name": "Socotra",
+      "id": "town14105",
+      "x": 6193,
+      "y": 2567,
+      "size": 1,
+      "langs": [
+        "lang150"
+      ],
+      "trade_zone": "24",
+      "price_zone": "58"
+    },
+    "mogadishu": {
+      "name": "Mogadishu",
+      "id": "town13104",
+      "x": 5898,
+      "y": 2891,
+      "size": 1,
+      "langs": [
+        "lang150",
+        "lang170"
+      ],
+      "trade_zone": "23",
+      "price_zone": "23"
+    },
+    "hanyang": {
+      "name": "Hanyang",
+      "id": "town21301",
+      "x": 8163,
+      "y": 1809,
+      "size": 3,
+      "langs": [
+        "lang360"
+      ],
+      "trade_zone": "31",
+      "price_zone": "54"
+    },
+    "yeongil": {
+      "name": "Yeongil",
+      "id": "town21102",
+      "x": 8246,
+      "y": 1853,
+      "size": 1,
+      "langs": [
+        "lang360"
+      ],
+      "trade_zone": "31",
+      "price_zone": "54"
+    },
+    "dongnae": {
+      "name": "Dongnae",
+      "id": "town21201",
+      "x": 8229,
+      "y": 1904,
+      "size": 2,
+      "langs": [
+        "lang360"
+      ],
+      "trade_zone": "31",
+      "price_zone": "54"
+    },
+    "yanyun": {
+      "name": "Yanyun",
+      "id": "town19101",
+      "x": 7986,
+      "y": 1902,
+      "size": 1,
+      "langs": [
+        "lang340"
+      ],
+      "trade_zone": "29",
+      "price_zone": "53"
+    },
+    "chang'an": {
+      "name": "Chang'an",
+      "id": "town19302",
+      "x": 7736,
+      "y": 1908,
+      "size": 3,
+      "langs": [
+        "lang340"
+      ],
+      "trade_zone": "29",
+      "price_zone": "53"
+    },
+    "tamsui": {
+      "name": "Tamsui",
+      "id": "town18301",
+      "x": 8034,
+      "y": 2219,
+      "size": 3,
+      "langs": [
+        "lang340"
+      ],
+      "trade_zone": "30",
+      "price_zone": "53"
+    },
+    "trabzon": {
+      "name": "Trabzon",
+      "id": "town8106",
+      "x": 5760,
+      "y": 1669,
+      "size": 1,
+      "langs": [
+        "lang60"
+      ],
+      "trade_zone": "13",
+      "price_zone": "41"
+    },
+    "riga": {
+      "name": "Riga",
+      "id": "town4102",
+      "x": 5349,
+      "y": 990,
+      "size": 1,
+      "langs": [
+        "lang50"
+      ],
+      "trade_zone": "5",
+      "price_zone": "37"
+    },
+    "kerch": {
+      "name": "Kerch",
+      "id": "town8103",
+      "x": 5658,
+      "y": 1533,
+      "size": 1,
+      "langs": [
+        "lang130",
+        "lang60"
+      ],
+      "trade_zone": "12",
+      "price_zone": "41"
+    },
+    "cairo": {
+      "name": "Cairo",
+      "id": "town7202",
+      "x": 5512,
+      "y": 2058,
+      "size": 2,
+      "langs": [
+        "lang150"
+      ],
+      "trade_zone": "14",
+      "price_zone": "41"
+    },
+    "arguin": {
+      "name": "Arguin",
+      "id": "town12108",
+      "x": 4202,
+      "y": 2363,
+      "size": 1,
+      "langs": [
+        "lang10"
+      ],
+      "trade_zone": "66",
+      "price_zone": "21"
+    },
+    "azores": {
+      "name": "Azores",
+      "id": "town1104",
+      "x": 4032,
+      "y": 1850,
+      "size": 1,
+      "langs": [
+        "lang10"
+      ],
+      "trade_zone": "65",
+      "price_zone": "57"
+    },
+    "nassau": {
+      "name": "Nassau",
+      "id": "town9102",
+      "x": 2512,
+      "y": 2219,
+      "size": 1,
+      "langs": [
+        "lang260",
+        "lang240"
+      ],
+      "trade_zone": "16",
+      "price_zone": "60"
+    },
+    "cohasset": {
+      "name": "Cohasset",
+      "id": "town9108",
+      "x": 2700,
+      "y": 1629,
+      "size": 1,
+      "langs": [
+        "lang240"
+      ],
+      "trade_zone": "17",
+      "price_zone": "60"
+    },
+    "havana": {
+      "name": "Havana",
+      "id": "town10106",
+      "x": 2375,
+      "y": 2276,
+      "size": 1,
+      "langs": [
+        "lang260"
+      ],
+      "trade_zone": "16",
+      "price_zone": "60"
+    },
+    "taganrog": {
+      "name": "Taganrog",
+      "id": "town8104",
+      "x": 5703,
+      "y": 1452,
+      "size": 1,
+      "langs": [
+        "lang130",
+        "lang60"
+      ],
+      "trade_zone": "12",
+      "price_zone": "41"
+    },
+    "lübeck": {
+      "name": "Lübeck",
+      "id": "town4201",
+      "x": 4967,
+      "y": 1143,
+      "size": 2,
+      "langs": [
+        "lang50",
+        "lang120"
+      ],
+      "trade_zone": "4",
+      "price_zone": "37"
+    },
+    "porlamar": {
+      "name": "Porlamar",
+      "id": "town10110",
+      "x": 2876,
+      "y": 2624,
+      "size": 1,
+      "langs": [
+        "lang270"
+      ],
+      "trade_zone": "19",
+      "price_zone": "60"
+    },
+    "sofala": {
+      "name": "Sofala",
+      "id": "town13203",
+      "x": 5627,
+      "y": 3498,
+      "size": 2,
+      "langs": [
+        "lang180"
+      ],
+      "trade_zone": "22",
+      "price_zone": "23"
+    },
+    "zanzibar": {
+      "name": "Zanzibar",
+      "id": "town13205",
+      "x": 5744,
+      "y": 3113,
+      "size": 2,
+      "langs": [
+        "lang170"
+      ],
+      "trade_zone": "23",
+      "price_zone": "23"
+    },
+    "rio de janeiro": {
+      "name": "Rio de Janeiro",
+      "id": "town11101",
+      "x": 3454,
+      "y": 3592,
+      "size": 1,
+      "langs": [
+        "lang250"
+      ],
+      "trade_zone": "19",
+      "price_zone": "60"
+    },
+    "basrah": {
+      "name": "Basrah",
+      "id": "town14204",
+      "x": 5994,
+      "y": 2082,
+      "size": 2,
+      "langs": [
+        "lang190",
+        "lang150"
+      ],
+      "trade_zone": "25",
+      "price_zone": "58"
+    },
+    "kolkata": {
+      "name": "Kolkata",
+      "id": "town15105",
+      "x": 7124,
+      "y": 2310,
+      "size": 1,
+      "langs": [
+        "lang200",
+        "lang280"
+      ],
+      "trade_zone": "26",
+      "price_zone": "59"
+    },
+    "panama": {
+      "name": "Panama",
+      "id": "town9109",
+      "x": 2457,
+      "y": 2713,
+      "size": 1,
+      "langs": [
+        "lang240"
+      ],
+      "trade_zone": "20",
+      "price_zone": "18"
+    },
+    "banda": {
+      "name": "Banda",
+      "id": "town18105",
+      "x": 8262,
+      "y": 3078,
+      "size": 1,
+      "langs": [
+        "lang290"
+      ],
+      "trade_zone": "73",
+      "price_zone": "50"
+    },
+    "chongqing": {
+      "name": "Chongqing",
+      "id": "town19303",
+      "x": 7725,
+      "y": 2062,
+      "size": 3,
+      "langs": [
+        "lang340"
+      ],
+      "trade_zone": "29",
+      "price_zone": "53"
+    },
+    "ambon": {
+      "name": "Ambon",
+      "id": "town18108",
+      "x": 8190,
+      "y": 3058,
+      "size": 1,
+      "langs": [
+        "lang290"
+      ],
+      "trade_zone": "73",
+      "price_zone": "50"
+    },
+    "jeju": {
+      "name": "Jeju",
+      "id": "town21103",
+      "x": 8181,
+      "y": 1944,
+      "size": 1,
+      "langs": [
+        "lang360"
+      ],
+      "trade_zone": "31",
+      "price_zone": "54"
+    },
+    "macau": {
+      "name": "Macau",
+      "id": "town19201",
+      "x": 7814,
+      "y": 2318,
+      "size": 2,
+      "langs": [
+        "lang340"
+      ],
+      "trade_zone": "75",
+      "price_zone": "53"
+    },
+    "tainan": {
+      "name": "Tainan",
+      "id": "town18110",
+      "x": 8006,
+      "y": 2309,
+      "size": 1,
+      "langs": [
+        "lang340"
+      ],
+      "trade_zone": "30",
+      "price_zone": "53"
+    },
+    "hangzhou": {
+      "name": "Hangzhou",
+      "id": "town19304",
+      "x": 8068,
+      "y": 2052,
+      "size": 3,
+      "langs": [
+        "lang340"
+      ],
+      "trade_zone": "29",
+      "price_zone": "53"
+    },
+    "ohlone": {
+      "name": "Ohlone",
+      "id": "town9107",
+      "x": 1234,
+      "y": 1778,
+      "size": 1,
+      "langs": [
+        "lang240"
+      ],
+      "trade_zone": "20",
+      "price_zone": "20"
+    },
+    "whanganui": {
+      "name": "Whanganui",
+      "id": "town20107",
+      "x": 9498,
+      "y": 4141,
+      "size": 1,
+      "langs": [
+        "lang310"
+      ],
+      "trade_zone": "33",
+      "price_zone": "63"
+    },
+    "k'gari": {
+      "name": "K'gari",
+      "id": "town20101",
+      "x": 8924,
+      "y": 3640,
+      "size": 1,
+      "langs": [
+        "lang310"
+      ],
+      "trade_zone": "33",
+      "price_zone": "33"
+    },
+    "hanoi": {
+      "name": "Hanoi",
+      "id": "town17108",
+      "x": 7622,
+      "y": 2364,
+      "size": 1,
+      "langs": [
+        null
+      ],
+      "trade_zone": "27",
+      "price_zone": "59"
+    },
+    "naha": {
+      "name": "Naha",
+      "id": "town22102",
+      "x": 8203,
+      "y": 2205,
+      "size": 1,
+      "langs": [
+        "lang350"
+      ],
+      "trade_zone": "76",
+      "price_zone": "54"
+    },
+    "natal": {
+      "name": "Natal",
+      "id": "town13101",
+      "x": 5609,
+      "y": 3655,
+      "size": 1,
+      "langs": [
+        "lang180"
+      ],
+      "trade_zone": "22",
+      "price_zone": "23"
+    },
+    "brunei": {
+      "name": "Brunei",
+      "id": "town18107",
+      "x": 7842,
+      "y": 2800,
+      "size": 1,
+      "langs": [
+        "lang290",
+        "lang320"
+      ],
+      "trade_zone": "74",
+      "price_zone": "50"
+    },
+    "willemstad": {
+      "name": "Willemstad",
+      "id": "town10102",
+      "x": 2729,
+      "y": 2605,
+      "size": 1,
+      "langs": [
+        "lang270"
+      ],
+      "trade_zone": "19",
+      "price_zone": "60"
+    },
+    "maracaibo": {
+      "name": "Maracaibo",
+      "id": "town10101",
+      "x": 2684,
+      "y": 2629,
+      "size": 1,
+      "langs": [
+        "lang260",
+        "lang270"
+      ],
+      "trade_zone": "19",
+      "price_zone": "60"
+    },
+    "southside": {
+      "name": "Southside",
+      "id": "town10103",
+      "x": 2384,
+      "y": 2387,
+      "size": 1,
+      "langs": [
+        "lang260"
+      ],
+      "trade_zone": "16",
+      "price_zone": "60"
+    },
+    "pinjarra": {
+      "name": "Pinjarra",
+      "id": "town20111",
+      "x": 7876,
+      "y": 3897,
+      "size": 1,
+      "langs": [
+        "lang310"
+      ],
+      "trade_zone": "33",
+      "price_zone": "33"
+    },
+    "quelimane": {
+      "name": "Quelimane",
+      "id": "town13107",
+      "x": 5698,
+      "y": 3437,
+      "size": 1,
+      "langs": [
+        "lang180",
+        "lang170"
+      ],
+      "trade_zone": "22",
+      "price_zone": "23"
+    },
+    "ushuaia": {
+      "name": "Ushuaia",
+      "id": "town11105",
+      "x": 2785,
+      "y": 4792,
+      "size": 1,
+      "langs": [
+        "lang250"
+      ],
+      "trade_zone": "18",
+      "price_zone": "18"
+    },
+    "dili": {
+      "name": "Dili",
+      "id": "town18102",
+      "x": 8143,
+      "y": 3176,
+      "size": 1,
+      "langs": [
+        "lang290"
+      ],
+      "trade_zone": "73",
+      "price_zone": "50"
+    },
+    "aceh": {
+      "name": "Aceh",
+      "id": "town17103",
+      "x": 7307,
+      "y": 2779,
+      "size": 1,
+      "langs": [
+        "lang330"
+      ],
+      "trade_zone": "72",
+      "price_zone": "50"
+    },
+    "antalya": {
+      "name": "Antalya",
+      "id": "town7103",
+      "x": 5507,
+      "y": 1835,
+      "size": 1,
+      "langs": [
+        "lang140"
+      ],
+      "trade_zone": "41",
+      "price_zone": "41"
+    },
+    "diu": {
+      "name": "Diu",
+      "id": "town15102",
+      "x": 6641,
+      "y": 2340,
+      "size": 1,
+      "langs": [
+        "lang200"
+      ],
+      "trade_zone": "26",
+      "price_zone": "58"
+    },
+    "pernambuco": {
+      "name": "Pernambuco",
+      "id": "town11108",
+      "x": 3674,
+      "y": 3190,
+      "size": 1,
+      "langs": [
+        "lang250",
+        "lang210"
+      ],
+      "trade_zone": "19",
+      "price_zone": "60"
+    },
+    "karibib": {
+      "name": "Karibib",
+      "id": "town13106",
+      "x": 5050,
+      "y": 3566,
+      "size": 1,
+      "langs": [
+        "lang180"
+      ],
+      "trade_zone": "22",
+      "price_zone": "22"
+    },
+    "manila": {
+      "name": "Manila",
+      "id": "town18103",
+      "x": 8008,
+      "y": 2515,
+      "size": 1,
+      "langs": [
+        "lang320"
+      ],
+      "trade_zone": "71",
+      "price_zone": "50"
+    },
+    "ternate": {
+      "name": "Ternate",
+      "id": "town18111",
+      "x": 8205,
+      "y": 2909,
+      "size": 1,
+      "langs": [
+        "lang290"
+      ],
+      "trade_zone": "73",
+      "price_zone": "50"
+    },
+    "davao": {
+      "name": "Davao",
+      "id": "town18101",
+      "x": 8163,
+      "y": 2749,
+      "size": 1,
+      "langs": [
+        "lang320"
+      ],
+      "trade_zone": "71",
+      "price_zone": "50"
+    },
+    "ceylon": {
+      "name": "Ceylon",
+      "id": "town15104",
+      "x": 6887,
+      "y": 2743,
+      "size": 1,
+      "langs": [
+        "lang200"
+      ],
+      "trade_zone": "26",
+      "price_zone": "59"
+    },
+    "masulipatnam": {
+      "name": "Masulipatnam",
+      "id": "town15103",
+      "x": 6892,
+      "y": 2494,
+      "size": 1,
+      "langs": [
+        "lang200"
+      ],
+      "trade_zone": "26",
+      "price_zone": "59"
+    },
+    "kilwa": {
+      "name": "Kilwa",
+      "id": "town13108",
+      "x": 5769,
+      "y": 3197,
+      "size": 1,
+      "langs": [
+        "lang170"
+      ],
+      "trade_zone": "23",
+      "price_zone": "23"
+    },
+    "beirut": {
+      "name": "Beirut",
+      "id": "town7201",
+      "x": 5639,
+      "y": 1927,
+      "size": 2,
+      "langs": [
+        "lang150",
+        "lang60"
+      ],
+      "trade_zone": "41",
+      "price_zone": "41"
+    },
+    "baghdad": {
+      "name": "Baghdad",
+      "id": "town14202",
+      "x": 5880,
+      "y": 1975,
+      "size": 2,
+      "langs": [
+        "lang190"
+      ],
+      "trade_zone": "25",
+      "price_zone": "58"
+    },
+    "makassar": {
+      "name": "Makassar",
+      "id": "town18104",
+      "x": 7975,
+      "y": 3073,
+      "size": 1,
+      "langs": [
+        "lang290",
+        "lang330"
+      ],
+      "trade_zone": "73",
+      "price_zone": "50"
+    },
+    "odesa": {
+      "name": "Odesa",
+      "id": "town8102",
+      "x": 5516,
+      "y": 1485,
+      "size": 1,
+      "langs": [
+        "lang130",
+        "lang60"
+      ],
+      "trade_zone": "12",
+      "price_zone": "41"
+    },
+    "bergen": {
+      "name": "Bergen",
+      "id": "town4103",
+      "x": 4809,
+      "y": 810,
+      "size": 1,
+      "langs": [
+        "lang110",
+        "lang120"
+      ],
+      "trade_zone": "5",
+      "price_zone": "37"
+    },
+    "madeira": {
+      "name": "Madeira",
+      "id": "town1105",
+      "x": 4172,
+      "y": 2026,
+      "size": 1,
+      "langs": [
+        "lang10"
+      ],
+      "trade_zone": "65",
+      "price_zone": "21"
+    },
+    "cartagena": {
+      "name": "Cartagena",
+      "id": "town10108",
+      "x": 2549,
+      "y": 2650,
+      "size": 1,
+      "langs": [
+        "lang260",
+        "lang250"
+      ],
+      "trade_zone": "19",
+      "price_zone": "60"
+    },
+    "soda island": {
+      "name": "Soda Island",
+      "id": "town0301",
+      "x": 4445,
+      "y": 3523,
+      "size": 1,
+      "langs": [
+        "lang250",
+        "lang160"
+      ],
+      "trade_zone": "15",
+      "price_zone": "22"
+    },
+    "santiago de cuba": {
+      "name": "Santiago de Cuba",
+      "id": "town10104",
+      "x": 2562,
+      "y": 2373,
+      "size": 1,
+      "langs": [
+        "lang270",
+        "lang260"
+      ],
+      "trade_zone": "16",
+      "price_zone": "60"
+    },
+    "caracas": {
+      "name": "Caracas",
+      "id": "town10107",
+      "x": 2807,
+      "y": 2640,
+      "size": 1,
+      "langs": [
+        "lang270"
+      ],
+      "trade_zone": "19",
+      "price_zone": "60"
+    },
+    "cayenne": {
+      "name": "Cayenne",
+      "id": "town10109",
+      "x": 3233,
+      "y": 2814,
+      "size": 1,
+      "langs": [
+        "lang250"
+      ],
+      "trade_zone": "19",
+      "price_zone": "60"
+    },
+    "tacoma": {
+      "name": "Tacoma",
+      "id": "town10111",
+      "x": 1254,
+      "y": 1402,
+      "size": 1,
+      "langs": [
+        "lang240"
+      ],
+      "trade_zone": "20",
+      "price_zone": "20"
+    },
+    "port royal": {
+      "name": "Port Royal",
+      "id": "town10202",
+      "x": 2504,
+      "y": 2429,
+      "size": 2,
+      "langs": [
+        "lang260",
+        "lang270"
+      ],
+      "trade_zone": "16",
+      "price_zone": "60"
+    },
+    "bahia": {
+      "name": "Bahia",
+      "id": "town11102",
+      "x": 3587,
+      "y": 3298,
+      "size": 1,
+      "langs": [
+        "lang250"
+      ],
+      "trade_zone": "19",
+      "price_zone": "60"
+    },
+    "valparaíso": {
+      "name": "Valparaíso",
+      "id": "town11103",
+      "x": 2670,
+      "y": 3909,
+      "size": 1,
+      "langs": [
+        "lang210"
+      ],
+      "trade_zone": "18",
+      "price_zone": "18"
+    },
+    "málaga": {
+      "name": "Málaga",
+      "id": "town1201",
+      "x": 4569,
+      "y": 1830,
+      "size": 2,
+      "langs": [
+        "lang20"
+      ],
+      "trade_zone": "64",
+      "price_zone": "57"
+    },
+    "douala": {
+      "name": "Douala",
+      "id": "town12101",
+      "x": 4928,
+      "y": 2836,
+      "size": 1,
+      "langs": [
+        "lang160",
+        "lang180"
+      ],
+      "trade_zone": "21",
+      "price_zone": "21"
+    },
+    "las palmas": {
+      "name": "Las Palmas",
+      "id": "town12102",
+      "x": 4202,
+      "y": 2131,
+      "size": 1,
+      "langs": [
+        "lang150",
+        "lang20"
+      ],
+      "trade_zone": "66",
+      "price_zone": "21"
+    },
+    "bathurst": {
+      "name": "Bathurst",
+      "id": "town12103",
+      "x": 4187,
+      "y": 2554,
+      "size": 1,
+      "langs": [
+        "lang160"
+      ],
+      "trade_zone": "66",
+      "price_zone": "21"
+    },
+    "benin": {
+      "name": "Benin",
+      "id": "town12104",
+      "x": 4807,
+      "y": 2760,
+      "size": 1,
+      "langs": [
+        "lang160",
+        "lang180"
+      ],
+      "trade_zone": "21",
+      "price_zone": "21"
+    },
+    "bissau": {
+      "name": "Bissau",
+      "id": "town12105",
+      "x": 4210,
+      "y": 2611,
+      "size": 1,
+      "langs": [
+        "lang160"
+      ],
+      "trade_zone": "66",
+      "price_zone": "21"
+    },
+    "são tomé": {
+      "name": "São Tomé",
+      "id": "town12106",
+      "x": 4840,
+      "y": 2944,
+      "size": 1,
+      "langs": [
+        "lang160",
+        "lang10"
+      ],
+      "trade_zone": "21",
+      "price_zone": "21"
+    },
+    "sierra leone": {
+      "name": "Sierra Leone",
+      "id": "town12107",
+      "x": 4286,
+      "y": 2709,
+      "size": 1,
+      "langs": [
+        "lang160"
+      ],
+      "trade_zone": "66",
+      "price_zone": "21"
+    },
+    "cape verde": {
+      "name": "Cape Verde",
+      "id": "town12109",
+      "x": 3931,
+      "y": 2532,
+      "size": 1,
+      "langs": [
+        "lang160",
+        "lang10"
+      ],
+      "trade_zone": "21",
+      "price_zone": "21"
+    },
+    "santa island": {
+      "name": "Santa Island",
+      "id": "town1303",
+      "x": 3745,
+      "y": 1930,
+      "size": 1,
+      "langs": [
+        "lang70",
+        "lang40"
+      ],
+      "trade_zone": "8",
+      "price_zone": "57"
+    },
+    "mombasa": {
+      "name": "Mombasa",
+      "id": "town13102",
+      "x": 5745,
+      "y": 3063,
+      "size": 1,
+      "langs": [
+        "lang170"
+      ],
+      "trade_zone": "23",
+      "price_zone": "23"
+    },
+    "malindi": {
+      "name": "Malindi",
+      "id": "town13103",
+      "x": 5766,
+      "y": 3017,
+      "size": 1,
+      "langs": [
+        "lang170"
+      ],
+      "trade_zone": "23",
+      "price_zone": "23"
+    },
+    "toamasina": {
+      "name": "Toamasina",
+      "id": "town13109",
+      "x": 6030,
+      "y": 3445,
+      "size": 1,
+      "langs": [
+        "lang170"
+      ],
+      "trade_zone": "22",
+      "price_zone": "23"
+    },
+    "luanda": {
+      "name": "Luanda",
+      "id": "town13201",
+      "x": 5033,
+      "y": 3178,
+      "size": 2,
+      "langs": [
+        "lang160",
+        "lang180"
+      ],
+      "trade_zone": "21",
+      "price_zone": "22"
+    },
+    "mozambique": {
+      "name": "Mozambique",
+      "id": "town13202",
+      "x": 5793,
+      "y": 3351,
+      "size": 2,
+      "langs": [
+        "lang170",
+        "lang180"
+      ],
+      "trade_zone": "23",
+      "price_zone": "23"
+    },
+    "shiraz": {
+      "name": "Shiraz",
+      "id": "town14103",
+      "x": 6074,
+      "y": 2108,
+      "size": 1,
+      "langs": [
+        "lang190"
+      ],
+      "trade_zone": "25",
+      "price_zone": "58"
+    },
+    "doha": {
+      "name": "Doha",
+      "id": "town14104",
+      "x": 6096,
+      "y": 2206,
+      "size": 1,
+      "langs": [
+        "lang150",
+        "lang190"
+      ],
+      "trade_zone": "24",
+      "price_zone": "58"
+    },
+    "suez": {
+      "name": "Suez",
+      "id": "town14205",
+      "x": 5562,
+      "y": 2079,
+      "size": 1,
+      "langs": [
+        "lang150"
+      ],
+      "trade_zone": "67",
+      "price_zone": "58"
+    },
+    "hormuz": {
+      "name": "Hormuz",
+      "id": "town14207",
+      "x": 6226,
+      "y": 2156,
+      "size": 2,
+      "langs": [
+        "lang190"
+      ],
+      "trade_zone": "25",
+      "price_zone": "58"
+    },
+    "pondicherry": {
+      "name": "Pondicherry",
+      "id": "town15106",
+      "x": 6875,
+      "y": 2621,
+      "size": 1,
+      "langs": [
+        "lang200"
+      ],
+      "trade_zone": "26",
+      "price_zone": "59"
+    },
+    "pegu": {
+      "name": "Pegu",
+      "id": "town15107",
+      "x": 7359,
+      "y": 2470,
+      "size": 1,
+      "langs": [
+        "lang280"
+      ],
+      "trade_zone": "27",
+      "price_zone": "59"
+    },
+    "narvik": {
+      "name": "Narvik",
+      "id": "town16101",
+      "x": 5083,
+      "y": 445,
+      "size": 1,
+      "langs": [
+        "lang110",
+        "lang90"
+      ],
+      "trade_zone": "5",
+      "price_zone": "37"
+    },
+    "reykjavík": {
+      "name": "Reykjavík",
+      "id": "town16103",
+      "x": 4042,
+      "y": 578,
+      "size": 1,
+      "langs": [
+        "lang110",
+        "lang30"
+      ],
+      "trade_zone": "5",
+      "price_zone": "34"
+    },
+    "vardø": {
+      "name": "Vardø",
+      "id": "town16104",
+      "x": 5525,
+      "y": 384,
+      "size": 1,
+      "langs": [
+        "lang110",
+        "lang90"
+      ],
+      "trade_zone": "5",
+      "price_zone": "34"
+    },
+    "barrow": {
+      "name": "Barrow",
+      "id": "town16105",
+      "x": 335,
+      "y": 350,
+      "size": 1,
+      "langs": [
+        "lang240"
+      ],
+      "trade_zone": "20",
+      "price_zone": "34"
+    },
+    "arkhangelsk": {
+      "name": "Arkhangelsk",
+      "id": "town16106",
+      "x": 5750,
+      "y": 562,
+      "size": 1,
+      "langs": [
+        "lang90"
+      ],
+      "trade_zone": "68",
+      "price_zone": "34"
+    },
+    "okhotsk": {
+      "name": "Okhotsk",
+      "id": "town16107",
+      "x": 8645,
+      "y": 881,
+      "size": 1,
+      "langs": [
+        "lang90"
+      ],
+      "trade_zone": "69",
+      "price_zone": "54"
+    },
+    "chersky": {
+      "name": "Chersky",
+      "id": "town16109",
+      "x": 9110,
+      "y": 403,
+      "size": 1,
+      "langs": [
+        "lang90"
+      ],
+      "trade_zone": "69",
+      "price_zone": "34"
+    },
+    "korf": {
+      "name": "Korf",
+      "id": "town16112",
+      "x": 9276,
+      "y": 841,
+      "size": 1,
+      "langs": [
+        "lang90"
+      ],
+      "trade_zone": "69",
+      "price_zone": "54"
+    },
+    "lopburi": {
+      "name": "Lopburi",
+      "id": "town17101",
+      "x": 7444,
+      "y": 2573,
+      "size": 1,
+      "langs": [
+        "lang280",
+        null
+      ],
+      "trade_zone": "27",
+      "price_zone": "59"
+    },
+    "surabaya": {
+      "name": "Surabaya",
+      "id": "town17102",
+      "x": 7776,
+      "y": 3132,
+      "size": 1,
+      "langs": [
+        "lang330"
+      ],
+      "trade_zone": "73",
+      "price_zone": "50"
+    },
+    "pasay": {
+      "name": "Pasay",
+      "id": "town17104",
+      "x": 7374,
+      "y": 2790,
+      "size": 1,
+      "langs": [
+        "lang330"
+      ],
+      "trade_zone": "72",
+      "price_zone": "50"
+    },
+    "prey nokor": {
+      "name": "Prey Nokor",
+      "id": "town17107",
+      "x": 7643,
+      "y": 2646,
+      "size": 1,
+      "langs": [
+        null,
+        "lang280"
+      ],
+      "trade_zone": "27",
+      "price_zone": "59"
+    },
+    "banjarmasin": {
+      "name": "Banjarmasin",
+      "id": "town18106",
+      "x": 7833,
+      "y": 3034,
+      "size": 1,
+      "langs": [
+        "lang330",
+        "lang290"
+      ],
+      "trade_zone": "74",
+      "price_zone": "50"
+    },
+    "jolo": {
+      "name": "Jolo",
+      "id": "town18112",
+      "x": 8025,
+      "y": 2775,
+      "size": 1,
+      "langs": [
+        "lang320"
+      ],
+      "trade_zone": "71",
+      "price_zone": "50"
+    },
+    "mahina": {
+      "name": "Mahina",
+      "id": "town20102",
+      "x": 430,
+      "y": 3486,
+      "size": 1,
+      "langs": [
+        "lang310"
+      ],
+      "trade_zone": "62",
+      "price_zone": "55"
+    },
+    "samarai": {
+      "name": "Samarai",
+      "id": "town20103",
+      "x": 8865,
+      "y": 3240,
+      "size": 1,
+      "langs": [
+        "lang310"
+      ],
+      "trade_zone": "33",
+      "price_zone": "63"
+    },
+    "suva": {
+      "name": "Suva",
+      "id": "town20104",
+      "x": 9610,
+      "y": 3450,
+      "size": 1,
+      "langs": [
+        "lang310"
+      ],
+      "trade_zone": "62",
+      "price_zone": "63"
+    },
+    "atuona": {
+      "name": "Atuona",
+      "id": "town20105",
+      "x": 755,
+      "y": 3197,
+      "size": 1,
+      "langs": [
+        "lang310"
+      ],
+      "trade_zone": "62",
+      "price_zone": "55"
+    },
+    "unalaska": {
+      "name": "Unalaska",
+      "id": "town20106",
+      "x": 34,
+      "y": 1152,
+      "size": 1,
+      "langs": [
+        "lang240"
+      ],
+      "trade_zone": "20",
+      "price_zone": "34"
+    },
+    "yuldo": {
+      "name": "Yuldo",
+      "id": "town20108",
+      "x": 8935,
+      "y": 2794,
+      "size": 1,
+      "langs": [
+        "lang360"
+      ],
+      "trade_zone": "77",
+      "price_zone": "63"
+    },
+    "kakatuwah": {
+      "name": "Kakatuwah",
+      "id": "town20109",
+      "x": 8350,
+      "y": 3254,
+      "size": 1,
+      "langs": [
+        "lang310"
+      ],
+      "trade_zone": "33",
+      "price_zone": "33"
+    },
+    "port pirie": {
+      "name": "Port Pirie",
+      "id": "town20110",
+      "x": 8496,
+      "y": 3966,
+      "size": 1,
+      "langs": [
+        "lang310"
+      ],
+      "trade_zone": "33",
+      "price_zone": "33"
+    },
+    "guam": {
+      "name": "Guam",
+      "id": "town20112",
+      "x": 8614,
+      "y": 2528,
+      "size": 1,
+      "langs": [
+        "lang290"
+      ],
+      "trade_zone": "33",
+      "price_zone": "33"
+    },
+    "hawaii": {
+      "name": "Hawaii",
+      "id": "town20113",
+      "x": 222,
+      "y": 2324,
+      "size": 1,
+      "langs": [
+        "lang310"
+      ],
+      "trade_zone": "62",
+      "price_zone": "55"
+    },
+    "hobart": {
+      "name": "Hobart",
+      "id": "town20114",
+      "x": 8756,
+      "y": 4272,
+      "size": 1,
+      "langs": [
+        "lang310"
+      ],
+      "trade_zone": "33",
+      "price_zone": "33"
+    },
+    "gijón": {
+      "name": "Gijón",
+      "id": "town2101",
+      "x": 4510,
+      "y": 1582,
+      "size": 1,
+      "langs": [
+        "lang20"
+      ],
+      "trade_zone": "64",
+      "price_zone": "57"
+    },
+    "deokwon": {
+      "name": "Deokwon",
+      "id": "town21101",
+      "x": 8198,
+      "y": 1753,
+      "size": 1,
+      "langs": [
+        "lang360"
+      ],
+      "trade_zone": "31",
+      "price_zone": "54"
+    },
+    "ezo": {
+      "name": "Ezo",
+      "id": "town22103",
+      "x": 8609,
+      "y": 1615,
+      "size": 1,
+      "langs": [
+        "lang350"
+      ],
+      "trade_zone": "32",
+      "price_zone": "54"
+    },
+    "gdansk": {
+      "name": "Gdansk",
+      "id": "town4101",
+      "x": 5192,
+      "y": 1123,
+      "size": 1,
+      "langs": [
+        "lang130"
+      ],
+      "trade_zone": "5",
+      "price_zone": "37"
+    },
+    "visby": {
+      "name": "Visby",
+      "id": "town4104",
+      "x": 5180,
+      "y": 961,
+      "size": 1,
+      "langs": [
+        "lang70",
+        "lang120"
+      ],
+      "trade_zone": "5",
+      "price_zone": "37"
+    },
+    "kokkola": {
+      "name": "Kokkola",
+      "id": "town4105",
+      "x": 5305,
+      "y": 605,
+      "size": 1,
+      "langs": [
+        "lang70"
+      ],
+      "trade_zone": "5",
+      "price_zone": "37"
+    },
+    "benghazi": {
+      "name": "Benghazi",
+      "id": "town6101",
+      "x": 5208,
+      "y": 1992,
+      "size": 1,
+      "langs": [
+        "lang150",
+        "lang60"
+      ],
+      "trade_zone": "14",
+      "price_zone": "41"
+    },
+    "ancona": {
+      "name": "Ancona",
+      "id": "town6102",
+      "x": 5030,
+      "y": 1584,
+      "size": 1,
+      "langs": [
+        "lang80"
+      ],
+      "trade_zone": "10",
+      "price_zone": "57"
+    },
+    "zadar": {
+      "name": "Zadar",
+      "id": "town6103",
+      "x": 5072,
+      "y": 1568,
+      "size": 1,
+      "langs": [
+        "lang80"
+      ],
+      "trade_zone": "10",
+      "price_zone": "57"
+    },
+    "tripoli": {
+      "name": "Tripoli",
+      "id": "town6104",
+      "x": 5035,
+      "y": 1966,
+      "size": 1,
+      "langs": [
+        "lang150"
+      ],
+      "trade_zone": "66",
+      "price_zone": "57"
+    },
+    "trieste": {
+      "name": "Trieste",
+      "id": "town6105",
+      "x": 5047,
+      "y": 1500,
+      "size": 1,
+      "langs": [
+        "lang80"
+      ],
+      "trade_zone": "10",
+      "price_zone": "57"
+    },
+    "port said": {
+      "name": "Port Said",
+      "id": "town7102",
+      "x": 5565,
+      "y": 2026,
+      "size": 1,
+      "langs": [
+        "lang150",
+        "lang60"
+      ],
+      "trade_zone": "14",
+      "price_zone": "41"
+    },
+    "varna": {
+      "name": "Varna",
+      "id": "town8101",
+      "x": 5459,
+      "y": 1551,
+      "size": 1,
+      "langs": [
+        "lang130",
+        "lang60"
+      ],
+      "trade_zone": "12",
+      "price_zone": "41"
+    },
+    "thessaloniki": {
+      "name": "Thessaloniki",
+      "id": "town8105",
+      "x": 5317,
+      "y": 1704,
+      "size": 1,
+      "langs": [
+        "lang140",
+        "lang60"
+      ],
+      "trade_zone": "13",
+      "price_zone": "41"
+    },
+    "guatemala": {
+      "name": "Guatemala",
+      "id": "town9101",
+      "x": 2160,
+      "y": 2546,
+      "size": 1,
+      "langs": [
+        "lang220",
+        "lang230"
+      ],
+      "trade_zone": "20",
+      "price_zone": "20"
+    },
+    "nutak": {
+      "name": "Nutak",
+      "id": "town9103",
+      "x": 2950,
+      "y": 972,
+      "size": 1,
+      "langs": [
+        "lang240"
+      ],
+      "trade_zone": "17",
+      "price_zone": "60"
+    },
+    "mérida": {
+      "name": "Mérida",
+      "id": "town9104",
+      "x": 2174,
+      "y": 2324,
+      "size": 1,
+      "langs": [
+        "lang220"
+      ],
+      "trade_zone": "17",
+      "price_zone": "60"
+    },
+    "arviat": {
+      "name": "Arviat",
+      "id": "town9105",
+      "x": 2042,
+      "y": 795,
+      "size": 1,
+      "langs": [
+        "lang240"
+      ],
+      "trade_zone": "17",
+      "price_zone": "60"
+    },
+    "acapulco": {
+      "name": "Acapulco",
+      "id": "town9106",
+      "x": 1874,
+      "y": 2435,
+      "size": 1,
+      "langs": [
+        "lang230"
+      ],
+      "trade_zone": "20",
+      "price_zone": "20"
+    },
+    "khatanga": {
+      "name": "Khatanga",
+      "id": "townU007",
+      "x": 7771,
+      "y": 247,
+      "size": 1,
+      "langs": [
+        "lang90"
+      ],
+      "trade_zone": "69",
+      "price_zone": "34"
+    },
+    "qaanaaq": {
+      "name": "Qaanaaq",
+      "id": "townU015",
+      "x": 2686,
+      "y": 123,
+      "size": 1,
+      "langs": [
+        "lang240"
+      ],
+      "trade_zone": "17",
+      "price_zone": "34"
+    },
+    "cambridge bay": {
+      "name": "Cambridge Bay",
+      "id": "townU016",
+      "x": 1719,
+      "y": 400,
+      "size": 1,
+      "langs": [
+        "lang240"
+      ],
+      "trade_zone": "17",
+      "price_zone": "34"
+    },
+    "dikson": {
+      "name": "Dikson",
+      "id": "townU017",
+      "x": 6906,
+      "y": 287,
+      "size": 1,
+      "langs": [
+        "lang90"
+      ],
+      "trade_zone": "68",
+      "price_zone": "34"
+    },
+    "malé": {
+      "name": "Malé",
+      "id": "townU018",
+      "x": 6730,
+      "y": 2828,
+      "size": 1,
+      "langs": [
+        "lang200"
+      ],
+      "trade_zone": "72",
+      "price_zone": "58"
+    },
+    "cologne": {
+      "name": "Cologne",
+      "id": "townU019",
+      "x": 4840,
+      "y": 1280,
+      "size": 3,
+      "langs": [
+        "lang50"
+      ],
+      "trade_zone": "4",
+      "price_zone": "37"
+    },
+    "strasbourg": {
+      "name": "Strasbourg",
+      "id": "townU020",
+      "x": 4880,
+      "y": 1390,
+      "size": 2,
+      "langs": [
+        "lang50"
+      ],
+      "trade_zone": "4",
+      "price_zone": "37"
+    }
+  }
+}

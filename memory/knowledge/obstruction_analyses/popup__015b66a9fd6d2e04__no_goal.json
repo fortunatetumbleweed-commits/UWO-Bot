@@ -1,0 +1,21 @@
+{
+  "purpose": "Manage Loyalty panel explaining that unattended low-loyalty Mates risk Slacking (50% expertise reduction) and Mutiny, with options to pay gold or gems to restore loyalty to 100 or 110",
+  "full_text": "If Mates with low Loyalty are unattended, it will increase the chance of Slacking to occur. Mates who are Slacking will have 50% Reduction to their expertise, and may cause Mutiny. Recover Loyalty to 100 [Regular Pay] Recover Loyalty to 110 [Special Pay]",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "015b66a9fd6d2e04",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T20:59:15.874523+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Manage Loyalty panel explaining that unattended low-loyalty Mates risk Slacking (50% expertise reduction) and Mutiny, with options to pay gold or gems to restore loyalty to 100 or 110",
+    "full_text": "If Mates with low Loyalty are unattended, it will increase the chance of Slacking to occur. Mates who are Slacking will have 50% Reduction to their expertise, and may cause Mutiny. Recover Loyalty to 100 [Regular Pay] Recover Loyalty to 110 [Special Pay]",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

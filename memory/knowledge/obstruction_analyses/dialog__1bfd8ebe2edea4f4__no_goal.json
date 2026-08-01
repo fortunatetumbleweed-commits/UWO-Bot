@@ -1,0 +1,21 @@
+{
+  "purpose": "The bounding box has incorrectly flagged the main HUD sidebar menu (ship stats panel and right-side action buttons) as an obstruction; this is the normal in-port company overview UI showing resources and navigation options, not a dialog or popup.",
+  "full_text": "Ship | Blue Gem 86,727 | Red Gem 3,436 | Mates | Energy 605 / 539 | Total Load Capacity 1,368/2,816 > | Journal | Food 0 | Ammo 177 | Dispatch",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "1bfd8ebe2edea4f4",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T16:33:21.820512+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The bounding box has incorrectly flagged the main HUD sidebar menu (ship stats panel and right-side action buttons) as an obstruction; this is the normal in-port company overview UI showing resources and navigation options, not a dialog or popup.",
+    "full_text": "Ship | Blue Gem 86,727 | Red Gem 3,436 | Mates | Energy 605 / 539 | Total Load Capacity 1,368/2,816 > | Journal | Food 0 | Ammo 177 | Dispatch",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

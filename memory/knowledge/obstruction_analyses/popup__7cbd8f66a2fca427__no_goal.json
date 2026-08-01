@@ -1,0 +1,21 @@
+{
+  "purpose": "A combined skill-log and nearby-ports side panel showing recent activity totals (Sea Exploration ×780, Explore Land ×1,535, Fishing ×968, Cannot Salvage ×140) alongside the mini-map and a list of ports near the player's current position in the Atlantic Ocean near Tripoli",
+  "full_text": "TW 0.0 | Sea Exploration ×780 | Explore Land ×1,535 | Fishing ×968 | Cannot Salvage ×140 | Nearby ports: Tripoli (approx. 11.2 km), Naples (??? m), Sassari (??? m), Algiers (??? m)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "7cbd8f66a2fca427",
+  "goal_intent": null,
+  "cached_at": "2026-05-21T18:34:49.152678+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A combined skill-log and nearby-ports side panel showing recent activity totals (Sea Exploration ×780, Explore Land ×1,535, Fishing ×968, Cannot Salvage ×140) alongside the mini-map and a list of ports near the player's current position in the Atlantic Ocean near Tripoli",
+    "full_text": "TW 0.0 | Sea Exploration ×780 | Explore Land ×1,535 | Fishing ×968 | Cannot Salvage ×140 | Nearby ports: Tripoli (approx. 11.2 km), Naples (??? m), Sassari (??? m), Algiers (??? m)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

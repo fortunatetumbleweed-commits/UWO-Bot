@@ -1,0 +1,21 @@
+{
+  "purpose": "Village relationship panel showing the Berber Village's Amity level (Neutral, 60,000/100,000), current weather status (Calm), achievement and weekly rewards, and discovered items — this is the main Village overview screen, not a transient popup",
+  "full_text": "Amity: Neutral 60,000/100,000. It's a peaceful village. Status Effect Details. Achievement Reward: None. Weekly Reward: None. Discoveries.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "dialog",
+  "structural_hash": "636fc3a7eaf30476",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T17:02:28.018500+00:00",
+  "visit_count": 153,
+  "raw_api_response": {
+    "purpose": "Village relationship panel showing the Berber Village's Amity level (Neutral, 60,000/100,000), current weather status (Calm), achievement and weekly rewards, and discovered items — this is the main Village overview screen, not a transient popup",
+    "full_text": "Amity: Neutral 60,000/100,000. It's a peaceful village. Status Effect Details. Achievement Reward: None. Weekly Reward: None. Discoveries.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "An NPC warns the player that sea mines float on the water and should be avoided during navigation",
+  "full_text": "Mines float on the water, so you should be careful not to run into one.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "a02d4143e67300fe",
+  "goal_intent": null,
+  "cached_at": "2026-05-19T18:33:29.305213+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "An NPC warns the player that sea mines float on the water and should be avoided during navigation",
+    "full_text": "Mines float on the water, so you should be careful not to run into one.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

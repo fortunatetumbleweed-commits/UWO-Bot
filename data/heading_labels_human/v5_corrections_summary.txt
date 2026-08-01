@@ -1,0 +1,109 @@
+# 81 label corrections applied to v5 training set
+
+── ai_nav_2026-06-23T23-13-48 ──
+  sprite 000253  t311  lab=  180°  pca=  277°  mot=  162°  → motion   corr=161.6°  Δ=  18°
+
+── ai_nav_2026-06-24T17-58-57 ──
+  sprite 000353  t183  lab=  267°  pca=  267°  mot=  261°  → manual   corr=300.0°  Δ=  33°
+  sprite 000364  t317  lab=  282°  pca=  285°  mot=  270°  → motion   corr=270.0°  Δ=  12°
+
+── ai_nav_2026-06-24T20-03-24 ──
+  sprite 000375  t75   lab=  155°  pca=  288°  mot=  153°  → manual   corr=170.0°  Δ=  15°
+  sprite 000391  t123  lab=  220°  pca=   44°  mot=  207°  → motion   corr=206.6°  Δ=  13°
+
+── ai_nav_2026-06-24T20-49-36 ──
+  sprite 000404  t12   lab=  170°  pca=  284°  mot=  150°  → motion   corr=150.3°  Δ=  20°
+  sprite 000421  t87   lab=  155°  pca=  279°  mot=  164°  → motion   corr=164.1°  Δ=   9°
+  sprite 000441  t139  lab=  190°  pca=   20°  mot=  191°  → manual   corr=185.0°  Δ=   5°
+  sprite 000442  t140  lab=  175°  pca=    9°  mot=  186°  → manual   corr=180.0°  Δ=   5°
+  sprite 000443  t142  lab=  165°  pca=  165°  mot=  186°  → motion   corr=186.3°  Δ=  21°
+  sprite 000491  t417  lab=  175°  pca=  346°  mot=  192°  → manual   corr=180.0°  Δ=   5°
+  sprite 000492  t420  lab=  190°  pca=   25°  mot=  185°  → motion   corr=185.3°  Δ=   5°
+  sprite 000564  t745  lab=  345°  pca=  165°  mot=  354°  → motion   corr=353.7°  Δ=   9°
+  sprite 000565  t746  lab=    5°  pca=  182°  mot=  360°  → motion   corr=360.0°  Δ=   5°
+  sprite 000569  t776  lab=  165°  pca=  341°  mot=  174°  → manual   corr=180.0°  Δ=  15°
+  sprite 000570  t779  lab=  165°  pca=    1°  mot=  174°  → motion   corr=174.3°  Δ=   9°
+  sprite 000587  t874  lab=   75°  pca=  246°  mot=   59°  → motion   corr= 59.0°  Δ=  16°
+  sprite 000588  t876  lab=  165°  pca=  339°  mot=  180°  → motion   corr=180.4°  Δ=  15°
+
+── ai_nav_2026-06-29T18-20-40 ──
+  sprite 000759  t20   lab=  200°  pca=  265°  mot=  188°  → motion   corr=188.2°  Δ=  12°
+  sprite 000765  t84   lab=  168°  pca=  168°  mot=  172°  → motion   corr=171.8°  Δ=   4°
+  sprite 000766  t97   lab=  175°  pca=  281°  mot=  162°  → motion   corr=161.6°  Δ=  13°
+  sprite 000772  t111  lab=  215°  pca=   78°  mot=  233°  → motion   corr=233.1°  Δ=  18°
+  sprite 000774  t116  lab=  265°  pca=  265°  mot=  259°  → motion   corr=258.7°  Δ=   6°
+  sprite 000775  t128  lab=  215°  pca=  247°  mot=  204°  → motion   corr=204.0°  Δ=  11°
+  sprite 000789  t248  lab=  156°  pca=  157°  mot=  162°  → motion   corr=161.6°  Δ=   6°
+
+── ai_nav_2026-06-29T19-55-55 ──
+  sprite 000829  t131  lab=  263°  pca=  263°  mot=  252°  → motion   corr=251.6°  Δ=  11°
+  sprite 000832  t166  lab=  220°  pca=  274°  mot=  201°  → motion   corr=200.6°  Δ=  19°
+  sprite 000833  t168  lab=  220°  pca=  276°  mot=  210°  → motion   corr=209.7°  Δ=  10°
+  sprite 000834  t169  lab=  220°  pca=  261°  mot=  207°  → motion   corr=206.6°  Δ=  13°
+
+── ai_nav_2026-06-29T20-49-00 ──
+  sprite 000872  t57   lab=  205°  pca=  269°  mot=  193°  → motion   corr=192.6°  Δ=  12°
+  sprite 000891  t119  lab=  155°  pca=  297°  mot=  159°  → motion   corr=159.4°  Δ=   4°
+  sprite 000898  t131  lab=  200°  pca=   41°  mot=  194°  → manual   corr=210.0°  Δ=  10°
+  sprite 000899  t142  lab=   86°  pca=   86°  mot=   90°  → manual   corr= 30.0°  Δ=  56°
+  sprite 000900  t144  lab=  315°  pca=  239°  mot=  320°  → manual   corr=300.0°  Δ=  15°
+  sprite 000901  t153  lab=   75°  pca=  207°  mot=   66°  → motion   corr= 66.1°  Δ=   9°
+  sprite 000902  t156  lab=  352°  pca=  352°  mot=  341°  → manual   corr= 10.0°  Δ=  18°
+  sprite 000908  t181  lab=   75°  pca=  267°  mot=   56°  → motion   corr= 56.3°  Δ=  19°
+
+── ai_nav_2026-06-29T21-16-16 ──
+  sprite 000955  t91   lab=  178°  pca=  178°  mot=  156°  → motion   corr=156.1°  Δ=  22°
+  sprite 000960  t132  lab=  180°  pca=   14°  mot=  185°  → manual   corr=215.0°  Δ=  35°
+  sprite 000961  t134  lab=  275°  pca=   48°  mot=  257°  → motion   corr=257.5°  Δ=  18°
+  sprite 000962  t135  lab=  247°  pca=  247°  mot=  257°  → motion   corr=257.4°  Δ=  11°
+  sprite 000965  t142  lab=  160°  pca=   28°  mot=  185°  → manual   corr=208.0°  Δ=  48°
+  sprite 000966  t146  lab=  290°  pca=  290°  mot=  264°  → motion   corr=263.7°  Δ=  26°
+  sprite 000970  t186  lab=  155°  pca=  296°  mot=  162°  → motion   corr=162.5°  Δ=   7°
+  sprite 001003  t369  lab=  215°  pca=  295°  mot=  207°  → motion   corr=206.6°  Δ=   8°
+  sprite 001005  t377  lab=  175°  pca=  357°  mot=  189°  → manual   corr=180.0°  Δ=   5°
+
+── ai_nav_2026-06-29T22-29-41 ──
+  sprite 001058  t98   lab=  235°  pca=   52°  mot=  221°  → motion   corr=220.6°  Δ=  14°
+  sprite 001059  t102  lab=  210°  pca=   68°  mot=  225°  → manual   corr=240.0°  Δ=  30°
+  sprite 001080  t220  lab=  235°  pca=  276°  mot=  225°  → motion   corr=225.0°  Δ=  10°
+  sprite 001104  t346  lab=  276°  pca=  276°  mot=  289°  → manual   corr=355.0°  Δ=  79°
+
+── ai_nav_2026-06-29T23-11-24 ──
+  sprite 001146  t62   lab=  175°  pca=  279°  mot=  186°  → motion   corr=185.7°  Δ=  11°
+  sprite 001147  t64   lab=  200°  pca=  295°  mot=  188°  → motion   corr=187.6°  Δ=  12°
+  sprite 001148  t66   lab=  175°  pca=  293°  mot=  186°  → motion   corr=186.3°  Δ=  11°
+  sprite 001150  t73   lab=  165°  pca=  352°  mot=  167°  → motion   corr=167.5°  Δ=   2°
+  sprite 001155  t96   lab=  220°  pca=   62°  mot=  246°  → motion   corr=246.4°  Δ=  26°
+  sprite 001184  t380  lab=  180°  pca=    1°  mot=  164°  → manual   corr=200.0°  Δ=  20°
+  sprite 001186  t401  lab=   55°  pca=  221°  mot=   80°  → motion   corr= 80.4°  Δ=  25°
+  sprite 001201  t460  lab=  156°  pca=  156°  mot=  158°  → motion   corr=158.2°  Δ=   3°
+  sprite 001209  t491  lab=  155°  pca=  305°  mot=  156°  → motion   corr=156.0°  Δ=   1°
+
+── ai_nav_2026-06-29T23-57-44 ──
+  sprite 001237  t95   lab=  159°  pca=  159°  mot=  162°  → motion   corr=161.6°  Δ=   3°
+  sprite 001238  t100  lab=   75°  pca=  228°  mot=   66°  → manual   corr= 10.0°  Δ=  65°
+  sprite 001239  t101  lab=  345°  pca=   72°  mot=  315°  → manual   corr=290.0°  Δ=  55°
+  sprite 001240  t145  lab=  262°  pca=  262°  mot=  238°  → motion   corr=238.0°  Δ=  24°
+  sprite 001262  t229  lab=  170°  pca=  271°  mot=  169°  → manual   corr=175.0°  Δ=   5°
+
+── ai_nav_2026-06-30T07-59-21 ──
+  sprite 001293  t23   lab=  215°  pca=  286°  mot=  214°  → manual   corr=205.0°  Δ=  10°
+  sprite 001307  t100  lab=  155°  pca=  307°  mot=  156°  → motion   corr=156.0°  Δ=   1°
+  sprite 001312  t105  lab=  155°  pca=  286°  mot=  162°  → motion   corr=161.6°  Δ=   7°
+  sprite 001316  t139  lab=  240°  pca=   64°  mot=  225°  → motion   corr=225.0°  Δ=  15°
+  sprite 001327  t286  lab=  180°  pca=  308°  mot=  158°  → motion   corr=158.2°  Δ=  22°
+  sprite 001340  t304  lab=  190°  pca=  344°  mot=  172°  → motion   corr=172.4°  Δ=  18°
+  sprite 001370  t485  lab=  180°  pca=  358°  mot=  186°  → motion   corr=186.3°  Δ=   6°
+  sprite 001389  t535  lab=  200°  pca=  245°  mot=  186°  → motion   corr=185.7°  Δ=  14°
+  sprite 001393  t550  lab=  250°  pca=  250°  mot=  245°  → manual   corr=160.0°  Δ=  90°
+  sprite 001394  t553  lab=  335°  pca=  156°  mot=  336°  → pca      corr=155.6°  Δ= 179°
+  sprite 001396  t567  lab=  155°  pca=  307°  mot=  163°  → motion   corr=163.3°  Δ=   8°
+  sprite 001405  t589  lab=   82°  pca=   83°  mot=   86°  → pca      corr= 83.0°  Δ=   1°
+
+── ai_nav_2026-06-30T15-47-03 ──
+  sprite 001413  t69   lab=  200°  pca=  286°  mot=  187°  → motion   corr=187.1°  Δ=  13°
+  sprite 001436  t213  lab=  215°  pca=  285°  mot=  201°  → motion   corr=200.6°  Δ=  14°
+  sprite 001437  t214  lab=  215°  pca=  283°  mot=  198°  → motion   corr=198.4°  Δ=  17°
+  sprite 001458  t286  lab=  210°  pca=  294°  mot=  197°  → motion   corr=196.7°  Δ=  13°
+  sprite 001481  t534  lab=  165°  pca=    3°  mot=  188°  → motion   corr=188.1°  Δ=  23°
+

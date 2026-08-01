@@ -1,0 +1,21 @@
+{
+  "purpose": "Nearby ports panel showing a minimap and a list of the closest harbours with their approximate distances, currently showing Tripoli at 11.7 km, Syracuse at 436.5 km, Tunis at 476.8 km, Benghazi at 545.5 km and others further away",
+  "full_text": "TW | Spring | Mar | Night | Tripoli 33.23, 13.04 | Tripoli Approx 11.7 km | Syracuse Approx 436.5 km | Tunis Approx 476.8 km | Benghazi Approx 545.5 km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "684b1ef48ffe218f",
+  "goal_intent": null,
+  "cached_at": "2026-05-21T15:01:58.621420+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Nearby ports panel showing a minimap and a list of the closest harbours with their approximate distances, currently showing Tripoli at 11.7 km, Syracuse at 436.5 km, Tunis at 476.8 km, Benghazi at 545.5 km and others further away",
+    "full_text": "TW | Spring | Mar | Night | Tripoli 33.23, 13.04 | Tripoli Approx 11.7 km | Syracuse Approx 436.5 km | Tunis Approx 476.8 km | Benghazi Approx 545.5 km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

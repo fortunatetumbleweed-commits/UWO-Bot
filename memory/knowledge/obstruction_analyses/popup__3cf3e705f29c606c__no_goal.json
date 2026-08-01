@@ -1,0 +1,21 @@
+{
+  "purpose": "The Bureau tooltip is explaining that this city building allows players to develop London by making investments and viewing current investment rankings.",
+  "full_text": "Bureau. 00:00-23:59. Develop the city by making investments and view the current investment rankings.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "3cf3e705f29c606c",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T17:27:52.199619+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Bureau tooltip is explaining that this city building allows players to develop London by making investments and viewing current investment rankings.",
+    "full_text": "Bureau. 00:00-23:59. Develop the city by making investments and view the current investment rankings.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

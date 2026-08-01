@@ -1,0 +1,15 @@
+candidate_destinations:
+- Port Royal
+- Amsterdam
+- Hamburg
+- Antwerp
+- Bristol
+home_port: London
+mode: autonomous
+name: self_grow
+rounds: 9999
+seed_route:
+- London
+- Lisboa
+- Las Palmas
+- Port Royal

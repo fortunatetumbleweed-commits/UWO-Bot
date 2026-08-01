@@ -1,0 +1,21 @@
+{
+  "purpose": "The Company Overview panel is open, displaying the player's current resources (Ducats, Gems, Energy), cargo load capacity, and quick-access navigation buttons for ship management, fleet, missions, and other game systems.",
+  "full_text": "Ship | Blue Gem 100,043 | Red Gem 3,436 | Mates | Energy 599 / 539 | Total Load Capacity 3,940/4,066 | Journal | Food 0 | Ammo 297 | Dispatch | Sailing Log",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "03591060946d03dd",
+  "goal_intent": null,
+  "cached_at": "2026-05-20T16:50:21.651561+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The Company Overview panel is open, displaying the player's current resources (Ducats, Gems, Energy), cargo load capacity, and quick-access navigation buttons for ship management, fleet, missions, and other game systems.",
+    "full_text": "Ship | Blue Gem 100,043 | Red Gem 3,436 | Mates | Energy 599 / 539 | Total Load Capacity 3,940/4,066 | Journal | Food 0 | Ammo 297 | Dispatch | Sailing Log",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

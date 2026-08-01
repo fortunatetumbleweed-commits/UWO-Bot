@@ -1,0 +1,21 @@
+{
+  "purpose": "The city navigation panel for Las Palmas is open, showing available port facilities including Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, and Bureau — this is the standard port location menu, not a blocking popup.",
+  "full_text": "Spring Apr 23:46 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "2e113440f3ea9685",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T16:48:47.673198+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The city navigation panel for Las Palmas is open, showing available port facilities including Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, and Bureau — this is the standard port location menu, not a blocking popup.",
+    "full_text": "Spring Apr 23:46 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

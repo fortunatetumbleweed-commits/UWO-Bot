@@ -1,0 +1,21 @@
+{
+  "purpose": "The mini-map and nearby port distance panel showing the player's current navigation context — nearby ports (Las Palmas, Casablanca, Berber Village, Madeira), their approximate distances, and current in-game season/time (Spring, April, Daytime) — this is a persistent HUD panel, not a dismissible popup",
+  "full_text": "TW | 10 | 27.0 kn | ln | 3A | 29.95, -78 | 1▼ | Spring | Apr | Daytime | Las Palmas Approx. 421.5km | Casablanca Approx. 464.8km | Berber Village Approx. 500.7km | Madeira Approx. 536.3km",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "33d88a314a750823",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T03:47:28.842868+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The mini-map and nearby port distance panel showing the player's current navigation context — nearby ports (Las Palmas, Casablanca, Berber Village, Madeira), their approximate distances, and current in-game season/time (Spring, April, Daytime) — this is a persistent HUD panel, not a dismissible popup",
+    "full_text": "TW | 10 | 27.0 kn | ln | 3A | 29.95, -78 | 1▼ | Spring | Apr | Daytime | Las Palmas Approx. 421.5km | Casablanca Approx. 464.8km | Berber Village Approx. 500.7km | Madeira Approx. 536.3km",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

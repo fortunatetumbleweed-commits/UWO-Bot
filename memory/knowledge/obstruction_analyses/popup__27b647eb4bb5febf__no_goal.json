@@ -1,0 +1,21 @@
+{
+  "purpose": "Nearby ports panel showing distances to surrounding harbours relative to the player's current position near Tripoli in the Atlantic Ocean / Mediterranean region",
+  "full_text": "TW | Spring, Mar, Night | Tripoli (map) | Tripoli ~11.2 km | Syracuse ~434.3 km | Tunis ~476.6 km | Benghazi ~543.2 km",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "27b647eb4bb5febf",
+  "goal_intent": null,
+  "cached_at": "2026-05-21T18:36:16.264620+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Nearby ports panel showing distances to surrounding harbours relative to the player's current position near Tripoli in the Atlantic Ocean / Mediterranean region",
+    "full_text": "TW | Spring, Mar, Night | Tripoli (map) | Tripoli ~11.2 km | Syracuse ~434.3 km | Tunis ~476.6 km | Benghazi ~543.2 km",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "City navigation menu for Tripoli is open, overlaid with an NPC philosophical quote about camel riding in the desert, alongside a partially visible missionary dialogue about spreading Christianity",
+  "full_text": "If only we could bring the teachings of Christ to children as well. Spring Mar 18:48. Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "bfe29851c9559d6f",
+  "goal_intent": null,
+  "cached_at": "2026-05-21T16:33:20.612933+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "City navigation menu for Tripoli is open, overlaid with an NPC philosophical quote about camel riding in the desert, alongside a partially visible missionary dialogue about spreading Christianity",
+    "full_text": "If only we could bring the teachings of Christ to children as well. Spring Mar 18:48. Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "A New Year seasonal greeting banner ('Happy 2026') has appeared near the London Harbor, overlaying the game world alongside a nearby player named TaylorFP — this is a decorative in-game event message, not a modal dialog.",
+  "full_text": "Happy 2026. Harbor. TaylorFP. LV 92. 8.46%. Autumn Sep 09:28. Harbor, Market, Shipyard, Bank, Inn, Cathedral, Venturer Association, Item Shop, Union, Bureau. Atlantic Ocean 4.0501, 291.2605141023.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "cad03faa8081569f",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T20:40:48.602948+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A New Year seasonal greeting banner ('Happy 2026') has appeared near the London Harbor, overlaying the game world alongside a nearby player named TaylorFP — this is a decorative in-game event message, not a modal dialog.",
+    "full_text": "Happy 2026. Harbor. TaylorFP. LV 92. 8.46%. Autumn Sep 09:28. Harbor, Market, Shipyard, Bank, Inn, Cathedral, Venturer Association, Item Shop, Union, Bureau. Atlantic Ocean 4.0501, 291.2605141023.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

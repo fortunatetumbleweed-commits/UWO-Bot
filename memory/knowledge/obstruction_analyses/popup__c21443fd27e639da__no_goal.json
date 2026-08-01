@@ -1,0 +1,21 @@
+{
+  "purpose": "A seasonal New Year 2026 celebration greeting popup displayed by another player or the game system, unrelated to any active sailing or trading activity",
+  "full_text": "Happy 2026",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "c21443fd27e639da",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T21:21:37.448228+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A seasonal New Year 2026 celebration greeting popup displayed by another player or the game system, unrelated to any active sailing or trading activity",
+    "full_text": "Happy 2026",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "A player character named TaylorFP is speaking in London's town square, humorously commenting that they are struggling to communicate in English, while another player's 'Happy 2026' seasonal greeting is also visible overhead",
+  "full_text": "Happy 2026. TaylorFP: I'm about to strain my tongue from trying to speak in English!",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "9726db01fb9a31a3",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T16:43:37.366237+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A player character named TaylorFP is speaking in London's town square, humorously commenting that they are struggling to communicate in English, while another player's 'Happy 2026' seasonal greeting is also visible overhead",
+    "full_text": "Happy 2026. TaylorFP: I'm about to strain my tongue from trying to speak in English!",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

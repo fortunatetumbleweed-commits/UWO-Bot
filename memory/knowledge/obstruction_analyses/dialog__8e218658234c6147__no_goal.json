@@ -1,0 +1,21 @@
+{
+  "purpose": "The right-side port navigation panel listing available facilities in Las Palmas (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) along with the in-game date and time, acting as the standard port services sidebar.",
+  "full_text": "Pass | Spring May 09:08 | Harbor | Market | Shipyard | Bank | Inn | Sanctuary | Union | Bureau",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "8e218658234c6147",
+  "goal_intent": null,
+  "cached_at": "2026-05-23T21:05:25.974541+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The right-side port navigation panel listing available facilities in Las Palmas (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) along with the in-game date and time, acting as the standard port services sidebar.",
+    "full_text": "Pass | Spring May 09:08 | Harbor | Market | Shipyard | Bank | Inn | Sanctuary | Union | Bureau",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

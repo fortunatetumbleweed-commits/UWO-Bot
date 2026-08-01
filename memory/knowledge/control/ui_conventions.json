@@ -1,0 +1,730 @@
+{
+  "_note": "Universal UWO UI grammar — structural rules and behavioural patterns that hold across many screens. Hand-authored from gameplay observation. Read by perception (to interpret screens), by find_button helpers (to constrain search regions), and by Claude-guided prompts (as ground-truth context). Add to / refine here when a new convention is observed or an existing one is found wrong; pure config — no code change required to update.",
+
+  "screen_chrome": {
+    "_note": "Elements that appear on many or all screens with consistent meaning.",
+    "back_arrow": {
+      "position":    "top-left corner",
+      "appearance":  "left-pointing arrow",
+      "actionable":  true,
+      "behavior":    "returns to the parent screen — port_overworld from a building top-menu, building top-menu from a sub-menu, etc. Always functional when visible.",
+      "presence":    "every building, sub-menu, port_map, world_map (sometimes other screens too)"
+    },
+    "home_button": {
+      "position":    "top-right area",
+      "appearance":  "house icon",
+      "actionable":  true,
+      "behavior":    "exits directly to the port overworld from any building or sub-menu — bypasses intermediate Back presses",
+      "presence":    "building, sub-menu, port_map"
+    },
+    "hamburger_menu_pointer": "the hamburger menu is part of the top_right_icon_bar (overworld chrome).  See top_right_icon_bar.icons[hamburger] for its position, appearance, and behaviour.  Cross-listed here only because earlier revisions of this file documented it under screen_chrome — it does not belong here, since this section is for chrome'd full-screen elements while the hamburger only appears on the overworlds.",
+    "tutorial_question_button": {
+      "position":    "near the screen title (typically top-right of the title text)",
+      "appearance":  "circular '?' icon",
+      "actionable":  true,
+      "behavior":    "starts an in-game guided tutorial that highlights each interactive element of the current screen with an explanation. Powerful source of ground-truth UI documentation for autonomous building-knowledge gathering on first visit.",
+      "presence":    "most building interiors and sub-menus; not on overworld",
+      "future_use":  "see future feature: ?-tutorial walker for autonomous building-knowledge population"
+    },
+    "screen_title": {
+      "position":    "top-left, immediately right of the back arrow",
+      "actionable":  false,
+      "ocr_value":   "the most reliable identifier of the current screen — used as the canonical signal for which building / sub-menu the bot is on",
+      "behavior":    "at a building's top-menu the title is the building's canonical name (Inn, Harbor, Market, …). When a sub-menu is selected the title CHANGES to the sub-menu's name (e.g. 'Recruit Crew', 'Supply', 'Repair'). This title-changes-on-selection rule is universal across buildings and is one of the strongest signals of successful navigation.",
+      "applies_to":  "essentially every chrome'd full-screen view — buildings, building sub-menus, port_map, world_map.  The exceptions are: (1) the 'open world' views (port_overworld and sea_overworld) which have no title bar and no back arrow — there is no parent to navigate back to; (2) modal dialogs, which have their own layout (typically a title strip at the top of the dialog body plus dedicated OK / Cancel / Confirm buttons at the bottom — no back arrow, since the dialog must be acknowledged or cancelled through its own buttons); (3) story events / cutscenes — the screen is taken over by an NPC + speech bubble with a distinct top-right toolbar (Skip / Auto / Dialog History) replacing the title-bar chrome.  See story_event_chrome below.  Combat and land_explore are similarly open-world-like but are out of scope of this document for now.",
+      "known_inconsistency_in_shop": "the Shop screen (entered via top_right_icon_bar.icons[pass] or top_right_icon_bar.icons[shop]) HAS a screen title in chrome but does NOT change the title when sub-menu items are selected — this VIOLATES the title-changes-on-selection rule.  Shop is the only known violator so far.  Code that uses screen-title comparison to verify sub-menu navigation cannot rely on it inside the Shop."
+    }
+  },
+
+  "top_right_icon_bar": {
+    "_note": "Horizontal row of icons across the top-right of BOTH overworld views (port_overworld and sea_overworld).  This is overworld chrome — distinct from the chrome'd-screen elements in screen_chrome above.  Absent on every chrome'd full-screen view (buildings, world_map, dialogs).",
+
+    "presence": "both port_overworld AND sea_overworld; absent on all chrome'd screens",
+
+    "common_traits": {
+      "icon_only_no_text": "icons in this bar have NO text labels — they are purely graphic.  Any caption a vision model produces is a BEST GUESS interpretation of the icon graphic, not ground truth.  Several Claude Vision auto-labels for these icons were wrong or misleading on first capture (see lessons_from_capture below).  Authoritative semantic identification comes from domain knowledge / human verification, not from the auto-labels.",
+      "red_dot_is_a_state_not_a_different_icon": "most (likely all) icons in this bar can render a small red dot in the top-right corner of the icon when there is something worth looking at — new mail, unclaimed reward, new perk available, etc.  This is a STATE of the icon, not a separate icon.  Same tap coordinate, same destination, just a 'needs attention' overlay.  Detection logic should treat icon + dot and icon + no-dot as the same element.  Canonical red-dot semantics belong in visual_indicators.json (planned).",
+      "non_pausing_overlays": "tapping any icon in this bar opens a panel/popup ON TOP of the underlying overworld.  Game state continues to run while the panel is open — the fleet keeps sailing, the in-game clock keeps ticking.  There are no game-side effects from merely opening these panels (other than the player consuming their contents, e.g. collecting mail rewards).  Safe to open at sea without losing time.",
+      "arrival_interruption_pattern": "if the fleet ARRIVES at a port or village while ANY of these panels is still open, a special dialog appears at the lower-right warning the player to wrap up — see dialog_layout.dialog_styles.arrival_panel_open_prompt.  The dialog is non-blocking from the bot's perspective: ignoring it is fine (timer expires → fleet enters city automatically); the only potential side effect is losing in-progress work in the open panel."
+    },
+
+    "geometry": {
+      "y_range":          "approximately 47-71 (icons are not perfectly aligned in y; jitter of ~24 px observed in a single capture)",
+      "x_range":          "approximately 1775-2334 (rightmost ~25 % of a 2400 px-wide frame)",
+      "icon_spacing_x":   "approximately 92 px between icon centres",
+      "captured_from":    "Claude Vision scene capture from a representative port_overworld visit"
+    },
+
+    "icons_left_to_right": [
+      {
+        "id":           "pass",
+        "tap_coord":    [1775, 71],
+        "behavior":     "opens the Shop screen with the 'Pass' sub-menu item highlighted",
+        "context":      "the Shop is the game's commerce screen.  Pass provides recurring rewards — basic passes are free, premium passes cost real money.  Red dot on this icon indicates rewards available to collect.  The Shop also accepts blue gems (earned in-game) and red gems (bought with real money or obtained by selling items in the Auction).",
+        "captured_label_was_misleading": "Claude Vision labelled this 'seasonal/battle pass or premium subscription panel' — close in spirit but not specific to the in-game destination"
+      },
+      {
+        "id":           "notifications",
+        "tap_coord":    [1867, 47],
+        "appearance":   "bell icon",
+        "behavior":     "opens a notifications list panel under the icon bar showing recent alerts, union requests, and event notices",
+        "captured_label_correct": true
+      },
+      {
+        "id":           "mail",
+        "tap_coord":    [1959, 61],
+        "behavior":     "opens the in-game mailbox dialog (game-styled, title 'Mail')",
+        "context":      "many rewards arrive through the mailbox: weekly investment rewards, assault rewards, periodic goodies from the game company.  The dialog has a 'Collect All' button.  Should be opened and emptied whenever the icon shows a red dot.",
+        "captured_label_correct": true
+      },
+      {
+        "id":           "perk_event",
+        "tap_coord":    [2053, 60],
+        "captured_label_was_wrong": "Claude Vision originally labelled this 'profile / account information' — INCORRECT.  This icon opens the Perk/Event popup, not a profile screen.",
+        "behavior":     "opens the perk_event popup — see dialog_layout.dialog_styles.perk_event_popup",
+        "popup_uniqueness": "the popup's title bar contains TWO TABS ('Perk' and 'Event') instead of a single title text, which is an exception to the typical title-strip-with-text pattern documented in dialog_layout.dialog_styles.game_styled.title_strip"
+      },
+      {
+        "id":           "shop",
+        "tap_coord":    [2149, 60],
+        "captured_label_was_wrong": "Claude Vision originally labelled this 'storage / warehouse' — INCORRECT.  This icon opens the Shop, not a storage screen.",
+        "behavior":     "opens the Shop screen with the 'Recommended' sub-menu item highlighted (the first tab)",
+        "destination_overlap_with_pass": "both 'pass' and 'shop' icons open the SAME Shop screen, with different sub-menus pre-selected: Pass tab vs Recommended tab",
+        "title_inconsistency_warning": "Shop is the only known screen where the title does NOT change when a sub-menu is selected — see screen_chrome.screen_title.known_inconsistency_in_shop"
+      },
+      {
+        "id":           "chat",
+        "tap_coord":    [2243, 62],
+        "behavior":     "opens the chat popup on the LEFT side of the screen",
+        "dismissal":    "the chat popup carries a square close button with an X.  Tapping OUTSIDE the popup does NOT close it — must tap the X.  See dialog_layout.dismissal_patterns.tap_outside_dialog.exceptions.",
+        "captured_label_correct": true
+      },
+      {
+        "id":           "hamburger",
+        "tap_coord":    [2334, 53],
+        "captured_label_was_wrong": "Claude Vision originally labelled this 'loading bar' — INCORRECT.  Three horizontal lines visually resemble a loading indicator to a vision model.  This icon opens the main menu.",
+        "appearance":   "three horizontal lines, last entry of the bar",
+        "behavior":     "opens the main menu (Guild, Auction, Combat, Collection, Lighthouse, Assault, Production, Enhance, Rank, Friend — see ui_signals.json:main_menu_item_ids for the canonical list)"
+      }
+    ],
+
+    "lessons_from_capture": [
+      "ICON-ONLY UI (no text label visible) is a particularly weak case for Claude Vision auto-labelling.  Four of seven icons in this bar had wrong or misleading labels because the model was guessing each icon's purpose from its visual graphic with no caption to anchor it: Pass = 'seasonal pass', Profile = 'account info' (actually perk/event), Storage = 'warehouse' (actually shop), Hamburger = 'loading bar' (three lines look like a loading indicator).  Tap COORDINATES were correct; LABELS were not.",
+      "Rule for authoring KB from scene captures: use captured coordinates as the geometry signal, but FLAG every icon-only label as best-guess and require human verification before treating it as ground truth.  Domain knowledge is the authoritative source for semantic identification of unlabeled UI.",
+      "The 'purpose' field is sometimes more useful than the 'label' field but neither is reliable for icon-only UI."
+    ]
+  },
+
+  "building_screens": {
+    "_note": "Common layout across every building interior (Inn, Harbor, Market, Bank, Cathedral, Bureau, Item Shop, Sanctuary, Estate, Guild, …).",
+    "layout_overview": "Top: chrome (back arrow, title, optional ? button). Left side: sub-menu list (vertical, below the title). Right side: status panel / sub-menu actions / details. Center: at top-menu, the NPC owner with their speech bubble; once a sub-menu is selected, the NPC vanishes and the sub-menu's content panel takes over the center.",
+
+    "sub_menu_list": {
+      "position":            "left side of the screen, vertical column below the title",
+      "interaction":         "tap an item to select it; title updates to the item's name; right and center panels update to show the sub-menu's content; NPC owner disappears",
+      "default_search_region": {
+        "y_min_pct": 0.10,
+        "x_max_pct": 0.30,
+        "purpose":   "used by recovery._tap_building_action to constrain the OmniParser/_find_button label search to the menu region only. Excludes mid-screen NPC dialog text and right-panel labels that share menu-item words (a recurring source of misplaced-tap bugs)."
+      },
+      "selection_visual_cue":   "the selected item is typically highlighted (background or accent change). The most reliable signal is the screen title changing — the highlight alone is subtle and not always OCR-detectable.",
+      "red_dot_indicator":      "see visual_indicators.json:red_dot — when present on a sub-menu item, that item has pending content / a blocker requiring action"
+    },
+
+    "right_panel": {
+      "position":  "right side of the screen",
+      "role":      "secondary actions, status panels, and lists. Examples: the harbor's fleet status (Crew Size, Load Capacity, Supply); the market's price grid; the recruit panel's per-ship crew bars and the gold Recruit button.",
+      "primary_action_button_typically_here": "yellow/gold primary action buttons (Depart Now, Recruit, Purchase, Supply Departure, etc.) most often live in the right panel, lower portion. See visual_indicators.json:yellow_button for the styling convention."
+    },
+
+    "center_panel": {
+      "position":   "center of the screen, below the title",
+      "role":       "primary content for the selected sub-menu — recruit dialog body, market tile grid, supply tab's provision sliders, etc.",
+      "shared_real_estate": "the center-panel region overlaps with the NPC owner's bubble area (see npc_owner_dialog). The game uses this region for the NPC at the building top-menu and replaces it with sub-menu content when a sub-menu is selected. This is WHY the NPC disappears on sub-menu entry — it's the same screen real estate."
+    }
+  },
+
+  "npc_owner_dialog": {
+    "_note": "Every building has an NPC owner who narrates via a speech bubble. The bubble is INFORMATION ONLY — never tap as a button. Historical bugs traced to violating this rule include misplaced taps at (183,154) and (989,663) and the over-recruit cycle in the recruit-crew journey (Acts 2, 3, 8 in docs/journey_not_enough_crew.md).",
+
+    "appearance": {
+      "shape":            "rounded-rectangle speech bubble with a pointing tail",
+      "tail_target":      "the NPC owner sprite (typically beside or near the bubble)",
+      "position":         "center-bottom of the screen",
+      "color":            "light/neutral background with dark text (game-stylised; consistent across buildings)",
+      "size_relative":    "occupies a substantial portion of the lower-center; comparable to the area used by sub-menu content when a sub-menu is selected"
+    },
+
+    "presence_rules": {
+      "top_menu":     {
+        "presence":     "always present",
+        "content_role": "describes what the building does (e.g. inn: 'Recruit mates and hire crew' / market: 'Trade goods with us' / cathedral: 'Pray or donate to receive blessings')",
+        "implication":  "the top-menu NPC text is a high-value source for the building's self-description; capture on first visit and store as building_types/<x>.json:description",
+        "interplay_with_overworld_panel": "the port_overworld's building name panel (which expands when the player approaches an entrance) often shows similar text — that panel is also speech-bubble-like and contains menu-item-like keywords; same masking rules apply"
+      },
+      "sub_menu":     {
+        "presence":     "absent by default — the center panel is given over to the sub-menu's content",
+        "reappearance": "the NPC re-shows ONLY when the game has something contextual to communicate (e.g. 'Here's all the mates we got' after the player tries to over-recruit; 'Come back when you have more gold' on insufficient funds; 'I've got nothing more for you today' on a depleted shop)",
+        "implication":  "an NPC RE-appearing inside a sub-menu is itself a strong signal: the game just communicated a state change or a limit. Capturing the text and matching it against npc_stop_phrases.json is the recommended response."
+      }
+    },
+
+    "text_animation": {
+      "characters_appear_progressively": true,
+      "description": "letters/words appear one at a time (typewriter effect) until the sentence completes. After a sentence is fully visible, the bubble may disappear for ~1-2 seconds and re-appear with a NEW sentence — multiple distinct messages can play in sequence on the same screen.",
+      "implications_for_ocr": [
+        "a single snapshot may catch the bubble mid-animation, with truncated or empty text",
+        "a single snapshot may catch the bubble between sentences, with no text at all",
+        "for reliable stop-phrase detection, sample multiple frames over a 3-5 second window before declaring a phrase absent",
+        "for capture-as-description on first-visit, similarly: sample multiple frames and union the captured text"
+      ]
+    },
+
+    "actionability": {
+      "rule":           "NEVER tap the bubble as a button — it has no input handle. Tapping it is at best a no-op and at worst lands on whatever is underneath.",
+      "consequence_of_violating": "the substring matcher in _find_button (and OmniParser auto-descriptions) can match menu-item words inside the bubble text — historical bugs include (183,154) and (989,663) misplaced taps and the over-recruit cycle steps 3-4 and 9-10 in the recruit-crew journey",
+      "mitigation":     "see detection_approach below — the bubble's bbox should be EXCLUDED from any button-finding search; treat the region as read-only"
+    },
+
+    "detection_approach": {
+      "primary":        "geometric — locate the rounded-rectangle bubble at center-bottom of frame; the rounded-corner shape and pointing tail are visually distinctive. Detector implementation TODO; see also OmniParser auto-descriptions which sometimes label the region as 'speech bubble' or 'dialog box'.",
+      "fallback":       "Claude Vision on first encounter to identify the region; cache the bbox in a per-building record for future reuse",
+      "consumed_by":    [
+        "_find_button / OmniParser substring matching → exclude this bbox from candidates",
+        "perceive() → populate result.npc_says with OCR'd text from this region",
+        "claude_guided_loop → pass result.npc_says into the prompt as semantic context"
+      ]
+    },
+
+    "value_to_bot": [
+      "top-menu narration is the building's self-description in the game's own voice",
+      "sub-menu reappearance signals a state change or limit — often the cleanest stop signal",
+      "the bubble's text content fed into stop-phrase matching turns chatter into a structured signal (cf. npc_stop_phrases.json)"
+    ]
+  },
+
+  "port_overworld": {
+    "_note": "Town view between buildings — characters walking, weather, day/night cycle, NPCs, other players.  Right-panel tab structure is parallel to sea_overworld; tabs that share a role have the same icon and position in both views.",
+    "right_panel": {
+      "structure": "top: 4 tabs, below: hideable mini-map, below: scrollable building list",
+      "tabs": {
+        "tasks":     { "role": "TODO / quest list. Identical to sea_overworld.right_panel.tabs.tasks — same icon, same content shape." },
+        "buildings": { "role": "the scrollable building list immediately below; primary navigation source for entering a specific building" },
+        "people":    { "role": "nearby other-player list (in sea_overworld this slot is replaced by 'fleet_nearby' which shows NPC and player fleets)" },
+        "location":  { "role": "current location info / mini-map controls (in sea_overworld this slot is replaced by 'ship_status')" }
+      },
+      "mini_map": {
+        "presence":  "hideable — can be collapsed to free up screen space (in contrast to sea_overworld where the mini-map is always present)"
+      },
+      "search_region": {
+        "x_min": 1850, "x_max": 2400,
+        "y_min": 380,  "y_max": 1080,
+        "_note": "The building list. Used as the primary navigation source for entering a specific building. NPC speech bubbles in the overworld can occasionally bleed into this region when an NPC is positioned on the right side; canonical-name filtering (cf. brain/states/port_map.py:_canonical_name) is the mitigation."
+      }
+    },
+    "building_name_panel": {
+      "appearance":   "floating panel that expands above a building's entrance when the player character approaches",
+      "content":      "title (building's canonical name in large text) plus a one-line descriptive sub-text describing what the building offers",
+      "interaction":  "tapping the panel enters the building",
+      "actionability_caveat": "the descriptive sub-text often contains verbs and keywords from the building's sub-menu items (e.g. inn panel reads 'Recruit mates and hire new mates'). Treat the sub-text region the same way as an NPC speech bubble — read for context but EXCLUDE from button-search candidates. The panel TITLE (the bold name) is the safe tap target if the goal is to enter; the sub-text is not."
+    }
+  },
+
+  "sea_overworld": {
+    "_note": "View while sailing on open sea — fleet visible, sea region indicators, mini-map always present, right panel structurally parallel to port_overworld with sea-specific equivalents in the second / third / fourth tabs.",
+    "right_panel": {
+      "structure": "Identical layout to port_overworld — top: 4 tabs, below: mini-map, below: scrollable list. Tabs that share a role across the two views (tasks) keep the same icon and position; sea-specific tabs replace the port-specific ones in their slots.",
+      "tabs": {
+        "tasks": {
+          "role": "TODO / quest list — exact same content and icon as port_overworld.right_panel.tabs.tasks"
+        },
+        "ports_and_villages": {
+          "role":         "replaces the 'buildings' tab. Lists nearby ports and villages.",
+          "ordering":     "by DIRECT-LINE distance (not voyage distance — see distance_caveat below)",
+          "interaction":  "tapping a destination sends the fleet sailing to it; the fleet auto-navigates around landmasses",
+          "distance_caveat": "the displayed ordering is straight-line and ignores landmass and canal availability. Example: when in the Caribbean near Panama, Panama appears close, but the actual voyage may be much longer because routes depend on canal access. The game DOES include the Panama and Suez canals despite its 15th-century setting; canal availability gates which routes are short vs long. Routing / strategy logic should NOT take direct-line distance as voyage cost. See strategy KB (planned: world_geography.json or similar) for canal access rules and effective voyage costs."
+        },
+        "fleet_nearby": {
+          "role":         "replaces the 'people' tab. Lists nearby NPC fleets and other-player fleets.",
+          "interaction":  "the player can initiate combat with a listed fleet from this tab. Combat is a major branch — a separate flow set will be needed when combat is implemented (see strategy KB and Milestone 7 in CLAUDE.md)."
+        },
+        "ship_status": {
+          "role":         "fourth tab. Shows the player's own fleet ship statuses.",
+          "content":      "ship-by-ship hull integrity and crew health. Ships CAN be damaged during navigation (storms, encounters); damage is visible here.",
+          "implication":  "before / after long voyages this tab is the right place to check whether the fleet needs repair (cf. harbor.repair sub-menu)"
+        }
+      },
+      "mini_map": {
+        "presence": "always present on sea — UNLIKE the port_overworld mini-map, the sea mini-map cannot be closed",
+        "implication": "the sea mini-map's bbox is a stable, always-visible region — useful as a reliable sea-state detection signal in addition to the existing sea HUD tokens (see ui_signals.json:sea_hud_tokens)"
+      }
+    },
+    "fleet_visible_on_screen": {
+      "_note": "Unlike the port overworld where the player character is one of many NPCs walking around, the sea view shows the fleet as the central subject. There may be other fleets (NPC or player) visible in the sailable region — these are the same entities listed in the fleet_nearby tab.  Other fleets may also carry their own identity labels overhead similar to the player's own ship; this has not yet been documented in detail (see open_questions)."
+    },
+
+    "player_ship_overlay": {
+      "_note": "The player's own fleet flagship is rendered at the lower-center of the sea view, with a vertical stack of persistent identity labels above it and a status panel plus level-progress bar below.  All elements in this stack are INFORMATIONAL ONLY — none are tap-actionable.",
+
+      "ship_sprite_position": "lower-center of the frame.  Stable anchor across all sailing screens; useful as a geometric reference point for relative positioning of the labels and panels described below.",
+
+      "labels_above_ship": {
+        "_note": "Stacked text labels rendered above the player's ship sprite.  Persistent (not animated speech bubbles) — they remain on screen as long as the sea overworld is active.  Order is given closest-to-ship upward (i.e. the player_name sits just above the ship; the appellation sits at the top of the stack when present).",
+        "stack_bottom_up": [
+          {
+            "id":          "player_name",
+            "presence":    "always",
+            "description": "the player's character name",
+            "content_caveat": "player names can be in any script (CJK, Cyrillic, Arabic, Latin, …) — see CLAUDE.md 'Multilingual Text' for OCR engine selection rules"
+          },
+          {
+            "id":          "guild_name",
+            "presence":    "only when the player has joined a guild",
+            "description": "the joined guild's name",
+            "content_caveat": "guild names can also be in any script"
+          },
+          {
+            "id":          "appellation",
+            "presence":    "only when the player has earned an appellation/title and currently has it set",
+            "description": "the active appellation (e.g. 'Master Trader', 'Famous Captain', game-specific honorifics)"
+          }
+        ],
+        "actionability": "informational only — exclude from any button-search candidate set; treat as non-tappable identity metadata.  Same masking principle as npc_owner_dialog and port_overworld.building_name_panel.",
+        "ocr_implication": "these labels can produce alpha-only OCR tokens that resemble menu items or button labels.  Without exclusion they have the same risk profile as NPC speech-bubble text — historical class of misplaced-tap bugs."
+      },
+
+      "destination_eta_panel": {
+        "_note": "Status panel rendered immediately below the player ship sprite (and beneath the labels-above-ship stack) when the fleet is on an auto-sailing route to a destination.  The panel itself has TWO states — sailing-active and sailing-stopped — and the panel text differs between them.",
+
+        "presence":  "always present when an auto-sailing route is currently set (whether actively sailing or stopped).  Absent only when no destination has been set (e.g. manual sailing with no destination committed, or fleet at sea between ports without a target).",
+
+        "states": [
+          {
+            "id":          "sailing",
+            "panel_text":  "destination name + ETA (e.g. 'Sailing to London — ETA 3d 12h')",
+            "meaning":     "fleet is actively moving toward the destination",
+            "interaction": "tapping the panel STOPS the auto-sail (transitions to 'stopped' state below).  This is the manual-stop-during-sail control."
+          },
+          {
+            "id":          "stopped",
+            "panel_text":  "'Restart Sailing to <destination>' (e.g. 'Restart Sailing to London') — note the absence of an ETA",
+            "meaning":     "fleet is currently stopped on a previously-committed route.  Two ways to reach this state: (1) the player manually tapped the panel during sailing, (2) the known game bug where the fleet leaves the harbour but the destination never takes effect (see world_map.go_to_city_button.known_game_bug).",
+            "interaction": "tapping the panel SHOULD restart the auto-sail.  In the bug case (2) above, this tap does NOT work — the bot must re-set the destination via the world_map."
+          }
+        ],
+
+        "state_discriminator_for_bot": "the panel TEXT distinguishes the two states.  Presence of 'restart sailing' (case-insensitive substring) in the panel area means stopped; presence of 'eta' or a time-remaining tokens like 'd', 'h', 'days', 'sailing' (without 'restart') means sailing.  An OCR check on the panel region provides a textual fallback when visual ship-motion detection (the BEST signal — see notes_on_better_detection) isn't available.",
+
+        "notes_on_better_detection": "the most reliable signal is VISUAL — does the player ship sprite actually move between frames?  Textual panel detection works but is sensitive to OCR fidelity.  A future ship-motion detector comparing fleet position across consecutive frames would be the canonical 'is the bot actually sailing' check.  Until that exists, panel text is the practical fallback."
+      },
+
+      "level_progress_bar": {
+        "_note": "Player level indicator and progress bar to the next level, rendered beneath the destination-ETA panel area.",
+        "presence":    "always present on sea overworld",
+        "content":     "current player level and a progress bar showing distance to the next level-up",
+        "value_to_bot": "low-frequency progression signal — useful for tracking long-term growth pace.  Not action-relevant in the short term but worth periodic capture into a progression log when growth-tracking is implemented."
+      }
+    },
+
+    "hud_tokens": "see ui_signals.json:sea_hud_tokens for the OCR keywords that distinguish active sailing from cinematic/idle sea views"
+  },
+
+  "world_map": {
+    "_note": "Map of the game world used for cross-port navigation, exploration discovery review, route planning, and trade information.  Chrome'd screen — back arrow + 'World Map' title in the top-left, same pattern as buildings.  Right panel and top tab-bar conventions are reused here in the same way they appear on other screens.",
+
+    "entry_points": {
+      "from_port_overworld": {
+        "trigger":   "tap the GLOBE icon embedded in the right-panel mini-map",
+        "precision": "the globe icon is small and surrounded by the mini-map area — taps that miss the globe land on the mini-map and open the PORT MAP instead.  The bot needs accurate coordinates here; use the chrome / OmniParser bounding box rather than a region-tap."
+      },
+      "from_port_map": {
+        "trigger":   "tap the globe icon at the bottom-left of the port map (per CLAUDE.md; not yet re-confirmed in this round)"
+      },
+      "from_sea_overworld": {
+        "trigger":   "tap the MINI-MAP itself in the right panel.  No globe icon is needed (and none is present) because there is no port_map at sea — the only navigation surface to disambiguate from is the world_map itself.  The sea mini-map is always present and cannot be hidden, so this entry path is reliable.  This is already implemented; in fact at this point the bot only opens the world_map when at sea."
+      }
+    },
+
+    "screen_chrome": {
+      "title": {
+        "value":   "World Map",
+        "ocr_use": "this exact string is the canonical signal for world_map state — see ui_signals.json:world_map_title_keywords"
+      },
+      "back_arrow":               "present (returns to the screen the world map was opened from — port_overworld, port_map, or wherever the entry point fired from)",
+      "tutorial_question_button": "NOT present.  The world_map is one of the few chrome'd screens without a ? icon — most building interiors and sub-menus do have one but this screen does not."
+    },
+
+    "default_view_on_open": {
+      "_note":             "When the world_map is opened, the camera always centres on the player fleet's current sea position regardless of which entry point opened it.",
+      "fleet_indicator":   "the player fleet is rendered as a small GREEN SHIP icon at the centre of the default view.  It is visually small and easy to miss, especially when surrounded by port icons whose name labels can overlap (e.g. Seville and Ceuta in the western Mediterranean — overlapping names can also occlude the fleet sprite).",
+      "viewport_extent":   "covers a relatively small portion of the world.  Concrete example: when the fleet is at London, the default view shows Britain, Ireland, France, Germany, and parts of northern Europe — but Lisbon is OFF SCREEN.  Reaching ports outside the default viewport requires panning the map (supported — see pan_zoom) or selecting them from the right-panel port list (the bot's current go-to approach because it doesn't depend on map navigation gestures)."
+    },
+
+    "pan_zoom": {
+      "pan": {
+        "supported_by_game": true,
+        "supported_by_bot":  true,
+        "gesture":           "single-finger drag on the map area",
+        "note":               "panning works reliably for both human and bot.  Useful for reaching ports outside the default viewport when the right-panel port list isn't sufficient (e.g. tapping a specific ??? icon at a known position)."
+      },
+      "zoom": {
+        "supported_by_game": true,
+        "supported_by_bot":  false,
+        "gesture":           "pinch-to-zoom on touchscreen, mouse-wheel scroll when running through scrcpy on Mac",
+        "note":               "the game supports zoom; both pinch and mouse-wheel have proven unreliable to drive from ADB.  The bot currently has NO working zoom capability — it operates exclusively at the default zoom level.",
+        "on_screen_buttons":  "no zoom buttons on the world_map"
+      },
+      "current_navigation_approach": "for cross-port navigation the bot prefers the right-panel city_info_panel port list (scrolls regardless of map view, no map gestures needed).  Panning is available when needed (e.g. to reach a specific on-map icon position)."
+    },
+
+    "top_tab_bar": {
+      "_note":    "Horizontal tab bar across the TOP-CENTER of the world_map.  Selects which content layer the map shows.  This is a different tab pattern from the overworld right-panel tabs — here the tabs control the WHOLE map's content, not a side list.",
+      "position": "top center, below the screen title row",
+      "default_selected": "ports",
+      "tabs": {
+        "ports": {
+          "role":          "show known ports as icons on the map.  This is the default the bot uses for all current navigation.",
+          "interaction":   "tap a port icon → city_info_panel appears on the right; bottom_center go_to_city_button activates.  Selecting a port on this tab does NOT show a route preview line or ETA — supply estimation is left to the player (or to the bot, post-sail, by reading sea_overworld.player_ship_overlay.destination_eta_panel)."
+        },
+        "explore": {
+          "role":          "show discovered exploration findings — villages, geographic landmarks, constellations, historical sites (e.g. Tower of Pisa)",
+          "scope":         "exploration progress / collection.  Useful when growth tracking is implemented; not consumed by current trade-loop logic.",
+          "future_use":    "Milestone 6+ (port knowledge base & discovery) and Milestone 8 (autonomous company growth) will likely consume this tab"
+        },
+        "routes": {
+          "role":          "advanced multi-leg route planning.  Define a route with multiple midpoints; on execution the fleet sails through them in order.",
+          "midpoint_kinds": [
+            {
+              "kind":      "port_passthrough",
+              "behavior":  "when the route passes a port set as a midpoint, the fleet RESUPPLIES at that port without entering it.  Used for long voyages that exceed single-leg supply capacity."
+            },
+            {
+              "kind":      "sea_waypoint",
+              "behavior":  "an arbitrary point on the sea used to steer the route around impassable waters — e.g. seas the fleet can't cross because of insufficient seaworthiness, or polar regions requiring ice-breaking capability the fleet doesn't yet have."
+            }
+          ],
+          "preview_when_planning": "while constructing a route on this tab, the map renders the full route as a polyline AND shows an estimated time between each pair of waypoints.  This is a meaningful difference from the Ports tab (no preview, no ETA) and from the underlying limitation when sailing single-leg via Ports — the player has to estimate supply manually until the sailing actually starts.",
+          "future_use":    "Milestone 4 (world map intelligence) and Milestone 5 (route optimisation).  Currently out of scope for the trade loop."
+        },
+        "trade": {
+          "role":          "trade information layer — prices, recommended routes, market trends, etc.",
+          "scope":         "deferred for now; can be revisited when trade-strategy work resumes"
+        }
+      }
+    },
+
+    "city_info_panel": {
+      "position":    "right side of the screen — same convention as the right panel in port_overworld, sea_overworld, building screens, and many other chrome'd screens.  'Right panel' is treated as a reusable UI slot across the game, with content varying by screen.",
+      "trigger":     "appears when a port icon is tapped on the Ports tab (and presumably analogous on Explore and Trade tabs)",
+      "structure":   "complex — has tabs and sub-tabs internally.  The bot already has working code that parses this panel and is used today as the primary information-gathering tool to populate the per-city KB (what the city sells, its trade preferences, facilities, taxes, etc.).  A partial roster of cities has been gathered this way already.",
+      "content_known": [
+        "port name",
+        "facilities (which buildings are present in the port)",
+        "available goods / trade preferences",
+        "tax rate (relevant for foreign-nation markets — see CLAUDE.md trade system notes)"
+      ],
+      "ocr_keywords": "see ui_signals.json:world_map_ui_keywords.city_selected — currently ['city info', 'go to city', 'port info']"
+    },
+
+    "go_to_city_button": {
+      "position":         "BOTTOM CENTER of the screen — NOT inside the city_info_panel",
+      "appearance":       "primary action button.  The bot reliably finds and taps it today via label match ('go to city' is the canonical label; see ui_signals.json:world_map_ui_keywords.city_selected).  Exact visual styling (presumed yellow/gold per the universal primary-action convention) will be cross-referenced in visual_indicators.json when that file is authored, but is not blocking — current detection is solid.",
+      "trigger":          "becomes available when a port has been selected on the Ports tab and the city_info_panel is open",
+      "behavior_at_sea":  "tap → world_map closes, returns to sea overworld, fleet starts sailing toward the selected port (transitions to sea_overworld with destination set; cf. sea_overworld.player_ship_overlay.destination_eta_panel)",
+      "behavior_in_port": "tap → world_map closes; the player character runs to the harbour and the fleet sets sail with automatic resupply IF the fleet is sailable.  Things at the harbour can still block (e.g. not_enough_crew); the bot must verify the actual sail-out completed.",
+      "known_game_bug":   "occasionally the fleet leaves the harbour but does NOT begin sailing — the destination doesn't take effect.  Symptom: the destination_eta_panel IS present but in its 'stopped' state, showing text like 'Restart Sailing to <destination>' (no ETA).  Tapping the panel to restart does NOT work in this bug case — the bot must re-open the world_map and tap Go To City again to re-set the destination.  Detection: best signal is VISUAL — the fleet ship sprite does not move between frames; textual fallback is reading 'restart sailing' on the destination_eta_panel.  See sea_overworld.player_ship_overlay.destination_eta_panel.states for the panel state machine."
+    },
+
+    "port_discovery_state": {
+      "_note": "Ports on the world_map render in one of three states reflecting discovery progress.",
+      "completely_unknown":   "the port has never been seen by the fleet (never sailed close enough to detect).  It does NOT appear on the world_map at all.",
+      "spotted_but_unvisited": {
+        "trigger":      "fleet sails close enough to a port to detect its existence — a sailor's speech bubble announces 'Oh, a new port!' on the sea overworld, and a small shrouded-with-spinning-lights icon appears at the port's position on the sea",
+        "world_map_render": "the port shows up on the world_map but with its name displayed as '???'",
+        "interaction":  "tap the ??? icon → city_info_panel opens with limited info → Go To City sails the fleet there.  Alternatively, sail manually close enough to see the on-screen 'Enter New City' label, then tap the label to enter.",
+        "implication":  "the discovery cycle (spot from a distance → sail in → name resolves) is part of normal exploration; the bot can use ??? icons to navigate to known-unknown ports for first-time visits."
+      },
+      "fully_visited":        "after the player visits the port at least once, the name is shown on the world_map and the city_info_panel has the full data set (facilities, goods, preferences, taxes, etc.)."
+    },
+
+    "fog_of_war": {
+      "_note":      "The world_map has fog-of-war: sea regions the fleet has not yet sailed into are visually obscured.",
+      "visual":     "unsailed sea regions are covered by a CLOUD overlay; coastlines and ports inside those regions are hidden.  At the start of the game only a small home region is visible.",
+      "clearing":   "sailing the fleet into a clouded region uncovers it permanently — the cloud lifts and never returns.",
+      "implication": "exploration progress is reflected in how much of the world_map is uncovered.  A port can be in the spotted_but_unvisited state even if the surrounding region is still partially clouded."
+    },
+
+    "lower_left_controls": {
+      "_note": "Two control buttons at the lower-left of the world_map.",
+      "filter_button": {
+        "position": "lower-left",
+        "role":     "controls the map's visual layers / overlays.  Notable option: Filter → Region → enables sea-region colouring on the map.",
+        "region_overlay": {
+          "icon_per_region": "each region's icon is either a national flag (the dominant nation's flag) or a crossed-swords icon when the region is contested without a single nation holding enough share",
+          "region_types": {
+            "safe_waters":      "no PvP allowed; players with bad karma can still be attacked but normal players cannot initiate combat",
+            "dangerous_waters": "PvP allowed, NPC pirates may attack",
+            "lawless_waters":   "similar to dangerous — PvP and NPC pirate attacks expected"
+          }
+        },
+        "current_relevance": "low — the bot does not need region colouring for current trade-loop use cases.  Documented now so it isn't rediscovered the hard way later (e.g. when implementing combat, or when planning routes that should avoid PvP zones)."
+      },
+      "my_position_button": {
+        "position":      "lower-left",
+        "role":          "tapping this button re-centres the camera on the player fleet's current sea position, undoing any panning the player did to look at distant regions.",
+        "value_to_bot":  "useful as a 'reset to default view' if the bot ever pans away from default.  Currently the bot does not pan, so this is reserved for future use."
+      }
+    },
+
+    "port_list_search_field": {
+      "_note":  "Both the Ports-tab port list and the Trade-tab goods list (Trade tab not currently supported) include a search input field.",
+      "current_limitation": "the bot has trouble entering text into Unity editor fields (Android keyboard / IME interaction is unreliable).  Today the bot scrolls through the port list to find a destination instead of typing.",
+      "current_approach":   "scroll the port list (already implemented).  Acceptable for short lists; will become limiting as the discovered-port count grows."
+    },
+
+    "player_fleet_indicator": {
+      "appearance":    "small GREEN SHIP icon, rendered at the fleet's current sea position",
+      "during_sail":   "while the fleet is auto-sailing, the world_map also draws a DASHED LINE showing the planned sailing route from the fleet's position to the destination",
+      "centring":      "see lower_left_controls.my_position_button for the recentre-on-fleet control"
+    },
+
+    "sea_region_labels": "the world_map does NOT render sea-region names ('Mediterranean', 'Caribbean', 'Indian Ocean', etc.) directly on the map.  Region identity is conveyed via the Filter → Region overlay (see lower_left_controls.filter_button) when explicitly enabled, or via the per-port City Info panel."
+  },
+
+  "dialog_layout": {
+    "_note": "Modal overlays that block input on the screen behind them.  UWO has several distinct dialog visual styles — the 'game-styled dialog' is the dominant pattern, with daily-news and perk/event popups treated as special cases, and Android-level system dialogs as a fourth class.  Dialogs always dim the background; they appear without animation; they do not use the standard chrome back-arrow + screen-title pattern (see screen_chrome.screen_title.applies_to).",
+
+    "common_traits": {
+      "modal":             "blocks input on the underlying screen until acknowledged",
+      "dimmed_background": "the screen behind the dialog is darkened — strong detection signal that a modal is open",
+      "no_animation":      "dialogs appear and disappear without slide/fade transitions — first frame after appearance is OCR-readable",
+      "no_back_arrow":     "dialogs do not use the chrome back-arrow.  They must be acknowledged or dismissed via a button or close-X within the dialog itself",
+      "no_chrome_title":   "screen_chrome.screen_title rules do NOT apply — dialogs carry their own title strip INSIDE the dialog body (see dialog_styles.game_styled.title_strip)"
+    },
+
+    "dialog_styles": {
+      "_note": "Three observed dialog styles plus Android system dialogs.  Visual style determines how to detect the dialog and how to dismiss it; logical content (confirm/result/negotiate/etc.) is orthogonal — see dialog_kinds.",
+
+      "game_styled": {
+        "_note": "The dominant dialog style.  Looks like a classic Windows-style dialog with the game's themed colours.",
+        "title_strip": {
+          "appearance":  "dark BROWN horizontal strip at the top of the dialog body",
+          "presence":    "always present on game-styled dialogs",
+          "ocr_value":   "the title text identifies the dialog kind (e.g. 'Confirm Purchase', 'Recruited 953 Crew', 'Purchase Result', 'Sell Result', 'Negotiation') and feeds flow_detection_order via step_detection_keywords in flows.json"
+        },
+        "body": {
+          "content_examples": "description text, qty selectors / sliders, per-item lists with prices, success/result summaries, negotiation offer details"
+        },
+        "close_x_in_title_bar": {
+          "presence":   "only SOME game-styled dialogs include an X at the right end of the title strip — most do not",
+          "behavior":   "if present, tapping the X dismisses the dialog (equivalent to tapping Cancel / No)"
+        },
+        "dismiss_on_tap_outside": "yes — for most game-styled dialogs, tapping in the dimmed area outside the dialog rectangle closes the dialog.  Equivalent to tapping Cancel/No when one exists.  Does NOT confirm."
+      },
+
+      "daily_news_popup": {
+        "_note": "A non-game-styled popup with a non-standard close button.  The ONLY case seen so far where the close X sits OUTSIDE the dialog rectangle.",
+        "close_button": {
+          "appearance": "round X button OUTSIDE the dialog rectangle, top-right of the popup (not embedded in a title bar)",
+          "behavior":   "the ONLY way to dismiss this popup — tapping outside the popup or anywhere else on the screen does NOT close it"
+        },
+        "handler": "see brain/perceive.py:_dismiss_daily_news — explicitly hunts the round X via OmniParser/_find_button rather than tapping in a generic location"
+      },
+
+      "perk_event_popup": {
+        "_note": "Popup with a different colour theme than standard game-styled dialogs.  Appears automatically each new day, and can also be opened manually via the perk_event icon in top_right_icon_bar.",
+        "title_bar": {
+          "appearance": "title bar with TWO TABS ('Perk' and 'Event') in place of a single title text.  An X close button sits at the right of this bar.  Colour theme differs from the dark brown of game_styled dialogs.",
+          "behavior":   "tapping the X dismisses the popup; tapping a tab switches between Perk content and Event content within the popup",
+          "uniqueness": "this is the only popup observed so far whose title bar uses tabs instead of a title string"
+        },
+        "trigger": {
+          "automatic": "appears once per new game day",
+          "manual":    "tap top_right_icon_bar.icons[perk_event] (tap_coord [2053, 60] in the captured reference scene)"
+        }
+      },
+
+      "system_dialog": {
+        "_note": "Android-level system dialogs that the game cannot fully suppress or theme.",
+        "examples": [
+          "'The connection status is unstable and will restart the game.' — Android-themed; must tap OK"
+        ],
+        "behavior": "must tap a button (OK) — tap-outside does NOT dismiss",
+        "handler":  "see brain/perceive.py:_dismiss_android_connection — taps OK and then waits for the game to reload"
+      },
+
+      "arrival_panel_open_prompt": {
+        "_note": "Special dialog that appears at the LOWER-RIGHT when the fleet arrives at a port or village while any top_right_icon_bar panel is still open.  Position is unusual — most dialogs are centred; this one docks lower-right.  Triggered by the conjunction of arrival + panel-open state, not by a single event.",
+        "trigger": "fleet arrival at port/village + any top_right_icon_bar panel currently open",
+        "appearance": {
+          "position":      "lower-right of the screen",
+          "narrator":      "shows a sailor figure with narration",
+          "narration_text": "approximately 'Wrap up what you are doing, we are entering a port/village' (paraphrased from the user's description)",
+          "progress_bar":  "indicates remaining time before forced action; counts down toward zero"
+        },
+        "buttons": {
+          "hide": {
+            "appearance": "gray button labelled 'Hide'",
+            "behavior":   "hides the dialog so the player can keep using the open icon-bar panel.  The dialog reappears automatically when the timer is close to finishing — Hide just buys more time, it doesn't escape the timer."
+          },
+          "browse": {
+            "appearance":           "yellow button labelled 'Browse'",
+            "translation_caveat":   "'Browse' is likely a translation artifact; semantically the button means 'Enter the city now'.  When implementing logic, prefer matching the yellow primary button by position/colour over the English-label match."
+          }
+        },
+        "what_happens_if_no_button_is_pressed": "if neither button is pressed, the timer simply runs out and the fleet enters the city automatically — equivalent to an auto-Browse at timer = 0.  Letting the timer expire is a valid strategy.  The ONLY side effect is potential loss of in-progress work in whichever icon-bar panel was open (e.g. half-collected mail rewards may be abandoned and need to be redone after entering the city).",
+        "implications_for_bot": [
+          "the dialog does NOT block the bot — ignoring it is allowed, the fleet will enter the city by itself when the timer expires",
+          "if the bot is mid-task in the panel (collecting mail, browsing shop) and that task is important, the right move is to finish quickly (Hide buys time) or accept the loss; otherwise just let the timer run",
+          "if the bot is going to enter the city anyway, tapping the yellow button (Browse) is the fastest path; tapping Hide and waiting is the slowest"
+        ]
+      }
+    },
+
+    "dialog_kinds": {
+      "_note": "Logical roles a dialog plays.  These compose with dialog_styles.* — most kinds appear in the game_styled visual style.  Button-row patterns and recovery actions live in flows.json; this section captures the kinds for readers to navigate.",
+
+      "confirmation": {
+        "purpose": "ask the player to confirm a pending action before commit",
+        "examples": "'Confirm Purchase', 'Recruit 953 Crew?', 'Sell selected goods?'",
+        "buttons":  "yellow primary (OK / Confirm) plus secondary (Cancel / No / Back)"
+      },
+      "result": {
+        "purpose": "report the outcome of a committed action",
+        "examples": "'Purchase Result', 'Recruited 953 Crew', 'Sale Complete'",
+        "buttons":  "single OK / Close",
+        "multiplicity_note": "result dialogs are SINGLE — even compound transactions (e.g. selling several goods) yield ONE summary result dialog, not N consecutive ones"
+      },
+      "negotiation": {
+        "purpose":          "merchant negotiation for a discount on purchase / surcharge on sell",
+        "default_buttons":  "Accept Offer + Negotiate Once + Decline (3 buttons) — when the negotiation success rate is BELOW 100%",
+        "guaranteed_buttons": "Negotiate All + No (2 buttons) — when the negotiation success rate is ≥ 100%, the middle 'Negotiate Once' option vanishes; the bot is guaranteed to succeed when it presses Negotiate All in this state",
+        "implication":      "negotiation step recovery in flows.json should be aware of both shapes — a 2-button negotiation is NOT a different kind, just a sub-state of the same kind"
+      },
+      "abandon_basket": {
+        "purpose":  "sub-confirmation triggered when the player tries to dismiss (× / Back) a partially-loaded purchase basket",
+        "buttons":  "Yes (abandon and discard basket) + No (return to basket)",
+        "trigger":  "tapping × or Cancel on a market_purchase confirm dialog when the basket has items"
+      },
+      "reward":     {
+        "purpose":   "show a reward to be collected (login reward, achievement, perk event, attendance)",
+        "buttons":   "typically a single Collect / OK / X (varies by reward kind)"
+      },
+      "discovery":  {
+        "purpose":   "announce a new discovery (port, village, landmark, sea region)",
+        "buttons":   "tap-anywhere or single OK"
+      },
+      "system_notice": {
+        "purpose":   "out-of-game-flow notices (Android system, server errors)",
+        "buttons":   "OK only — see system_dialog above"
+      }
+    },
+
+    "dismissal_patterns": {
+      "tap_primary_button":   "yellow / gold primary action — confirms.  Used for OK, Confirm, Accept, Recruit, Purchase, etc.  Advances any active flow to the next step.",
+      "tap_secondary_button": "gray / neutral cancel — dismisses without confirming.  Equivalent to tap-outside on game_styled dialogs.",
+      "tap_close_x": {
+        "in_title_bar":   "where present (some game_styled dialogs and the perk_event_popup); equivalent to Cancel.",
+        "round_x_outside_rect": "daily_news_popup specifically — the ONLY way to close it"
+      },
+      "tap_outside_dialog": {
+        "default_behavior": "for most game_styled dialogs: closes the dialog (same as Cancel)",
+        "exceptions": [
+          "daily_news_popup — does NOT close on outside-tap; must tap the round X outside the rectangle",
+          "system_dialog (e.g. Android connection unstable) — does NOT close on outside-tap; must tap OK",
+          "chat popup (opened from top_right_icon_bar.icons[chat]) — does NOT close on outside-tap; must tap the square X close button on the popup"
+        ]
+      },
+      "back_press_behavior": "ADB back press behaviour on modal dialogs is not yet definitively documented — to be tested.  Existing flow advancement (advance_mandatory_flow) prefers tap_button over press_back for dialogs to avoid ambiguity."
+    },
+
+    "detection_signals": {
+      "dimmed_background":     "darkened/blurred underlying screen — universal across all dialog styles, the strongest single signal a modal is open",
+      "title_strip_ocr":       "for game_styled dialogs, the dark brown strip's OCR text identifies the dialog kind; feeds step_detection_keywords in flows.json and flow_detection_order in ui_signals.json",
+      "modal_panel_geometry":  "centred rectangular panel with rounded corners — distinguishes dialogs from speech bubbles (which have a pointing tail; see npc_owner_dialog) and from full-screen views (which fill the frame)",
+      "non_animation":         "since dialogs appear without animation, OCR is reliable from the first frame; no need to multi-sample for the title text (unlike npc_owner_dialog where the typewriter animation requires multi-frame sampling)"
+    },
+
+    "consumed_by": [
+      "brain/perceive.py — three-pass detection: interruptor handlers (Pass 1) for popups + special dialogs; flow detection (Pass 2) by step_detection_keywords for game_styled flow dialogs",
+      "brain/recovery.py:advance_mandatory_flow — drives in-flow tap_button / wait actions read from flows.json step definitions",
+      "brain/claude_guidance.py — when neither interruptor handler nor flow advancement fires, Claude inspects the dialog and picks a button; persisted as a learned step on success"
+    ]
+  },
+
+  "story_event_chrome": {
+    "_note": "When the game triggers a storyline / cutscene, a distinct chrome takes over the screen — distinct from screen_chrome (chrome'd full-screen views), from open-world views (port_overworld, sea_overworld), and from modal dialogs.  Cutscenes are passively encountered (the game decides when to fire one) rather than entered deliberately, and the chrome is the bot's signal that 'we're not on a normal screen — story content is being shown'.",
+
+    "trigger": "the game decides when to play a story scene; can fire on entering a port, after meeting a milestone, or as part of an MMORPG-style storyline arc.  The bot does not currently need to play story content — see the active_story_event interruptor for the dismissal recipe.",
+
+    "top_right_toolbar": {
+      "position": "top-right of the screen",
+      "controls": [
+        {
+          "id":           "skip",
+          "appearance":   "'Skip ›' label in the top-right",
+          "behavior":     "fast-forwards out of the cutscene; usually surfaces a Skip-confirmation dialog the bot must Yes/Confirm",
+          "preferred_by_bot": true
+        },
+        {
+          "id":           "auto",
+          "appearance":   "'Auto ›' label",
+          "behavior":     "auto-advances the dialog at a fixed rate without user interaction"
+        },
+        {
+          "id":           "dialog_history",
+          "appearance":   "'Dialog History' label with a clock icon",
+          "behavior":     "opens a transcript of dialog already shown — useful for human-style reading later, not relevant to the bot today"
+        }
+      ]
+    },
+
+    "screen_body": "the rest of the screen is taken over by cutscene content — typically an NPC sprite (different from a building's NPC owner; a story character) plus a speech bubble below.  No back arrow, no screen title, no left-panel sub-menus.  Sometimes mandatory choice buttons appear during the scene; per gameplay any choice advances the cutscene (the bot's recovery taps any button when those appear).",
+
+    "applies_to_screen_chrome_exception": "this is a fourth class of screen alongside open-world views and modal dialogs that does NOT follow the screen_chrome.screen_title applies_to rule.  See screen_chrome.screen_title.applies_to for the full exception list.",
+
+    "bot_strategy": "active_story_event interruptor in interruptors.json detects this chrome (conjunction of 'skip' + 'dialog history') and dispatches to brain/perceive.py:_dismiss_story_event — a small loop that taps Skip → Yes/Confirm → any button → safe-point until the chrome clears.  Mate-tap and other normal interactions are blocked until the cutscene is dismissed."
+  },
+
+  "non_dialog_notices": {
+    "_note": "Several visual elements look dialog-adjacent but are NOT modal — they do not block input, do not require dismissal, and the bot should NOT tap them as buttons.  Listed here for disambiguation; see also npc_owner_dialog (which IS persistent and DOES warrant explicit masking from button searches — different category).",
+
+    "sailor_discovery_bubble": {
+      "trigger":     "fleet sails close to a new port, village, or landmark on sea",
+      "appearance":  "small text bubble with a sailor's head icon, content like 'A new port!' or 'Look — there's a landmark!'",
+      "actionable":  false,
+      "duration":    "transient — disappears on its own after a few seconds"
+    },
+
+    "mate_tip_bubble": {
+      "trigger":     "various game-state changes (e.g. arriving at a port with notable trade conditions)",
+      "appearance":  "small text bubble at the lower-left of the screen, content like 'Whiskey is popular at London now'",
+      "actionable":  false,
+      "duration":    "transient — disappears on its own"
+    },
+
+    "current_handling": "the bot ignores both kinds for now.  Their content may be valuable for future strategy work (the mate tip bubbles in particular carry market-trend hints) but no action is required to proceed."
+  },
+
+  "consumers": {
+    "_note": "Pointers to the code paths that read these conventions — useful to know what changes when you edit this file.",
+    "screen_chrome.tutorial_question_button":           "future ?-tutorial walker (planned)",
+    "screen_chrome.screen_title":                       "vision/ocr.py:read_screen_title; brain/recovery.py:_ensure_harbor_top_level + _tap_building_action title verification",
+    "building_screens.sub_menu_list.default_search_region": "brain/recovery.py:_tap_building_action default region constant",
+    "npc_owner_dialog":                                 "TODO — detector + region masking + perceive_result.npc_says (planned, see docs/journey_not_enough_crew.md)",
+    "port_overworld.right_panel.search_region":         "config/settings.py:BUILDING_MENU_REGION; vision/ocr.py:read_building_menu",
+    "port_overworld.building_name_panel":               "TODO — currently bleeds into building-menu OCR as garbage tokens (cf. NPC-aware re-tap signature in actions/sail_actions.py)"
+  },
+
+  "open_questions": [
+    "main_menu screen is not yet covered here — modest scope, mostly a list of game-section entries we already enumerate in ui_signals.json:main_menu_keywords",
+    "Top-right icon bar variations across context — the seven icons documented in top_right_icon_bar were captured from a representative port_overworld frame.  Open: do all seven icons behave identically on sea_overworld, or do some change role / disappear?  (E.g. the 'mail' icon presumably still opens mail, but the 'pass'/'shop' icons opening the Shop on sea may have side effects, and red-dot states may differ from port.)  Worth verifying when a sea_overworld scene capture is available.",
+    "world_map.city_info_panel internal tabs and sub-tabs — the panel has multiple tabs and sub-tabs but only the working OCR-parser code knows the exact structure.  Worth extracting that structure into this doc when the parser is next touched.",
+    "Back-press behaviour on modal dialogs — referenced from dialog_layout.dismissal_patterns.back_press_behavior; not yet definitively tested.  Existing flow advancement prefers tap_button over press_back for dialogs to avoid ambiguity.",
+    "Combat and land_explore screens — out of scope for now; flagged as a third class of 'open world'-like view distinct from port_overworld and sea_overworld.  Will need their own sections when bot logic touches them.",
+    "Building family/category schema (religious cathedral/sanctuary/temple, estate variants) — see docs/journey_not_enough_crew.md What's Left section, Wave 6 in the proposed roadmap",
+    "Visual indicator semantics (red dot, yellow button, green bar, disabled gray) — to be authored separately as visual_indicators.json",
+    "World geography (canal locations, charted vs uncharted seas, route gating by ship class, midpoint waypoint use cases per region) — to be authored separately, e.g. as memory/knowledge/strategy/world_geography.json — referenced from sea_overworld.right_panel.tabs.ports_and_villages.distance_caveat and from world_map.top_tab_bar.tabs.routes",
+    "Other-fleet overlays on sea — NPC and other-player fleets visible on screen presumably carry similar identity labels (player/guild/appellation) overhead, but the exact stack and presence rules have not been documented yet.  Worth capturing the next time the sea view is observed with a non-player fleet in frame."
+  ]
+}

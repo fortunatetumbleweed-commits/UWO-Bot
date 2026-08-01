@@ -1,0 +1,21 @@
+{
+  "purpose": "Blueprint Exchange panel showing the player's inventory of ship blueprints by grade (5–8) and the conversion ratios for exchanging lower-grade blueprints into High Grade Blueprints",
+  "full_text": "Grade 5: quantities 5, 13, 2 | Grade 6: quantities 132, 91, 97 | Grade 7: quantities 18, 225, 303 | Grade 8: quantities 247, 73, 213, 8, 22 | Exchange Blueprint for High Grade Blueprint at ratio — Grade 5~6: 30:1, Grade 7~8: 25:1, Grade 9~10: 20:1, Grade 11~12: 15:1, Grade 13~19: 10:1 | Select the Blueprint to exchange.",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "dialog",
+  "structural_hash": "eecf0503fdfc37b8",
+  "goal_intent": null,
+  "cached_at": "2026-05-15T21:58:00.965768+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Blueprint Exchange panel showing the player's inventory of ship blueprints by grade (5–8) and the conversion ratios for exchanging lower-grade blueprints into High Grade Blueprints",
+    "full_text": "Grade 5: quantities 5, 13, 2 | Grade 6: quantities 132, 91, 97 | Grade 7: quantities 18, 225, 303 | Grade 8: quantities 247, 73, 213, 8, 22 | Exchange Blueprint for High Grade Blueprint at ratio — Grade 5~6: 30:1, Grade 7~8: 25:1, Grade 9~10: 20:1, Grade 11~12: 15:1, Grade 13~19: 10:1 | Select the Blueprint to exchange.",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

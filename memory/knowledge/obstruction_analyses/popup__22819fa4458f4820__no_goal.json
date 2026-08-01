@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen's item inventory panel showing Gear and Tool tabs with a search filter — this is not an obstruction but a normal in-port sell interface awaiting item selection",
+  "full_text": "Tool Search",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "22819fa4458f4820",
+  "goal_intent": null,
+  "cached_at": "2026-05-16T03:32:50.588175+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The Sell screen's item inventory panel showing Gear and Tool tabs with a search filter — this is not an obstruction but a normal in-port sell interface awaiting item selection",
+    "full_text": "Tool Search",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

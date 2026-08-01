@@ -1,0 +1,162 @@
+{
+  "ship": "fast_ship",
+  "top_speed_kt": 27.0,
+  "rate_dps": 81.3,
+  "rate_right": 62.2,
+  "rate_left": 96.0,
+  "mean_speed_kt": 24.8,
+  "n_valid": 12,
+  "n_total": 12,
+  "holds_ms": [
+    300,
+    500,
+    800,
+    1200
+  ],
+  "records": [
+    {
+      "i": 0,
+      "hold_ms": 300,
+      "cmd": "hold_right",
+      "h0": 241.8,
+      "h1": 46.0,
+      "turn": 164.2,
+      "conf0": 0.96,
+      "conf1": 0.97,
+      "speed": 27.0,
+      "bounced": false
+    },
+    {
+      "i": 1,
+      "hold_ms": 300,
+      "cmd": "hold_left",
+      "h0": 94.5,
+      "h1": 97.5,
+      "turn": -3.0,
+      "conf0": 0.92,
+      "conf1": 0.95,
+      "speed": 24.8,
+      "bounced": false
+    },
+    {
+      "i": 2,
+      "hold_ms": 300,
+      "cmd": "hold_right",
+      "h0": 83.6,
+      "h1": 94.3,
+      "turn": 10.6,
+      "conf0": 0.98,
+      "conf1": 0.92,
+      "speed": 24.8,
+      "bounced": false
+    },
+    {
+      "i": 3,
+      "hold_ms": 500,
+      "cmd": "hold_left",
+      "h0": 94.0,
+      "h1": 65.3,
+      "turn": 28.8,
+      "conf0": 0.92,
+      "conf1": 0.96,
+      "speed": 25.0,
+      "bounced": false
+    },
+    {
+      "i": 4,
+      "hold_ms": 500,
+      "cmd": "hold_right",
+      "h0": 64.6,
+      "h1": 116.0,
+      "turn": 51.4,
+      "conf0": 0.96,
+      "conf1": 0.95,
+      "speed": 24.9,
+      "bounced": false
+    },
+    {
+      "i": 5,
+      "hold_ms": 500,
+      "cmd": "hold_left",
+      "h0": 211.4,
+      "h1": 186.6,
+      "turn": 24.8,
+      "conf0": 0.96,
+      "conf1": 0.97,
+      "speed": 25.6,
+      "bounced": false
+    },
+    {
+      "i": 6,
+      "hold_ms": 800,
+      "cmd": "hold_right",
+      "h0": 186.2,
+      "h1": 273.2,
+      "turn": 87.0,
+      "conf0": 0.97,
+      "conf1": 0.93,
+      "speed": 27.0,
+      "bounced": false
+    },
+    {
+      "i": 7,
+      "hold_ms": 800,
+      "cmd": "hold_left",
+      "h0": 272.6,
+      "h1": 199.1,
+      "turn": 73.5,
+      "conf0": 0.93,
+      "conf1": 0.98,
+      "speed": 26.4,
+      "bounced": false
+    },
+    {
+      "i": 8,
+      "hold_ms": 800,
+      "cmd": "hold_right",
+      "h0": 190.7,
+      "h1": 290.8,
+      "turn": 100.0,
+      "conf0": 0.97,
+      "conf1": 0.94,
+      "speed": 27.0,
+      "bounced": false
+    },
+    {
+      "i": 9,
+      "hold_ms": 1200,
+      "cmd": "hold_left",
+      "h0": 291.0,
+      "h1": 151.6,
+      "turn": 139.4,
+      "conf0": 0.94,
+      "conf1": 0.97,
+      "speed": 27.0,
+      "bounced": false
+    },
+    {
+      "i": 10,
+      "hold_ms": 1200,
+      "cmd": "hold_right",
+      "h0": 94.6,
+      "h1": 68.2,
+      "turn": -26.4,
+      "conf0": 0.97,
+      "conf1": 0.96,
+      "speed": 14.6,
+      "bounced": false
+    },
+    {
+      "i": 11,
+      "hold_ms": 1200,
+      "cmd": "hold_left",
+      "h0": 68.1,
+      "h1": 309.3,
+      "turn": 118.8,
+      "conf0": 0.96,
+      "conf1": 0.96,
+      "speed": 23.1,
+      "bounced": false
+    }
+  ]
+}

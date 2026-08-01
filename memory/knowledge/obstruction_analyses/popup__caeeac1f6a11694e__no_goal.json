@@ -1,0 +1,21 @@
+{
+  "purpose": "The game is prompting the player to confirm they want to exit the game, noting that any fleet on Auto Sail will continue to its destination after logout.",
+  "full_text": "Exit Game? ※ Your fleet will continue to its destination if you are using Auto Sail.",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "caeeac1f6a11694e",
+  "goal_intent": null,
+  "cached_at": "2026-05-22T16:35:10.501285+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The game is prompting the player to confirm they want to exit the game, noting that any fleet on Auto Sail will continue to its destination after logout.",
+    "full_text": "Exit Game? ※ Your fleet will continue to its destination if you are using Auto Sail.",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}
