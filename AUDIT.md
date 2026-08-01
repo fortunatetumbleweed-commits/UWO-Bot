@@ -156,14 +156,39 @@ hardcoded 685). So no single orientation makes them all correct; whichever
 way the phone sits, ~half the market coords are 118px off. That's why
 trading breaks either way.
 
-### Revised fix direction
-1. **Lock/normalise phone orientation** before any run, and make the
-   capture pipeline **notch-aware**: read the cutout inset from
-   `dumpsys display` (or detect the safe-area) and offset all absolute X
-   coords by the notch width for the current rotation. One correction fixes
-   every absolute-X site at once. (Highest leverage — also helps nav.)
-2. **Prefer detected positions** (still the durable fix): route tab taps
-   through `_find_button` and derive the tile grid from detected tile
-   bounding boxes, so orientation/notch is irrelevant.
-3. Re-calibrating the raw constants is NOT enough on its own — it just
-   picks one orientation and re-breaks on a flip.
+### RESOLUTION (2026-08-01) — auto-rotate was the cause; lock fixes it
+Refined mechanism (confirmed live): the 118px shift is the notch safe-area,
+but the *trigger* is **AUTO-ROTATE being ON** (`accelerometer_rotation=1`).
+The game is landscape-locked but follows the sensor, so it sits in
+`ROTATION_90` or `ROTATION_270` depending on how the phone is physically
+held. **Each screen's offset is baked at the instant of a world-switch
+(sea/port/building/menu transition), from the orientation active then.**
+Rotating *within* a screen is inert; the offset only changes on the next
+world-switch after the orientation changed. So screens entered at different
+orientations come back with different offsets → trading breaks.
+
+**`ROTATION_270` is the canonical (calibration) orientation.** Verified: with
+rotation locked to 270 and a *fresh* world-switch into the market, the
+hardcoded `MARKET_COORDS["purchase"]=(70,145)` tap opened the Purchase grid,
+and the `_GRID_*` tile centers + all tab coords landed correctly. **The
+constants were never wrong — they only fail when the orientation at a
+world-switch differs from 270.** (Corrects the earlier "tabs vs grid
+calibrated at opposite orientations" note above — that was an artifact of
+comparing captures baked at different offsets.)
+
+**Immediate fix (no code):**
+```
+adb shell settings put system accelerometer_rotation 0   # lock auto-rotate off, pins ROTATION_270
+```
+With auto-rotate off and the phone physically fixed, every world-switch
+bakes the identical 270 offset the coords expect. Reversible with
+`… put system accelerometer_rotation 1`.
+
+**Durable fixes (this branch):**
+1. **Orientation guard in the bot** — assert `mDisplayRotation==ROTATION_270`
+   at startup and before/after each world-switch; re-lock or refuse to tap
+   if it drifted to 90. Cheap, catches the whole class (nav + trading).
+2. **Per-screen offset auto-detect on entry** (or route taps through
+   `_find_button` / detected tile bboxes) — makes orientation irrelevant.
+   The nav layer already does this at sail-start (`_auto_calibrate_ui`);
+   extend the same idea to trading/other screens.
