@@ -127,11 +127,43 @@ vertical shift + pitch change misalign the per-tile name/price OCR
 sub-crops, so price reads are unreliable. `market_reader` is a real
 casualty of the update.
 
-### Conclusion
-The game build moved the market UI. Confirmed breaks: (1) `MARKET_COORDS`
-Purchase/Sell tabs miss by ~150px; (2) `market_reader` grid drifted ~95px
-down / pitch 230→240. Both are exactly the Tier-1 "no structural fallback"
-items flagged above — validating the hardening order. Re-measuring the
-constants would be a quick patch; replacing them with detected positions
-(OmniParser tab-button find + detected tile bounding boxes) is the durable
-fix and the point of this branch.
+### Conclusion — ROOT CAUSE IS PHONE ORIENTATION (notch), not a game update
+Re-checked after physically rotating the phone. The entire market UI
+shifts **118px horizontally** (y unchanged) between the two landscape
+orientations. Cause, from `dumpsys display`:
+
+```
+cutout DisplayCutout{insets=Rect(0, 118 - 0, 0)}   # 118px camera cutout
+mDisplayRotation = ROTATION_270 / ROTATION_90       # two landscape modes
+```
+
+The 118px camera notch sits on the **left in one landscape mode, right in
+the other**; the game reserves that safe-area, so its content translates
+118px sideways when the phone flips. This is the same class as the nav
+"rotation issue" — **every hardcoded X coordinate is orientation-dependent.**
+
+Two corrections to the first-pass live verification above:
+- The grid's **vertical is fine** — live rows `316/558/797` match the
+  hardcoded tile centers `330/560/790` (±15px). The earlier "↓95px drift"
+  compared against a stale code *comment* (`y=221`), not the real
+  `_GRID_TOP`/pitch constants. Grid pitch is essentially unchanged.
+- The horizontal mismatch is the **notch flip**, not a game build change.
+
+**The trap:** the constants are split across orientations —
+`MARKET_COORDS` tabs match in ROTATION_270 (live sell x=65 = hardcoded 65),
+but `market_reader`'s grid matches in ROTATION_90 (live col0 x=688 ≈
+hardcoded 685). So no single orientation makes them all correct; whichever
+way the phone sits, ~half the market coords are 118px off. That's why
+trading breaks either way.
+
+### Revised fix direction
+1. **Lock/normalise phone orientation** before any run, and make the
+   capture pipeline **notch-aware**: read the cutout inset from
+   `dumpsys display` (or detect the safe-area) and offset all absolute X
+   coords by the notch width for the current rotation. One correction fixes
+   every absolute-X site at once. (Highest leverage — also helps nav.)
+2. **Prefer detected positions** (still the durable fix): route tab taps
+   through `_find_button` and derive the tile grid from detected tile
+   bounding boxes, so orientation/notch is irrelevant.
+3. Re-calibrating the raw constants is NOT enough on its own — it just
+   picks one orientation and re-breaks on a flip.
