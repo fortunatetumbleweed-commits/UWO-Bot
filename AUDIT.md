@@ -98,8 +98,40 @@ toward.
    detection in most call paths. Audit which `_flow_*` sites lack a
    `_find_button` attempt and add one.
 
-## Next step
-Verify the `market_reader` grid against a **current** market screenshot
-(post-update) — overlay `_GRID_*` tile centers on a live frame and check
-they still land on tiles. Confirms whether the grid is the break before
-any code changes.
+## Live verification (2026-08-01, current game build — Seville market)
+Captured the live market on the phone (`Seville → Market → Purchase`) and
+compared the hardcoded positions to detected element positions. **The UI
+has moved — both absolute-position layers are affected.**
+
+### `MARKET_COORDS` tabs — BROKEN (taps miss the button)
+| Button | Hardcoded | Live center | Live bbox (x) | Result |
+|---|---|---|---|---|
+| `purchase` | (70, 145) | (225, 161) | 149–301 | ❌ x=70 is 79px left of the button |
+| `sell` | (65, 225) | (182, 275) | 149–215 | ❌ left & above the button |
+
+The Purchase/Sell tabs shifted right ~+150px. The 3 direct
+`tap(*MARKET_COORDS[...])` calls (`market_actions.py:906/1617/1847`) now
+land left of the tabs and hit nothing.
+
+### `market_reader` tile grid — DRIFTED (reads corrupted, not off-screen)
+Measured item-name centers on the live Purchase grid vs the hardcoded grid:
+
+| Axis | Hardcoded | Live | Drift |
+|---|---|---|---|
+| column centers (x) | 685 / 1135 / 1585 (pitch 450) | 688 / 1127 / 1566 (pitch **439**) | −11px/col |
+| row origin (y) | row0 name ≈221 *(code comment)* | row0 name **316** | **grid ↓ ~95px** |
+| row pitch (y) | 230 | **240** | +10px/row |
+
+Tile-center *taps* still land inside the (450-wide) tiles, but the ~95px
+vertical shift + pitch change misalign the per-tile name/price OCR
+sub-crops, so price reads are unreliable. `market_reader` is a real
+casualty of the update.
+
+### Conclusion
+The game build moved the market UI. Confirmed breaks: (1) `MARKET_COORDS`
+Purchase/Sell tabs miss by ~150px; (2) `market_reader` grid drifted ~95px
+down / pitch 230→240. Both are exactly the Tier-1 "no structural fallback"
+items flagged above — validating the hardening order. Re-measuring the
+constants would be a quick patch; replacing them with detected positions
+(OmniParser tab-button find + detected tile bounding boxes) is the durable
+fix and the point of this branch.
