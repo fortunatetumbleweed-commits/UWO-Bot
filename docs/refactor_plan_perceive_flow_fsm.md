@@ -290,6 +290,74 @@ subsumes/hardens `detect_dialog` (dialog frame + buttons become learned slots),
 but `detect_dialog` can be elevated to the overlay axis **now** without waiting
 for training.
 
+## Design note — Explore mode, per-building goals, affordance KB (+ VLM taxonomy)
+
+### The VLMs we have, and what "expensive" means
+| Model | Where | Cost | Notes |
+|---|---|---|---|
+| **Claude Vision** (`claude-sonnet-4-6`) | `vision/claude_vision.py` | **$ + ~1–3s + external API** | Most capable; cached to `memory/knowledge/scenes/`.  The "expensive" tier. |
+| **Moondream** | `brain/moondream_family_cache.py` | **~5–7s/call** (free $) | True local VLM but so slow it's TTL-cached (the stale-cache hazard). |
+| **Qwen-perception** (`Qwen2.5-1.5B`, MLX) | `vision/qwen_perception.py` | cheap, every tick | **NOT pixel vision** — a small *text* LLM over OCR+OmniParser output, so it inherits OCR's blindness (can't fix the NPC-bubble misread). |
+| **OmniParser** (YOLOv8 + Florence-2) | `vision/omniparser.py` | YOLO ~0.1s | Detector/captioner, not a chat-VLM. |
+
+Key point: the affordable always-on model (Qwen) isn't pixel-aware; the
+pixel-aware ones (Claude, Moondream) are slow/paid.  **Resolution = distill:**
+use the expensive VLMs as OFFLINE TEACHERS to auto-label `data/sessions/` frames,
+then train the fast local student (the layout-slot detector + a small
+captioner/classifier or LoRA).  The expensive VLM becomes a *training-time* cost,
+not a runtime one; the `scenes/` cache is the lookup-table version of this.
+
+### Explore mode + Play mode
+- **Explore mode — Claude as explorer (occasional, thorough).**  Point Claude at
+  a building with a "learn this screen" objective; it drives via
+  `brain/plan_loop.py::achieve_goal` (perceive→act→verify→replan), enumerates
+  actionable elements (layout detector + OmniParser), **predicts-then-probes**
+  each *safe* one, observes the outcome, and writes a structured affordance to
+  the KB.  Run **once per building *type*** (cross-port reuse — "building types
+  capture cross-port knowledge") or when a new/unknown element is flagged.
+  Extends the existing `actions/explore_actions.py::explore_port` from recording
+  *structure* to recording *affordances*.  Amortized: learn once, reuse forever.
+- **Play mode — goal-driven exploit (fast, cheap, every visit).**  The bot runs
+  a per-building **goal spec** using KB affordances + fast local perception;
+  Claude re-consulted only on novelty/failure.
+
+### Per-building goal specs (declarative missions)
+- **Market:** `sell cargo → buy profitable goods within budget → collect
+  trade-point chest if claimable → gather weekly trade-boost sets`
+- **Inn:** `recruit crew if below target headcount / if a strong mate available`
+- **Bank / Shipyard / …:** TBD, discovered by explore mode.
+- Note: **weekly trade-boost sets** are *periodic, read-only* dynamic data
+  (refresh weekly) → a low-risk "gather info" goal re-run on a cadence.
+
+### Affordance KB schema (per building_type, in `memory/knowledge/building_types/`)
+```
+market:
+  elements:
+    - id: trade_point_chest  actionable_when: points_full  effect: reward
+      cost: none  reversible: n/a  how: tap detected chest slot
+    - id: sell_tab | purchase_tab | load_all | ...
+  dynamic:
+    - trade_boost_sets: { refresh: weekly, read_from: <trade info panel>, current: [...] }
+  goals: [sell, buy, collect_rewards, gather_trade_info]
+```
+
+### Safety guardrails (Claude drives the LIVE game in explore mode)
+- **Never touch red-gem / real-money elements; confirm before any spend.**
+- **Predict-before-tap** — VLM predicts an element's effect first; probe only if
+  predicted reversible/read-only.  Irreversible/costly → recorded as
+  "known, not probed," never blindly tried.
+- **Bounded** — max taps/time per session, no re-probing known elements, always
+  return to a known base state.
+- **Anti-cheat discipline** (jittered sleeps, no bursts) and **log every probe**
+  (the action-contract log) so a bad outcome is caught and never repeated.
+
+### Relationship to RL
+The affordance KB + goal specs are the deterministic/rule + LLM-policy layer
+(claim free rewards = a rule once discovered).  RL stays reserved for the
+*tradeoff* decisions this enables later ("is the detour to claim X worth the
+time vs continuing the trade run?") — which need the affordance KB + outcome log
+to exist first.
+
 ## Migration / compatibility notes
 - The recorded `flow.json` files stay as a **coordinate fallback**, but
   structural `_find_button` becomes primary everywhere (already true for buy;
