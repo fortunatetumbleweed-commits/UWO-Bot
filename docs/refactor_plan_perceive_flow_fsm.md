@@ -65,9 +65,13 @@ the end.
 @dataclass
 class PerceivedState:
     base:     BaseState      # sea | port_overworld | village | world_map |
-                             # market | building | main_menu | loading | unknown
+                             # market | building | loading | unknown
+                             # (loading resolves to port_overworld | village | sea
+                             #  = arrived at dest, or still auto-route sailing)
     overlay:  Overlay        # none | dialog | confirm | negotiation | result |
-                             # news | reward | error   (ORTHOGONAL axis)
+                             # news | reward | error | main_menu   (ORTHOGONAL axis)
+                             # main_menu = the game hub menu, opened over
+                             # sea or port_overworld; base unchanged (like a dialog)
     identity: str | None     # port/village/building name, if known
     confidence: float        # arbitrated, single scale
     evidence: list[Signal]   # what each detector said + its score

@@ -106,26 +106,28 @@ flowchart LR
 ### 2.1 Base navigation states (overlay is a separate, orthogonal axis)
 ```mermaid
 stateDiagram-v2
-    [*] --> main_menu
-    main_menu --> port_overworld
+    [*] --> loading : app launch or login
+    loading --> port_overworld : arrived at destination port
+    loading --> village : arrived at destination village
+    loading --> sea : still sailing, auto-route in progress
     port_overworld --> market
     port_overworld --> building
     port_overworld --> world_map
     port_overworld --> sea : depart
-    world_map --> sea : set destination, auto-route
+    world_map --> sea : set sail to port or village, auto-route
     sea --> port_overworld : arrive at port
     sea --> village : arrive at village
     market --> port_overworld : back
     building --> port_overworld : back
     village --> sea : depart
-    loading --> port_overworld
-    loading --> sea
 
     note right of market
       OVERLAY axis is orthogonal to base:
-      none | dialog | confirm | negotiation
-      | result | news | reward | error
-      A dialog does NOT change the base —
+      none | dialog | confirm | negotiation | result
+      | news | reward | error | main_menu (game hub)
+      main_menu overlays sea OR port_overworld (open/close,
+      base unchanged) — just like a dialog.
+      An overlay does NOT change the base —
       base is kept from last-confident tick.
     end note
 ```
