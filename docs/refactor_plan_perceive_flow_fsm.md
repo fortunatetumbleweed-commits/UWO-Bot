@@ -19,9 +19,31 @@ the end.
 5. **Degrade, don't crash** — headless recovery has a safe autonomous fallback.
 
 ## Design principles
+- **Understand, don't pattern-match — on the screens that matter.**  For
+  information-rich, low-frequency screens (port overworld, market, inn,
+  dialogs) use a **VLM over the whole frame** to *understand* the scene, not
+  crop-a-region-OCR-fuzzy-match.  The current `read_port_name` (crop → OCR →
+  fuzzy-match @0.6) misreads exactly when an NPC speech bubble or a neighbouring
+  building label falls in the crop — the Seville→"Svear Village" bug.  A VLM
+  asked "what is the port name in the top-left banner? ignore floating speech
+  bubbles and building labels" doesn't have that failure mode.
+- **Tier by frequency × information.**  VLM calls are slow (~1–5s) and cost
+  money, so they can't run every tick — and don't need to.  **High-frequency,
+  low-info** (sea navigation, hundreds of ticks) stays on cheap local CNNs.
+  **Low-frequency, high-info** (ports/markets/inns/dialogs, dozens of ticks)
+  is VLM-**first**, not VLM-as-fallback.  Elevate the existing
+  `qwen_perception` / `claude_vision` / Moondream from narrow fallbacks to the
+  primary layer for rich screens.
+- **LLM-as-policy for info-rich decisions.**  Buy/sell, crew hiring, dialog
+  choices are decisions a model can *reason* about from a goal/rule prompt +
+  a clean structured read ("buy the most profitable good within budget, prefer
+  demand at destination").  This is the "more intelligent gameplay" tier — it
+  is NOT RL; RL stays a later topic for pure sequential strategy (route /
+  destination / timing) where there is no promptable optimum.
 - **Arbitrate, don't order.** Signals produce evidence scored on ONE scale; a
   fusion stage picks the winner.  A 1.0 CNN is never silently beaten by a 0.6
-  fuzzy string.
+  fuzzy string.  On rich screens the VLM is the strong evidence / arbiter; on
+  sea the local CNN is.
 - **Overlay is orthogonal to base state.** "market" and "market + confirm
   dialog" are different perceived states; the classifier must be able to say so.
 - **Perception is a pure read.** No tapping/sleeping inside `perceive()`; acting
@@ -29,6 +51,10 @@ the end.
 - **Actions are contracts.** Each declares preconditions and expected post-state;
   the loop enforces them.  Contract violations are the deterministic
   "reward/punish" signal (logged for future learning).
+- **Robust + affordable VLM use:** structured JSON-schema output (grounded, not
+  prose) · verification via the perceive→act→verify loop (a bad read is caught,
+  not trusted) · learn-once caching for static understanding (building types, UI
+  layouts), re-read only dynamic data (prices, crew).
 
 ---
 
@@ -46,10 +72,13 @@ class PerceivedState:
     confidence: float        # arbitrated, single scale
     evidence: list[Signal]   # what each detector said + its score
 ```
-- Produced by a **fusion/arbitration** function that gathers evidence from every
-  detector (family CNN, OmniParser fingerprints, chrome, OCR text, DialogModel,
-  Qwen) and scores them on one scale, then picks base + overlay.  Replaces the
-  priority cascade in `perceive.py:2331`.
+- Produced by a **tiered fusion/arbitration** function.  Cheap local detectors
+  (family CNN, OmniParser fingerprints, chrome, `DialogModel`) run first to get
+  base + overlay + a "is this a rich screen?" flag.  On **rich screens**
+  (port / market / inn / dialog) a **VLM** produces the authoritative structured
+  read (identity, overlay, goods+prices, options) and is the arbiter; on **sea**
+  the local CNN is.  All evidence is scored on one scale — no priority cascade
+  as in `perceive.py:2331`, and no weak fuzzy-match beating a strong verdict.
 - `market` becomes first-class (fingerprint or Qwen-confirmed), not "building".
 - `overlay` is computed from the structural `DialogModel` FIRST (unify the
   keyword + structural detectors), so popup-presence is always known.
@@ -93,18 +122,22 @@ The loop turns the user's desired reward rules into **hard gates** now, and
 Each tick logs `(PerceivedState, action, expected_post, actual_post, verified)`
 → this **is** the imitation/RL dataset, obtained for free once the loop exists.
 
-### 4. Deterministic mechanics vs learned strategy
-- **Mechanics (dialogs, flows, navigation-to-screen): deterministic.**  The
-  failure modes the user named are *verifiable perception facts*, not sparse
-  rewards — solved by the action contract above, not RL.  RL here is infeasible
-  anyway (real phone ≈ seconds/action, anti-cheat tap limits, non-reproducible
-  episodes, 700+-tick voyages — can't run the millions of steps model-free RL
-  needs), and the reward can't even be computed until perception reliably
-  reports overlay + transition-success.
-- **Strategy (which port, negotiate once/all/skip, which route): learned.**  A
-  real sequential-decision problem with a real reward (**ducats/hour**) and no
-  hand-coded optimum → contextual bandit / lightweight RL.  `self_grow`'s
-  `_pick_destination` scoring stub is the natural first host.
+### 4. Three decision tiers (mechanics / understanding / strategy)
+- **Mechanics (dialog dismissal, flow steps, navigate-to-screen):
+  deterministic.**  The failure modes named (phantom dismiss, missed blocker,
+  cancel-not-complete) are *verifiable perception facts* — solved by the action
+  contract, not learning.
+- **Info-rich understanding + decisions (market buy/sell, crew hiring, dialog
+  choices): VLM + goal/rule prompt.**  A VLM reads the screen into a structured
+  scene and an LLM (or rules) chooses the action from a mission prompt.  This is
+  the "intelligent gameplay" tier — grounded reads + reasoning, verified by the
+  loop.  Not RL.
+- **Pure strategy (which port, negotiate once/all/skip, which route): learned
+  (later, optional).**  A sequential-decision problem with a real reward
+  (**ducats/hour**) and no promptable optimum → contextual bandit / lightweight
+  RL.  `self_grow`'s `_pick_destination` scoring stub is the natural first host.
+  RL is infeasible for *mechanics* anyway (real phone ≈ seconds/action,
+  anti-cheat tap limits, non-reproducible episodes, 700+-tick voyages).
 
 ---
 
@@ -165,14 +198,23 @@ Each tick logs `(PerceivedState, action, expected_post, actual_post, verified)`
   already load-bearing.
 - Anti-cheat discipline unchanged (jittered sleeps, no burst taps).
 
-## Open decisions (need input)
-1. **RL scope** — reserve learning for the *strategy* layer only (recommended),
-   or also explore RL on mechanics despite the sample-cost/reward-availability
-   problems?
-2. **Perception consolidation** — *replace* the cascade with one arbitration
-   stage (bigger, cleaner), or *patch* the worst overrides in place (smaller,
-   keeps the accretion)?
+## Decisions
+1. **RL scope — DECIDED (2026-08-02): parked as a later topic.**  Learning is
+   reserved for pure sequential *strategy* (route / destination / timing) only,
+   explored later.  The "intelligent gameplay" the bot needs now (buy/sell,
+   hiring, dialog choices) is the **VLM + goal-prompt** tier, not RL.
+2. **Perception — DECIDED (2026-08-02): VLM-first for rich screens.**  Don't
+   just arbitrate the existing weak OCR/fuzzy signals better — for
+   information-rich screens *replace* crop-OCR-fuzzy with grounded VLM
+   understanding (tiered; cheap local perception keeps high-frequency sea nav).
+   Root fix for the NPC-bubble / label-collision misreads.
+
+### Still open (need input)
 3. **Sequencing** — land Phase 0 immediately (unblock grow), then Phase 1;
-   or design the full `PerceivedState` first and cut Phase 0 into it?
+   or design the full `PerceivedState` + VLM read schema first?
 4. **`main.py`/`BotFSM`** — delete outright, or keep `main.py` as a thin shim
    into the agent loop for the documented entry point?
+5. **VLM choice per tier** — which model for the rich-screen read: Qwen-VL
+   (local, already wired), Claude Vision (accurate, paid, already cached), or
+   Moondream (cheap, weaker)?  Likely per-screen (cheap for classify, strong
+   for market/crew reads) — decide when Phase 1 is scoped.
