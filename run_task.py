@@ -18,6 +18,12 @@ if len(sys.argv) < 2:
 task_file = sys.argv[1]
 dry_run   = "--dry-run" in sys.argv
 
+if not dry_run:
+    # Lock auto-rotate off / assert canonical landscape before any tapping —
+    # hardcoded UI coords are orientation-specific (see actions/orientation.py).
+    from actions.orientation import ensure_canonical_orientation
+    ensure_canonical_orientation()
+
 from actions.task_runner import run_task
 
 report = run_task(task_file, dry_run=dry_run)
