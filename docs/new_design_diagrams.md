@@ -274,14 +274,14 @@ sequenceDiagram
     X->>Ly: enumerate elements (market)
     Ly-->>X: slots incl. trade_point_chest (glowing = actionable)
     X->>V: predict — what does this element do?
-    V-->>X: "claim reward when points full; cost none"
+    V-->>X: claim reward when points full, cost none
     X->>X: safe / reversible? yes
     X->>A: tap chest
     A->>G: tap
     X->>V: observe outcome
-    V-->>X: "reward claimed (+blue gems)"
-    X->>K: write affordance<br/>market.trade_point_chest {when: points_full, effect: reward, cost: none}
-    Note over X,K: irreversible / red-gem elements are recorded as "known, not probed"
+    V-->>X: reward claimed, plus blue gems
+    X->>K: write affordance market.trade_point_chest, when=points_full, effect=reward, cost=none
+    Note over X,K: irreversible or red-gem elements are recorded as known, not probed
 ```
 
 ### 3.5 Grow trade-round (orchestration, incl. failure escalation)
@@ -307,7 +307,7 @@ sequenceDiagram
         Mk->>R: structured failure (no blind coords)
         R-->>S: safe-abort round (headless: no crash)
     end
-    S->>N: sail home; repeat
+    S->>N: sail home, then repeat
 ```
 
 ---
