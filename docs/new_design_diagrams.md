@@ -112,9 +112,11 @@ stateDiagram-v2
     loading --> sea : still sailing, auto-route in progress
     port_overworld --> market
     port_overworld --> building
-    port_overworld --> world_map
+    port_overworld --> world_map : open world map
     port_overworld --> sea : depart
-    world_map --> sea : set sail to port or village, auto-route
+    sea --> world_map : open world map
+    world_map --> sea : set sail auto-route, or close if opened at sea
+    world_map --> port_overworld : close if opened at port
     sea --> port_overworld : arrive at port
     sea --> village : arrive at village
     market --> port_overworld : back
