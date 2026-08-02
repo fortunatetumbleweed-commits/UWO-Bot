@@ -10,6 +10,14 @@ CAPTURE_FPS: int = 5             # target frames per second for the capture loop
 SCREEN_WIDTH: int = 2400         # fixed resolution width — landscape (update if orientation changes)
 SCREEN_HEIGHT: int = 1080        # fixed resolution height
 
+# Canonical display rotation (degrees) all hardcoded UI coords are calibrated
+# for.  The game is landscape-locked but follows the sensor, so with auto-rotate
+# ON it sits in ROTATION_90 or ROTATION_270 by physical handling; the game bakes
+# a different notch/safe-area X-offset per screen at each world-switch based on
+# the orientation active then, so a wrong rotation silently mis-taps every
+# absolute coord.  See actions/orientation.py + AUDIT.md.
+CANONICAL_ROTATION: int = 270
+
 # Input delays — intentionally slower than a human to avoid anti-bot detection.
 # No two taps ever fire within ACTION_COOLDOWN_MIN seconds of each other.
 TAP_DELAY_MIN: float = 1.0

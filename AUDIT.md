@@ -185,9 +185,12 @@ bakes the identical 270 offset the coords expect. Reversible with
 `… put system accelerometer_rotation 1`.
 
 **Durable fixes (this branch):**
-1. **Orientation guard in the bot** — assert `mDisplayRotation==ROTATION_270`
-   at startup and before/after each world-switch; re-lock or refuse to tap
-   if it drifted to 90. Cheap, catches the whole class (nav + trading).
+1. **Orientation guard in the bot** — ✅ DONE (`actions/orientation.py`,
+   `ensure_canonical_orientation()`). Locks auto-rotate off and asserts
+   `mDisplayRotation == CANONICAL_ROTATION` (270, in `config/settings.py`).
+   Wired at startup (`main.py`, `run.py`) and into the port world-switch gate
+   `_assert_at_port` (refuses to confirm the port if the orientation is wrong,
+   so no primitive mis-taps). Tests: `tests/test_orientation_guard.py`.
 2. **Per-screen offset auto-detect on entry** (or route taps through
    `_find_button` / detected tile bboxes) — makes orientation irrelevant.
    The nav layer already does this at sail-start (`_auto_calibrate_ui`);

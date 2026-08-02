@@ -12,6 +12,7 @@ from __future__ import annotations
 import time
 
 from capture.adb_capture import capture_screen
+from actions.orientation import ensure_canonical_orientation
 from classifier.predict import ScreenClassifier
 from memory.screen_discovery import handle_unknown_screen, list_unimplemented, is_implemented
 from state.game_state import GameState
@@ -38,6 +39,10 @@ def _report_unimplemented() -> None:
 def main() -> None:
     setup_logging()
     logger.info("UWO Bot starting up")
+    # Orientation guard — all hardcoded UI coords are calibrated for the
+    # canonical rotation; lock auto-rotate off and refuse to run if the phone
+    # is in the wrong landscape (see actions/orientation.py).
+    ensure_canonical_orientation()
     _report_unimplemented()
 
     game_state = GameState()

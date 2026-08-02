@@ -786,6 +786,10 @@ def _single_shot() -> None:
 
 if __name__ == "__main__":
     setup_logging()
+    # Lock auto-rotate off / assert canonical landscape before any tapping —
+    # hardcoded UI coords are orientation-specific (see actions/orientation.py).
+    from actions.orientation import ensure_canonical_orientation
+    ensure_canonical_orientation()
     if len(sys.argv) > 1:
         _single_shot()
     else:

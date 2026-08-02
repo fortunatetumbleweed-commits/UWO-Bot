@@ -600,6 +600,17 @@ def _assert_at_port(port: str, home_port: Optional[str] = None) -> bool:
     On miss, calls `recover_to_port_overworld` once and re-checks.
     """
     from vision.scene_model import get_scene_model
+    from actions.orientation import ensure_canonical_orientation
+
+    # World-switch gate: the port screen's notch offset is baked on entry from
+    # the phone's orientation.  If it isn't the canonical rotation, every
+    # hardcoded port/building/market coord is off — refuse rather than mis-tap.
+    if not ensure_canonical_orientation(raise_on_mismatch=False):
+        logger.error(
+            f"[explore_port] _assert_at_port({port!r}): wrong display "
+            f"orientation — hardcoded coords would mis-hit; not confirming port."
+        )
+        return False
 
     def _scene_says_we_are_at_target() -> bool:
         """Primary check via SceneModel: scene_kind + title both match."""
