@@ -190,6 +190,48 @@ Each tick logs `(PerceivedState, action, expected_post, actual_post, verified)`
 
 ---
 
+## Action item — Learned structural layout (UI-slot detector)
+**Status:** candidate; **prioritise when the gameplay-perception work starts.**
+Likely reshapes Phase 1 (the `PerceivedState` gets *produced* by this detector
+instead of the heuristic cascade), and largely retires Phase 0 as a stopgap.
+
+**Idea.** The game UI is a stable set of spatial *slots* that only shift
+slightly between versions.  Train a **game-specific UI-slot detector** (same
+spirit as the heading CNN / ship U-Net — and easier, because chrome is
+high-contrast and stable) that outputs, per frame, the labelled slots present +
+their boxes + confidence, e.g. for port overworld:
+`{ name_banner, national_flag, minimap, world_area, nameplate?, action_button
+[Quick Supply | Enter City/Village | Depart]?, dialog? }`.  Note the **sea↔port
+symmetry**: the "get-close → nameplate + action plate" element is the *same*
+learnable slot in both contexts — train once, reuse.
+
+**Why it's high-leverage.**
+- **Retires the absolute-position fragility class** we fought all session
+  (notch/orientation, version drift, `MARKET_COORDS`/`MINIMAP_REGION`/
+  `OCR_PORT_NAME_REGION` hardcoded crops).  A detector finds the banner/minimap/
+  buttons *wherever they are*, so small shifts don't break anything; the
+  orientation guard becomes belt-and-suspenders, not load-bearing.
+- **Fixes the misread class** (Seville→village): OCR runs only inside the
+  *localised* banner box, so NPC speech bubbles / neighbouring labels are no
+  longer in the read.
+- **Produces most of `PerceivedState` for free, every tick, locally:** slots
+  present → base state; dialog slot → overlay; banner box → clean read region;
+  button boxes → action targets (tap the *detected* button, not a coord).
+
+**Model choice.** Small fine-tuned **YOLO** for the discrete chrome slots (reuse
+the existing ultralytics/OmniParser stack; OmniParser is *generic* "a button",
+this head is *semantic* "the Enter-City button").  Keep **U-Net** for pixel
+masks / ship-sprite work.  Likely both.
+
+**Fits the three tiers:** detector (localise + presence, cheap/every-tick) →
+OCR on localised slots (read text) → VLM (reason about semantics only where
+needed).  Detector + VLM are complementary, not competing.
+
+**Main cost = labels**, but bootstrappable: auto-generate first-pass labels from
+OmniParser + chrome detector + templates, correct, then train; thousands of
+unlabelled frames already exist in `data/sessions/`.  Tolerant of small shifts →
+retrain only on big UI redesigns, not every version wobble.
+
 ## Migration / compatibility notes
 - The recorded `flow.json` files stay as a **coordinate fallback**, but
   structural `_find_button` becomes primary everywhere (already true for buy;
