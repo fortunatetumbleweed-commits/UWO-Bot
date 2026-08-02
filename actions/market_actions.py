@@ -906,24 +906,34 @@ def sell_all_cargo(
     tap(*MARKET_COORDS["sell"])
     time.sleep(1.5)
 
-    # Read what's sellable (to know good names for logging / KB)
+    # Gate on the reliable "Cargo X/Y" counter, NOT the sell-page grid parse —
+    # the sell layout differs from the buy grid so that parse is unreliable and
+    # must not abort the sale.  Only bail when cargo is CONFIDENTLY empty
+    # (counter read AND used == 0); a failed read (0,0) proceeds to Load All.
     frame = capture_screen()
     _set_flow_scale(frame)
-    goods = read_market_page_claude(frame, tab="sell", port=port)
-    sellable = [g for g in goods if not g.sold_out]
-
-    if not sellable:
-        logger.info(f"[{port}] No goods to sell")
+    used, total = _read_cargo_capacity(frame)
+    if total > 0 and used == 0:
+        logger.info(f"[{port}] Cargo empty ({used}/{total}) — nothing to sell")
         return []
 
-    good_names = [g.name for g in sellable]
-    logger.info(f"[{port}] Goods to sell: {good_names}")
+    # Good names / sellable list are best-effort (sell-page parse is unreliable):
+    # used for logging, KB, and the per-good fallback — NOT to gate the sale.
+    goods = read_market_page_claude(frame, tab="sell", port=port)
+    sellable = [g for g in goods if not g.sold_out]
+    good_names = [g.name for g in sellable] or ["<cargo>"]
+    logger.info(f"[{port}] Cargo {used}/{total}; selling (goods best-effort: {good_names})")
 
     # ── Tap Load All ──────────────────────────────────────────────────────────
+    # Structural detection first (OmniParser/OCR) so the tap lands on the actual
+    # button regardless of the recorded flow's baked offset; flow coords are the
+    # fallback.  "Load All" lives in the bottom action band.
     grid_step = _step(flow, "sell_tab_goods_grid")
-    load_all_pos = _flow_btn_coords(grid_step, "load all")
+    load_all_pos = _find_button(frame, "Load All", y_min=int(frame.height * 0.85))
     if load_all_pos is None:
-        logger.warning("  'Load All' not found in flow — falling back to per-good sell")
+        load_all_pos = _flow_btn_coords(grid_step, "load all")
+    if load_all_pos is None:
+        logger.warning("  'Load All' not found by vision or flow — falling back to per-good sell")
         return _sell_all_cargo_per_good(flow, port, sellable, negotiation_strategy)
 
     logger.info(f"  Tapping Load All @ {load_all_pos}")
@@ -937,7 +947,12 @@ def sell_all_cargo(
         frame = capture_screen()
 
     # ── Tap Sell button ───────────────────────────────────────────────────────
-    sell_pos = _flow_coords(flow, "basket_loaded_sell_ready")
+    # Structural first (bottom-right action button); flow coords fallback.
+    sell_pos = _find_button(frame, "Sell",
+                            x_min=int(frame.width * 0.60),
+                            y_min=int(frame.height * 0.85))
+    if sell_pos is None:
+        sell_pos = _flow_coords(flow, "basket_loaded_sell_ready")
     logger.info(f"  Tapping Sell @ {sell_pos}")
     tap(*sell_pos)
 
