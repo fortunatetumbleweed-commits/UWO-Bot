@@ -94,16 +94,28 @@ class PerceivedState:
 Consolidate on the `agent.step` / `plan_loop.achieve_goal` model; delete the
 dead `BotFSM`/`brain/states/*` stub and the `main.py` decoy.  Every action runs:
 ```
-perceive()                                  # PerceivedState
-if state.overlay != none:                   # a blocker is up
-    resolve_overlay(state)                  # ONE canonical handler, typed action
-    continue
-assert state.base == action.precondition    # location gate (extends _assert_*)
-act()
+perceive()                                  # PerceivedState(base, overlay)
+if state.overlay != none:
+    if state.overlay == action.expected_next:   # EXPECTED — a step of THIS action
+        pass                                     # fall through: act on the dialog control
+    else:                                        # UNEXPECTED — an interrupt
+        resolve_overlay(state); continue         # dismiss/handle, re-perceive, resume
+else:
+    assert state.base == action.precondition    # location gate (extends _assert_*)
+act()                                        # tap base element OR the expected dialog control
 post = perceive()                           # re-perceive
 verify(post == action.expected_post)        # transition check
-  → on mismatch: structured failure UP to the policy (bounded retry / replan)
+  → step ok but action has more steps: loop (e.g. confirm → result)
+  → complete + verified: done
+  → mismatch / stuck: structured failure UP to the policy (bounded retry / replan)
 ```
+**Expected vs unexpected is the axis, not dialog-vs-informational.**  A
+transaction (buy) is a multi-step action whose steps *produce* overlays
+(confirm → result); those are EXPECTED and are acted on, not dismissed.  Only
+overlays the current action did NOT expect (news / event / error / reward /
+main_menu) are interrupts to resolve-and-resume.  The `DialogModel.kind`
+(informational / confirmation / reward / …) chooses the *handler*;
+expected-vs-unexpected (from the action contract) chooses the *branch*.
 - Routine transactions (buy/sell/depart) go through this loop instead of
   scripted `tap; sleep`.
 - The location gate generalizes `_assert_on_sea` / `_assert_at_port` and adds

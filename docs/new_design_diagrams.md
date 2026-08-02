@@ -138,23 +138,35 @@ stateDiagram-v2
 ```mermaid
 stateDiagram-v2
     [*] --> Perceive
-    Perceive --> ResolveOverlay : overlay != none
-    Perceive --> AssertPre : overlay == none
-    ResolveOverlay --> Perceive : re-perceive
-    AssertPre --> Act : base == precondition
-    AssertPre --> Fail : base != precondition
+    Perceive --> HandleInterrupt : overlay present but UNEXPECTED
+    Perceive --> AssertPre : ready to act
+    HandleInterrupt --> Perceive : resolve generically, then resume
+    AssertPre --> Act : precondition ok
+    AssertPre --> Fail : precondition wrong
     Act --> Verify : re-perceive
-    Verify --> Done : post == expected_post
-    Verify --> Fail : mismatch / stuck
+    Verify --> Perceive : step ok, action has more steps
+    Verify --> Done : action complete and verified
+    Verify --> Fail : mismatch or stuck
     Fail --> Escalate : structured failure up
     Escalate --> [*]
     Done --> [*]
 
+    note right of Perceive
+      Overlay is EXPECTED vs UNEXPECTED w.r.t. the current
+      action's contract:
+      - EXPECTED (confirm / keypad / negotiation / result) =
+        a STEP of the action -> act on it (tap OK, enter qty),
+        do NOT dismiss. It is just the next 'ready to act'.
+      - UNEXPECTED (news / event / error / reward / main_menu)
+        = an interrupt -> resolve generically, then resume.
+      DialogModel.kind says HOW to handle an overlay;
+      expected-vs-unexpected says WHICH branch.
+    end note
+
     note right of Escalate
       bounded retry / replan / safe-abort.
       NEVER inner-loop-retry forever.
-      headless: safe autonomous fallback,
-      not a crash.
+      headless: safe autonomous fallback, not a crash.
     end note
 ```
 
