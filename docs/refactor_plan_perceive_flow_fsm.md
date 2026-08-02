@@ -232,6 +232,64 @@ OmniParser + chrome detector + templates, correct, then train; thousands of
 unlabelled frames already exist in `data/sessions/`.  Tolerant of small shifts →
 retrain only on big UI redesigns, not every version wobble.
 
+## Design note — Dialog / overlay handling
+Dialogs (especially non-standard ones like the **daily-news** popup) have always
+been a weak spot: perception often fails to realise a dialog is showing *on top
+of* another screen (e.g. the inn), and per-dialog handling doesn't generalise.
+
+**We already have the right primitive.**  `vision/region_detectors/dialog.py::
+detect_dialog()` returns a **structural, content-agnostic** `DialogModel`: the
+frame, action buttons (label + position), the close **X** (`_find_x_close`
+finds it *wherever* it is — inside or outside the frame), a `title`, plus
+computed `kind()` (informational / confirmation / reward / system / quest /
+unknown) and `dismiss_action()` (tap_close / tap_ok / tap_claim /
+caller_decides).  The weakness is **architectural**, not a missing detector:
+`detect_dialog` is used only inside dismiss helpers, never wired into the
+classifier, and is gated behind the "obstruction" pre-check that can skip it
+(`perceive.py:447`).  A parallel keyword-interruptor list + per-dialog pixel
+signatures (`daily_news`, the `sail_actions` bright-modal guard) + duplicated
+market-local dialog handling fragment the logic.
+
+**The conceptual fix — ask two orthogonal questions every tick, not one label:**
+1. **Is there an overlay?** — structurally, via `detect_dialog`, independent of
+   recognising the *specific* dialog.  This is why non-standard dialogs slip
+   through today (matched by keyword/pixel-signature, not by structure).
+2. **What's the base underneath?** — and a dialog **does not change what's
+   underneath**.  When an overlay occludes the chrome, **keep the last-confident
+   base** rather than re-deriving the whole screen through the dialog (that
+   occlusion is exactly what confuses the single-label classifier).  →
+   "inn + daily-news dialog" falls out as `base: inn (remembered)` +
+   `overlay: dialog(kind=informational)`.
+
+**Concrete moves (build on what exists):**
+1. **Elevate `detect_dialog` to the first-class `overlay` axis of
+   `PerceivedState` — run every tick, ungated** (remove the obstruction
+   pre-check skip).
+2. **Base = last-confident base when an overlay occludes the chrome.**
+3. **Perceive-before-act gates on `overlay` first.**  Resolve via the
+   DialogModel's own affordances: `dismiss_action()` for standard kinds, and the
+   **detected** X/buttons wherever they are — which is precisely why the
+   **daily-news "X outside the frame"** case just works (tap where detected, not
+   a hardcoded spot).  For `confirmation` / `caller_decides`, the current goal
+   decides dismiss-vs-act (the flow-completeness rule: never dismiss a confirm
+   dialog that is part of your transaction).
+4. **Consolidate onto this one resolver.**  Retire the duplicated market-local
+   dialog handling; demote the keyword-interruptor list + per-dialog pixel
+   signatures to cheap **fast-path hints** that *trigger* `detect_dialog`, not
+   parallel decision paths.
+
+**Unknown dialogs that must be READ to act correctly** (novel event/choice where
+"dismiss" is wrong and the right option depends on content): `detect_dialog`
+gives "overlay present, N buttons, kind=unknown"; escalate to the **VLM** —
+"read this dialog; given goal X, which button?" → returns the detected button to
+tap.  Structural detector for *is-there-an-overlay-and-where-are-its-controls*,
+VLM for *what-does-this-unknown-one-want*.
+
+**Relationship to the layout detector:** the learned UI-slot detector later
+subsumes/hardens `detect_dialog` (dialog frame + buttons become learned slots),
+but `detect_dialog` can be elevated to the overlay axis **now** without waiting
+for training.
+
 ## Migration / compatibility notes
 - The recorded `flow.json` files stay as a **coordinate fallback**, but
   structural `_find_button` becomes primary everywhere (already true for buy;
