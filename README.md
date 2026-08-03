@@ -21,6 +21,15 @@ terminal (lat ≈ −1.27, the southern turnaround of a Cairo → Lake Victoria 
 round trip) and makes a clean U-turn — the white diamonds trace its path. Full
 round trip: 734 ticks / 4 course-flips / zero thrash on the current substrate.*
 
+It also handles **dead ends without a map**: at a Y-junction it probes into the
+dead-end tip, reverses out, and commits to the other branch.
+
+![Y-fork — probe the dead-end tip, back out, take the other branch](docs/media/nile_fork.gif)
+
+*A Y-junction on the Nile (37 consecutive ticks): the ship pushes up into the
+dead-end tip, reverses out when it stops making progress, and takes the other
+branch — Trémaux-style dead-end handling driven purely by the traced bank.*
+
 How it works, in layers:
 - **L1 heading** — a 220K-param CNN reads ship pose from the mini-map sprite (robust to occlusion).
 - **L2 segmentation** — water/land from the mini-map.
