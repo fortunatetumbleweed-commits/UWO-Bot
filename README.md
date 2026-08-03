@@ -1,10 +1,16 @@
 # UWO-Bot — an autonomous agent for *Uncharted Waters Origin*
-
 A Python bot that plays the mobile game **Uncharted Waters Origin** on a real
 Android phone. It sees only what a player sees — screen captures mirrored over
 `scrcpy` — perceives the game through a tiered vision stack, and drives the game
 through ADB touch input. The long-term goal is a self-growing trading company;
 today its strongest capability is **autonomous sea & river exploration**.
+
+I have been a huge fan of the Uncharted Waters series games by Koei Tecomo, and have been playing the UnCharted Waters Origin(https://store.steampowered.com/app/1574360/Uncharted_Waters_Origin/ and https://play.google.com/store/apps/details?id=com.linegames.uwogl&hl=en_US) for some time. Also I have been trying to learn AI for some time, but felt I lacked a use case that I am passionate about to go deeper. One day while playing the game, it came to me writting a bot using AI, and also make the bot intellegent would be something really fun. That is how this project got started.
+
+It started haphazardly predicably, half baked(quite charitale to say that) ideas being thrown around, and hodge podge code being build around them. This project is entirely written by Claude Code, I did not write a single line of code, and I do not know Python much either. The painpoint has really been how to verifiy the results, and how to describe the things I wanted to do to Claude, and understand what did Claude build without reading through the code that is in a language I am not familiar at all. But I have really been having fun, and learning a lot of things, most importantly learning how to verfiy the code that I myself did not write and do not full understand. Right now the exploring navigation works reasonable well, although still have some challenges(in this game the port name/icons are drawn partly on the water, the handling of that is still not ideal). But the navigation is working reasonally well, the bot has navigated the Nile river, north Africa shoreline down to Capetown. 
+
+The bot can also do trading, although this part is a bit rough and not very reliable sometimes. It uses a combination of vision models(Ominparser, MoonDream, Yolo) and OCR cropping to recognize game controls (sometimes not putting together well, and that is what I am trying ot learn more and improve), and also use a self trained U-net(posted as a separate project, this project uses the library generated from it) to recognize the direction of the ship for navigation purpose.
+
 
 ## 🧭 Exploration (the heart of the project)
 
@@ -13,6 +19,13 @@ map of its own** — it reads the in-game mini-map each tick, estimates the ship
 heading with a trained CNN, traces the nearest river/coast bank, and steers a
 shore-hugging path. That lets it descend the **Nile from Cairo to Lake Victoria
 and sail back** with almost no thrashing.
+
+![The bot's explored footprint on the in-game world map](docs/media/explored_world_map.png)
+
+*In-game World Map (Explore view): the revealed terrain — the Nile from the
+Mediterranean down to the equatorial lakes, and the North- & West-African
+coastline with its river mouths — is what the bot has actually navigated.
+Everything still under cloud is undiscovered.*
 
 ![Reaching the Nile's equatorial lake and turning around](docs/media/nile_voyage.gif)
 
@@ -90,5 +103,3 @@ Honest state — the redesign in `docs/refactor_plan_perceive_flow_fsm.md` targe
 - Refactor plan: `docs/refactor_plan_perceive_flow_fsm.md`
 - Design diagrams (Mermaid): `docs/new_design_diagrams.md`
 - Project rules & knowledge map: `CLAUDE.md`
-
-![The Nile the bot descends](docs/media/nile_map.png)
