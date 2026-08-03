@@ -57,3 +57,10 @@ memory/discoveries/*.json
 models/screen_classifier/
 data/rl/
 models/
+
+# README / doc media (committed)
+!docs/media/*.png
+!docs/media/*.gif
+
+# README is ignored by the user global gitignore; keep it for this repo
+!README.md
