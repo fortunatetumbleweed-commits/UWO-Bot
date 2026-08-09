@@ -165,7 +165,11 @@ class FallbackDetailWordingTests(unittest.TestCase):
         """
         import inspect
         import re
+        # The classify cascade was split into a thin family-gate wrapper
+        # (_classify_nav_state) + the detail cascade (_classify_nav_state_inner);
+        # the fallback wording lives in the inner. Inspect both halves.
         source = inspect.getsource(perceive_mod._classify_nav_state)
+        source += inspect.getsource(perceive_mod._classify_nav_state_inner)
 
         # Strip triple-quoted docstrings and # comments so we only check the
         # executable code, not historical-context comments.

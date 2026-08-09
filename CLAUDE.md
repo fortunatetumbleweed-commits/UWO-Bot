@@ -162,6 +162,27 @@ Detail:
 - Full vision pipeline → `docs/vision_pipeline.md`
 - `where_am_i()` design + location vocabulary → `docs/where_am_i_design.md`
 - Architecture overview (broader) → `docs/architecture_overview.md`
+- **Layered bot architecture (task / reasoning / skills / perception) — TARGET
+  design (2026-08-07)** → `docs/bot_architecture_layers.md`.  Task layer takes
+  natural-language tasks (goals + schedule + concurrent monitors); reasoning/
+  mission layer below owns "where am I + how to achieve the goal + recover";
+  skills layer wraps the existing goals/actions; perception is the structured
+  `PerceivedState` substrate.  The **reasoning fallback** (LLM over structured
+  state + intent, whitelisted actions; fixes wrong-place + headless-escalation)
+  → `docs/reasoning_fallback_layer_design.md`.
+- **Perception consolidation (A0–A3, A2 structured PerceivedState) — IN PROGRESS
+  (2026-08)** → `docs/perception_backlog.md` + `docs/a2_perceived_state_implementation_plan.md`.
+  Family CNN owns coarse structure (chromed ≠ overworld); panel identity from the
+  left-menu vocab; general `GridDetector` reads same-layout grids/lists; market
+  goods reader is OmniParser-detected (no hardcoded grid).  Principle: **detect,
+  don't hardcode; nav fast, buildings/port precise via OmniParser.**
+- **Affordance learning & curiosity — grow the KB from play (design, 2026-08-07)**
+  → `docs/affordance_learning_and_curiosity.md`.  OmniParser sees elements the KB
+  doesn't (`Trade Points`); learn them by reasoning + **safe** experimentation
+  (open info → Back), detect operation-completion signatures, record into an
+  affordance KB.  **Safety-gated**: probe only reversible/info affordances; never
+  experiment on spend/confirm/red-gem actions.  Extends the Data Flywheel +
+  learn-once.
 - KB record schemas → `docs/kb_record_schemas.md`
 - Scene model substrate → `docs/scene_model_design.md`
 - Dialog / event typed detectors → `docs/dialog_and_event_models.md`

@@ -144,10 +144,25 @@ Each tick logs `(PerceivedState, action, expected_post, actual_post, verified)`
   cancel-not-complete) are *verifiable perception facts* — solved by the action
   contract, not learning.
 - **Info-rich understanding + decisions (market buy/sell, crew hiring, dialog
-  choices): VLM + goal/rule prompt.**  A VLM reads the screen into a structured
-  scene and an LLM (or rules) chooses the action from a mission prompt.  This is
-  the "intelligent gameplay" tier — grounded reads + reasoning, verified by the
-  loop.  Not RL.
+  choices): a model + goal/rule prompt.**  A model reads the relevant content
+  into structured form and an LLM (or rules) chooses the action from a mission
+  prompt.  This is the "intelligent gameplay" tier — grounded reads + reasoning,
+  verified by the loop.  Not RL.  **The right model depends on how bounded and
+  clean the input is:**
+  - **Bounded, cleanly-extractable text → a *text* LLM (no pixels needed).**  A
+    dialog, a market-info panel, a crew stat panel is a small high-SNR region:
+    detect its box, OCR just that region, and feed the clean text **plus game
+    context** to a text LLM.  E.g. a hiring dialog: `{candidate, skills, wage,
+    chances}` + "hire Navigation mates under budget X" → which button.  This is
+    the niche the old `qwen_perceive` was *pointed at wrong* — it was fed the
+    whole screen's noisy OCR soup, not a bounded clean region.  Cheap (local
+    Qwen for routine, Claude for ambiguous).
+  - **Whole-scene / noisy input → a *pixel-aware* VLM, not a text LLM.**  When
+    the decision needs understanding the whole frame (or the extraction is
+    noisy), use a VLM that can correct bad OCR from pixels; a text-LLM-over-OCR
+    only inherits and amplifies the errors.
+
+  **Rule of thumb:** bounded-clean-text → text LLM; whole-scene/noisy → VLM.
 - **Pure strategy (which port, negotiate once/all/skip, which route): learned
   (later, optional).**  A sequential-decision problem with a real reward
   (**ducats/hour**) and no promptable optimum → contextual bandit / lightweight
@@ -294,12 +309,20 @@ market-local dialog handling fragment the logic.
    signatures to cheap **fast-path hints** that *trigger* `detect_dialog`, not
    parallel decision paths.
 
-**Unknown dialogs that must be READ to act correctly** (novel event/choice where
-"dismiss" is wrong and the right option depends on content): `detect_dialog`
-gives "overlay present, N buttons, kind=unknown"; escalate to the **VLM** —
-"read this dialog; given goal X, which button?" → returns the detected button to
-tap.  Structural detector for *is-there-an-overlay-and-where-are-its-controls*,
-VLM for *what-does-this-unknown-one-want*.
+**Unknown / choice dialogs that must be READ to act correctly** (a hiring
+dialog, an event/quest choice — "dismiss" is wrong and the right option depends
+on content): `detect_dialog` gives "overlay present, N buttons, kind=unknown"
+plus the **bounded dialog box**.  Because a dialog is a *small high-SNR region*,
+this is usually a **text-LLM** job, not a VLM one: **OCR just the dialog box**
+(clean, bounded) and send the extracted text **plus game context** —
+"read this dialog; given goal X, which button?" → it returns the detected button
+to tap.  Example (hiring): `{candidate, skills:Nav+3, wage, chances-left}` +
+"hire Navigation mates under budget X" → Hire / Skip.  No pixels needed when the
+box OCRs cleanly; escalate to a **VLM** only if the dialog is visually ambiguous
+or the OCR is unreliable.  Structural detector for
+*is-there-an-overlay-and-where-are-its-controls*, LLM/VLM for
+*what-does-this-one-want* (see the bounded-clean-text vs whole-scene rule in the
+decision-tiers section).
 
 **Relationship to the layout detector:** the learned UI-slot detector later
 subsumes/hardens `detect_dialog` (dialog frame + buttons become learned slots),

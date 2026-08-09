@@ -140,6 +140,18 @@ def load_inventory(scene_type: str, screen_title: str) -> SceneInventory | None:
 
 def save_inventory(inv: SceneInventory) -> None:
     """Persist a scene inventory to disk."""
+    # A0: a scene must be uniquely keyable to be cached.  With an empty
+    # screen_title the path collapses to slug(scene_type) alone (e.g.
+    # 'unknown.json'), so many unrelated frames overwrite ONE file and later
+    # frames load it back as a cached verdict — proven to drift classification
+    # across runs on identical input.  Classification must be reproducible;
+    # refuse to cache a title-less (non-distinctive) scene.
+    if not (inv.screen_title or "").strip():
+        logger.debug(
+            f"save_inventory: skip title-less scene (scene_type="
+            f"{inv.scene_type!r}) — not uniquely keyable"
+        )
+        return
     _SCENES_DIR.mkdir(parents=True, exist_ok=True)
     path = _scene_path(inv.scene_type, inv.screen_title)
     path.write_text(json.dumps(inv.to_dict(), indent=2, ensure_ascii=False))
@@ -626,9 +638,11 @@ class ClaudeVision:
         if not force:
             cached = load_inventory(scene_type, screen_title)
             if cached is not None:
+                # A0: a cache HIT is a pure read.  Don't re-persist just to
+                # bump visit telemetry — that write during classify is the
+                # side effect A0 forbids.  The in-memory bump is only for
+                # the log line below.
                 cached.visit_count += 1
-                cached.last_analysed_at = datetime.now(timezone.utc).isoformat()
-                save_inventory(cached)
                 logger.debug(
                     f"Scene inventory cache hit: {scene_type}/{screen_title} "
                     f"(visit #{cached.visit_count})"

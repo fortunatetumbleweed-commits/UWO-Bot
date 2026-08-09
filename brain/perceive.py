@@ -50,6 +50,8 @@ except Exception as _fp_exc:  # pragma: no cover — must not block perceive
 CONFIDENCE_HIGH = "high"
 CONFIDENCE_LOW  = "low"
 
+from brain.perceived_state import PerceivedState  # A2 structured view (Phase 0)
+
 
 # ── Result type ───────────────────────────────────────────────────────────────
 
@@ -66,6 +68,7 @@ class PerceiveResult:
     corrected:    bool = False         # True if Claude corrected this result
     scene_type:   Optional[str] = None # Qwen's domain-aware scene tag (village/harbor/market/…); None when Qwen not consulted or unsure
     task_complete: Optional[bool] = None  # Qwen's task-completion verdict when GoalContext was active; None otherwise. Goal layer uses as a SECONDARY arrival signal, not the sole one.
+    perceived:    "Optional[PerceivedState]" = None  # A2 structured view (base/overlay/mode/context); `state` above is derived from it via legacy_state(). Additive — not yet authoritative.
 
     def to_location_dict(self) -> dict:
         """Backward-compatible format matching the old where_am_i() return value."""
@@ -2328,7 +2331,98 @@ def _match_learned_recoveries(ocr_tokens: list) -> list:
 # ── Pass 3: Navigation state ──────────────────────────────────────────────────
 
 
+# A1 arbitration floor: a village fuzzy-match must reach at least this ratio
+# (well above the 0.6 accept cutoff) AND beat the port interpretation before it
+# can override a confident port_overworld CNN.  Stops 'Seville'→'Svear
+# Village'@0.70 from flipping a real port to a village.  See docs backlog A1.
+_VILLAGE_OVERRIDE_FLOOR = 0.80
+
+# Family CNN confidence at/above which its coarse verdict is trusted to gate the
+# detail cascade (same floor the family short-circuit already uses).
+_FAMILY_TRUST_FLOOR = 0.7
+_OVERWORLD_LOCATIONS = ("sea", "port_overworld", "world_map")
+
+
 def _classify_nav_state(frame) -> dict:
+    """Classify a frame, with the family CNN's coarse structure as a HARD gate.
+
+    The family CNN owns coarse structure: a confidently `chromed` frame is a
+    panel/building and can NEVER be an overworld (sea / port_overworld /
+    world_map). The detail cascade (`_classify_nav_state_inner`) can still be
+    fooled into an overworld state on an unfingerprinted chromed screen (e.g. a
+    village sub-screen, or any building after a game update breaks its
+    fingerprint), so we constrain its output: chromed@>=floor + overworld
+    verdict -> generic panel. See docs backlog; origin 2026-08-05.
+    """
+    result = _classify_nav_state_inner(frame)
+    try:
+        from vision.family_classifier import classify_family
+        fam = classify_family(frame)  # cached per id(frame) — no extra inference
+    except Exception as _fam_exc:
+        logger.debug(f"[classify] family verdict unavailable: {_fam_exc}")
+        fam = None
+
+    loc = (result or {}).get("location")
+    chromed = bool(fam is not None and fam.family == "chromed"
+                   and fam.confidence >= _FAMILY_TRUST_FLOOR)
+
+    # Family-CNN base GATE: a confidently chromed frame is a panel, never an
+    # overworld. Override the cascade if it landed on one.
+    if chromed and loc in _OVERWORLD_LOCATIONS:
+        logger.info(
+            f"[classify] family=chromed@{fam.confidence:.2f} GATE: cascade said "
+            f"{loc!r} but a chromed frame is never an overworld — → building"
+        )
+        result = {"location": "building", "port": None,
+                  "detail": f"Chromed panel (family CNN chromed@{fam.confidence:.2f}; "
+                            f"cascade said {loc})"}
+        loc = "building"
+
+    # Phase 3 panel-context reader: identify the panel from its LEFT MENU vs the
+    # tiered vocab (Explore/Loot/Gifting/Barter → Village; Buy/Sell → Market; …).
+    # Panels only — skips the OmniParser cost on sea/port_overworld, and on a
+    # panel the parse is already cached from the cascade's fingerprint step.
+    if loc in ("building", "sub_menu", "village") or chromed:
+        pc = _read_panel_context(frame)
+        if pc is not None and pc.context == "village" and pc.score >= 2:
+            logger.info(
+                f"[classify] → village (left-menu vocab match {pc.matched}; "
+                f"name={pc.village_name!r}) — was {loc!r}"
+            )
+            return {"location": "village", "port": pc.village_name,
+                    "detail": f"Village interior (menu: {', '.join(pc.matched)})"}
+    return result
+
+
+def _read_panel_context(frame):
+    """Detect the left menu and match it against the tiered vocab (Phase 3).
+
+    Returns a PanelContext or None. Uses cached OmniParser elements, so no extra
+    inference on frames the cascade already parsed.
+    """
+    try:
+        from vision.omniparser import parse_fast_cached
+        from vision.region_detectors.left_menu import detect_left_menu
+        from vision.panel_context import identify_context
+        els = parse_fast_cached(frame)
+        if els is None:
+            return None
+        lm = detect_left_menu(els, frame.width, frame.height)
+        if not (lm and lm.items):
+            return None
+        pc = identify_context([it["label"] for it in lm.items])
+        if pc is not None:
+            # active function = the selected menu item (title cross-check)
+            pc.menu_item = next(
+                (it["label"] for it in lm.items if it.get("is_selected")), None
+            )
+        return pc
+    except Exception as _pc_exc:
+        logger.debug(f"[classify] panel-context reader skipped: {_pc_exc}")
+        return None
+
+
+def _classify_nav_state_inner(frame) -> dict:
     """
     Classify a frame into a navigation state, returning the same dict shape
     where_am_i() used to produce: { "location", "port", "detail" }.
@@ -2410,19 +2504,36 @@ def _classify_nav_state(frame) -> dict:
                 # village but kept running.
                 if raw_port:
                     village, vratio = correct_village_name(raw_port)
-                    if village is not None:
+                    # A1 strong-vs-weak arbitration: villages are lumped
+                    # under port_overworld by the CNN, so a village title
+                    # legitimately overrides — but only when the village
+                    # match is STRONG (>= floor) AND beats the port reading
+                    # of the same OCR text.  Otherwise a real port like
+                    # 'Seville' (port match ≈1.0) gets unseated by a
+                    # marginal 'Svear Village'@0.70 and the grow loop stalls.
+                    _, pratio = correct_port_name(raw_port)
+                    if (village is not None
+                            and vratio >= _VILLAGE_OVERRIDE_FLOOR
+                            and vratio > pratio):
                         logger.info(
                             f"[classify] → village {village!r} "
                             f"(family-classifier said port_overworld@"
                             f"{family_verdict.confidence:.2f}, but top-"
                             f"left {raw_port!r} matched village catalogue "
-                            f"@ {vratio:.2f})"
+                            f"@ {vratio:.2f} > port @ {pratio:.2f})"
                         )
                         return {
                             "location": "village",
                             "port":     village,
                             "detail":   f"Village interior: {village}",
                         }
+                    if village is not None:
+                        logger.info(
+                            f"[classify] village match {village!r}@{vratio:.2f} "
+                            f"for {raw_port!r} REJECTED as override — port "
+                            f"interp @{pratio:.2f}, CNN port_overworld@"
+                            f"{family_verdict.confidence:.2f}; keeping port"
+                        )
 
                 # Generic 'Village' title — in-game village screens
                 # show literally "Village" as the top-left text, not
@@ -2666,15 +2777,31 @@ def _classify_nav_state(frame) -> dict:
     # the port_overworld fallback so the bot recognises arrival at a
     # village instead of misreading the village name as a garbled port.
     if port and chrome.has_back_arrow:
-        from vision.text_correction import correct_village_name, _is_generic_title
+        from vision.text_correction import (
+            correct_village_name, correct_port_name, _is_generic_title,
+        )
         village, vratio = correct_village_name(port)
-        if village is not None:
+        # A1 arbitration — SAME rule as the family-classifier branch above
+        # (kept in sync deliberately; see A6 in docs/perception_backlog.md).
+        # A village match must be STRONG (>= floor) AND beat the port reading
+        # of the same OCR text, so a real port name can't flip to village here.
+        _, pratio = correct_port_name(port)
+        if (village is not None
+                and vratio >= _VILLAGE_OVERRIDE_FLOOR
+                and vratio > pratio):
             logger.info(
                 f"[classify] → village {village!r} "
-                f"(top-left {port!r} matched village catalogue @ {vratio:.2f})"
+                f"(top-left {port!r} matched village catalogue @ {vratio:.2f} "
+                f"> port @ {pratio:.2f})"
             )
             return {"location": "village", "port": village,
                     "detail": f"Village interior: {village}"}
+        if village is not None:
+            logger.info(
+                f"[classify] village match {village!r}@{vratio:.2f} for {port!r} "
+                f"REJECTED as override — port interp @{pratio:.2f}; "
+                "not classifying as village"
+            )
         # Generic 'Village' title — see family-classifier branch above
         # for full rationale.  Identity comes from goal context.
         if _is_generic_title(port) and port.strip().lower() == "village":
@@ -2738,6 +2865,41 @@ def _classify_nav_state(frame) -> dict:
                 logger.info(f"[classify] → main_menu (items: {sorted(menu_overlap)})")
                 return {"location": "main_menu", "port": None,
                         "detail": f"Main menu open (items: {sorted(menu_overlap)})"}
+            # A BACK ARROW means we're inside a panel/building — never the open
+            # port_overworld (which shows a lighthouse, not a back arrow, and
+            # ALWAYS has the right panel). With the right panel also absent, the
+            # top-left text is a panel title / menu item (villages don't show a
+            # name; e.g. 'Barter'/'Explore'/'Gifting'), NOT a port name — often
+            # a spurious auto-correction to the nearest port. Do NOT commit to
+            # port_overworld on it; classify as a generic chromed panel. Origin:
+            # 2026-08-05 — this fallback swallowed every unfingerprinted village
+            # sub-screen (and would swallow any building on fingerprint drift).
+            # The RELIABLE panel signal is the left menu list: every chromed
+            # building/village/sub-screen has a title + a vertical left menu,
+            # always present (center/right panels are optional). Back-arrow
+            # detection alone is fragile and misses frames. A real
+            # port_overworld has NEITHER a left menu nor a back arrow (it has
+            # the right panel + a genuine port name), so if either fires this
+            # is a panel — refuse the port_overworld fallback.
+            has_left_menu = False
+            try:
+                from vision.omniparser import parse_fast_cached
+                from vision.region_detectors.left_menu import detect_left_menu
+                _els = parse_fast_cached(frame)
+                if _els is not None:
+                    _lm = detect_left_menu(_els, frame.width, frame.height)
+                    has_left_menu = bool(_lm and len(_lm.items) >= 2)
+            except Exception as _lm_exc:
+                logger.debug(f"[classify] left-menu probe failed: {_lm_exc}")
+            if chrome.has_back_arrow or has_left_menu:
+                logger.info(
+                    f"[classify] → building (panel structure: back_arrow="
+                    f"{chrome.has_back_arrow} left_menu={has_left_menu}; right "
+                    f"panel absent; top-left {port!r} is a title/menu item, not a "
+                    "port) — refusing the port_overworld fallback"
+                )
+                return {"location": "building", "port": None,
+                        "detail": f"Chromed panel (top-left text: {port})"}
             logger.info(
                 f"[classify] → port_overworld via port name {port!r} "
                 "(right panel unconfirmed)"
@@ -3139,6 +3301,20 @@ def perceive(frame=None) -> PerceiveResult:
             flow_id, flow_step, nav_state, detail
         )
 
+    perceived = PerceivedState.from_legacy(
+        nav_state, port, detail,
+        has_overlay=bool(remaining_interruptors),
+    )
+    # A2 Phase 3: on a panel, identify WHICH screen from the left-menu vocab
+    # (Market/Inn/Bank/…) and record it as the structured `context`. Panels only
+    # — the parse is already cached, and sea/port_overworld skip it.
+    if nav_state in ("building", "sub_menu", "village"):
+        pc = _read_panel_context(frame)
+        if pc is not None:
+            perceived.context = pc.context
+            perceived.menu_item = pc.menu_item
+            perceived.conf["context"] = round(min(1.0, pc.score / 3.0), 2)
+
     result = PerceiveResult(
         state         = nav_state,
         port          = port,
@@ -3150,6 +3326,8 @@ def perceive(frame=None) -> PerceiveResult:
         confidence    = confidence,
         scene_type    = (l25_result or {}).get("scene_type"),
         task_complete = (l25_result or {}).get("task_complete"),
+        # A2 Phase 0/3: structured view (additive; `state` stays authoritative).
+        perceived     = perceived,
     )
     _publish_observation(result, frame)
     return result

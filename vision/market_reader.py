@@ -377,6 +377,176 @@ def _apply_claude_fallback(
     return goods
 
 
+# ── OmniParser-based reader (precision-first, no hardcoded grid) ───────────────
+# The goods tiles are detected as `button` elements, so we don't assume a fixed
+# 3×3 grid at absolute pixels. This adapts to the actual number of goods (6 vs 9)
+# and is orientation / notch robust — the fixed-grid reader breaks when the whole
+# UI shifts (the live D11 "1-2 garbage items" symptom). Slower than the fixed
+# grid, but that's fine: building screens are off the nav hot-path and want
+# PRECISION over speed. See memory: perception is mode-dependent (nav=fast,
+# buildings/port=precise via OmniParser).
+
+def _parse_tile_from_button(button, text_els, tab: str) -> Optional[MarketGood]:
+    """Build a MarketGood from an OmniParser tile BUTTON + the text elements
+    inside it. Name = the button label (clean); price/index/qty/etc. from the
+    inner text via `_classify_token`, with y scaled to the `_TILE_H` reference so
+    the zone thresholds hold regardless of the detected tile's actual height."""
+    name = re.sub(r"\s+", " ", (button.label or "").strip())
+    tile_h = max(1, button.y2 - button.y1)
+    text_x0 = button.x1 + _IMG_ZONE_W
+
+    index_pct = price = available_qty = None
+    sold_out = False
+    category = ""
+    trend = "unknown"
+    name_tokens: list[tuple[str, int, int]] = []
+
+    for e in text_els:
+        text = (e.label or "").strip()
+        if not text:
+            continue
+        rel_y = int((e.cy - button.y1) * _TILE_H / tile_h)   # scale to _TILE_H frame
+        kind = _classify_token(text, rel_y)
+        if kind == "timer":
+            sold_out = True
+        elif kind == "index_pct":
+            v = int(re.sub(r"[^\d]", "", text))
+            if index_pct is None or abs(v - 100) < abs(index_pct - 100):
+                index_pct = v
+        elif kind == "price":
+            t_num = re.sub(r"\([-+]?\d+\)\s*$", "", text).strip()
+            digits = re.sub(r"^\D+|\D+$", "", re.sub(r"[,\.\+\-▼▲\s]", "", t_num))
+            if not digits.isdigit():
+                continue
+            v = int(digits)
+            if e.cx <= text_x0:
+                if available_qty is None or v > available_qty:
+                    available_qty = v
+            elif price is None or v > price:
+                price = v
+        elif kind == "trend":
+            trend = _TREND_MAP[text.lower()]
+        elif kind == "category":
+            category = text.title()
+        elif kind == "name" and e.cx > text_x0:
+            name_tokens.append((text, e.cx, e.cy))
+
+    # Prefer the button label; fall back to joined name tokens.
+    if len(name) < 3 and name_tokens:
+        name_tokens.sort(key=lambda t: (t[2], t[1]))
+        name = " ".join(t[0] for t in name_tokens[:2]).strip()
+    if len(name) < 2:
+        return None
+
+    from training.collector import apply_name_correction
+    name = apply_name_correction(name)
+
+    tile_cx = (button.x1 + button.x2) // 2
+    tile_cy = (button.y1 + button.y2) // 2
+    good = MarketGood(
+        name=name, category=category, index_pct=index_pct, trend=trend,
+        sold_out=sold_out, available_qty=available_qty,
+        tap_x=tile_cx, tap_y=tile_cy,
+    )
+    if tab == "purchase":
+        good.buy_price = None if sold_out else price
+    else:
+        good.sell_price = price
+    return good
+
+
+def read_market_page_omni(
+    frame: Image.Image,
+    tab: str = "purchase",
+    port: str = "unknown",
+    elements=None,
+    claude_fallback: bool = True,
+) -> list[MarketGood]:
+    """Read one visible market page from OmniParser-detected tiles.
+
+    No hardcoded grid: the goods tiles are `button` elements, so this adapts to
+    the number of goods and is orientation/notch-robust. `elements` may be a
+    pre-computed OmniParser list (cache hit); otherwise it is parsed here.
+    """
+    from vision.omniparser import parse_fast_cached
+    if elements is None:
+        try:
+            elements = parse_fast_cached(frame)
+        except Exception as exc:
+            logger.debug(f"[market omni] OmniParser unavailable: {exc}")
+            return []
+    if not elements:
+        return []
+
+    from vision.grid_detector import detect_grid
+    W, H = frame.width, frame.height
+    # goods zone: right of the left sub-menu, left of the cargo panel, below header
+    zone = (0.17 * W, 0.14 * H, 0.78 * W, 0.92 * H)
+    grid = detect_grid(elements, W, H, zone=zone, cell_types=("button",))
+    if grid is None:
+        logger.info(f"[{tab}] omni: no goods grid detected")
+        return []
+
+    text_els = [e for e in elements if getattr(e, "element_type", "") == "text"]
+    goods: list[MarketGood] = []
+    for cell in grid.in_reading_order():
+        cell_text = [e for e in text_els if cell.contains(e.cx, e.cy)]
+        good = _parse_tile_from_button(cell, cell_text, tab)
+        if not good:
+            continue
+        # Template-guided recovery: the index % sits at the bottom-left of EVERY
+        # cell (congruent layout). OmniParser's tiny-text detection is flaky, so
+        # when it's missing, re-read exactly that sub-region instead of guessing.
+        if good.index_pct is None:
+            good.index_pct = _recover_cell_index(frame, cell)
+        goods.append(good)
+
+    if claude_fallback:
+        goods = _apply_claude_fallback(frame, goods, tab)
+    logger.info(
+        f"[{tab}] omni grid {grid.n_rows}×{grid.n_cols}: {len(goods)} goods"
+    )
+    return goods
+
+
+def _recover_cell_index(frame: Image.Image, cell) -> Optional[int]:
+    """Re-read the price index from a cell's bottom-left corner via targeted OCR.
+
+    Used only when OmniParser dropped the % token for this cell. Because every
+    cell is congruent, the index's relative box is known — no full re-parse.
+    """
+    from vision.ocr import _get_reader
+    x0, y0, x1, y1 = cell.rel_region(0.0, 0.72, 0.36, 1.0)
+    x0, y0 = max(0, x0), max(0, y0)
+    x1, y1 = min(frame.width, x1), min(frame.height, y1)
+    if x1 <= x0 or y1 <= y0:
+        return None
+    try:
+        toks = _get_reader().readtext(np.array(frame.crop((x0, y0, x1, y1))), detail=0)
+    except Exception:
+        return None
+    # Clean read: "99%"
+    for t in toks:
+        m = re.search(r'(\d{1,3})\s*%', t)
+        if m:
+            return int(m.group(1))
+    # Garbled read: this corner holds ONLY the index badge, so any number here is
+    # the index. OCR often turns "99%" -> "990" or "990/" (the % becomes 0/'/'):
+    # a value > 250 ending in 0 is that misread — drop the trailing 0.
+    for t in toks:
+        digits = re.sub(r'\D', '', t)
+        if not digits:
+            continue
+        v = int(digits)
+        if 40 <= v <= 250:
+            return v
+        if v > 250 and digits.endswith('0'):
+            v2 = int(digits[:-1])
+            if 40 <= v2 <= 250:
+                return v2
+    return None
+
+
 # ── Alias used by market_actions.py ───────────────────────────────────────────
 
 def read_market_page_claude(
@@ -384,8 +554,9 @@ def read_market_page_claude(
     tab: str = "purchase",
     port: str = "unknown",
 ) -> list[MarketGood]:
-    """Compatibility alias — delegates to OCR reader (no API key required)."""
-    return read_market_page_ocr(frame, tab=tab, port=port)
+    """Compatibility alias — now delegates to the OmniParser reader (detected
+    tiles, orientation/notch-robust). Name kept for existing callers."""
+    return read_market_page_omni(frame, tab=tab, port=port)
 
 
 # ── Multi-page helpers (unchanged interface) ───────────────────────────────────
@@ -405,7 +576,7 @@ def read_market_all_pages(
 
     for scroll_n in range(max_scrolls + 1):
         frame     = capture_fn()
-        page_goods = read_market_page_ocr(frame, tab=tab, port=port)
+        page_goods = read_market_page_omni(frame, tab=tab, port=port)
 
         new_goods = [g for g in page_goods if g.name not in seen_names]
         if not new_goods and scroll_n > 0:

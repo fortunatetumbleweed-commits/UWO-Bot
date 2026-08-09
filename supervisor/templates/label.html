@@ -113,6 +113,20 @@
       justify-content: center;
       margin-bottom: 8px;
     }
+    .button-row.collapsed { display: none; }
+    /* review-mode "change type" toggle — keeps the tag panel at the top */
+    .type-toggle {
+      background: #1e1e1e;
+      color: #888;
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 5px 10px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      font-size: 0.78rem;
+    }
+    .type-toggle:hover { background: #2a2a2a; color: #d4d4d4; }
     .label-btn {
       background: #1e1e1e;
       color: #d4d4d4;
@@ -317,8 +331,12 @@
   <!-- label controls -->
   <div class="button-area">
 
-    <!-- screen type buttons -->
-    <div class="button-row" id="btn-row">
+    <!-- screen type buttons — collapsed by default in /type review mode
+         (all frames are the same type there), expandable to re-type a frame -->
+    {% if filter_type %}
+    <button class="type-toggle" id="type-toggle" onclick="toggleTypeRow()">▸ change type</button>
+    {% endif %}
+    <div class="button-row{% if filter_type %} collapsed{% endif %}" id="btn-row">
       {% for st in screen_types %}
       <button class="label-btn {% if frame.screen_type == st.id %}active{% endif %}"
               id="btn-{{ st.id }}"
@@ -380,6 +398,25 @@
 
     // ── tag panel ─────────────────────────────────────────────────────────────
 
+    // TIERED tags: a group may scope its chips to another group's selection
+    // (cascade). The driver group carries `cascade_key`; the dependent group
+    // carries `cascade_from` + `menu_by_context` (a {contextTagId: [tags]} map).
+    // `effectiveTags` resolves a group's live chip list.
+    function selectedContextFor(group) {
+      const groups = SCREEN_TAGS[selectedType] || [];
+      const src = groups.find(g => g.cascade_key && g.cascade_key === group.cascade_from);
+      if (!src) return null;
+      for (const t of (src.tags || [])) if (selectedTags.has(t.id)) return t.id;
+      return null;
+    }
+    function effectiveTags(group) {
+      if (group.menu_by_context) {
+        const ctx = selectedContextFor(group);
+        return ctx ? (group.menu_by_context[ctx] || []) : [];
+      }
+      return group.tags || [];
+    }
+
     function buildTagPanel(typeId) {
       const container = document.getElementById('tag-groups-container');
       container.innerHTML = '';
@@ -393,7 +430,15 @@
         lbl.textContent = group.group
             + (group.single_select ? ' (pick one)' : '');
         row.appendChild(lbl);
-        group.tags.forEach(tag => {
+        const tags = effectiveTags(group);
+        if (group.cascade_from && tags.length === 0) {
+          const hint = document.createElement('span');
+          hint.className = 'tag-group-label';
+          hint.style.opacity = '0.5';
+          hint.textContent = `— pick a ${group.cascade_from} first —`;
+          row.appendChild(hint);
+        }
+        tags.forEach(tag => {
           const chip = document.createElement('span');
           chip.className = 'tag-chip' + (selectedTags.has(tag.id) ? ' selected' : '');
           chip.dataset.tagId = tag.id;
@@ -411,6 +456,8 @@
       if (selectedTags.has(tagId)) {
         selectedTags.delete(tagId);
         chipEl.classList.remove('selected');
+        // Deselecting a cascade driver empties its dependent menu group.
+        if (group && group.cascade_key) refreshCascade(group.cascade_key);
         return;
       }
       // Single-select groups: deselect any previously-selected tag in
@@ -418,7 +465,7 @@
       // radio-button behaviour for groups marked single_select=true in
       // screen_tags.json.
       if (group && group.single_select) {
-        for (const otherTag of group.tags) {
+        for (const otherTag of effectiveTags(group)) {
           if (otherTag.id !== tagId && selectedTags.has(otherTag.id)) {
             selectedTags.delete(otherTag.id);
             const otherChip = document.querySelector(
@@ -430,6 +477,20 @@
       }
       selectedTags.add(tagId);
       chipEl.classList.add('selected');
+
+      // Cascade driver changed (e.g. a different building picked): drop any
+      // now-orphaned dependent-menu selections and re-render.
+      if (group && group.cascade_key) refreshCascade(group.cascade_key);
+    }
+
+    // Clear every dependent group's menu selections (they belong to the old
+    // context) and re-render so the scoped items reflect the current driver.
+    function refreshCascade(cascadeKey) {
+      const groups = SCREEN_TAGS[selectedType] || [];
+      groups.filter(g => g.cascade_from === cascadeKey)
+            .forEach(dep => Object.values(dep.menu_by_context || {})
+              .flat().forEach(t => selectedTags.delete(t.id)));
+      buildTagPanel(selectedType);
     }
 
     function hasTags(typeId) {
@@ -439,6 +500,15 @@
 
     // ── type selection ────────────────────────────────────────────────────────
 
+    // Review mode: show/hide the ~26 type buttons on demand (collapsed by
+    // default) so the tag panel stays at the top.
+    function toggleTypeRow() {
+      const row = document.getElementById('btn-row');
+      const btn = document.getElementById('type-toggle');
+      const collapsed = row.classList.toggle('collapsed');
+      if (btn) btn.textContent = (collapsed ? '▸' : '▾') + ' change type';
+    }
+
     function selectType(typeId) {
       document.querySelectorAll('.label-btn').forEach(b => b.classList.remove('active', 'pending'));
       selectedType = typeId;
@@ -446,6 +516,10 @@
       document.getElementById('btn-' + typeId).classList.add('pending');
       buildTagPanel(typeId);
       pendingConfirm = true;
+      // The tag panel sits below the type buttons inside a 45vh scroll box;
+      // bring it into view so its groups (incl. the cascading Menu item) aren't
+      // hidden below the fold after a type is picked.
+      document.getElementById('tag-panel').scrollIntoView({block: 'nearest'});
     }
 
     // ── confirm & submit ──────────────────────────────────────────────────────
@@ -531,11 +605,11 @@
         return;
       }
 
-      // Arrow keys = navigate (only when not in pending state)
-      if (!pendingConfirm) {
-        if (e.key === 'ArrowLeft')  { window.location.href = `${NAV_BASE}/frame/{{ prev_index }}`; return; }
-        if (e.key === 'ArrowRight') { window.location.href = `${NAV_BASE}/frame/{{ next_index }}`; return; }
-      }
+      // Arrow keys = navigate between frames — always (matches the ‹ › click
+      // arrows). Not gated on pendingConfirm, so you can page through already-
+      // labeled frames without clicking. (Typing in notes returns above.)
+      if (e.key === 'ArrowLeft')  { window.location.href = `${NAV_BASE}/frame/{{ prev_index }}`; return; }
+      if (e.key === 'ArrowRight') { window.location.href = `${NAV_BASE}/frame/{{ next_index }}`; return; }
 
       // Tab = focus notes
       if (e.key === 'Tab') {
@@ -549,7 +623,7 @@
         const keyLower = e.key.toLowerCase();
         const tagGroups = SCREEN_TAGS[selectedType] || [];
         for (const group of tagGroups) {
-          const tag = group.tags.find(t => t.key === keyLower);
+          const tag = effectiveTags(group).find(t => t.key === keyLower);
           if (tag) {
             const chip = document.querySelector(`[data-tag-id="${tag.id}"]`);
             if (chip) toggleTag(tag.id, chip, group);
@@ -570,6 +644,9 @@
       buildTagPanel(selectedType);
       const btn = document.getElementById('btn-' + selectedType);
       if (btn) btn.classList.add('active');
+      // In review mode (/type/<type>) the tag panel is the focus — scroll it
+      // into view so its groups are visible without hunting inside the scroll box.
+      if (FILTER_TYPE) document.getElementById('tag-panel').scrollIntoView({block: 'nearest'});
     }
   </script>
 

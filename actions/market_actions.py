@@ -202,6 +202,44 @@ def _get_elements(frame: Image.Image):
     return parser.parse_fast(frame)
 
 
+# ── Reasoning-fallback escalation ─────────────────────────────────────────────
+# When a scripted transaction step stalls on a dialog it did NOT expect (e.g. the
+# load-ratio / capacity warning that blocks the Confirm dialog), hand THAT screen
+# to the LLM reasoning layer to resolve it (tap OK / proceed), then let the flow
+# resume. The deterministic flow does the fast bulk work; the LLM only handles the
+# surprise dialog. See docs/reasoning_fallback_layer_design.md.
+_TXN_ESCALATION_INTENT = (
+    "You are in the middle of completing a market transaction (buying or selling "
+    "trade goods). A dialog is on screen that the scripted flow did not expect — "
+    "often a load-ratio / capacity warning or a confirmation. If it is a warning "
+    "and supplies are sufficient for the voyage, confirm it (tap OK / the [COMMIT] "
+    "button) to proceed. Handle whatever dialog is shown so the purchase/sale can "
+    "complete."
+)
+
+
+def _escalate_unexpected_dialog(intent: str = _TXN_ESCALATION_INTENT,
+                                max_steps: int = 3) -> bool:
+    """Hand the current screen to the reasoning layer to clear an unexpected dialog.
+
+    Returns True if the LLM acted (tapped something); the caller should then re-check
+    its expected state. Isolated import so market_actions doesn't hard-depend on the
+    reasoning layer at module load.
+    """
+    try:
+        from brain.reasoning_loop import resolve
+        from brain.world_model import WorldModel
+        logger.info("  [escalation] unexpected dialog — handing to reasoning layer…")
+        out = resolve(intent, WorldModel(), shadow=False, max_steps=max_steps,
+                      trigger="market_dialog_escalation")
+        acted = any((s.get("exec") or {}).get("ok") for s in out.get("steps", []))
+        logger.info(f"  [escalation] acted={acted} — {out.get('reason')}")
+        return acted
+    except Exception as exc:
+        logger.warning(f"  [escalation] failed: {exc}")
+        return False
+
+
 def _ocr_frame(frame: Image.Image, min_conf: float = 0.35) -> List[Tuple[str, float, int, int]]:
     """
     Run EasyOCR on a full frame.
@@ -829,8 +867,16 @@ def _sell_one_good(
         interval=_STEP_INTERVAL,
     )
     if not ok:
-        logger.warning("  Confirm Sales dialog did not appear — aborting")
-        return None
+        # unexpected dialog (e.g. load-ratio warning) blocked the Confirm —
+        # hand it to the reasoning layer, then re-check for the Confirm.
+        if _escalate_unexpected_dialog():
+            frame, ok = _wait_for_screen(
+                *_ckb().dialog_confirmation("confirm_sales"),
+                timeout=_STEP_TIMEOUT, interval=_STEP_INTERVAL,
+            )
+        if not ok:
+            logger.warning("  Confirm Sales dialog did not appear — aborting")
+            return None
     logger.info("  Confirm Sales dialog confirmed")
     _log_elements(frame, "confirm_sales_dialog")
 
@@ -960,8 +1006,12 @@ def sell_all_cargo(
     logger.info("  Waiting for Confirm Sales dialog…")
     frame, ok = _wait_for_screen("confirm", timeout=_STEP_TIMEOUT)
     if not ok:
-        logger.warning("  Confirm Sales dialog did not appear — aborting")
-        return []
+        # unexpected dialog blocked the Confirm — hand it to the reasoning layer.
+        if _escalate_unexpected_dialog():
+            frame, ok = _wait_for_screen("confirm", timeout=_STEP_TIMEOUT)
+        if not ok:
+            logger.warning("  Confirm Sales dialog did not appear — aborting")
+            return []
     logger.info("  Confirm Sales dialog confirmed")
 
     # ── Tap OK ────────────────────────────────────────────────────────────────
@@ -1858,13 +1908,19 @@ def auto_buy(
 
     logger.info(f"[{port}] Auto-buy: reading market…")
 
-    # Switch to Purchase tab and read available goods
+    # Switch to Purchase tab and read available goods. Read-with-verify: the
+    # goods grid can lag the tab tap (or a transient/greeting frame gets captured),
+    # so retry the read a few times instead of bailing on a single empty read.
     tap(*MARKET_COORDS["purchase"])
-    time.sleep(1.5)
-
-    frame = capture_screen()
-    _set_flow_scale(frame)
-    goods = read_market_page_claude(frame, tab="purchase", port=port)
+    goods: list = []
+    for attempt in range(4):
+        time.sleep(1.5)
+        frame = capture_screen()
+        _set_flow_scale(frame)
+        goods = read_market_page_claude(frame, tab="purchase", port=port)
+        if goods:
+            break
+        logger.info(f"  [auto_buy] no goods grid on read attempt {attempt + 1}/4 — retrying")
     buyable = [g for g in goods if not g.sold_out and g.buy_price]
 
     # Culture-aware filtering: skip goods that cannot be sold at the destination

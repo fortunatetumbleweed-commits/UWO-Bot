@@ -76,6 +76,14 @@ SCREEN_TAGS:  dict[str, list]     = _load_screen_tags()
 app = Flask(__name__, template_folder="templates")
 
 
+@app.after_request
+def _no_cache(resp):
+    # The UI (incl. its inline JS) is served fresh every request; without this a
+    # browser may keep an old cached page and miss labeler updates on reload.
+    resp.headers["Cache-Control"] = "no-store, must-revalidate"
+    return resp
+
+
 # ── label store ───────────────────────────────────────────────────────────────
 
 def _load_labels() -> dict[str, dict]:

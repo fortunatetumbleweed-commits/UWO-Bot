@@ -153,7 +153,8 @@
       {
         "group": "Parent Building",
         "single_select": true,
-        "_comment": "Required: tag every sub_menu with the parent building. Layout-generation tooling and the validator in tests/test_label_schema.py expect every sub_menu to have a building:X tag. Different in-game names that share sub-menu layouts (e.g. palace/castle, cathedral/temple/sanctuary/church) are kept as DISTINCT tags here — the layout loader resolves them to canonical layout files via memory/knowledge/building_aliases.json.",
+        "cascade_key": "building",
+        "_comment": "Required: tag every sub_menu with the parent building. Layout-generation tooling and the validator in tests/test_label_schema.py expect every sub_menu to have a building:X tag. Different in-game names that share sub-menu layouts (e.g. palace/castle, cathedral/temple/sanctuary/church) are kept as DISTINCT tags here — the layout loader resolves them to canonical layout files via memory/knowledge/building_aliases.json. `cascade_key: building` drives the tiered 'Menu item' group below — selecting a building reveals only THAT building's menu items.",
         "tags": [
           {"id": "building:harbor",         "label": "Harbor",         "key": "h"},
           {"id": "building:inn",            "label": "Inn",            "key": "i"},
@@ -174,14 +175,69 @@
         ]
       },
       {
-        "group": "Action",
+        "group": "Menu item",
         "single_select": true,
+        "cascade_from": "building",
+        "_comment": "TIERED: tags are scoped to the selected Parent Building (cascade_from: building) — pick a building above and ONLY that building's menu items appear here. Keys avoid the 16 building-group keys (h i m b y c u g n t a f l d k v) so shortcuts don't collide; they may repeat across buildings since only one building's items show at a time. CONFIDENCE: harbor/inn/market/item_shop/bank/shipyard menu items are verified from live flows; the rest (bureau/union/estate/fortune_teller/castle/palace/church/cathedral/temple/sanctuary) are best-effort game knowledge — correct them as you label.",
+        "menu_by_context": {
+          "building:harbor":         [{"id": "action:supply",       "label": "Supply",       "key": "s"},
+                                      {"id": "action:repair",       "label": "Repair",       "key": "r"},
+                                      {"id": "action:recruit_crew", "label": "Recruit Crew", "key": "o"}],
+          "building:inn":            [{"id": "action:recruit",      "label": "Recruit",      "key": "r"},
+                                      {"id": "action:hire",         "label": "Hire",         "key": "o"},
+                                      {"id": "action:party",        "label": "Party",        "key": "p"},
+                                      {"id": "action:employee",     "label": "Employee",     "key": "e"},
+                                      {"id": "action:manage_mate",  "label": "Manage Mate",  "key": "w"}],
+          "building:market":         [{"id": "action:purchase", "label": "Purchase",  "key": "p"},
+                                      {"id": "action:sell",     "label": "Sell",      "key": "e"}],
+          "building:item_shop":      [{"id": "action:gear",         "label": "Gear",         "key": "r"},
+                                      {"id": "action:tool",         "label": "Tool",         "key": "o"},
+                                      {"id": "action:black_market", "label": "Black Market", "key": "w"},
+                                      {"id": "action:sell",         "label": "Sell",         "key": "e"}],
+          "building:bank":           [{"id": "action:deposit_withdraw", "label": "Deposit/Withdraw", "key": "e"},
+                                      {"id": "action:savings",          "label": "Saving Account",  "key": "s"},
+                                      {"id": "action:insurance",        "label": "Insurance",       "key": "o"}],
+          "building:shipyard":       [{"id": "action:build",            "label": "Build",            "key": "r"},
+                                      {"id": "action:blueprint",        "label": "Blueprint",        "key": "e"},
+                                      {"id": "action:parts_shop",       "label": "Parts Shop",       "key": "p"},
+                                      {"id": "action:dismantle",        "label": "Dismantle",        "key": "s"},
+                                      {"id": "action:ship_inscription", "label": "Ship Inscription", "key": "o"},
+                                      {"id": "action:modify",           "label": "Modify",           "key": "w"},
+                                      {"id": "action:combine",          "label": "Combine",          "key": "q"},
+                                      {"id": "action:repair",           "label": "Repair",           "key": "x"}],
+          "building:bureau":         [{"id": "action:invest",          "label": "Invest",          "key": "o"},
+                                      {"id": "action:tax",             "label": "Tax",             "key": "x"},
+                                      {"id": "action:marketing_event", "label": "Marketing Event", "key": "e"}],
+          "building:union":          [{"id": "action:requests", "label": "Requests",  "key": "r"},
+                                      {"id": "action:limited",  "label": "Limited",   "key": "e"}],
+          "building:estate":         [{"id": "action:report_discoveries", "label": "Report Discoveries", "key": "r"},
+                                      {"id": "action:cartography",        "label": "Cartography",        "key": "o"},
+                                      {"id": "action:report_resources",   "label": "Report Resources",   "key": "e"},
+                                      {"id": "action:discovery_rank",     "label": "Discovery Rank",     "key": "s"}],
+          "building:fortune_teller": [{"id": "action:fortune",   "label": "Fortune",   "key": "o"},
+                                      {"id": "action:contract",  "label": "Contract",  "key": "e"},
+                                      {"id": "action:blueprint", "label": "Blueprint", "key": "r"},
+                                      {"id": "action:tool",      "label": "Tool",      "key": "s"}],
+          "building:castle":         [{"id": "action:audience", "label": "Audience",  "key": "o"}],
+          "building:palace":         [{"id": "action:audience", "label": "Audience",  "key": "o"}],
+          "building:church":         [{"id": "action:donate",   "label": "Donate",    "key": "o"}],
+          "building:cathedral":      [{"id": "action:donate",   "label": "Donate",    "key": "o"}],
+          "building:temple":         [{"id": "action:donate",   "label": "Donate",    "key": "o"}],
+          "building:sanctuary":      [{"id": "action:donate",   "label": "Donate",    "key": "o"}]
+        }
+      }
+    ],
+    "village": [
+      {
+        "group": "Menu item",
+        "single_select": true,
+        "_comment": "A village is a panel screen (base=panel, context=Village); these are its left-menu items — also used as the context-match vocabulary in vision/panel_context.py (a left menu containing several of these => context=Village, robust to game/UI drift).",
         "tags": [
-          {"id": "action:supply",   "label": "Supply",   "key": "s"},
-          {"id": "action:purchase", "label": "Purchase", "key": "p"},
-          {"id": "action:sell",     "label": "Sell",     "key": "e"},
-          {"id": "action:explore",  "label": "Explore",  "key": "x"},
-          {"id": "action:repair",   "label": "Repair",   "key": "r"}
+          {"id": "action:explore",      "label": "Explore",      "key": "x"},
+          {"id": "action:loot",         "label": "Loot",         "key": "o"},
+          {"id": "action:gift",         "label": "Gifting",      "key": "g"},
+          {"id": "action:barter",       "label": "Barter",       "key": "b"},
+          {"id": "action:recruit_crew", "label": "Recruit Crew", "key": "r"}
         ]
       }
     ],

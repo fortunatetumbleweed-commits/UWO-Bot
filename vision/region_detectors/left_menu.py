@@ -53,6 +53,15 @@ _CLUSTER_TOLERANCE_X_NORM = 80.0 / 2400.0
 # Inn has 5; an isolated label is probably not a menu).
 _MIN_CLUSTER_SIZE = 2
 
+# Menu items are narrow text rows, all in the same layout. The bottom-left
+# reward / info widgets (e.g. the market's Trade Points / Trade Info / Language
+# Effect boxes) are a DIFFERENT layout — full-panel-width filled boxes — and are
+# NOT menu items. A cluster whose typical member is that wide is a reward/info
+# group, not the menu, so it's deprioritised when picking the menu column.
+# (Origin 2026-08-06: on the market trading view these boxes outnumbered the
+# real Purchase/Sell menu and were wrongly returned as the menu.)
+_REWARD_BOX_WIDTH_NORM = 260.0 / 2400.0
+
 # Lock-indicator search tolerance.  A label is "locked" when an
 # 'Unavailable' / 'Locked' element is within this Y radius AND within
 # this X radius of the menu item's centre.
@@ -115,9 +124,60 @@ def detect_left_menu(
             "cx":          el.cx,
             "cy":          el.cy,
             "is_locked":   locked,
-            "is_selected": False,    # deferred — highlight detection is fragile
+            "is_selected": False,
         })
+
+    # Selected item = the one whose label matches the SCREEN TITLE. Game rule:
+    # selecting a menu item highlights it (golden background) AND sets the
+    # top-left title to its label (e.g. 'Purchase'). The title is a reliable
+    # OCR signal, so we use it as the primary selection cue (the golden
+    # highlight is the visual corroboration). Origin 2026-08-06.
+    title = _find_screen_title(elements, frame_width, frame_height)
+    if title:
+        best_i, best_r = None, 0.0
+        for i, it in enumerate(items):
+            r = _title_ratio(it["label"], title)
+            if r > best_r:
+                best_i, best_r = i, r
+        if best_i is not None and best_r >= 0.8:
+            items[best_i]["is_selected"] = True
+
     return LeftMenuRegion(items=items)
+
+
+def _norm_label(s: str) -> str:
+    return " ".join((s or "").strip().lower().split())
+
+
+def _title_ratio(label: str, title: str) -> float:
+    """Similarity of a menu label to the screen title (1.0 = clear match)."""
+    from difflib import SequenceMatcher
+    a, b = _norm_label(label), _norm_label(title)
+    if not a or not b:
+        return 0.0
+    if a == b or a in b or b in a:
+        return 1.0
+    return SequenceMatcher(None, a, b).ratio()
+
+
+def _find_screen_title(
+    elements: List[DetectedElement], frame_width: int, frame_height: int,
+) -> str:
+    """The screen title: the top-most text/button in the top-left corner, ABOVE
+    the menu zone (e.g. the '‹ Purchase' header). Empty string if none."""
+    cx_max = 0.30 * frame_width
+    cy_max = _ZONE_CY_MIN_NORM * frame_height   # above the menu candidate zone
+    cands = [
+        e for e in elements
+        if e.element_type in ("text", "button")
+        and (e.label or "").strip()
+        and any(c.isalpha() for c in e.label)
+        and e.cx < cx_max and e.cy < cy_max
+    ]
+    if not cands:
+        return ""
+    cands.sort(key=lambda e: (e.cy, e.cx))   # top-most, then left-most
+    return cands[0].label.strip()
 
 
 # ── Implementation helpers ────────────────────────────────────────────────
@@ -188,8 +248,18 @@ def _largest_left_column(
         else:
             clusters.append([el])
 
-    # Largest cluster first; ties broken by leftmost mean cx
-    clusters.sort(key=lambda c: (-len(c), sum(x.cx for x in c) / len(c)))
+    # Pick the MENU column: a cluster of narrow text rows, not the wide
+    # reward/info boxes. Deprioritise reward-box clusters (typical member spans
+    # the full panel), then prefer more members, then leftmost. This keeps the
+    # real menu even when the reward widgets outnumber it.
+    box_w = _REWARD_BOX_WIDTH_NORM * frame_width
+
+    def _is_reward_cluster(c: List[DetectedElement]) -> bool:
+        widths = sorted(e.x2 - e.x1 for e in c)
+        return widths[len(widths) // 2] >= box_w   # median member is full-width
+
+    clusters.sort(key=lambda c: (_is_reward_cluster(c), -len(c),
+                                 sum(x.cx for x in c) / len(c)))
     return clusters[0]
 
 
