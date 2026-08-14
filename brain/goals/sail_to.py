@@ -159,6 +159,21 @@ class SailToGoal:
             except Exception as _exc:
                 logger.debug(f"[sail_to] push_goal failed: {_exc}")
 
+        # Dismiss non-game blockers BEFORE perceiving — the daily-news / event /
+        # anniversary popups appear over the sea + world map during a voyage, and
+        # perceive()'s pixel+Moondream daily-news detector misfires on them (and
+        # then suppresses itself for 60 min), so the world-map nav gets stuck. The
+        # text-based clear_blockers catches them (Updates/Notices, the Perk/Season/
+        # Competition tab row) and is un-suppressed. See brain/unexpected_dialog.
+        try:
+            from capture.adb_capture import capture_screen
+            from brain.unexpected_dialog import clear_blockers
+            if clear_blockers(capture_screen()).get("cleared"):
+                import time as _t
+                _t.sleep(1.0)
+        except Exception as _exc:
+            logger.debug(f"[sail_to] clear_blockers failed: {_exc}")
+
         # Ground truth — includes interruptor dismissal (pass 1)
         state = perceive()
         # Flow-completeness bookkeeping (CLAUDE.md guideline): keep the

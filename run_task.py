@@ -17,6 +17,7 @@ if len(sys.argv) < 2:
 
 task_file = sys.argv[1]
 dry_run   = "--dry-run" in sys.argv
+trace     = "--trace" in sys.argv     # record every tap + pre-tap frame to a session
 
 if not dry_run:
     # Lock auto-rotate off / assert canonical landscape before any tapping —
@@ -26,6 +27,17 @@ if not dry_run:
 
 from actions.task_runner import run_task
 
-report = run_task(task_file, dry_run=dry_run)
+if trace and not dry_run:
+    from pathlib import Path
+    from actions import action_trace
+    action_trace.start(Path(task_file).stem)
+
+try:
+    report = run_task(task_file, dry_run=dry_run)
+finally:
+    if trace and not dry_run:
+        from actions import action_trace
+        action_trace.stop()
+
 print(f"\nTask complete. Rounds: {report.rounds_completed}  "
       f"Profit: {report.total_profit:+,} ducats")

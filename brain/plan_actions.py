@@ -199,10 +199,33 @@ def _handle_commit_via_positive_taps(action: dict) -> None:
     where they are; the handler discovers them dynamically via
     OmniParser.  See brain/commit_actions.py for selection rules.
     """
+    # Metric-gated recruit commit: if the crew HUD is readable, we're on a
+    # recruit/crew screen — verify the commit actually INCREASED crew instead
+    # of scoring success on "a button was tapped".  This is what stops the blind
+    # re-tap loop (2026-08-13); the generic path only knew "I tapped something".
+    # Opt out with action["verify"] == "off".
+    if action.get("verify", "auto") != "off":
+        try:
+            from capture.adb_capture import capture_screen
+            from vision.hud_readers import read_crew
+            if read_crew(capture_screen()) is not None:
+                from brain.verified_recruit import recruit_crew_verified
+                res = recruit_crew_verified()
+                if not res["ok"]:
+                    logger.warning(
+                        f"[commit] recruit verify — crew {res['crew_before']}→"
+                        f"{res['crew_after']} did NOT increase; commit ineffective "
+                        f"(tapped {res['tapped']}) — plan verify should escalate, not re-tap"
+                    )
+                return
+        except Exception as exc:
+            logger.debug(f"[commit] crew-verify probe failed: {exc}")
+
     from brain.commit_actions import commit_via_positive_taps
     commit_via_positive_taps(
         max_taps=action.get("max_taps", 6),
         settle_secs=action.get("settle_secs", 3.0),
+        goal_keywords=action.get("goal_keywords"),
     )
 
 

@@ -2,8 +2,11 @@
 
 Maps a whitelisted reasoning action `{op, arg, why}` to the real primitive
 (navigate_to_building / exit_to_overworld / _find_button+tap / press_back) and
-**refuses any commit/spend tap** (the red-gem discipline backstop). This is the
-"act" half of reason → execute → re-perceive → repeat.
+**refuses real-money commits** — the red-gem discipline backstop. Two gates:
+a verb-token gate (Confirm/Pay/…) and a currency gate that refuses any commit
+whose cost is in RED GEMS (UWO's real commit button just says 'Purchase'/
+'Recruit', which the token gate can't catch — the cost-icon colour can). This
+is the "act" half of reason → execute → re-perceive → repeat.
 
 Primitives are injectable (`prims=`) so the mapping + safety logic are testable
 without a phone. Real transactions (buy/sell) are the deterministic skills' job,
@@ -107,6 +110,13 @@ def execute(
             logger.info(f"[executor] REFUSED commit/spend tap {arg!r} — needs confirmation")
             return ExecResult(False, f"refused commit tap '{arg}'", refused=True)
         tgt = _resolve_element(arg, elements)
+        # RED-GEM discipline: a commit whose cost is in red gems spends REAL MONEY.
+        # Refuse it regardless of the verb (UWO's real commit button just says
+        # 'Purchase'/'Recruit', which the token gate above can't catch). The
+        # currency comes from the commit_button detector's cost-icon colour.
+        if tgt and tgt.get("currency") == "red_gem" and not (confirm_fn and confirm_fn(arg)):
+            logger.info(f"[executor] REFUSED red-gem (real-money) commit {arg!r}")
+            return ExecResult(False, f"refused red-gem commit '{arg}'", refused=True)
         if tgt:
             prims["tap_xy"](tgt["cx"], tgt["cy"])
             return ExecResult(True, f"tap({arg}) @({tgt['cx']},{tgt['cy']}) "

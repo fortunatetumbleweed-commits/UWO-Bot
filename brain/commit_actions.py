@@ -256,6 +256,43 @@ def _same_button(a: tuple, b: tuple) -> bool:
     )
 
 
+def _yellow_commit_button(elements, frame, goal_keywords: Optional[Iterable[str]]):
+    """Prefer the game's signature yellow COMMIT button (a `<cost> <VERB>` pill)
+    over a plain text-verb match.
+
+    OmniParser labels this button with the COST ("205,848") and spins the verb
+    off as a separate text element, so a text-verb search matches the wrong
+    control — e.g. the "Normal Recruit" TYPE SELECTOR instead of the yellow
+    "Recruit" commit (2026-08-13 recruit-loop bug). `detect_commit_buttons`
+    recognises the button by colour+layout and recovers {verb, cost, currency}.
+
+    Returns a lightweight btn (label/cx/cy) or None. NEVER returns a red-gem
+    (real-money) commit — those are dropped here so this primitive can't
+    auto-spend real money; the currency gate in action_executor remains the
+    backstop.
+    """
+    try:
+        from vision.region_detectors.commit_button import detect_commit_buttons
+        commits = detect_commit_buttons(elements, frame)
+    except Exception as exc:
+        logger.debug(f"[commit] yellow-commit detect failed: {exc}")
+        return None
+    commits = [c for c in (commits or []) if getattr(c, "currency", "") != "red_gem"]
+    if not commits:
+        return None
+    if goal_keywords:
+        kws = [k.lower() for k in goal_keywords]
+        matched = [c for c in commits if c.verb and any(k in c.verb.lower() for k in kws)]
+        if matched:
+            commits = matched
+    c = commits[0]
+    import types
+    return types.SimpleNamespace(
+        label=(c.verb or (f"commit ({c.cost})" if c.cost else "commit")),
+        cx=int(c.cx), cy=int(c.cy),
+    )
+
+
 def commit_via_positive_taps(
     *,
     max_taps: int = 6,
@@ -319,15 +356,21 @@ def commit_via_positive_taps(
         frame = capture_fn()
         elements = parse_fast_cached(frame)
 
-        if goal_keywords:
-            btn = find_positive_button_for_context(
-                elements, frame_w=frame.width, frame_h=frame.height,
-                goal_keywords=goal_keywords,
-            )
-        else:
-            btn = find_positive_button(
-                elements, frame_w=frame.width, frame_h=frame.height,
-            )
+        # Prefer the yellow COMMIT button (colour+layout) — it's the real
+        # positive action on purchase/recruit screens, where a text-verb match
+        # would pick a type-selector or tab instead.  Fall back to the
+        # text-verb search when no yellow commit is present (dialogs, etc.).
+        btn = _yellow_commit_button(elements, frame, goal_keywords)
+        if btn is None:
+            if goal_keywords:
+                btn = find_positive_button_for_context(
+                    elements, frame_w=frame.width, frame_h=frame.height,
+                    goal_keywords=goal_keywords,
+                )
+            else:
+                btn = find_positive_button(
+                    elements, frame_w=frame.width, frame_h=frame.height,
+                )
         if btn is None:
             logger.info(
                 f"[commit] iter {iteration}: no positive button found — "

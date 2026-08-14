@@ -400,10 +400,117 @@ _ACTION_HANDLERS = {
 }
 
 
+def run_smart_trade(path: Path, dry_run: bool = False) -> TaskReport:
+    """Decision-driven trade over a cycle of ports (yaml `mode: smart_trade`).
+
+    Instead of a fixed sell→buy→sail at every port, at each port it:
+      1. (profit-aware) sells only cargo that PROFITS there — carries the rest,
+         so it never dumps goods at a loss / at the port they were bought;
+      2. reads the resulting cargo fill (market kept open);
+      3. lets brain.trade_policy.decide_trade_action choose BUY (hold has room AND
+         there are goods profitable for the NEXT port, from the price KB) vs SAIL
+         (hold already loaded / nothing here worth buying);
+      4. sails to the next port.
+    One market visit per port.  Yaml: {mode: smart_trade, ports: [A, B, ...], rounds: N}.
+    """
+    from brain.trade_policy import TradeState, decide_trade_action
+    task = yaml.safe_load(path.read_text())
+    ports = task.get("ports", [])
+    rounds = task.get("rounds", 1)
+    report = TaskReport(task_name=task.get("name", path.stem),
+                        started_at=datetime.now(timezone.utc))
+    if len(ports) < 2:
+        logger.error("[smart_trade] need at least 2 ports in 'ports:'")
+        return report
+
+    logger.info("=" * 60)
+    logger.info(f"Smart trade: {' → '.join(ports)} → (loop)   {rounds} round(s)")
+    logger.info("=" * 60)
+
+    # Start the cycle from where the ship ACTUALLY is: rotate the route so it
+    # begins at the current port; if the ship is off-route, sail to the first
+    # route port first.  (The ship may not be at ports[0] — e.g. drifted to a
+    # neighbouring port.)
+    if not dry_run:
+        loc = where_am_i()
+        here = (loc.get("port") or _current_port() or "").strip()
+        idx = next((i for i, p in enumerate(ports)
+                    if here and p.lower() in here.lower()), None)
+        if idx:
+            ports = ports[idx:] + ports[:idx]
+            logger.info(f"[smart_trade] ship is at {here!r} — starting the cycle there")
+        elif idx is None and here:
+            logger.info(f"[smart_trade] ship at {here!r} is off-route — sailing to {ports[0]} first")
+            report.steps.append(run_sail_to(ports[0], report, dry_run))
+
+    for round_num in range(1, rounds + 1):
+        logger.info(f"\n── Round {round_num}/{rounds} ─────────────────────────────")
+        for i in range(len(ports)):
+            port, dest = ports[i], ports[(i + 1) % len(ports)]
+            logger.info(f"\n[smart_trade] at {port}, next → {dest}")
+            if dry_run:
+                report.steps.append(StepResult("smart_trade", port, ok=True, notes=f"dry-run → {dest}"))
+                continue
+
+            # 1. Profit-aware sell (self-limiting); keep the market open for the buy.
+            report.steps.append(run_sell_all(port, report, dry_run, exit_after=False))
+
+            # 2. Cargo fill (market still open) + goods profitable to buy for the dest.
+            from actions.market_actions import _read_cargo_capacity
+            from capture.adb_capture import capture_screen
+            used, total = _read_cargo_capacity(capture_screen())
+            try:
+                from memory.market_kb import profitable_routes
+                buyable = [r["good"] for r in profitable_routes(port, dest)]
+            except Exception as exc:
+                buyable = []
+                logger.debug(f"[smart_trade] profitable_routes failed: {exc}")
+
+            # 3. Decide BUY vs SAIL from the observed state.
+            action = decide_trade_action(TradeState(
+                port, dest, used, total, sellable_profit_here=[], buyable_for_dest=buyable))
+            logger.info(f"[smart_trade] decision @ {port}: {action['op'].upper()} — {action['why']}")
+            try:
+                from actions import action_trace
+                if action_trace.active():
+                    action_trace.record_decision(
+                        inputs={"port": port, "destination": dest,
+                                "cargo": f"{used}/{total}", "sellable_profit_here": [],
+                                "buyable_for_dest": buyable},
+                        output=action, model="brain.trade_policy.decide_trade_action")
+            except Exception as _exc:
+                logger.debug(f"[smart_trade] record_decision failed: {_exc}")
+
+            has_room = total > 0 and used < total * 0.85
+            if action["op"] == "buy":
+                report.steps.append(run_buy_all(port, report, dry_run,
+                                                destination=dest, enter_market=False))
+            elif has_room and not buyable:
+                # Cold start: the price KB has no known-profitable route port→dest
+                # yet.  With room in the hold, do an EXPLORATORY buy (auto_buy's
+                # culture-filtered specialties) to bootstrap the price data — safe
+                # because the profit-aware sell at the destination won't dump it at
+                # a loss.  Once the KB fills, buys become route-driven.
+                logger.info(f"[smart_trade] no KB route {port}→{dest} yet + hold has room "
+                            f"— exploratory buy to bootstrap prices")
+                report.steps.append(run_buy_all(port, report, dry_run,
+                                                destination=dest, enter_market=False))
+            else:
+                _exit_to_overworld()
+
+            # 4. Sail to the next port.
+            report.steps.append(run_sail_to(dest, report, dry_run))
+
+    report.print()
+    report.save()
+    return report
+
+
 def run_task(task_path: str | Path, dry_run: bool = False) -> TaskReport:
     """
     Load a YAML task file and execute it. Returns a TaskReport.
-    Dispatches to run_self_grow when mode: autonomous.
+    Dispatches to run_self_grow when mode: autonomous, run_smart_trade when
+    mode: smart_trade.
     """
     path = Path(task_path)
     if not path.exists():
@@ -414,6 +521,9 @@ def run_task(task_path: str | Path, dry_run: bool = False) -> TaskReport:
     if task.get("mode") == "autonomous":
         from actions.self_grow import run_self_grow
         return run_self_grow(path, dry_run=dry_run)
+
+    if task.get("mode") == "smart_trade":
+        return run_smart_trade(path, dry_run=dry_run)
     name    = task.get("name", path.stem)
     rounds  = task.get("rounds", 1)
     loop    = task.get("loop", [])

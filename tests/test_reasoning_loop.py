@@ -97,5 +97,63 @@ class LoopTests(unittest.TestCase):
             self.assertEqual(wm.fleet.current_building, "Inn")   # folded in
 
 
+class TaskExecutorTests(unittest.TestCase):
+    """Attempt memory + progress/stuck detection (the self-correcting executor)."""
+    class _R:
+        ok, note, refused = True, "ok", False
+
+    def test_progressed_by_signature_or_hud(self):
+        from brain.reasoning_loop import _progressed, Observation
+
+        def mk(buttons, hud=None):
+            return Observation(
+                perceived=PerceivedState(base="panel", context="Market", menu_item="Buy"),
+                elements=[{"label": b, "type": "button", "cx": 1, "cy": 1, "region": "C"}
+                          for b in buttons],
+                hud=hud or {})
+        self.assertFalse(_progressed(mk(["Buy", "Back"]), mk(["Buy", "Back"])))
+        self.assertTrue(_progressed(mk(["Buy", "Back"]), mk(["Buy", "Confirm"])))  # buttons changed
+        self.assertTrue(_progressed(mk(["Buy"], {"cargo": (10, 100)}),
+                                    mk(["Buy"], {"cargo": (20, 100)})))            # hud changed
+
+    def test_stuck_breaks_the_repeat_loop(self):
+        # same screen + same action every step → must declare STUCK, not run to max
+        out = resolve("goal", WorldModel(fleets=[Fleet(location="London")]),
+                      observe_fn=_inn_obs,
+                      llm_fn=lambda pr: '{"op":"tap","arg":"Recruit"}',
+                      execute_fn=lambda a, frame=None, **kw: TaskExecutorTests._R(),
+                      shadow=False, max_steps=10)
+        self.assertTrue(out["reason"].startswith("stuck"), out["reason"])
+        self.assertLess(len(out["steps"]), 10)                 # bailed early
+
+    def test_avoid_list_reaches_the_llm_after_no_progress(self):
+        prompts = []
+        resolve("goal", WorldModel(fleets=[Fleet(location="London")]),
+                observe_fn=_inn_obs,
+                llm_fn=lambda pr: prompts.append(pr) or '{"op":"tap","arg":"Recruit"}',
+                execute_fn=lambda a, frame=None, **kw: TaskExecutorTests._R(),
+                shadow=False, max_steps=10)
+        self.assertTrue(any("ALREADY TRIED" in p and "tap:Recruit" in p for p in prompts))
+
+    def test_cache_hit_replays_action_without_calling_llm(self):
+        import pathlib
+        import tempfile
+        from brain.decision_cache import DecisionCache
+        from brain.reasoning_loop import _screen_sig
+
+        obs = _inn_obs()
+        cache = DecisionCache(path=pathlib.Path(tempfile.mktemp()), persist=False)
+        cache.record(_screen_sig(obs), {"op": "tap", "arg": "Recruit"})
+        prompts = []
+        out = resolve("goal", WorldModel(fleets=[Fleet(location="London")]),
+                      observe_fn=lambda: obs,
+                      llm_fn=lambda pr: prompts.append(pr) or '{"op":"tap","arg":"WRONG"}',
+                      execute_fn=lambda a, frame=None, **kw: TaskExecutorTests._R(),
+                      shadow=False, max_steps=1, decision_cache=cache)
+        self.assertEqual(out["steps"][0]["action"]["arg"], "Recruit")  # from cache
+        self.assertTrue(out["steps"][0].get("cached"))
+        self.assertEqual(prompts, [])                                  # LLM never called
+
+
 if __name__ == "__main__":
     unittest.main()

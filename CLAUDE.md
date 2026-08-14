@@ -159,6 +159,16 @@ Android Phone (game)
 ```
 
 Detail:
+- **★ NEXT-PHASE FOUNDATION (read first, 2026-08-09)** →
+  `docs/next_phase_architecture_2026-08-09.md`.  Consolidated design for the next phase:
+  the THREE knowledge layers (strategy → task → control), the self-correcting
+  TASK EXECUTOR (done-conditions + attempt memory: remember what worked / didn't →
+  no-progress→try-different→stuck→escalate), progress/change detection
+  (`docs/state_change_detection.md` — structured, not pixel-diff), the tiered
+  reasoning cascade (cache → Qwen → Claude, learn-once), the knowledge base
+  (control/task/strategy KBs; play-learned + human text/URL), and the current-code
+  gap map + build order (HUD readers → task executor → done-conditions → decision
+  cache).  Supersedes/consolidates the earlier scattered design notes.
 - Full vision pipeline → `docs/vision_pipeline.md`
 - `where_am_i()` design + location vocabulary → `docs/where_am_i_design.md`
 - Architecture overview (broader) → `docs/architecture_overview.md`

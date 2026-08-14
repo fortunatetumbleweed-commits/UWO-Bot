@@ -299,18 +299,38 @@ _GENERIC_TITLE_WORDS = frozenset({
 })
 
 
-def _is_generic_title(raw: str) -> bool:
-    """True when *raw* is a single bare generic word like 'Village'.
+# Market / sub-menu action words AND port-building menu titles that appear as
+# the top-left title on non-overworld screens.  Same failure mode as the generic
+# titles above: fuzzy-matching them against the port catalogue mis-canonicalises
+# them (or read_port_name passes the raw word through), which `_is_on_overworld`
+# then reads as a visible port name and falsely confirms as port_overworld.
+# Origin: 2026-08-12 London↔Amsterdam run — 'Sell' → 'Seville' @ 0.73 (buy_all
+# skipped as if 'at Seville'); 'Market'/'Purchase' passed through raw and each
+# falsely confirmed a building/tab screen as overworld.  Hard-reject before any
+# fuzzy match.
+_UI_ACTION_WORDS = frozenset({
+    # market tab / action words
+    "sell", "buy", "purchase", "supply", "supplies",
+    # port building / menu titles (top-left label on those screens)
+    "market", "shipyard", "bank", "inn", "cathedral", "union",
+    "trade", "shop", "item", "warehouse", "guild",
+})
 
-    Multi-word titles ('Las Palmas', 'Berber Village') do not match —
-    only the single-token generic-noun case is rejected.
+
+def _is_generic_title(raw: str) -> bool:
+    """True when *raw* is a single bare word that is never a place name — a
+    generic UI title ('Village', 'Port') or a market action/tab label ('Sell',
+    'Purchase', 'Supply').
+
+    Multi-word titles ('Las Palmas', 'Berber Village') do not match — only the
+    single-token case is rejected.
     """
     if not raw:
         return False
     s = raw.strip().lower()
     if not s or " " in s:
         return False
-    return s in _GENERIC_TITLE_WORDS
+    return s in _GENERIC_TITLE_WORDS or s in _UI_ACTION_WORDS
 
 
 def _best_match(raw: str, candidates: list[str]) -> Tuple[Optional[str], float]:

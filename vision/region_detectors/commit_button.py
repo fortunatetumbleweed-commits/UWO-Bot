@@ -34,11 +34,22 @@ from vision.ocr import read_text
 YELLOW_MIN_FRAC = 0.28
 MIN_ASPECT      = 2.3      # width/height; buttons ≥2.8, tiles ~1.8
 
+# The cost sits at the button's LEFT as `<currency-icon> <cost>`. The icon tells
+# us what we'd SPEND: gold coin = ducat, red diamond = RED GEM (real money —
+# never autonomously), blue diamond = blue gem. The button is itself yellow/gold
+# so a ducat coin blends in — but a red or blue gem stands out as saturated
+# red / blue pixels against the yellow. So: red pixels → red_gem, blue → blue_gem,
+# neither → ducat. Calibrated on the live top-bar gem counters (blue 0.061 at the
+# blue icon, red 0.100 at the red icon, ~0 at the gold coin). See memory
+# feedback_commit_gate_misses_yellow_purchase.
+GEM_MIN_FRAC = 0.015      # gem-icon pixel fraction over the button's left band
+
 
 @dataclass
 class CommitButton:
     verb: str            # action verb, e.g. "Recruit" / "Buy" / "Sell" ("" if unread)
     cost: str            # currency amount text, e.g. "205,848" ("" if none)
+    currency: str        # "ducat" | "red_gem" | "blue_gem" — what the cost SPENDS
     cx: int
     cy: int
     x1: int
@@ -62,6 +73,28 @@ def yellow_fraction(arr: np.ndarray, x1: int, y1: int, x2: int, y2: int) -> floa
         return 0.0
     r, g, b = c[:, 0].astype(int), c[:, 1].astype(int), c[:, 2].astype(int)
     return float(((r > 150) & (g > 120) & (b < 110) & (abs(r - g) < 80)).mean())
+
+
+def cost_currency(arr: np.ndarray, x1: int, y1: int, x2: int, y2: int) -> str:
+    """Which currency the button spends, from the cost-icon colour on its LEFT.
+
+    Red diamond → 'red_gem' (real money), blue diamond → 'blue_gem', else the
+    gold coin → 'ducat'. Only the leftmost band (icon + cost) is scanned; the
+    white/dark verb text on the right never reads as saturated red/blue."""
+    h, w = arr.shape[:2]
+    x1, y1, x2, y2 = max(0, x1), max(0, y1), min(w, x2), min(h, y2)
+    xe = x1 + int(0.40 * (x2 - x1))               # left band: icon + amount
+    band = arr[y1:y2, x1:xe].reshape(-1, 3)
+    if len(band) == 0:
+        return "ducat"
+    r, g, b = band[:, 0].astype(int), band[:, 1].astype(int), band[:, 2].astype(int)
+    red  = ((r > 130) & (g < 110) & (b < 110) & (r - g > 40) & (r - b > 40)).mean()
+    blue = ((b > 120) & (r < 140) & (b - r > 25) & (b - g > 0)).mean()
+    if red >= GEM_MIN_FRAC and red >= blue:
+        return "red_gem"
+    if blue >= GEM_MIN_FRAC:
+        return "blue_gem"
+    return "ducat"
 
 
 def looks_like_commit_button(w: int, h: int, yellow_frac: float) -> bool:
@@ -110,6 +143,7 @@ def detect_commit_buttons(elements, frame: Image.Image,
             verb = verb or v2
             cost = cost or c2
         out.append(CommitButton(verb=verb, cost=cost,
+                                currency=cost_currency(arr, x1, y1, x2, y2),
                                 cx=int(getattr(e, "cx", (x1 + x2) // 2)),
                                 cy=int(getattr(e, "cy", (y1 + y2) // 2)),
                                 x1=x1, y1=y1, x2=x2, y2=y2, yellow_frac=round(yf, 2)))

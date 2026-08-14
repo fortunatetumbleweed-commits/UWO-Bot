@@ -923,6 +923,113 @@ def _sell_one_good(
     return result
 
 
+# ── Per-good sell profitability ─────────────────────────────────────────────
+#
+# The Sell page shows each good as `<sell_price> (<profit/unit>)`.  The
+# parenthetical is the game's PER-UNIT PROFIT for selling HERE — it already bakes
+# in the trade-DISTANCE bonus (the separate % is only the local market trend, NOT
+# profit; a nearby port at 96% can be worth far less than a distant one at 75%).
+# A LOSS renders the profit red / negative.  Reading this lets the seller sell
+# only profitable goods and skip losses — which also enforces "don't sell where
+# you bought" (those goods show a loss here).
+
+
+@dataclass
+class SellGoodInfo:
+    name: str
+    sell_price: int
+    profit_per_unit: int      # includes the distance bonus; < 0 = loss
+    is_loss: bool             # profit < 0 OR the number renders red
+    tap_x: int                # tile tap target (to load this good selectively)
+    tap_y: int
+
+
+def _profit_is_red(arr, cx: int, cy: int) -> bool:
+    """True if the profit number at (cx,cy) renders red (a loss)."""
+    r = arr[max(0, cy - 14):cy + 14, max(0, cx - 65):cx + 65]
+    if r.size == 0:
+        return False
+    R, G, B = r[:, :, 0].astype(int), r[:, :, 1].astype(int), r[:, :, 2].astype(int)
+    return float(((R > 130) & (G < 90) & (B < 90) & (R - G > 50)).mean()) > 0.01
+
+
+_GOOD_SUBTITLES = {"food", "liquor", "fabrics", "crafts", "wares", "seasoning",
+                   "livestock", "specialties", "medicine", "luxury", "sundries",
+                   "textiles", "ore", "dyes", "weapons", "gems"}
+
+
+def read_sell_page_profits(frame: Image.Image) -> List[SellGoodInfo]:
+    """Parse the Sell-page goods grid into per-good {sell_price, profit/unit,
+    is_loss, tap target}.  See the section header above for the mechanic."""
+    import re
+    arr = np.asarray(frame.convert("RGB"))
+    toks = _ocr_frame(frame, 0.3)
+    names = [(t.strip(), cx, cy) for t, c, cx, cy in toks
+             if t.replace(" ", "").isalpha() and len(t) > 2
+             and 180 < cy < 560 and 350 < cx < 1700
+             and t.strip().lower() not in _GOOD_SUBTITLES]
+    pat = re.compile(r"^([\d,]+)\s*\((-?[\d,]+)\)$")
+    out: List[SellGoodInfo] = []
+    for t, c, cx, cy in toks:
+        m = pat.match(t.strip())
+        if not m:
+            continue
+        price = int(m.group(1).replace(",", ""))
+        profit = int(m.group(2).replace(",", ""))
+        above = [(n, nx, ny) for n, nx, ny in names if ny < cy and abs(nx - cx) < 160]
+        if above:
+            name, nx, ny = min(above, key=lambda z: cy - z[2])
+            tap_x, tap_y = (nx + cx) // 2, (ny + cy) // 2
+        else:
+            name, tap_x, tap_y = "?", cx, cy - 90
+        out.append(SellGoodInfo(name, price, profit,
+                                profit < 0 or _profit_is_red(arr, cx, cy),
+                                tap_x, tap_y))
+    return out
+
+
+# ── Ground-truth sale verification ──────────────────────────────────────────
+#
+# A sell "succeeds" only when the world confirms it — cargo dropped / ducats rose
+# — not when a specific scripted dialog appears.  The escalation reasoning layer
+# can complete a sale through an unrecognised dialog; the market flow must not
+# then report a false failure (London↔Amsterdam run: sold ~all cargo for +103K
+# but logged "Confirm Sales dialog did not appear — aborting" and recorded +0).
+
+
+def _read_ducats_safe(frame: Image.Image) -> Optional[int]:
+    """Best-effort ducat balance from the top-bar currency cluster (None on failure)."""
+    try:
+        from vision.omniparser import parse_fast_cached
+        from vision.hud_readers import read_ducats
+        return read_ducats(parse_fast_cached(frame))
+    except Exception as exc:
+        logger.debug(f"[market] ducats read failed: {exc}")
+        return None
+
+
+def _verify_sale_completed(port: str, cargo_before: int, ducats_before: Optional[int],
+                           good_names: List[str]) -> Optional[List["SellResult"]]:
+    """Ground-truth check that a sell went through when the Confirm/Result dialog
+    signature was missed.  Returns [SellResult] with ducat-delta profit if cargo
+    dropped or ducats rose, else None."""
+    frame = capture_screen()
+    used_after, _ = _read_cargo_capacity(frame)
+    ducats_after = _read_ducats_safe(frame)
+    cargo_dropped = (cargo_before > 0 and 0 <= used_after < cargo_before - 10)
+    ducats_rose = (ducats_before is not None and ducats_after is not None
+                   and ducats_after > ducats_before)
+    if not (cargo_dropped or ducats_rose):
+        return None
+    profit = (ducats_after - ducats_before) if ducats_rose else 0
+    logger.info(f"[{port}] Sale VERIFIED by ground truth despite missed dialog "
+                f"(cargo {cargo_before}->{used_after}"
+                + (f", ducats +{profit:,}" if ducats_rose else "") + ")")
+    r = SellResult(good=", ".join(good_names))
+    r.total_amount = r.profit = profit
+    return [r]
+
+
 # ── Public API ─────────────────────────────────────────────────────────────────
 
 def sell_all_cargo(
@@ -959,6 +1066,7 @@ def sell_all_cargo(
     frame = capture_screen()
     _set_flow_scale(frame)
     used, total = _read_cargo_capacity(frame)
+    ducats_before = _read_ducats_safe(frame)   # ground-truth profit baseline (Brick-1 HUD)
     if total > 0 and used == 0:
         logger.info(f"[{port}] Cargo empty ({used}/{total}) — nothing to sell")
         return []
@@ -969,28 +1077,66 @@ def sell_all_cargo(
     sellable = [g for g in goods if not g.sold_out]
     good_names = [g.name for g in sellable] or ["<cargo>"]
     logger.info(f"[{port}] Cargo {used}/{total}; selling (goods best-effort: {good_names})")
+    _log_market_snapshot(port, sell=goods)          # feed the price flywheel
 
-    # ── Tap Load All ──────────────────────────────────────────────────────────
-    # Structural detection first (OmniParser/OCR) so the tap lands on the actual
-    # button regardless of the recorded flow's baked offset; flow coords are the
-    # fallback.  "Load All" lives in the bottom action band.
+    # ── Profit-aware selection ─────────────────────────────────────────────
+    # Read each good's per-unit profit (red = loss).  Sell only profitable goods;
+    # skip losses — which also enforces "don't sell where you bought" (those show a
+    # loss here).  If NOTHING is profitable, carry the cargo to a better port rather
+    # than dump it at a loss.  Falls back to Load All if the profit read fails.
+    selective = None
+    try:
+        profits = read_sell_page_profits(frame)
+    except Exception as exc:
+        profits = []
+        logger.debug(f"[{port}] sell-profit read failed: {exc}")
+    if profits:
+        for g in profits:
+            logger.info(f"[{port}]   {g.name}: {g.sell_price} (profit/unit {g.profit_per_unit:+})"
+                        f"{'  LOSS→skip' if g.is_loss else ''}")
+        profitable = [g for g in profits if not g.is_loss]
+        losses = [g for g in profits if g.is_loss]
+        if not profitable:
+            logger.info(f"[{port}] Nothing sells at a profit here — NOT selling "
+                        f"(carrying cargo to a better port)")
+            return []
+        if losses:
+            selective = profitable
+            logger.info(f"[{port}] Selling {len(profitable)} profitable good(s); skipping "
+                        f"{len(losses)} loss-making: {[g.name for g in losses]}")
+            good_names = [g.name for g in profitable]
+
     grid_step = _step(flow, "sell_tab_goods_grid")
-    load_all_pos = _find_button(frame, "Load All", y_min=int(frame.height * 0.85))
-    if load_all_pos is None:
-        load_all_pos = _flow_btn_coords(grid_step, "load all")
-    if load_all_pos is None:
-        logger.warning("  'Load All' not found by vision or flow — falling back to per-good sell")
-        return _sell_all_cargo_per_good(flow, port, sellable, negotiation_strategy)
-
-    logger.info(f"  Tapping Load All @ {load_all_pos}")
-    tap(*load_all_pos)
-
-    # ── Wait for basket to populate ───────────────────────────────────────────
-    logger.info("  Waiting for basket to populate…")
-    frame, ok = _wait_for_screen("nego", timeout=_STEP_TIMEOUT)
-    if not ok:
-        logger.warning("  Basket population not confirmed — attempting to proceed")
+    if selective is not None:
+        # Selective sell: load ONLY the profitable goods by tapping their tiles
+        # (Put-in-Bulk loads each good's full quantity into the sell basket).
+        _ensure_bulk_mode(True, frame)
+        for g in selective:
+            logger.info(f"  [sell] loading {g.name} @ ({g.tap_x},{g.tap_y})")
+            tap(g.tap_x, g.tap_y)
+            time.sleep(0.8)
         frame = capture_screen()
+        basket_ok = True
+    else:
+        # ── Tap Load All (all goods profitable, or profit read unavailable) ──
+        # Structural detection first; flow coords are the fallback.
+        load_all_pos = _find_button(frame, "Load All", y_min=int(frame.height * 0.85))
+        if load_all_pos is None:
+            load_all_pos = _flow_btn_coords(grid_step, "load all")
+        if load_all_pos is None:
+            logger.warning("  'Load All' not found by vision or flow — falling back to per-good sell")
+            return _sell_all_cargo_per_good(flow, port, sellable, negotiation_strategy)
+
+        logger.info(f"  Tapping Load All @ {load_all_pos}")
+        tap(*load_all_pos)
+
+        logger.info("  Waiting for basket to populate…")
+        frame, basket_ok = _wait_for_screen("nego", timeout=_STEP_TIMEOUT)
+        if not basket_ok:
+            # Load All produced no sell basket — usually nothing sellable (empty
+            # hold / supplies-only).  Don't escalate on the missing Confirm below.
+            logger.warning("  Basket population not confirmed — likely nothing to sell")
+            frame = capture_screen()
 
     # ── Tap Sell button ───────────────────────────────────────────────────────
     # Structural first (bottom-right action button); flow coords fallback.
@@ -1006,11 +1152,22 @@ def sell_all_cargo(
     logger.info("  Waiting for Confirm Sales dialog…")
     frame, ok = _wait_for_screen("confirm", timeout=_STEP_TIMEOUT)
     if not ok:
-        # unexpected dialog blocked the Confirm — hand it to the reasoning layer.
-        if _escalate_unexpected_dialog():
+        # Escalate to the reasoning layer ONLY if the basket populated (a real
+        # sale is mid-flight and an unexpected dialog is blocking the Confirm).
+        # If the basket never populated, there was nothing to sell — skip the
+        # escalation flail and go straight to the ground-truth check.
+        if basket_ok and _escalate_unexpected_dialog():
             frame, ok = _wait_for_screen("confirm", timeout=_STEP_TIMEOUT)
         if not ok:
-            logger.warning("  Confirm Sales dialog did not appear — aborting")
+            # Don't trust the missing dialog signature — a sale may have completed
+            # (escalation) OR there was nothing to sell.  Verify by GROUND TRUTH.
+            verified = _verify_sale_completed(port, used, ducats_before, good_names)
+            if verified is not None:
+                _save_sell_summary(port, verified)
+                return verified
+            reason = ("nothing to sell (empty basket)" if not basket_ok
+                      else "Confirm Sales dialog did not appear and no cargo/ducat change")
+            logger.info(f"[{port}] Sell skipped — {reason}")
             return []
     logger.info("  Confirm Sales dialog confirmed")
 
@@ -1039,6 +1196,19 @@ def sell_all_cargo(
                                 handler="market_sell_result")
     tap(*ok_pos)
     time.sleep(1.5)
+
+    # Ground-truth profit: the Result-dialog parse can miss the number (and it
+    # populates total_amount but not profit).  The ducat delta is the cash the
+    # sale actually brought in — prefer it; else surface the parsed amount.
+    ducats_after = _read_ducats_safe(capture_screen())
+    if ducats_before is not None and ducats_after is not None and ducats_after > ducats_before:
+        delta = ducats_after - ducats_before
+        if delta != result.total_amount:
+            logger.info(f"[{port}] sell profit from ducat delta: +{delta:,} "
+                        f"(dialog parse: {result.total_amount:,})")
+        result.total_amount = result.profit = delta
+    elif result.profit == 0:
+        result.profit = result.total_amount
 
     logger.info(
         f"[{port}] Sell complete — {len(good_names)} goods\n"
@@ -1120,6 +1290,8 @@ class BuyOrder:
     """A single good to purchase."""
     name: str
     quantity: object = "max"    # int for specific qty, "max" for all available
+    tap_pos: object = None      # (x, y) tile centre from the market read — lets the
+                                # bulk loader tap directly without re-running OmniParser
 
 
 @dataclass
@@ -1393,7 +1565,14 @@ def _buy_handle_negotiation(
             )
             return rounds, frame
 
-        if not _screen_contains(frame, "negotiat", "chance", "should i"):
+        # Detect the ACTUAL 'Attempt Negotiation' dialog by its unique text — NOT
+        # the bare word 'chance', which false-matches the market Purchase page's
+        # "Nego. Chance ?/64.7%" success-rate widget and made this loop spin 10×
+        # on a screen that was never the negotiation dialog (London↔Amsterdam run).
+        # The real dialog reads 'Attempt Negotiation' / 'Remaining negotiation
+        # attempts' / 'Do you want to bargain?'.  (A truly-entered negotiation
+        # screen always completes the purchase — a spinning loop means misdetection.)
+        if not _screen_contains(frame, "negotiat", "want to bargain"):
             logger.info(f"  Negotiation dialog gone after {rounds} round(s)")
             break   # dialog gone — done
 
@@ -1604,53 +1783,145 @@ def _ensure_bulk_mode(target_on: bool, frame: Image.Image) -> bool:
         return True
 
 
-def _buy_load_bulk(good_name: str, cargo_used: int) -> Tuple[bool, int]:
-    """
-    Load one good in 'Put in Bulk' mode: tap tile, wait for cargo counter to update.
-    Returns (success, new_cargo_used).
-    cargo_used is the current basket count before the tap (used to detect the update).
+# ── Apply Load Ratio helpers ─────────────────────────────────────────────────
+#
+# "Apply Load Ratio" is the checkbox to the RIGHT of "Put in Bulk".  Cargo space
+# is shared by trade goods + supplies (water/food); a user-set ratio reserves a
+# slice for supplies (20% here).  With the box CHECKED, loading trade goods stops
+# at the reserved cap — no "cargo exceeds load ratio" popup ever appears.  With it
+# unchecked, loading past the cap turns the cargo bar red ("4108(+N)/4108") and
+# pops the warning that stalls the deterministic flow.  Preferred behaviour: tick
+# it ON before bulk loading.  See memory project_cargo_load_ratio.
 
-    Optimistic fallback: if the cargo counter can't be read but no "purchase cost"
-    dialog appeared, the good was almost certainly loaded (bulk mode is on, tile tap
-    loaded directly into basket).  Return (True, cargo_used) in that case so the
-    basket state — not the unreadable counter — is the source of truth.
+
+def _find_apply_load_ratio_anchor(frame: Image.Image) -> Optional[Tuple[int, int]]:
+    """Full-frame (left_x, cy) of the 'Apply Load Ratio' label.
+
+    Layout: [☐ Put in Bulk]  [☐ Apply Load Ratio].  The checkbox sits to the LEFT
+    of the 'Apply' word, so we anchor on the phrase's LEFT edge (not its centre).
+    Returns None if the label is not found.
+    """
+    from vision.ocr import _get_reader
+    h, w = frame.height, frame.width
+    y0 = h - 130
+    strip = frame.crop((0, y0, w, h))
+    for bbox, text, conf in _get_reader().readtext(np.array(strip), detail=1):
+        tl = text.lower()
+        if conf >= 0.30 and ("apply" in tl or "load ratio" in tl):
+            xs = [p[0] for p in bbox]
+            ys = [p[1] for p in bbox]
+            return int(min(xs)), int((min(ys) + max(ys)) / 2) + y0
+    logger.debug("'Apply Load Ratio' label not found in bottom strip")
+    return None
+
+
+def _is_load_ratio_on(frame: Image.Image) -> bool:
+    """True if the 'Apply Load Ratio' checkbox shows a green checkmark (same
+    green signature as the 'Put in Bulk' box), read just LEFT of the label."""
+    anchor = _find_apply_load_ratio_anchor(frame)
+    if anchor is None:
+        return False
+    lx, cy = anchor
+    arr = np.array(frame)
+    x1, x2 = max(0, lx - 70), max(0, lx - 5)
+    y1, y2 = max(0, cy - 25), min(arr.shape[0], cy + 25)
+    region = arr[y1:y2, x1:x2]
+    if region.size == 0:
+        return False
+    r = region[:, :, 0].astype(int)
+    g = region[:, :, 1].astype(int)
+    b = region[:, :, 2].astype(int)
+    green_pixels = int(((g - r > 50) & (g - b > 50) & (g > 100)).sum())
+    is_on = green_pixels >= 5
+    logger.debug(f"'Apply Load Ratio' checkbox: {green_pixels} green px → {'ON' if is_on else 'OFF'}")
+    return is_on
+
+
+def _ensure_load_ratio_on(frame: Image.Image) -> bool:
+    """Tick 'Apply Load Ratio' ON before bulk loading so the game caps trade goods
+    at the reserved supply ratio (no overload popup).  The box defaults OFF, so —
+    unlike bulk-mode — we DO tap when it reads OFF, then verify the tick appeared.
+    Returns True when confirmed ON.  See memory project_cargo_load_ratio.
+    """
+    anchor = _find_apply_load_ratio_anchor(frame)
+    if anchor is None:
+        logger.debug("'Apply Load Ratio' label not found — cannot tick; proceeding")
+        return False
+    if _is_load_ratio_on(frame):
+        logger.debug("'Apply Load Ratio' already ON")
+        return True
+    lx, cy = anchor
+    # The checkbox sits immediately left of the label, centred ~13px left of the
+    # text's left edge (measured: box spans x[lx-25 .. lx+1]).  lx-35 missed it by
+    # ~10px, so the tick never engaged and carts overloaded (London↔Amsterdam
+    # trace, frame 0025: cargo red 4108(+102)).
+    chk_x, chk_y = lx - 13, cy
+    logger.info(f"  Ticking 'Apply Load Ratio' checkbox @ ({chk_x}, {chk_y}) (OFF → ON)")
+    tap(chk_x, chk_y)
+    time.sleep(0.6)
+    if _is_load_ratio_on(capture_screen()):
+        logger.info("  'Apply Load Ratio' confirmed ON")
+        return True
+    logger.warning("  'Apply Load Ratio' tick not confirmed after tap — proceeding anyway")
+    return False
+
+
+# Right-panel cart region (the loaded-goods tiles). A good loads iff a new tile
+# appears here — a cheap pixel-diff instead of OCRing the cargo counter. With
+# Put-in-Bulk + Apply-Load-Ratio both ON the game caps loading, so we don't need
+# the exact count. Validated on the London↔Amsterdam trace: real loads change
+# 8-21% of this region, non-loads 0.0-0.5% → a 4% threshold separates them.
+_CART_REGION = (1900, 120, 2385, 420)
+_CART_CHANGE_FRAC = 0.04
+
+
+def _cart_signature(frame):
+    """Cheap fingerprint of the cart region for change detection (~10ms)."""
+    return np.asarray(frame.convert("RGB").crop(_CART_REGION)).astype("int16")
+
+
+def _cart_changed(before, after) -> bool:
+    d = np.abs(after - before).mean(axis=2)
+    return float((d > 25).mean()) > _CART_CHANGE_FRAC
+
+
+def _buy_load_bulk(good_name: str) -> str:
+    """Load one good in 'Put in Bulk' mode. Confirmation = a NEW TILE appears in
+    the cart (right panel changes) — a cheap pixel-diff, NOT a cargo-counter OCR
+    (which cost ~5-8s/poll). Requires Put-in-Bulk + Apply-Load-Ratio ON.
+
+    Returns one of:
+      "loaded"    — a tile was added to the cart.
+      "no_tile"   — no tappable tile for this good (market sold out of it / grid
+                    exhausted). Caller should try the NEXT good.
+      "no_change" — a tile was tapped but nothing was added. Usually the ship is
+                    FULL (the ratio cap is reached — every further tap is a no-op);
+                    the caller confirms with one cargo read. Also covers the rare
+                    bulk-mode-OFF case (a purchase-cost dialog opened), dismissed here.
     """
     frame = capture_screen()
     pos = _find_tile_pos(frame, good_name)
     if pos is None:
-        logger.warning(f"  [bulk] Tile for '{good_name}' not found — skipping")
-        return False, cargo_used
+        logger.warning(f"  [bulk] Tile for '{good_name}' not found — market out of it, skipping")
+        return "no_tile"
 
+    before = _cart_signature(frame)
     logger.info(f"  [bulk] Tapping tile: {good_name} @ {pos}")
     tap(*pos)
 
-    # Wait for the cargo counter in the right panel to increase.
-    # Also watch for a "purchase cost" dialog — that signals bulk mode is OFF.
-    deadline = time.time() + 6.0
-    dialog_appeared = False
+    deadline = time.time() + 4.0
     while time.time() < deadline:
-        time.sleep(0.6)
-        chk = capture_screen()
-        if _screen_contains(chk, *_ckb_lazy("buy_result")):
-            dialog_appeared = True
-            logger.warning(f"  [bulk] {good_name}: 'purchase cost' dialog appeared — "
-                           f"bulk mode appears OFF; dismissing and marking as failed")
-            press_back()
-            return False, cargo_used
-        used, total = _read_cargo_capacity(chk)
-        if used > cargo_used:
-            logger.info(f"  [bulk] {good_name}: +{used - cargo_used} units "
-                        f"(cargo {used}/{total if total else '?'})")
-            return True, used
+        time.sleep(0.4)
+        if _cart_changed(before, _cart_signature(capture_screen())):
+            logger.info(f"  [bulk] {good_name}: loaded (cart tile added)")
+            return "loaded"
 
-    if not dialog_appeared:
-        # Cargo counter unreadable but no dialog → bulk tap went through.
-        # Treat as success; the basket has the good even though we can't verify count.
-        logger.info(f"  [bulk] {good_name}: cargo counter unreadable but no dialog appeared "
-                    f"— assuming loaded (optimistic)")
-        return True, cargo_used
-
-    return False, cargo_used
+    # Nothing added: usually the cart is full — OR bulk mode was off and a
+    # Trade Goods Info / purchase-cost dialog opened (dismiss it here, off the hot path).
+    if _screen_contains(capture_screen(), *_ckb_lazy("buy_result")):
+        logger.warning(f"  [bulk] {good_name}: purchase-cost dialog (bulk mode OFF) — dismissing")
+        press_back()
+    return "no_change"
 
 
 def buy_goods(
@@ -1699,29 +1970,34 @@ def buy_goods(
     if use_bulk:
         frame = capture_screen()
         _set_flow_scale(frame)
-        _ensure_bulk_mode(True, frame)  # logs state; never taps when targeting ON
+        _ensure_bulk_mode(True, frame)   # logs state; never taps when targeting ON
+        _ensure_load_ratio_on(frame)     # cap goods at the reserved supply ratio → no overload popup
 
-        used, total = _read_cargo_capacity(capture_screen())
-        logger.info(f"[{port}] [bulk] Cargo before load: {used}/{total if total else '?'}")
-
+        # FAST bulk load (user 2026-08-13): the market grid was already OmniParsed
+        # ONCE by the market read, so every order carries its tile position. Just
+        # TAP them all — no per-good OmniParser, no per-good poll. In bulk mode a
+        # tile tap loads the full stock; Apply-Load-Ratio caps loading when the hold
+        # fills (further taps are harmless no-ops). Verify the cart ONCE at the end.
+        # (Was ~9s/good — OmniParser find ~5s + cart poll ~4.5s; now ~0.5s/good.)
+        # A tile with no cached position falls back to a single _find_tile_pos.
+        cart_before = _cart_signature(capture_screen())
         for order in orders:
-            if total > 0 and used >= total:
-                logger.info(f"  Cargo full — skipping {order.name} and remaining goods")
-                break
-            logger.info(f"[{port}] [bulk] Loading: {order.name}")
-            ok, used = _buy_load_bulk(order.name, used)
-            if ok:
-                loaded.append(order.name)
-            time.sleep(0.5)
-
-        if not loaded:
-            # No tiles were found at all (all _find_tile_pos calls returned None).
-            # This is different from "tiles found but counter unreadable" — those
-            # return True optimistically now.  Zero tiles found means the goods
-            # grid is empty or OCR failed to locate any of the requested goods.
-            logger.warning(f"[{port}] [bulk] No tiles found for any requested goods — "
-                           f"aborting bulk load (not falling back to dialog; basket state unknown)")
+            pos = order.tap_pos or _find_tile_pos(capture_screen(), order.name)
+            if pos is None:
+                logger.warning(f"[{port}] [bulk] no tile for {order.name} — skipping")
+                continue
+            logger.info(f"[{port}] [bulk] tapping {order.name} @ {pos}")
+            tap(*pos)                        # built-in 0.3-0.8s jitter → not a burst
+            loaded.append(order.name)
+        time.sleep(1.5)                       # let the last tiles render into the cart
+        if not _cart_changed(cart_before, _cart_signature(capture_screen())):
+            logger.warning(f"[{port}] [bulk] cart unchanged after tapping {len(loaded)} tile(s) "
+                           f"— nothing loaded (bulk mode off / empty grid); aborting")
             return result
+        logger.info(f"[{port}] [bulk] tapped {len(loaded)} good(s); cart updated")
+        # NOTE: multi-page grids (> one screen of goods) would swipe up + re-read
+        # here while the hold has room — a follow-up (auto_buy currently reads one
+        # page). Our markets fit one page, so all ordered goods are tapped above.
 
     if not use_bulk:
         # Ensure bulk mode is OFF so tile taps open the dialog
@@ -1834,6 +2110,23 @@ def buy_goods(
     else:
         logger.warning("  Could not dismiss Confirm Purchase dialog after 3 attempts")
 
+    # ── Overload backstop ─────────────────────────────────────────────────────
+    # If the cart exceeded the trade-goods slot, the game shows a "The Cargo
+    # Hold's Trade Goods slot will be exceeded by N slots. Purchase the Trade
+    # Goods?" Notice AFTER the Confirm dialog.  With Apply Load Ratio engaged this
+    # shouldn't appear; if it does, confirm it (supplies are managed separately).
+    # Not handling it strands the buy — the exit logic taps the Notice's centre
+    # and misses OK (London↔Amsterdam trace, frame 0027).
+    frame = capture_screen()
+    if _screen_contains(frame, "exceeded by", "purchase the trade goods"):
+        ov_ok = _dialog_ok_pos(frame) or _find_button(frame, "ok", "OK")
+        if ov_ok is not None:
+            logger.info(f"  Trade-goods overload Notice — confirming (OK @ {ov_ok})")
+            tap(*ov_ok)
+            time.sleep(1.5)
+        else:
+            logger.warning("  Overload Notice present but OK button not found")
+
     # Handle negotiation (may loop multiple rounds)
     # Returns (rounds, result_frame) — result_frame is non-None if the result
     # dialog was already detected during negotiation (don't wait again).
@@ -1922,6 +2215,7 @@ def auto_buy(
             break
         logger.info(f"  [auto_buy] no goods grid on read attempt {attempt + 1}/4 — retrying")
     buyable = [g for g in goods if not g.sold_out and g.buy_price]
+    _log_market_snapshot(port, purchase=goods)      # feed the price flywheel
 
     # Culture-aware filtering: skip goods that cannot be sold at the destination
     if destination and buyable:
@@ -1974,7 +2268,8 @@ def auto_buy(
         # Always use "max" quantity — the Max button in the Trade Goods Info
         # dialog sets the quantity to all available stock without touching the
         # numeric keypad, which is unreliable for position detection.
-        orders.append(BuyOrder(name=g.name, quantity="max"))
+        pos = (g.tap_x, g.tap_y) if (g.tap_x is not None and g.tap_y is not None) else None
+        orders.append(BuyOrder(name=g.name, quantity="max", tap_pos=pos))
         # Deduct known stock from remaining capacity estimate
         if g.available_qty:
             remaining -= g.available_qty
@@ -1985,6 +2280,26 @@ def auto_buy(
 
     logger.info(f"[{port}] Placing {len(orders)} order(s): {[o.name for o in orders]}")
     return buy_goods(orders, port=port, negotiation_strategy=negotiation_strategy)
+
+
+def _log_market_snapshot(port: str, purchase=None, sell=None) -> None:
+    """Feed the market-price flywheel: persist this visit's per-good prices to the
+    market KB (memory.market_kb.save_snapshot). Accumulates the price surface that
+    profitable_routes() / all_buy_prices() / all_sell_prices() read from — the
+    substrate for destination-aware buying and the trade decision policy. Never
+    raises. See project_game_knowledge_base_vision, project_sell_profit_and_distance."""
+    try:
+        from datetime import datetime, timezone
+        from memory.market_kb import MarketSnapshot, save_snapshot
+        if not (purchase or sell):
+            return
+        snap = MarketSnapshot(port=port, timestamp=datetime.now(timezone.utc).isoformat(),
+                              purchase_goods=list(purchase or []), sell_goods=list(sell or []))
+        save_snapshot(snap)
+        logger.info(f"[{port}] market snapshot saved "
+                    f"({len(purchase or [])} buy, {len(sell or [])} sell prices)")
+    except Exception as exc:
+        logger.debug(f"[{port}] market snapshot save failed: {exc}")
 
 
 def _save_buy_summary(port: str, result: BuyResult) -> None:

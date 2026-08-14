@@ -93,6 +93,33 @@ class CorrectPortNameTests(unittest.TestCase):
                 canonical, _ = correct_port_name(raw)
                 self.assertIsNone(canonical, f"{raw!r} matched {canonical!r}")
 
+    def test_market_ui_words_not_coerced_into_ports(self):
+        # A market sub-menu title ('Sell') must not fuzzy-match a port
+        # ('Sell'->'Seville' @0.73 falsely confirmed the sell screen as
+        # overworld in the London<->Amsterdam run).
+        for raw in ("Sell", "Buy", "Purchase", "Supply", "Supplies",
+                    "Market", "Shipyard", "Bank", "Inn", "Cathedral", "Trade"):
+            with self.subTest(raw=raw):
+                canonical, _ = correct_port_name(raw)
+                self.assertIsNone(canonical, f"{raw!r} matched {canonical!r}")
+
+    def test_real_ports_still_match_after_ui_reject(self):
+        # The UI-word reject must not harm real port canonicalisation.
+        self.assertEqual(correct_port_name("Seville")[0], "Seville")
+        self.assertEqual(correct_port_name("Amsterdam")[0], "Amsterdam")
+
+    def test_read_port_name_returns_none_for_ui_title(self):
+        # read_port_name's raw-fallback must NOT hand back a bare UI title —
+        # otherwise _is_on_overworld reads 'Purchase'/'Sell' as a visible port
+        # and falsely confirms overworld on a market screen.
+        from unittest import mock
+        import vision.ocr as ocr
+        frame = mock.Mock(width=2400, height=1080)
+        with mock.patch.object(ocr, "_top_left_title_from_elements", return_value="Purchase"):
+            self.assertIsNone(ocr.read_port_name(frame, elements=[object()]))
+        with mock.patch.object(ocr, "_top_left_title_from_elements", return_value="London"):
+            self.assertEqual(ocr.read_port_name(frame, elements=[object()]), "London")
+
 
 # ── Waters / sea-region corrections ────────────────────────────────────────
 

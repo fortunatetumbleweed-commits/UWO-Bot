@@ -33,9 +33,9 @@ Failure modes the design accepts (not bugs):
   • Pinch-zoom-out is not implementable via ADB, so the bot pans at
     whatever zoom the user / game left the map at.  Multi-pan handles
     long distances naturally.
-  • Map wrap-around (date-line) is not modelled.  The bot always pans
-    the direct (game-coord-delta) direction; if the shorter path is
-    via wrap, the bot will pan the long way around the first time.
+  • Map wrap-around (date-line) IS modelled (2026-08-13): _wrap_dx picks the
+    shortest horizontal delta across the globe seam (wrap period derived from the
+    lat/lon affine). Latitude does not wrap, so vertical uses the direct delta.
 """
 
 from __future__ import annotations
@@ -189,6 +189,40 @@ _STRIDE_SETTLE_S = 0.6
 # this fraction of the screen in the direction the catalogue says the
 # target lies.  Smaller than the clamped pan so we don't overshoot.
 _BLIND_PAN_FRACTION = 0.6
+
+# ── Globe wrap (date-line) ────────────────────────────────────────────────────
+# The world map wraps HORIZONTALLY like a globe: pan far enough east and you come
+# back to where you started.  Latitude (vertical) does NOT wrap.  So the direction
+# to a target must use the SHORTEST horizontal delta across the seam — otherwise a
+# far port (e.g. Nagasaki→Port Royal) is chased the long way and the pan budget
+# runs out before it's found.  The wrap period (catalogue-x per 360° longitude) is
+# derived from the calibrated lat/lon affine so it tracks the real map.
+_WORLD_WRAP_FALLBACK = 10269.0
+_wrap_period_cache: Optional[float] = None
+
+
+def _world_wrap_gx() -> float:
+    global _wrap_period_cache
+    if _wrap_period_cache is not None:
+        return _wrap_period_cache
+    w = _WORLD_WRAP_FALLBACK
+    try:
+        from actions.latlon_localize import latlon_to_catalogue
+        a, b = latlon_to_catalogue(0, 0), latlon_to_catalogue(0, 360)
+        if a and b and 6000 < abs(b[0] - a[0]) < 16000:
+            w = abs(b[0] - a[0])
+    except Exception:
+        pass
+    _wrap_period_cache = w
+    return w
+
+
+def _wrap_dx(dgx: float) -> float:
+    """Shortest horizontal game-coord delta to a target across the globe seam."""
+    w = _world_wrap_gx()
+    dgx %= w
+    return dgx - w if dgx > w / 2 else dgx
+
 
 # Anchored-swipe margin: stay this many pixels off the screen edge to
 # avoid system gestures (back, status bar, navigation pill).
@@ -440,6 +474,21 @@ class WorldMapNavigator:
                     logger.info(
                         f"[pan_to_port] FOUND {vp.name!r} @ {vp.tap_pos}"
                     )
+                    try:
+                        from actions import action_trace
+                        if action_trace.active():
+                            action_trace.record_decision(
+                                inputs={"attempt": attempt,
+                                        "visible_ports": len(visible),
+                                        "target": [target_gx, target_gy],
+                                        "found": vp.name},
+                                output={"result": "FOUND",
+                                        "tap_pos": list(vp.tap_pos)},
+                                model="world_map_nav.pan_to_port",
+                                label=f"FOUND {vp.name} (attempt {attempt})",
+                            )
+                    except Exception as _exc:
+                        logger.debug(f"[pan_to_port] trace FOUND record failed: {_exc}")
                     return vp.tap_pos
 
             if not visible:
@@ -463,8 +512,13 @@ class WorldMapNavigator:
                 camera_y: Optional[float] = None
                 camera_source: str = "unknown"
 
-                if (_is_plausible_scale(cached_scale_x)
-                        and _is_plausible_scale(cached_scale_y)):
+                # Compute BOTH estimates, then reconcile.
+                wt_x = wt_y = None       # water-tap
+                dr_x = dr_y = None       # dead-reckon
+                scale_ok = (_is_plausible_scale(cached_scale_x)
+                            and _is_plausible_scale(cached_scale_y))
+
+                if scale_ok:
                     try:
                         from actions.latlon_localize import (
                             localize_screen_center,
@@ -477,30 +531,62 @@ class WorldMapNavigator:
                                 tap_cx, tap_cy = loc["catalogue"]
                                 # Back-project: camera-centre catalogue =
                                 # tap catalogue - (tap pixel - centre pixel) / scale.
-                                camera_x = tap_cx - (tap_px - frame.width / 2) / cached_scale_x
-                                camera_y = tap_cy - (tap_py - frame.height / 2) / cached_scale_y
-                                camera_source = "water-tap"
+                                wt_x = tap_cx - (tap_px - frame.width / 2) / cached_scale_x
+                                wt_y = tap_cy - (tap_py - frame.height / 2) / cached_scale_y
                                 logger.info(
                                     f"[pan_to_port] water-tap localize: "
                                     f"tap=({tap_px},{tap_py}) "
                                     f"latlon=({loc['latlon'][0]:.2f},{loc['latlon'][1]:.2f}) "
-                                    f"→ camera≈({camera_x:.0f},{camera_y:.0f})"
+                                    f"→ camera≈({wt_x:.0f},{wt_y:.0f})"
                                 )
                     except Exception as exc:
                         logger.debug(
                             f"[pan_to_port] water-tap localize raised: {exc}"
                         )
 
-                if (camera_x is None and from_info is not None
-                        and _is_plausible_scale(cached_scale_x)
-                        and _is_plausible_scale(cached_scale_y)):
-                    camera_x = from_info["x"] - total_swipe_dpx / cached_scale_x
-                    camera_y = from_info["y"] - total_swipe_dpy / cached_scale_y
+                if from_info is not None and scale_ok:
+                    dr_x = from_info["x"] - total_swipe_dpx / cached_scale_x
+                    dr_y = from_info["y"] - total_swipe_dpy / cached_scale_y
+
+                # Reconcile.  Dead-reckon's premise — the world map opens
+                # centred on the fleet — was live-verified 2026-08-13
+                # (raw open-center 2508 vs Port Royal catalogue 2504).  So
+                # right after a known stride, dead-reckon is trustworthy.
+                # Water-tap is ground truth WHEN it reads cleanly, but in
+                # port-less open ocean it misreads badly (2026-08-13
+                # London→Port Royal: it read camera x=6709 when dead-reckon
+                # said ~3680 — a bad reading that sent the next hops the wrong
+                # way until the globe-wrap coincidentally recovered).  So:
+                # prefer water-tap, but if it disagrees with dead-reckon by
+                # more than one screen-width, treat it as an open-ocean
+                # misread and use dead-reckon instead.
+                if wt_x is not None and dr_x is not None:
+                    disagree_px = max(
+                        abs(wt_x - dr_x) * cached_scale_x,
+                        abs(wt_y - dr_y) * cached_scale_y,
+                    )
+                    if disagree_px > frame.width:
+                        camera_x, camera_y = dr_x, dr_y
+                        camera_source = "dead-reckon (water-tap rejected)"
+                        logger.warning(
+                            f"[pan_to_port] water-tap≈({wt_x:.0f},{wt_y:.0f}) "
+                            f"disagrees with dead-reckon≈({dr_x:.0f},{dr_y:.0f}) "
+                            f"by {disagree_px:.0f}px (> 1 screen-width) — likely "
+                            f"an open-ocean misread; using dead-reckon"
+                        )
+                    else:
+                        camera_x, camera_y = wt_x, wt_y
+                        camera_source = "water-tap"
+                elif wt_x is not None:
+                    camera_x, camera_y = wt_x, wt_y
+                    camera_source = "water-tap"
+                elif dr_x is not None:
+                    camera_x, camera_y = dr_x, dr_y
                     camera_source = "dead-reckon"
 
                 if camera_x is not None and camera_y is not None:
-                    dgx = target_gx - camera_x
-                    dgy = target_gy - camera_y
+                    dgx = _wrap_dx(target_gx - camera_x)   # short way round the globe
+                    dgy = target_gy - camera_y             # latitude does not wrap
                     dpx = dgx * cached_scale_x
                     dpy = dgy * cached_scale_y
                     max_dpx = _SWIPE_FRACTION_MAX * frame.width
@@ -536,6 +622,20 @@ class WorldMapNavigator:
                         return None
                     last_swipe = current_swipe
                     last_visible_keys = current_visible_keys
+                    try:
+                        from actions import action_trace
+                        if action_trace.active():
+                            action_trace.record_decision(
+                                inputs={"attempt": attempt, "visible_ports": 0,
+                                        "camera_est": [round(camera_x), round(camera_y)],
+                                        "camera_source": camera_source,
+                                        "target": [target_gx, target_gy]},
+                                output={"swipe_dpx": swipe_dpx, "swipe_dpy": swipe_dpy},
+                                model="world_map_nav.pan_to_port",
+                                label=f"pan attempt {attempt} (no anchors: {camera_source})",
+                            )
+                    except Exception as _exc:
+                        logger.debug(f"[pan_to_port] trace no-anchor record failed: {_exc}")
                     actual_dpx, actual_dpy = self._swipe_pan(
                         swipe_dpx, swipe_dpy, frame.width, frame.height,
                     )
@@ -620,7 +720,7 @@ class WorldMapNavigator:
                 # from the centroid of visible labels.
                 cx_centroid = statistics.fmean(vp.game_x for vp in visible)
                 cy_centroid = statistics.fmean(vp.game_y for vp in visible)
-                dgx_sign = 1 if target_gx > cx_centroid else -1
+                dgx_sign = 1 if _wrap_dx(target_gx - cx_centroid) > 0 else -1
                 dgy_sign = 1 if target_gy > cy_centroid else -1
                 dpx = dgx_sign * frame.width  * _BLIND_PAN_FRACTION
                 dpy = dgy_sign * frame.height * _BLIND_PAN_FRACTION
@@ -631,8 +731,8 @@ class WorldMapNavigator:
                     f"swipe Δpix=({-dpx:.0f},{-dpy:.0f})"
                 )
             else:
-                dgx = target_gx - center_gx
-                dgy = target_gy - center_gy
+                dgx = _wrap_dx(target_gx - center_gx)   # short way round the globe
+                dgy = target_gy - center_gy             # latitude does not wrap
                 dpx = dgx * scale_x
                 dpy = dgy * scale_y
                 max_dpx = _SWIPE_FRACTION_MAX * frame.width
@@ -671,6 +771,37 @@ class WorldMapNavigator:
                 return None
             last_swipe = current_swipe
             last_visible_keys = current_visible_keys
+
+            # Capture the pan decision for frame-by-frame diagnosis in the
+            # trace viewer (only when a trace session is active — no cost
+            # otherwise).  Records the world-map frame + the numbers behind
+            # this swipe so overshoot / oscillation is visible with context.
+            try:
+                from actions import action_trace
+                if action_trace.active():
+                    _c = ([round(center_gx), round(center_gy)]
+                          if center_gx is not None and center_gy is not None
+                          else None)
+                    action_trace.record_decision(
+                        inputs={
+                            "attempt": attempt,
+                            "visible_ports": len(visible),
+                            "center_est": _c,
+                            "target": [target_gx, target_gy],
+                            "scale_chosen": [round(scale_x, 3) if scale_x else None,
+                                             round(scale_y, 3) if scale_y else None],
+                            "scale_source": [source_x, source_y],
+                            "fresh": [round(fresh_x, 3) if fresh_x else None,
+                                      round(fresh_y, 3) if fresh_y else None],
+                            "odo": [round(odo_x, 3) if odo_x else None,
+                                    round(odo_y, 3) if odo_y else None],
+                        },
+                        output={"swipe_dpx": -int(dpx), "swipe_dpy": -int(dpy)},
+                        model="world_map_nav.pan_to_port",
+                        label=f"pan attempt {attempt}",
+                    )
+            except Exception as _exc:
+                logger.debug(f"[pan_to_port] trace record failed: {_exc}")
 
             # Swipe direction is OPPOSITE the desired map-content motion:
             # to move the camera RIGHT (to see ports east of us), we drag

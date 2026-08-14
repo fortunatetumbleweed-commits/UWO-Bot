@@ -861,6 +861,37 @@ def _tap_building_action(building_type: str, sub_menu_id: str) -> bool:
     return True
 
 
+# Confirmation words on a NOTICE/confirm dialog whose positive button clears it.
+# Deliberately excludes commit/spend verbs (Purchase/Buy/Pay) — this is a safe
+# "acknowledge a blocking dialog" tap, not a transaction.
+_DIALOG_OK_WORDS = frozenset({"ok", "confirm", "continue", "yes"})
+
+
+def _tap_dialog_ok(frame) -> bool:
+    """Tap a blocking confirmation dialog's OK/Continue/Yes button, if present.
+
+    The 'different action' recovery tries when press_back keeps bouncing off a
+    confirmation Notice (e.g. "Moving to another menu will empty the cart.
+    Continue?" — OK empties the cart and lets us leave). Returns True if a
+    positive confirmation button was found and tapped. Never taps a commit/spend
+    button (those words aren't in _DIALOG_OK_WORDS).
+    """
+    from actions.adb_actions import tap
+    try:
+        from actions.sail_actions import _ocr_frame
+        tokens = _ocr_frame(frame, min_conf=0.4)
+    except Exception as exc:
+        logger.debug(f"  [recovery] _tap_dialog_ok OCR failed: {exc}")
+        return False
+    for text, _conf, cx, cy in tokens:
+        if text.strip().lower() in _DIALOG_OK_WORDS:
+            logger.info(f"  [recovery] variation: tapping dialog '{text}' @ ({cx},{cy}) "
+                        "(attempt-memory: press_back wasn't working)")
+            tap(cx, cy)
+            return True
+    return False
+
+
 # ── Primary recovery function ─────────────────────────────────────────────────
 
 def recover_to_port_overworld(
@@ -903,6 +934,17 @@ def recover_to_port_overworld(
     while time.time() < deadline and attempt < MAX_ATTEMPTS:
         attempt += 1
         frame  = capture_screen()
+        # Dismiss non-game blockers (lock/screensaver 'Slide up to unlock',
+        # promo/store popups) first — the FSM has no path out of them, so without
+        # this recovery stalls and escalates to the (headless) teaching loop.
+        # See brain/unexpected_dialog.clear_blockers.
+        try:
+            from brain.unexpected_dialog import clear_blockers
+            if clear_blockers(frame).get("cleared"):
+                time.sleep(1.0)
+                frame = capture_screen()
+        except Exception as exc:
+            logger.debug(f"  [recovery] clear_blockers failed: {exc}")
         result = perceive(frame)
         state  = result.state
 
@@ -1020,6 +1062,20 @@ def recover_to_port_overworld(
                 time.sleep(2.0)
                 continue
             # Fall through to blind Back/Home only if dismissal failed.
+
+        # ── Clear a blocking confirmation dialog BEFORE the FSM path ──────────
+        # press_back bounces off confirmation dialogs whose positive button is OK
+        # (e.g. "Moving to another menu will empty the cart. Continue?"), so the
+        # FSM's press_back loops forever. Do something DIFFERENT: if a
+        # confirmation dialog is on screen, tap its OK instead of pressing Back.
+        # Checked EVERY iteration (not gated on a stuck counter) because the
+        # reclassification above resets any per-state counter, which previously
+        # let this be preempted and never fire. Safe: _tap_dialog_ok only taps
+        # OK/Continue/Yes, never a commit/spend button. (User 2026-08-12: "if
+        # seeing the same thing and can't get where it wants, do something else.")
+        if state != "port_overworld" and _tap_dialog_ok(frame):
+            time.sleep(1.5)
+            continue
 
         # ── All other states: follow FSM BFS recovery path ────────────────
         path = registry.recovery_path(state)

@@ -321,6 +321,14 @@ def read_port_name(
     canonical, ratio = _correct(raw)
     if canonical is not None:
         return canonical
+    # A bare UI / tab title ('Purchase', 'Sell', 'Village') is definitively NOT a
+    # port name — return None so callers (e.g. _is_on_overworld) don't treat it as
+    # a visible port and falsely confirm overworld on a market screen.  Only the
+    # raw pass-through survives, for plausibly-novel port names not yet catalogued.
+    from vision.text_correction import _is_generic_title
+    if _is_generic_title(raw):
+        logger.debug(f"[read_port_name] {raw!r} is a UI title, not a port — returning None")
+        return None
     logger.warning(
         f"[read_port_name] raw OCR {raw!r} did not match any known port "
         f"(best similarity {ratio:.2f}); returning raw read"

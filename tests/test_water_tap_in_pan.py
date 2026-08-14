@@ -129,6 +129,61 @@ class WaterTapInPanTests(unittest.TestCase):
         self.assertEqual(pos, (800, 500))
         self.assertEqual(len(swipes), 1)
 
+    def test_water_tap_rejected_when_disagrees_with_dead_reckon(self):
+        """An open-ocean water-tap misread that disagrees with dead-reckon by
+        more than one screen-width is rejected; dead-reckon drives the swipe.
+
+        Repro of the 2026-08-13 London→Port Royal failure: the stride lands in
+        port-less ocean, water-tap misreads a camera far to the east, and the
+        next hop would go the wrong way if it were trusted."""
+        # berber close to tripoli → stride skipped, total_swipe=0, so
+        # dead-reckon camera == tripoli catalogue.
+        self.nav._ports = {
+            "berber": {"x": 4289, "y": 2212},
+            "tripoli": {"x": 4000, "y": 2200},
+        }
+        captures = [_frame(), _frame(), _frame(), _frame()]
+        parse_calls = [0]
+        def fake_parse(frame, ports, aliases):
+            idx = parse_calls[0]
+            parse_calls[0] += 1
+            if idx == 0:
+                return []          # attempt 1: no anchors → reconcile fires
+            return [_vp("berber", 4289, 2212, 800, 500)]
+
+        # Water-tap claims camera x=7000 — ~3000 catalogue (6000px @ scale 2.0)
+        # east of dead-reckon (tripoli x=4000).  That's >1 screen-width → reject.
+        bad_loc = {
+            "tap_pixel": (1200, 540),
+            "latlon": (30.0, 40.0),
+            "catalogue": (7000.0, 2200.0),
+        }
+        swipes = []
+        def fake_swipe(dpx, dpy, w, h):
+            swipes.append((dpx, dpy))
+            return dpx, dpy
+
+        with patch("actions.world_map_nav._load_persisted_scale",
+                   return_value=(2.0, 2.0)), \
+             patch("actions.world_map_nav._save_persisted_scale"), \
+             patch("capture.adb_capture.capture_screen",
+                   side_effect=captures), \
+             patch("actions.world_map_nav.parse_visible_ports",
+                   side_effect=fake_parse), \
+             patch.object(self.nav, "_swipe_pan", side_effect=fake_swipe), \
+             patch("actions.world_map_nav.time.sleep"), \
+             patch("actions.latlon_localize.affine_available",
+                   return_value=True), \
+             patch("actions.latlon_localize.localize_screen_center",
+                   return_value=bad_loc):
+            pos = self.nav.pan_to_port("berber", max_pans=6, from_port="tripoli")
+
+        self.assertEqual(pos, (800, 500))
+        # Dead-reckon (camera x=4000) targets berber (x=4289) to the EAST →
+        # dgx>0 → swipe_dpx < 0.  The rejected water-tap (x=7000) would have put
+        # berber to the WEST → swipe_dpx > 0.  Assert dead-reckon won.
+        self.assertLess(swipes[0][0], 0)
+
     def test_no_affine_skips_water_tap(self):
         """Without an affine on disk, water-tap should not even be attempted."""
         # 3 captures: stride pre-plan + attempt 1 (empty) + attempt 2 (hit).

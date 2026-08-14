@@ -49,6 +49,15 @@ def tap(x: int, y: int) -> None:
     instead of `input tap`, so the touch-down/hold/touch-up event sequence
     looks like a real finger rather than an instantaneous ADB tap.
     """
+    # Record the pre-tap frame + target when an action-trace session is active
+    # (debugging: replay a flow frame-by-frame; see actions/action_trace.py).
+    try:
+        from actions import action_trace
+        if action_trace.active():
+            action_trace.record_tap(int(x), int(y), "tap")
+    except Exception:
+        pass
+
     # Slight coordinate jitter — no human lands on exactly the same pixel
     x += random.randint(-2, 2)
     y += random.randint(-2, 2)
@@ -131,7 +140,20 @@ def swipe_fast(x1: int, y1: int, x2: int, y2: int,
 
 def press_back() -> None:
     """Send the Android BACK key."""
+    try:
+        from actions import action_trace
+        if action_trace.active():
+            action_trace.record_tap(-1, -1, "back")
+    except Exception:
+        pass
     _adb(["shell", "input", "keyevent", "4"])
+    _human_delay()
+
+
+def wake() -> None:
+    """Wake the screen (KEYCODE_WAKEUP) — used before dismissing the lock/
+    screensaver, which the game idles into between steps."""
+    _adb(["shell", "input", "keyevent", "224"])   # KEYCODE_WAKEUP
     _human_delay()
 
 

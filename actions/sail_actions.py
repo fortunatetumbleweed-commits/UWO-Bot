@@ -947,6 +947,18 @@ def navigate_to_building(building_name: str, timeout: float = 60.0) -> bool:
         # redundant ADB screencaps (~5s each).
         frame = capture_screen()
 
+        # Clear unexpected NON-GAME blockers that freeze navigation — the idle
+        # lock/screensaver and the game's promo/store popups (perceive's interruptor
+        # layer doesn't cover these graphical promos / the lock state). Dismiss +
+        # re-capture. See brain/unexpected_dialog.clear_blockers.
+        try:
+            from brain.unexpected_dialog import clear_blockers
+            if clear_blockers(frame).get("cleared"):
+                time.sleep(1.0)
+                frame = capture_screen()
+        except Exception as _exc:
+            logger.debug(f"  [{building_name}] clear_blockers failed: {_exc}")
+
         # Special case: harbor is a right-panel overlay, not a new screen.
         # Detect it by its unique panel content before checking where_am_i().
         if _harbor_panel_open(frame):

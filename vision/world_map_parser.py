@@ -304,6 +304,19 @@ def parse_visible_ports(
     for el in text_like:
         named = _ports_named_in_text(el.label, ports, port_aliases)
         if not named:
+            # Exact-substring match found nothing.  The label may be
+            # OCR-corrupted — notably the docked-fleet marker renders over
+            # the CURRENT port's label, turning "Port Royal" → "Pont Royal"
+            # (r→n), which makes the home port undetectable and sends
+            # pan_to_port oscillating around a target it can see but can't
+            # read.  Fall back to the fuzzy single-token matcher (same
+            # _SIM_THRESHOLD used everywhere else) so a small OCR error
+            # still resolves.  Only fires when substring found nothing, so
+            # clean labels and merged multi-port labels are unaffected.
+            fuzzy_key = _match_token_to_port(el.label, ports, port_aliases)
+            if fuzzy_key is not None:
+                named = [fuzzy_key]
+        if not named:
             continue
 
         if len(named) == 1:

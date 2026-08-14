@@ -5,7 +5,19 @@ import numpy as np
 
 from vision.region_detectors.commit_button import (
     yellow_fraction, _split_verb_cost, CommitButton, looks_like_commit_button,
+    cost_currency,
 )
+
+
+def _button(icon=None):
+    """A 300×60 yellow commit button; optionally a coloured gem diamond on its left."""
+    a = np.zeros((60, 300, 3), np.uint8)
+    a[:] = (210, 170, 40)                        # yellow/gold fill
+    if icon == "red":
+        a[20:40, 15:45] = (200, 40, 40)          # red diamond
+    if icon == "blue":
+        a[20:40, 15:45] = (50, 90, 210)          # blue diamond
+    return a
 
 
 class LooksLikeCommitTests(unittest.TestCase):
@@ -50,8 +62,28 @@ class SplitVerbCostTests(unittest.TestCase):
         self.assertEqual(_split_verb_cost("82,707,048"), ("", "82,707,048"))
 
     def test_commit_button_label_prefers_verb(self):
-        self.assertEqual(CommitButton("Recruit", "205,848", 1, 2, 0, 0, 0, 0, 0.4).label, "Recruit")
-        self.assertEqual(CommitButton("", "999", 1, 2, 0, 0, 0, 0, 0.4).label, "commit (999)")
+        self.assertEqual(CommitButton("Recruit", "205,848", "ducat",
+                                      1, 2, 0, 0, 0, 0, 0.4).label, "Recruit")
+        self.assertEqual(CommitButton("", "999", "ducat",
+                                      1, 2, 0, 0, 0, 0, 0.4).label, "commit (999)")
+
+
+class CostCurrencyTests(unittest.TestCase):
+    """Which currency the button spends, from the cost-icon colour (red-gem gate)."""
+    def test_gold_coin_reads_ducat(self):
+        self.assertEqual(cost_currency(_button(None), 0, 0, 300, 60), "ducat")
+
+    def test_red_diamond_reads_red_gem(self):
+        self.assertEqual(cost_currency(_button("red"), 0, 0, 300, 60), "red_gem")
+
+    def test_blue_diamond_reads_blue_gem(self):
+        self.assertEqual(cost_currency(_button("blue"), 0, 0, 300, 60), "blue_gem")
+
+    def test_gem_on_the_right_is_ignored(self):
+        # a coloured pixel in the VERB half (right) must not flip the currency
+        a = _button(None)
+        a[20:40, 255:285] = (200, 40, 40)        # red blob on the right — not the icon
+        self.assertEqual(cost_currency(a, 0, 0, 300, 60), "ducat")
 
 
 if __name__ == "__main__":

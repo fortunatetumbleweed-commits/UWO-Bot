@@ -806,13 +806,18 @@ class CommitViaPositiveTapsActionTests(unittest.TestCase):
         from unittest.mock import patch
         from brain.plan_actions import execute_step
 
+        # verify="off" skips the crew-metric probe so this asserts the generic
+        # commit path (the metric-gated recruit path has its own tests).
         with patch("brain.commit_actions.commit_via_positive_taps") as mock_commit:
             execute_step({
                 "kind": "commit_via_positive_taps",
                 "max_taps": 4,
                 "settle_secs": 1.5,
+                "verify": "off",
             })
-        mock_commit.assert_called_once_with(max_taps=4, settle_secs=1.5)
+        mock_commit.assert_called_once_with(
+            max_taps=4, settle_secs=1.5, goal_keywords=None,
+        )
 
 
 if __name__ == "__main__":

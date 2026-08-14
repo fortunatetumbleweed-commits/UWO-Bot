@@ -1,0 +1,6 @@
+name: "Smart trade: London <-> Amsterdam"
+mode: smart_trade
+ports:
+  - London
+  - Amsterdam
+rounds: 1

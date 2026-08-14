@@ -111,3 +111,18 @@ def set_ships(wm: WorldModel, ships: list) -> WorldModel:
     f = _ensure_fleet(wm)
     f.ships = [s if isinstance(s, Ship) else Ship(name=s[0], life=s[1]) for s in ships]
     return wm
+
+
+def update_from_hud(wm: WorldModel, hud: dict) -> WorldModel:
+    """Apply HUD numeric reads (vision.hud_readers) to the world model — the
+    ground-truth cargo/crew/ducats for done-conditions + progress checks. `hud` =
+    {"ducats": int|None, "cargo": (used,cap)|None, "crew": (cur,cap)|None}."""
+    if not hud:
+        return wm
+    if hud.get("ducats") is not None:
+        set_currencies(wm, {"ducat": hud["ducats"]})
+    if hud.get("crew"):
+        set_crew(wm, hud["crew"][0], hud["crew"][1])
+    if hud.get("cargo"):
+        set_cargo(wm, hud["cargo"][0], hud["cargo"][1])
+    return wm

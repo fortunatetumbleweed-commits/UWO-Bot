@@ -125,6 +125,35 @@ class SafetyGateTests(unittest.TestCase):
         for lbl in ("Confirm", "Confirm Purchase", "Pay", "Buy Now"):
             self.assertTrue(_is_commit_label(lbl), lbl)
 
+    def test_red_gem_commit_refused_even_though_verb_is_innocuous(self):
+        # UWO's real commit button just says 'Purchase' (token gate can't catch it);
+        # the red-gem cost currency is what must refuse it.
+        inv = [{"id": "e1", "label": "Purchase", "type": "commit", "region": "RIGHT-PANEL",
+                "cx": 2077, "cy": 997, "cost": "559", "currency": "red_gem", "conf": 0.5}]
+        prims, calls = _mock_prims()
+        r = execute({"op": "tap", "arg": "Purchase"}, frame=object(), elements=inv, prims=prims)
+        self.assertFalse(r.ok)
+        self.assertTrue(r.refused)
+        self.assertEqual(calls, [])                       # never tapped the red-gem spend
+
+    def test_ducat_commit_allowed(self):
+        # a ducat 'Purchase' commit is free-currency autonomy — proceeds
+        inv = [{"id": "e1", "label": "Purchase", "type": "commit", "region": "RIGHT-PANEL",
+                "cx": 2077, "cy": 997, "cost": "445,905", "currency": "ducat", "conf": 0.5}]
+        prims, calls = _mock_prims()
+        r = execute({"op": "tap", "arg": "Purchase"}, frame=object(), elements=inv, prims=prims)
+        self.assertTrue(r.ok)
+        self.assertIn(("tap_xy", 2077, 997), calls)
+
+    def test_red_gem_commit_allowed_with_confirmation(self):
+        inv = [{"id": "e1", "label": "Purchase", "type": "commit", "region": "RIGHT-PANEL",
+                "cx": 2077, "cy": 997, "cost": "559", "currency": "red_gem", "conf": 0.5}]
+        prims, calls = _mock_prims()
+        r = execute({"op": "tap", "arg": "Purchase"}, frame=object(), elements=inv,
+                    prims=prims, confirm_fn=lambda label: True)
+        self.assertTrue(r.ok)
+        self.assertIn(("tap_xy", 2077, 997), calls)
+
 
 if __name__ == "__main__":
     unittest.main()

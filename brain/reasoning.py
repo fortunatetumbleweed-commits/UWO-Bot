@@ -35,12 +35,18 @@ class ReasoningContext:
     perception:     str                       # structured PerceivedState, as text
     game_knowledge: str = ""                  # compact primer (iterated from traces)
     action_vocab:   List[str] = field(default_factory=lambda: sorted(ACTION_OPS))
+    avoid:          List[str] = field(default_factory=list)  # actions tried here that made NO progress
 
     def to_prompt(self) -> str:
+        avoid = ""
+        if self.avoid:
+            avoid = ("\nALREADY TRIED HERE — MADE NO PROGRESS (pick something "
+                     f"DIFFERENT, do NOT repeat these):\n  {', '.join(self.avoid)}\n")
         return (
             f"GOAL:\n  {self.goal}\n\n"
             f"WORLD MODEL:\n{self.world_model}\n\n"
-            f"OBSERVED (current screen):\n{self.perception}\n\n"
+            f"OBSERVED (current screen):\n{self.perception}\n"
+            f"{avoid}\n"
             f"GAME KNOWLEDGE:\n{self.game_knowledge or '(none provided)'}\n\n"
             f"ALLOWED ACTIONS (pick exactly one; reply as JSON "
             f'{{\"op\": <one of these>, \"arg\": <string or null>, '
