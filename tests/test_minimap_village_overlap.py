@@ -9,8 +9,9 @@ See `memory/project_hud_pirate_sprite_occlusion.md` and the in-line
 docstring on the property for the perception mechanism.
 """
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
+import vision.minimap_navigation_view as mnv
 from vision.minimap_navigation_view import (
     MinimapNavigationView,
     VILLAGE_OVERLAP_RADIUS_PX,
@@ -56,7 +57,8 @@ class VillageOverlapTests(unittest.TestCase):
         # Ship at (100, 50), target at (120, 60) → ~22 px away ≤ 40 px.
         nav = _make_nav(ship_xy=(100.0, 50.0),
                         targets_and_positions=[(target, (120.0, 60.0))])
-        self.assertTrue(nav.village_overlap)
+        with patch.object(mnv, "VILLAGE_OVERLAP_ENABLED", True):
+            self.assertTrue(nav.village_overlap)
 
     def test_target_exactly_at_radius_returns_true(self):
         target = Target(kind="port_known", bearing_deg=0.0, distance=0.1,
@@ -65,7 +67,8 @@ class VillageOverlapTests(unittest.TestCase):
         nav = _make_nav(ship_xy=(0.0, 0.0),
                         targets_and_positions=[
                             (target, (float(VILLAGE_OVERLAP_RADIUS_PX), 0.0))])
-        self.assertTrue(nav.village_overlap)
+        with patch.object(mnv, "VILLAGE_OVERLAP_ENABLED", True):
+            self.assertTrue(nav.village_overlap)
 
     def test_one_close_one_far_target_returns_true(self):
         """Any one close target triggers overlap — far ones don't mask it."""
@@ -80,8 +83,27 @@ class VillageOverlapTests(unittest.TestCase):
                 (far,   (400.0, 200.0)),
             ],
         )
-        self.assertTrue(nav.village_overlap)
+        with patch.object(mnv, "VILLAGE_OVERLAP_ENABLED", True):
+            self.assertTrue(nav.village_overlap)
 
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class VillageOverlapKillSwitchTests(unittest.TestCase):
+    """The detector ships DISABLED — see VILLAGE_OVERLAP_ENABLED.
+
+    Without this test the flag could be flipped on by accident and nothing would
+    complain until a voyage started suppressing its tangent every tick again.
+    """
+
+    def test_detector_is_disabled_by_default(self):
+        self.assertFalse(mnv.VILLAGE_OVERLAP_ENABLED)
+
+    def test_overlapping_target_reports_false_while_disabled(self):
+        target = Target(kind="port_known", bearing_deg=0.0, distance=0.1,
+                        name="Bari")
+        nav = _make_nav(ship_xy=(100.0, 50.0),
+                        targets_and_positions=[(target, (120.0, 60.0))])
+        self.assertFalse(nav.village_overlap)

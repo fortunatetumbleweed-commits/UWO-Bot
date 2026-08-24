@@ -1,5 +1,9 @@
 # Architecture Review — Perception, Flows, FSM, Recovery (2026-08-02)
 
+> **Status (confirmed 2026-08-23): UNIMPLEMENTED, still accurate.** The verdict below
+> still describes the live system. See `docs/one_loop_task_drives_state.md` for the
+> 2026-08-22 re-occurrence and the task-loop design that makes the fix executable.
+
 **Scope.** The perception layer, the FSM / flow / state-machine layer, the
 recovery / escalation layer, and the action layer's perceive-before-act and
 dialog discipline.  Triggered by the `self_grow` ("grow") task failing at

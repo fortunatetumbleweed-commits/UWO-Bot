@@ -1,0 +1,21 @@
+{
+  "purpose": "The Recruit Crew panel is open, showing fleet crew capacity, standby crew available (1257 Ming sailors), and a pending recruitment of 953 crew for 205,848 gold — the bot must dismiss or complete this before sailing to London.",
+  "full_text": "Standby Crew 1257 Ming. Recruit Crew 953/2,275. Min | Max Waiting Time | Max. Emergency Recruit 0. Normal Recruit 205,848. [Recruit button: 205,848]",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "b7e1aa7a31392e23",
+  "goal_intent": "sail_to",
+  "cached_at": "2026-08-13T19:31:19.069908+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Recruit Crew panel is open, showing fleet crew capacity, standby crew available (1257 Ming sailors), and a pending recruitment of 953 crew for 205,848 gold — the bot must dismiss or complete this before sailing to London.",
+    "full_text": "Standby Crew 1257 Ming. Recruit Crew 953/2,275. Min | Max Waiting Time | Max. Emergency Recruit 0. Normal Recruit 205,848. [Recruit button: 205,848]",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

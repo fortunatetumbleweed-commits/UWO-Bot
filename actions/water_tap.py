@@ -217,17 +217,41 @@ def read_destination_latlon_from_sailing_hud(
     )
 
 
+def _on_world_map(frame=None) -> bool:
+    """True only when the WORLD MAP is on screen."""
+    try:
+        from actions.sail_actions import _is_on_world_map
+        from capture.adb_capture import capture_screen as _cap
+        return bool(_is_on_world_map(frame if frame is not None else _cap()))
+    except Exception as exc:
+        logger.debug(f"[water-tap] world-map check failed: {exc}")
+        return False
+
+
 def tap_water_and_read_latlon(
     px: int, py: int,
     settle_s: float = 0.9,
     debug_dir: Optional[Path] = None,
+    require_world_map: bool = True,
 ) -> Optional[Tuple[float, float]]:
     """Tap (px, py) and read the lat/lon shown by the Move panel.
 
     Returns None when the tap landed on land/port-icon (no readout
     appears) or OCR failed to parse the text.  Caller should try
     another pixel from WATER_TAP_CANDIDATES.
+
+    GATED ON LOCATION. This looks like a read, but it is a TAP at a fixed screen point,
+    and CLAUDE.md is explicit that such primitives must assert where they are first. Left
+    ungated it fired eight scattered taps into the SEA VIEW on 2026-08-21 — the caller
+    believed it was localising a world-map camera — and one of them landed in the sea
+    destination list, which is the most likely reason the fleet set course for a port
+    nobody asked for. A localisation routine must never be able to steer the ship.
     """
+    if require_world_map and not _on_world_map():
+        logger.warning(f"[water-tap] NOT on the world map — refusing to tap ({px},{py}); "
+                       "these coordinates mean nothing off the map and can hit live "
+                       "controls (see the 2026-08-21 sea-view taps)")
+        return None
     logger.info(f"[water-tap] tapping ({px}, {py}) to read lat/lon")
     _adb_tap(px, py)
     time.sleep(settle_s)

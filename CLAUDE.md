@@ -26,6 +26,23 @@ When in doubt about where to put something new:
 - A design decision that affects how features should be built → CLAUDE.md (here) + a doc in `docs/`
 - A long explanation, diagram, table, or schema → `docs/`
 
+## Trace Viewer Reports
+Every live run writes an action trace to `data/sessions/trace_<name>_<ts>/`.  To review it:
+
+```bash
+python -m tools.trace_viewer data/sessions/trace_<name>_<ts>/
+open -a Safari "file://$PWD/data/sessions/trace_<name>_<ts>/viewer.html"
+```
+
+**Always open the report in Safari as part of generating it** — not as a separate step to be
+asked for.  The report exists to be looked at frame by frame; left as a path on disk the
+review does not happen.  When summarising, name the frames that matter ("frames 8-12 are the
+repeated taps at the hardcoded close-X"), because the review navigates to specific ticks.
+
+`--qwen` adds a Qwen read per frame (slow); `--rebuild` ignores cached component data.
+Generation reuses perception the bot already recorded where available; see
+`actions/action_trace.py::_capture_with_perception`.
+
 ## Voyage Evaluation Procedure
 Standard, single-command voyage evaluation against the canonical
 Cairo→Y-tip reference path:
@@ -52,6 +69,26 @@ Use this every voyage.  Jump straight to the surfaced issue ticks in
 the frame + trace context.
 
 ## Active Rules
+- **Never act blind — always know WHERE and WHAT STATE, else re-perceive** —
+  before taking any action the bot must know both (1) its **location**
+  (port_overworld / market / building / sub_menu / sea / village / world_map …)
+  and (2) its **interaction state** (mid-transaction with the bot's own dialogs,
+  vs. blocked by an unsolicited popup like daily-news / promo / event).  If either
+  is unknown it must **re-perceive** — never guess or tap.  If still unknown after
+  re-perceiving, **escalate / learn**, don't flail.  Some facts are **invariants**:
+  a `port_overworld` ALWAYS has a port name — failing to read one there is an
+  anomaly to flag + retry (re-capture, stronger read), NOT a silent `None`.  This
+  is the foundation for the action-verification/recovery ladder
+  (`docs/action_verification_and_recovery_design.md`).
+  - **Dialog / popup handling — who caused it decides how to clear it:**
+    - **From the bot's OWN action** (a Confirm / Result / Negotiation after a
+      buy / sell / commit / recruit): **complete the action** by clicking through
+      its action buttons (Confirm / OK / Purchase / …), never dismiss it.
+    - **System / unsolicited** (daily news, promo, event, announcement — NOT
+      triggered by the bot): **dismiss** it — the Back button, or the dialog's own
+      **close X** (an X-shaped icon in or near the **top-right** of the popup).
+      Never the screen-corner (at sea/port_overworld that is the ☰ hamburger —
+      see `memory/project_home_button_is_chromed_only_escape`).
 - **Surgical changes** — touch only what the task requires.  Don't refactor
   adjacent code, don't add unrequested features, don't introduce
   abstractions for hypothetical use.
@@ -82,6 +119,97 @@ the frame + trace context.
   before tapping.  A rudder tap fired on the wrong screen (post-arrival
   port_overworld) opened an unrelated quest dialog once — gating is the
   fix.  See `actions/sea_actions.py::_assert_on_sea`.
+- **All screen input goes through `actions/ui.py`** — never hand-roll taps, swipes,
+  key presses or waits in new code.  `ui.tap_element` / `ui.tap_text` take a DETECTED
+  element or a label, `ui.scroll` / `ui.back` / `ui.settle(kind)` carry the jitter, and
+  `ui.tap_at(x, y, why=…)` is the loud, logged exception for genuinely calibrated HUD
+  controls.  This exists because the two habits it replaces each caused a live failure:
+  a `time.sleep(1.0)` scroll loop tripped the ANTI-CHEAT and terminated the game
+  (2026-08-21), and hardcoded coordinates silently mis-tap whenever the game re-bakes
+  its camera-cutout offset — the same Village Info panel rendered ~110px apart between
+  two sessions, so every absolute band in the trade-list parser rejected every row.
+  Rule of thumb: **if you are about to write a number that means "where on the screen",
+  find the element instead.**  Layout is stable; position is not.
+- **Unit tests never touch the phone** — `tests/conftest.py` blocks any `adb`
+  subprocess and hands tests offline stand-ins (a blank 2400x1080 frame, a canned
+  `dumpsys` rotation, recording stubs for `adb_actions` input and the sea-steering
+  press-and-holds).  A test that genuinely needs hardware must be marked
+  `@pytest.mark.device` and is skipped unless you pass `--device`.
+  This is not hygiene for its own sake: before the guard existed the suite fired 6
+  `input swipe`s and 2 `keyevent 4`s at the live game — `test_hug_shore_bug2_wall_ahead`
+  drove `HugShoreGoal.tick()` into the real steering primitives, and
+  `test_village_recognition` drove `SailToGoal` into a real `press_back()`, which on the
+  port overworld raises "Exit Game?".  Running the unit suite steered the ship and
+  panned the map.
+  Two corollaries when writing tests:
+  - **Reset session state you depend on.**  Production caches are keyed by frame bytes,
+    and every test builds the same blank frame, so they collide.  `_OBSTRUCTION_NONE_CACHE`
+    (5s TTL) made four interruptor tests order-dependent — each passed alone and failed in
+    the file.  conftest clears the known frame-keyed caches, the daily-news suppression
+    global, and the Moondream family cache; add new ones there as they appear.
+  - **State every attribute a `MagicMock` stands in for.**  MagicMock auto-vivifies
+    unknown attributes as TRUTHY mocks, so when `has_hamburger` was added to the chrome
+    detector every existing chrome mock silently began reporting "this is an overworld"
+    and the Home-button branch became unreachable in tests — in two separate files.
+
+- **Expected screens are multi-anchored; positive-button search is for the UNEXPECTED** —
+  on a screen the bot MEANT to be on, an action must be anchored by several things at once:
+  the screen's identity, the specific control (detected, not remembered), and the expected
+  post-condition.  Searching for "the positive button" there is a guess dressed as a plan.
+  `find_positive_button_for_context` is for the other case only: something unexpected
+  interrupted a goal the bot was PURSUING and had already COMMITTED an action toward, so a
+  transaction is genuinely half-finished and the goal says which button closes it.  With no
+  goal there is nothing to finish and the search degrades to "tap whatever looks positive" —
+  live 2026-08-22 that tapped `Trade Info` and a panel title on the Market landing page,
+  because POSITIVE_LABELS contains the word "trade" and matching is by substring.
+  In this game a POSITIVE button is identified by its **yellow/gold background**, not its
+  wording (measured: the dialog OK is 64-91% gold pixels; Trade Info, Trade Points and
+  Requested Trade Goods are 0%).  `brain.commit_actions.has_positive_background` enforces
+  that; the word lists are a weak secondary signal and should eventually be LEARNED from
+  observed real commit buttons rather than hand-listed.
+  Today FOUR different notions of "positive" coexist — `POSITIVE_LABELS` (substring),
+  goal keywords + `UNIVERSAL_COMMIT_LABELS`, `detect_commit_buttons` (colour+layout),
+  `_DIALOG_OK_WORDS`, plus `_tap_depart_button`'s own "depart"/"supply" scan.  That is the
+  "one canonical implementation per concern" rule being violated, and it is why fixing the
+  trade false positive in one place left the escalation path exposed.
+
+- **ONE sell flow, several goals** — selling at a market is a single flow: switch to the
+  Sell tab → stage goods → tap Sell → handle Confirm/Result/Negotiation.  What differs
+  between callers is only WHICH goods and HOW MANY of each:
+    - `goal="profit"`  — every profitable good            [trade runs]
+    - `goal="clear"`   — every non-kept good              [free cargo for a barter]
+    - `goal="down_to"` — trim each good to a target qty   [surplus of a MATERIAL]
+  Today `sell_goods` and `sell_down_to` are two implementations of that same flow, and the
+  cost is concrete: the "N / M" Cargo-bar confusion had to be found and fixed TWICE (once
+  when opening the quantity dialog, once when verifying it closed), and only one of the two
+  paths backs out of the market on abort — so a false abort there DISCARDS a basket that
+  was correctly staged (live 2026-08-22: 981 Ebony loaded, Sell one tap away, thrown away).
+  Selection is the part that should vary; staging, committing and the dialog chain are the
+  part that must not.  Same rule as "one canonical implementation per concern" — when a new
+  selling need appears, add a GOAL, do not fork the flow.
+
+- **ONE loop — the task drives the state machine** → `docs/one_loop_task_drives_state.md`.
+  Two things are going on when the bot acts: a TASK (which owns the *sequence*: plan →
+  gather → barter → route+sell, tracked in `brain/mission_progress.py`) and a UI STATE
+  MACHINE (port_overworld / harbor / market / sea / village — which owns *no* sequence,
+  only "where am I and what can I do here").  Today the task is chopped into sub-loops
+  living INSIDE actions, each with its own private recovery policy — that inverts the
+  hierarchy, and a low-level action ends up deciding the fleet's position in the world
+  without knowing what the bot is trying to achieve.
+  Measured cost in one day (2026-08-22): `open_world_map`'s loop judged `village` "not
+  port/sea" and pressed Back until the fleet was AT SEA — leaving the village the mission
+  had just sailed to; `navigate_to_building("harbor")` saw "sailing to Melanesian Village",
+  judged it "not the harbour", and pressed Back, cancelling a departure that had SUCCEEDED
+  — four times, 18.5 minutes; `_read_owned_via_sell` tapped a label matching the page title
+  and left the market it was standing in.  Each was locally reasonable and globally wrong,
+  because locally was the only scope it had.
+  Rules: a primitive **never** presses Back to make the screen match its expectation (the
+  screen is ground truth; the stale expectation is what updates) and **never** walks the
+  fleet out of a settlement.  A loop inside a primitive may only wait for that primitive's
+  OWN effect ("did the map open?" ✓ / "am I somewhere else now?" ✗ — that is the task
+  runner's question).  After ANY correction — state adopted, dialog cleared, popup
+  dismissed — the loop **re-asks the task what to do next** rather than resuming a
+  half-finished intention.
 - **Anti-cheat tap discipline** — the game fingerprints automated input:
   - **Never burst-tap** (≥ 3 taps in < 1 s).  Burst-tapping the L/R
     arrows caused the spiral that fired the anti-cheat popup.  Use
@@ -169,6 +297,31 @@ Detail:
   (control/task/strategy KBs; play-learned + human text/URL), and the current-code
   gap map + build order (HUD readers → task executor → done-conditions → decision
   cache).  Supersedes/consolidates the earlier scattered design notes.
+- **★ Perceive→Act→Verify act-layer substrate (PROPOSED, 2026-08-19)** →
+  `docs/perceive_act_verify_substrate.md`.  The primitive-level realization of the
+  self-correcting executor: every action declares an EXPECTED post-condition, then
+  re-perceives and compares expected-vs-actual — no assumed-state blind actions.
+  L0-L3 verification (frame_diff → verify.py → targeted → perceive), an outcome
+  taxonomy (match / no-change / wrong-state / refused), and a 4-phase migration.
+  Motivated by the blind-`press_back` "Exit Game?" loop; see
+  `memory/feedback_perceive_act_verify_expected_vs_actual.md`.
+- **★ Barter command flow — BUILT 2026-08-20, NOT YET RUN LIVE** →
+  `docs/barter_command_flow.md` (full gap table + build order + what each piece does).
+  One typed command drives the mission:
+  `python run_barter.py "barter <good> at <village>[, then take the route <name> |
+  and sail to <port>]"` (`--dry-run` plans without sailing).  Recipe = invariant
+  materials + 6h-volatile quantities, so the plan CONSTRUCTS the live recipe
+  REMOTELY from port before gathering — `actions/village_check.read_village_barter_remote`
+  (Base + Barter tabs, scroll-accumulated, source pins learned, KB invariants written
+  back).  The CHECK runs BEFORE the graph is built, because every node is
+  parameterised by it.  Plan: `brain/barter_quantity.plan_barter_rounds` with
+  `free_space = capacity − cargo − 7-day supply reserve`, bounded by the PEAK hold
+  (`max(Σ needs, output)` per round — the gather must be carryable, not just the
+  output).  Graph: gathers → **supply_verify** → village → barter → route/sail tail →
+  sell (`brain/mission.MissionTail`).  First live mission completed 2026-08-20
+  (+66.6M ducats); see `memory/project_village_find_worldmap_2026-08-20.md`.
+  ⚠️ Unvalidated live surface: the Village Info panel navigation and the main-menu
+  fleet read (`actions/fleet_status.py`) — supervise the first run.
 - Full vision pipeline → `docs/vision_pipeline.md`
 - `where_am_i()` design + location vocabulary → `docs/where_am_i_design.md`
 - Architecture overview (broader) → `docs/architecture_overview.md`

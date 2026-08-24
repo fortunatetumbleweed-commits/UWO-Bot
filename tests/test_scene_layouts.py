@@ -192,7 +192,9 @@ class ListLayoutsTests(unittest.TestCase):
         self.assertIn("buildings/harbor/recruit_crew.md", layouts)
         self.assertIn("buildings/inn/_building.md", layouts)
         self.assertIn("buildings/inn/recruit_crew.md", layouts)
-        self.assertIn("README.md", layouts)
+        # No README.md assertion: memory/knowledge/scene_layouts/ has never contained
+        # one (it is untracked in git history), and a README would be documentation
+        # rather than a scene layout, so listing it is not something to require.
 
 
 class SiblingMarkerConsistencyTests(unittest.TestCase):

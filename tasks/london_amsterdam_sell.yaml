@@ -1,0 +1,15 @@
+name: "London → Amsterdam + sell"
+description: "Sail the loaded cargo London → Amsterdam and sell it there"
+
+start_port: London
+rounds: 1
+
+loop:
+  - action: sail_to
+    destination: Amsterdam
+  - action: sell_all
+    port: Amsterdam
+    note: "Sell the London-bought cargo at Amsterdam (the profit leg)"
+
+report:
+  - profit_loss

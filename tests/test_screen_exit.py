@@ -66,7 +66,7 @@ class ExitCurrentScreenTests(unittest.TestCase):
             ) as gcd:
                 # Even if chrome reports has_home, dialog wins.
                 gcd.return_value.detect.return_value = mock.MagicMock(
-                    has_home=True, has_back_arrow=True,
+                    has_home=True, has_back_arrow=True, has_hamburger=False, positions={},
                 )
                 result = exit_current_screen(frame=_blank_frame())
 
@@ -86,7 +86,7 @@ class ExitCurrentScreenTests(unittest.TestCase):
                 "vision.chrome_detector.get_chrome_detector"
             ) as gcd:
                 gcd.return_value.detect.return_value = mock.MagicMock(
-                    has_home=True, has_back_arrow=True,
+                    has_home=True, has_back_arrow=True, has_hamburger=False, positions={},
                 )
                 result = exit_current_screen(frame=_blank_frame())
 
@@ -105,7 +105,7 @@ class ExitCurrentScreenTests(unittest.TestCase):
                 "vision.chrome_detector.get_chrome_detector"
             ) as gcd:
                 gcd.return_value.detect.return_value = mock.MagicMock(
-                    has_home=False, has_back_arrow=True,
+                    has_home=False, has_back_arrow=True, has_hamburger=False, positions={},
                 )
                 result = exit_current_screen(frame=_blank_frame())
 
@@ -124,7 +124,7 @@ class ExitCurrentScreenTests(unittest.TestCase):
                 "vision.chrome_detector.get_chrome_detector"
             ) as gcd:
                 gcd.return_value.detect.return_value = mock.MagicMock(
-                    has_home=False, has_back_arrow=False,
+                    has_home=False, has_back_arrow=False, has_hamburger=False, positions={},
                 )
                 with mock.patch("brain.perceive.perceive") as perc:
                     perc.return_value = mock.MagicMock(state="sea")
@@ -145,7 +145,7 @@ class ExitCurrentScreenTests(unittest.TestCase):
                 "vision.chrome_detector.get_chrome_detector"
             ) as gcd:
                 gcd.return_value.detect.return_value = mock.MagicMock(
-                    has_home=False, has_back_arrow=False,
+                    has_home=False, has_back_arrow=False, has_hamburger=False, positions={},
                 )
                 with mock.patch("brain.perceive.perceive") as perc:
                     perc.return_value = mock.MagicMock(state="port_overworld")
@@ -164,7 +164,7 @@ class ExitCurrentScreenTests(unittest.TestCase):
                 "vision.chrome_detector.get_chrome_detector"
             ) as gcd:
                 gcd.return_value.detect.return_value = mock.MagicMock(
-                    has_home=False, has_back_arrow=False,
+                    has_home=False, has_back_arrow=False, has_hamburger=False, positions={},
                 )
                 result = exit_current_screen(
                     frame=_blank_frame(),
@@ -188,7 +188,7 @@ class ExitCurrentScreenTests(unittest.TestCase):
                 "vision.chrome_detector.get_chrome_detector"
             ) as gcd:
                 gcd.return_value.detect.return_value = mock.MagicMock(
-                    has_home=True, has_back_arrow=False,
+                    has_home=True, has_back_arrow=False, has_hamburger=False, positions={},
                 )
                 result = exit_current_screen(
                     frame=_blank_frame(),
@@ -212,7 +212,7 @@ class ExitCurrentScreenTests(unittest.TestCase):
                 "vision.chrome_detector.get_chrome_detector"
             ) as gcd:
                 gcd.return_value.detect.return_value = mock.MagicMock(
-                    has_home=True, has_back_arrow=False,
+                    has_home=True, has_back_arrow=False, has_hamburger=False, positions={},
                 )
                 result = exit_current_screen(frame=_blank_frame())
 
@@ -222,3 +222,80 @@ class ExitCurrentScreenTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class HamburgerGuardTests(unittest.TestCase):
+    """The Home slot is the ☰ hamburger on an overworld — tapping it opens
+    Company Overview instead of exiting (it stranded the gather run 2026-08-17).
+
+    These cases were untested, which is how every other test in this file came to
+    rely on `MagicMock` auto-vivifying `has_hamburger` as truthy: the guard was
+    firing everywhere and nothing said so.
+    """
+
+    def setUp(self):
+        self._cap_patch = mock.patch("capture.adb_capture.capture_screen",
+                                     return_value=_blank_frame())
+        self._cap_patch.start()
+        self.addCleanup(self._cap_patch.stop)
+        self._tap_patch = mock.patch("actions.adb_actions.tap")
+        self.tap = self._tap_patch.start()
+        self.addCleanup(self._tap_patch.stop)
+
+    def _run(self, **chrome):
+        with mock.patch("vision.region_detectors.dialog.detect_dialog", return_value=None):
+            with mock.patch("vision.chrome_detector.get_chrome_detector") as gcd:
+                chrome.setdefault("positions", {})
+                gcd.return_value.detect.return_value = mock.MagicMock(**chrome)
+                return exit_current_screen(frame=_blank_frame())
+
+    def test_home_with_hamburger_does_not_tap_home(self):
+        result = self._run(has_home=True, has_back_arrow=False, has_hamburger=True)
+        self.assertNotEqual(result.method, "home_or_menu_x")
+        self.assertNotIn(mock.call(*_HOME_SLOT_XY), self.tap.call_args_list)
+
+    def test_home_without_hamburger_taps_home(self):
+        result = self._run(has_home=True, has_back_arrow=False, has_hamburger=False)
+        self.assertEqual(result.method, "home_or_menu_x")
+        self.tap.assert_called_once_with(*_HOME_SLOT_XY)
+
+    def test_hamburger_screen_falls_through_to_back_arrow(self):
+        result = self._run(has_home=True, has_back_arrow=True, has_hamburger=True)
+        self.assertEqual(result.method, "back_arrow")
+
+
+class DetectedPositionTests(unittest.TestCase):
+    """Tap where the icon WAS DETECTED, not where it used to be.
+
+    The game re-bakes its camera-cutout offset per screen, so the chrome row slides.
+    Live 2026-08-21, Jakarta's Market: the Home icon was detected at (2219,44) while
+    _HOME_SLOT_XY says (2300,45) — 81px away, on nothing.
+    """
+
+    def setUp(self):
+        self._cap_patch = mock.patch("capture.adb_capture.capture_screen",
+                                     return_value=_blank_frame())
+        self._cap_patch.start()
+        self.addCleanup(self._cap_patch.stop)
+        self._tap_patch = mock.patch("actions.adb_actions.tap")
+        self.tap = self._tap_patch.start()
+        self.addCleanup(self._tap_patch.stop)
+
+    def _run(self, positions):
+        with mock.patch("vision.region_detectors.dialog.detect_dialog", return_value=None):
+            with mock.patch("vision.chrome_detector.get_chrome_detector") as gcd:
+                gcd.return_value.detect.return_value = mock.MagicMock(
+                    has_home=True, has_back_arrow=False, has_hamburger=False,
+                    positions=positions)
+                return exit_current_screen(frame=_blank_frame())
+
+    def test_taps_the_detected_home_position(self):
+        result = self._run({"home": (2219, 44)})
+        self.assertEqual(result.method, "home_or_menu_x")
+        self.tap.assert_called_once_with(2219, 44)
+
+    def test_falls_back_to_the_calibrated_slot_when_undetected(self):
+        """Detection can still fail; the old slot remains the fallback, not the default."""
+        result = self._run({})
+        self.assertEqual(result.method, "home_or_menu_x")
+        self.tap.assert_called_once_with(*_HOME_SLOT_XY)

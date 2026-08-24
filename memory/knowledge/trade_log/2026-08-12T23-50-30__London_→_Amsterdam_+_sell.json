@@ -1,0 +1,27 @@
+{
+  "task_name": "London → Amsterdam + sell",
+  "started_at": "2026-08-12T23:50:30.609910+00:00",
+  "ended_at": "2026-08-13T00:05:32.067209+00:00",
+  "elapsed_seconds": 901.457299,
+  "rounds_completed": 1,
+  "total_profit": 1871355,
+  "ducats_per_hour": 7473319.044033832,
+  "steps": [
+    {
+      "action": "sail_to",
+      "port": "Amsterdam",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 569.7130774999969,
+      "notes": "arrived"
+    },
+    {
+      "action": "sell_all",
+      "port": "Amsterdam",
+      "ok": true,
+      "profit": 1871355,
+      "duration_s": 204.14909154199995,
+      "notes": "sold 1 goods  +1,871,355d"
+    }
+  ]
+}

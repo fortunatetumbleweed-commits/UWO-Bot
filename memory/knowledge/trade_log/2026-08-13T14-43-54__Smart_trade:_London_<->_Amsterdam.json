@@ -1,0 +1,27 @@
+{
+  "task_name": "Smart trade: London <-> Amsterdam",
+  "started_at": "2026-08-13T14:43:54.469895+00:00",
+  "ended_at": null,
+  "elapsed_seconds": 0.0,
+  "rounds_completed": 0,
+  "total_profit": 0,
+  "ducats_per_hour": null,
+  "steps": [
+    {
+      "action": "smart_trade",
+      "port": "London",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 0.0,
+      "notes": "dry-run → Amsterdam"
+    },
+    {
+      "action": "smart_trade",
+      "port": "Amsterdam",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 0.0,
+      "notes": "dry-run → London"
+    }
+  ]
+}

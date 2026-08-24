@@ -1,0 +1,21 @@
+{
+  "purpose": "A limited-time shop offer called 'Shortcut to Growth 5' is presenting a bundle of growth resources (medals, scrolls, tokens) for purchase, with roughly 24 hours remaining before the offer expires",
+  "full_text": "Shortcut to Growth 5. This item may be shown again in the same form. Even if not purchased, it may be displayed again after a certain time. Bundle contents: 110, 260, 220, 540, 240, 160, 100 (various resource quantities). Time left: 23:58:12. Purchase.",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "628290db53c79e9b",
+  "goal_intent": null,
+  "cached_at": "2026-08-12T03:57:37.014447+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A limited-time shop offer called 'Shortcut to Growth 5' is presenting a bundle of growth resources (medals, scrolls, tokens) for purchase, with roughly 24 hours remaining before the offer expires",
+    "full_text": "Shortcut to Growth 5. This item may be shown again in the same form. Even if not purchased, it may be displayed again after a certain time. Bundle contents: 110, 260, 220, 540, 240, 160, 100 (various resource quantities). Time left: 23:58:12. Purchase.",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

@@ -53,6 +53,23 @@ def _icon(cx, cy, label="icon", element_type="icon", half=20):
     )
 
 
+def _gold_frame(*buttons):
+    """A real frame with each button painted the game's positive gold.
+
+    `commit_via_positive_taps` now requires a text-matched button to PROVE it is a commit
+    by its background colour — "trade" matches Trade Info, Trade Points and Requested
+    Trade Goods, none of which commit anything (live 2026-08-22). A MagicMock frame has no
+    pixels, so a button on it can never qualify.
+    """
+    import numpy as np
+    from PIL import Image
+    a = np.zeros((SCREEN_H, SCREEN_W, 3), dtype=np.uint8)
+    a[:, :] = (40, 40, 40)
+    for b in buttons:
+        a[max(b.y1, 0):b.y2, max(b.x1, 0):b.x2] = (255, 200, 60)
+    return Image.fromarray(a)
+
+
 def _button(label, cx, cy, half_w=80, half_h=30):
     """A YOLO-detected button promoted by _merge_icons_and_text — what
     OmniParser produces for a gold action button with text on it."""
@@ -275,10 +292,14 @@ class L2OcrHelpersTests(unittest.TestCase):
 
         # Element exists but is in the middle of screen, not top-left.
         elements = [_text("Some center text", 1200, 500)]
+        # read_port_name fuzzy-matches against the port catalogue to repair corrupted
+        # OCR, and the catalogue's canonical name is the game's local-language spelling —
+        # so a clean read of "Lisbon" canonicalises to "Lisboa". That is the point of the
+        # normalisation, not a bug: downstream KB lookups key on the catalogue name.
         with patch("vision.ocr.read_text", return_value="Lisbon"):
             self.assertEqual(
                 read_port_name(_frame(), elements=elements),
-                "Lisbon",
+                "Lisboa",
             )
 
     def test_read_screen_title_via_omniparser(self):
@@ -387,9 +408,11 @@ class L2OcrHelpersTests(unittest.TestCase):
             # Tallest: the actual port name
             _text("Lisbon", 130, 50, half_w=80, half_h=35),
         ]
+        # Canonicalised to the catalogue spelling — see the note in
+        # test_read_port_name_no_title_element_falls_through.
         self.assertEqual(
             read_port_name(_frame(), elements=elements),
-            "Lisbon",
+            "Lisboa",
         )
 
     def test_read_port_name_passes_elements_through_unchanged(self):
@@ -636,25 +659,25 @@ class CommitViaPositiveTapsTests(unittest.TestCase):
         from brain.commit_actions import commit_via_positive_taps
 
         # Recruit @ (2150, 800) appears on round 0 and round 2.
-        frame_recruit_a = _frame()
         elements_recruit_a = [
             _button("Recruit", 2150, 800),
             _text("ship list", 1000, 500),
         ]
+        frame_recruit_a = _gold_frame(elements_recruit_a[0])
 
-        frame_confirm = _frame()
         elements_confirm = [
             _button("OK", 1300, 700),
             _text("Confirm hire?", 1200, 400),
         ]
+        frame_confirm = _gold_frame(elements_confirm[0])
 
         # Same Recruit button position; ship count slightly changed
         # (jitter that screen-signature equality would have missed)
-        frame_recruit_b = _frame()
         elements_recruit_b = [
             _button("Recruit", 2150, 800),
             _text("ship list updated", 1000, 500),
         ]
+        frame_recruit_b = _gold_frame(elements_recruit_b[0])
 
         capture_calls = [frame_recruit_a, frame_confirm, frame_recruit_b]
         capture_fn = MagicMock(side_effect=capture_calls)
@@ -666,9 +689,16 @@ class CommitViaPositiveTapsTests(unittest.TestCase):
             if frame is frame_recruit_b: return elements_recruit_b
             return []
 
+        # These tests exercise the TEXT-verb path. The frames now carry real gold (a
+        # text-matched button must prove itself by background colour), which would
+        # otherwise let the yellow-commit-pill detector claim them first and relabel the
+        # taps "commit". Pin it off so the text path is what is under test.
         with unittest.mock.patch(
             "vision.omniparser.parse_fast_cached",
             side_effect=fake_parse_fast_cached,
+        ), unittest.mock.patch(
+            "vision.region_detectors.commit_button.detect_commit_buttons",
+            return_value=[],
         ), unittest.mock.patch("time.sleep"):
             tapped = commit_via_positive_taps(
                 max_taps=10, settle_secs=0.0,
@@ -707,7 +737,6 @@ class CommitViaPositiveTapsTests(unittest.TestCase):
         from unittest.mock import MagicMock
         from brain.commit_actions import commit_via_positive_taps
 
-        capture_fn = MagicMock(side_effect=[_frame() for _ in range(20)])
         tap_fn = MagicMock()
 
         # Each iteration's positive button has a different label / position
@@ -716,10 +745,16 @@ class CommitViaPositiveTapsTests(unittest.TestCase):
             [_button(f"Continue {i}", 2100 - i * 50, 800 - i * 50)]
             for i in range(10)
         ]
+        # Each frame must actually carry the gold behind its button — a text match alone
+        # is no longer accepted as a commit.
+        capture_fn = MagicMock(side_effect=[_gold_frame(els[0]) for els in unique_elements])
 
         with unittest.mock.patch(
             "vision.omniparser.parse_fast_cached",
             side_effect=unique_elements,
+        ), unittest.mock.patch(
+            "vision.region_detectors.commit_button.detect_commit_buttons",
+            return_value=[],
         ), unittest.mock.patch("time.sleep"):
             tapped = commit_via_positive_taps(
                 max_taps=3, settle_secs=0.0,

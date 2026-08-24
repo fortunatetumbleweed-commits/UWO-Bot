@@ -111,3 +111,17 @@
 {"type": "round", "ports": ["Cairo"], "profit": 0, "elapsed_s": 203.2, "ducats_per_hour": 0.0, "recorded_at": "2026-06-04T03:03:13.894110+00:00"}
 {"type": "round", "ports": ["Cairo"], "profit": 0, "elapsed_s": 2377.3, "ducats_per_hour": 0.0, "recorded_at": "2026-06-04T19:49:21.869759+00:00"}
 {"type": "round", "ports": ["Cairo"], "profit": 0, "elapsed_s": 2656.1, "ducats_per_hour": 0.0, "recorded_at": "2026-06-07T00:45:54.209493+00:00"}
+{"type": "leg", "from": "London", "to": "port royal", "departed_at": "2026-08-02T19:37:29.518705+00:00", "arrived_at": "2026-08-02T19:59:24.512493+00:00", "sailing_time_s": 1315.0, "ok": true}
+{"type": "leg", "from": "london", "to": "Amsterdam", "departed_at": "2026-08-12T03:41:09.688869+00:00", "arrived_at": "2026-08-12T03:56:26.128460+00:00", "sailing_time_s": 916.4, "ok": true}
+{"type": "leg", "from": "Seville", "to": "London", "departed_at": "2026-08-12T04:05:26.759679+00:00", "arrived_at": "2026-08-12T04:18:28.369332+00:00", "sailing_time_s": 781.6, "ok": true}
+{"type": "round", "ports": ["London", "Amsterdam", "London"], "profit": 0, "elapsed_s": 2730.9, "ducats_per_hour": 0.0, "recorded_at": "2026-08-12T04:18:28.371849+00:00"}
+{"type": "leg", "from": "London", "to": "Amsterdam", "departed_at": "2026-08-12T23:52:18.568212+00:00", "arrived_at": "2026-08-13T00:01:48.277222+00:00", "sailing_time_s": 569.7, "ok": true}
+{"type": "round", "ports": ["London", "Amsterdam"], "profit": 1871355, "elapsed_s": 773.9, "ducats_per_hour": 8705527.0, "recorded_at": "2026-08-13T00:05:32.064650+00:00"}
+{"type": "leg", "from": "Amsterdam", "to": "London", "departed_at": "2026-08-13T02:22:26.963636+00:00", "arrived_at": "2026-08-13T02:31:11.359115+00:00", "sailing_time_s": 524.4, "ok": true}
+{"type": "round", "ports": ["Amsterdam", "London"], "profit": -207429, "elapsed_s": 1370.1, "ducats_per_hour": -545013.2, "recorded_at": "2026-08-13T02:35:46.936942+00:00"}
+{"type": "leg", "from": "Malé", "to": "Goa", "departed_at": "2026-08-16T04:54:15.597691+00:00", "arrived_at": "2026-08-16T05:07:09.483022+00:00", "sailing_time_s": 773.9, "ok": true}
+{"type": "round", "ports": ["Malé", "Goa"], "profit": 0, "elapsed_s": 910.3, "ducats_per_hour": 0.0, "recorded_at": "2026-08-16T05:09:46.390090+00:00"}
+{"type": "leg", "from": "Malé", "to": "Goa", "departed_at": "2026-08-16T05:21:29.251205+00:00", "arrived_at": "2026-08-16T05:32:14.445984+00:00", "sailing_time_s": 645.2, "ok": true}
+{"type": "round", "ports": ["Malé", "Goa"], "profit": 0, "elapsed_s": 773.1, "ducats_per_hour": 0.0, "recorded_at": "2026-08-16T05:34:41.939262+00:00"}
+{"type": "leg", "from": "Goa", "to": "Goa", "departed_at": "2026-08-16T05:42:09.566044+00:00", "arrived_at": "2026-08-16T05:42:40.020447+00:00", "sailing_time_s": 30.5, "ok": true}
+{"type": "round", "ports": ["Malé", "Goa"], "profit": 0, "elapsed_s": 333.8, "ducats_per_hour": 0.0, "recorded_at": "2026-08-16T05:48:11.623952+00:00"}

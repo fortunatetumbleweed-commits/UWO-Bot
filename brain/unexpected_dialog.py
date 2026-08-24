@@ -69,6 +69,63 @@ def looks_like_announcement(text: str) -> bool:
             or "attendance time" in t or "anniversary stars" in t)
 
 
+def find_announcement_close_x(frame) -> Optional[tuple]:
+    """Locate the announcement popup's close-X — a black disc near the popup's
+    top-right, LEFT of the sea mini-map. Returns (x, y) or None.
+
+    CRITICAL: the popup's X is NOT at the screen corner. The old code tapped
+    (0.975w, 0.05h) ≈ (2340,54), which at sea/port_overworld is the ☰ HAMBURGER →
+    it OPENED Company Overview instead of closing the popup (see memory
+    project_home_button_is_chromed_only_escape). Detect the real X instead.
+    """
+    import numpy as np
+    arr = np.asarray(frame.convert("RGB"))
+    h, w = arr.shape[:2]
+    # Band: right-of-centre but LEFT of the top-right mini-map (which starts ~0.80w).
+    x0, x1 = int(0.58 * w), int(0.80 * w)
+    y0, y1 = int(0.12 * h), int(0.30 * h)
+    band = arr[y0:y1, x0:x1]
+    # The disc is NEAR-PURE black with a WHITE CROSS in it. Both halves of that matter.
+    #
+    # A plain "dark pixels" test fails whenever the popup behind is a dark picture. Live
+    # 2026-08-23 the announcement sat on a NIGHT SKY: at the old threshold (<70) 28% of the
+    # band read as dark, the densest window landed on empty sky at (1874,234), and the bot
+    # tapped it four times while the real button sat at (1695,222). Measured there:
+    #   sky            [13 23 51]   → max 51, "dark" at <70, NOT dark at <35
+    #   disc           [0 0 0]      → dark at any threshold
+    #   cross (centre) [248 248 248]→ bright
+    # Tightening to <35 drops the band from 28% to 0.7%; requiring a bright core rejects any
+    # remaining dark patch that is merely a shadow.
+    dark = (band.max(axis=2) < 35).astype(np.int32)
+    bright = (band.min(axis=2) > 200).astype(np.int32)
+    if dark.sum() < 50:                          # no black disc present
+        return None
+    k = 44
+    H, W = dark.shape
+    if H <= k or W <= k:
+        return None
+    ii = np.pad(dark, ((1, 0), (1, 0))).cumsum(0).cumsum(1)
+    ib = np.pad(bright, ((1, 0), (1, 0))).cumsum(0).cumsum(1)
+    win_dark = (ii[k:, k:] - ii[:-k, k:] - ii[k:, :-k] + ii[:-k, :-k])
+    win_bright = (ib[k:, k:] - ib[:-k, k:] - ib[k:, :-k] + ib[:-k, :-k])
+    # The white cross DISAMBIGUATES; it is not a hard requirement.
+    #
+    # On a LIGHT background a dark disc is already unambiguous, so requiring a cross would
+    # reject a perfectly good button (and did — tests/test_announcement_dismiss.py draws a
+    # plain disc). On DARK artwork the darkness test alone is useless: a night-sky popup made
+    # 28% of the band "dark" at the old threshold and the densest window landed on empty sky.
+    #
+    # So: prefer windows that contain a bright core, and fall back to the blackest window
+    # when none does.
+    win = np.where(win_bright >= 20, win_dark, 0)
+    if win.max() <= 0:
+        win = win_dark
+    if win.max() < 0.25 * k * k:                 # not dense enough to be the disc
+        return None
+    yy, xx = np.unravel_index(int(win.argmax()), win.shape)
+    return (int(x0 + xx + k // 2), int(y0 + yy + k // 2))
+
+
 def looks_like_lock_screen(text: str) -> bool:
     """The idle lock/screensaver the game drops into between steps."""
     t = (text or "").lower()
@@ -100,24 +157,33 @@ def clear_blockers(frame=None, *, llm_fn: Optional[Callable[[str], str]] = None,
         return {"cleared": True, "kind": "lock"}
 
     if looks_like_announcement(text):
-        # Back closes the daily-news popup; some event/competition popups need the
-        # close X at the TOP-RIGHT CORNER (outside the popup content). Try Back,
-        # then fall back to the corner X if it persists.
-        back_fn()
-        try:
-            import time as _t
+        # Dismiss by tapping the popup's OWN close-X (a black disc at its top-right).
+        # NEVER the screen corner — at sea/port_overworld that spot is the ☰ hamburger
+        # and opens Company Overview (the bug that stranded the gather run 2026-08-17).
+        # Back is unreliable for this popup, so it's only a fallback.
+        import time as _t
+        from capture.adb_capture import capture_screen
+        _cap = capture_fn or capture_screen
+
+        def _try_dismiss(f):
+            x = find_announcement_close_x(f)
+            if x:
+                tap_fn(*x)
+                logger.info(f"[clear_blockers] announcement — tapped close-X @ {x}")
+            else:
+                back_fn()
+                logger.info("[clear_blockers] announcement — no close-X found, pressed Back")
+
+        _try_dismiss(frame)
+        _t.sleep(0.8)
+        frame2 = _cap()
+        if looks_like_announcement(_ocr_text(frame2)):
+            _try_dismiss(frame2)                 # one retry (X or Back)
             _t.sleep(0.8)
-            from capture.adb_capture import capture_screen
-            frame2 = (capture_fn or capture_screen)()
-            if looks_like_announcement(_ocr_text(frame2)):
-                w, h = frame2.size
-                tap_fn(int(w * 0.975), int(h * 0.05))    # top-right-corner X
-                logger.info("[clear_blockers] announcement persisted after Back — tapped corner X")
-                return {"cleared": True, "kind": "announcement"}
-        except Exception as exc:
-            logger.debug(f"[clear_blockers] announcement corner-X fallback failed: {exc}")
-        logger.info("[clear_blockers] dismissed daily-news/announcement popup (Back)")
-        return {"cleared": True, "kind": "announcement"}
+            frame2 = _cap()
+        cleared = not looks_like_announcement(_ocr_text(frame2))
+        logger.info(f"[clear_blockers] announcement dismiss → cleared={cleared}")
+        return {"cleared": cleared, "kind": "announcement"}
 
     if looks_like_promo(text):
         r = handle(frame, llm_fn=llm_fn, tap_fn=tap_fn, back_fn=back_fn)

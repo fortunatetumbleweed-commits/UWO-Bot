@@ -107,8 +107,15 @@ def test_nearest_edge_run_midpoint_px_returns_pixel():
 
 
 def test_search_tracker_updates_pixel_offset_phase3():
-    """After tracker runs, _current_dest_px_offset reflects the new
-    edge-midpoint pixel offset from ship centre."""
+    """After tracker runs, _current_dest_px_offset points at the top-edge exit.
+
+    Written against the old centerline substrate, this asserted the EDGE MIDPOINT
+    (row exactly 0, column centred on the water run). The tactical layer now follows
+    a single hugging-side BANK offset inward (docs/loop_navigation_design.md), so for
+    hug_side="port" over a water run spanning cols 150-250 the exit lands on the west
+    bank a few pixels inside the frame edge — not at the run's centre. Asserting the
+    midpoint tests a substrate that no longer exists.
+    """
     tac = LookaheadTactical(hug_side="port")
     tac._current_dest = (8.9, 33.0)
     tac._current_dest_reason = "frame_edge"
@@ -119,5 +126,13 @@ def test_search_tracker_updates_pixel_offset_phase3():
     tac.maybe_consult(frame, state)
     assert tac._current_dest_px_offset is not None
     row_off, col_off = tac._current_dest_px_offset
-    assert row_off == -96
-    assert -10 <= col_off <= 10
+    # ship_row is H // 2 == 96, so -96 would mean the endpoint sits EXACTLY on
+    # frame-edge row 0. The nav line is offset inward from the bank, so the endpoint
+    # lands a few pixels inside the edge instead — asserting the exact edge row
+    # over-specifies the geometry. What matters is that it still points at the top
+    # edge (strongly negative, and horizontally centred on the water run).
+    assert -96 <= row_off <= -88, row_off
+    # ship_col is W // 2 == 202, so the water run (cols 150-250) spans offsets
+    # -52..+48. A port-side hug tracks the WEST bank, so the exit sits in the
+    # western half of that span rather than at its centre.
+    assert -52 <= col_off <= 0, col_off

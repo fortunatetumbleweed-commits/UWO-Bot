@@ -115,6 +115,15 @@ class BotObservation:
     # remembered).  0 = freshly observed this tick.
     last_known_base_scene_age_ticks: int = 0
     last_known_settlement_age_ticks: int = 0
+    # Epoch when the settlement was last DIRECTLY observed. Ticks only count within one
+    # session, so they cannot age a value that came off disk; this can.
+    last_known_settlement_seen_at: Optional[float] = None
+
+    def settlement_age_s(self, now: Optional[float] = None) -> Optional[float]:
+        """Seconds since the settlement was actually seen, or None if that is unknown."""
+        if self.last_known_settlement_seen_at is None:
+            return None
+        return (now if now is not None else time.time()) - self.last_known_settlement_seen_at
 
     def fresh_scene(self) -> bool:
         return self.scene_source == "detected"
@@ -126,6 +135,25 @@ class BotObservation:
         # the voyage's *origin* when this is True, vs the *current
         # location* when False.
         return self.last_known_base_scene in ("sea", "sea_cinematic", "world_map")
+
+
+# ── What each screen can actually tell us ─────────────────────────
+# The settlement name is painted on the port/village OVERWORLD and nowhere else: inside a
+# building the title is the SUB-MENU (see `actions.ui.active_submenu`), and the main menu
+# shows the fleet panel and the region ("Atlantic Ocean"), never the port. `perceive` only
+# even attempts the OCR when the family classifier says `port_overworld`, so asking anywhere
+# else is structurally guaranteed to return None.
+#
+# Live 2026-08-22: the mission asked for the port from the MAIN MENU, retried three times,
+# and aborted "current port unreadable" — two minutes after reading 'Kolkata' correctly on
+# the overworld, twice. Knowing which screen can answer a question is what stops the bot
+# re-deriving something it already knew from a screen that cannot supply it.
+SETTLEMENT_NAME_VISIBLE_ON = frozenset({"port_overworld"})
+
+
+def screen_shows_settlement(nav_state: Optional[str]) -> bool:
+    """True when this screen paints the settlement name, so a read there can succeed."""
+    return nav_state in SETTLEMENT_NAME_VISIBLE_ON
 
 
 # ── Module-level singleton ─────────────────────────────────────────
@@ -140,14 +168,26 @@ _PERSISTED_UNLOADED: object = object()
 _persisted_settlement: Any = _PERSISTED_UNLOADED
 
 
+_persisted_settlement_at: Optional[float] = None      # epoch it was written, if known
+
+
 def _load_persisted_settlement() -> Optional[str]:
-    """Read the last known settlement from disk, or None if missing/corrupt."""
+    """Read the last known settlement from disk, or None if missing/corrupt.
+
+    Also records WHEN it was written into `_persisted_settlement_at`, so a value loaded
+    after a restart can report a real age. The tick counters are session-scoped and reset to
+    zero every run, which made a settlement saved days ago indistinguishable from one seen
+    this tick.
+    """
+    global _persisted_settlement_at
     try:
         data = json.loads(_SETTLEMENT_PATH.read_text())
         name = data.get("name")
         if isinstance(name, str) and name.strip():
+            at = data.get("at")
+            _persisted_settlement_at = float(at) if isinstance(at, (int, float)) else None
             return name.strip()
-    except (FileNotFoundError, json.JSONDecodeError, OSError):
+    except (FileNotFoundError, json.JSONDecodeError, OSError, ValueError):
         pass
     return None
 
@@ -160,6 +200,10 @@ def _save_persisted_settlement(name: str) -> None:
         _SETTLEMENT_PATH.parent.mkdir(parents=True, exist_ok=True)
         payload = {
             "name": name,
+            # `at` is what code reads: an epoch, unambiguous and comparable. `saved_at` is
+            # local time for a human opening the file — it carries no zone, so it cannot be
+            # compared against anything.
+            "at": time.time(),
             "saved_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
         }
         _SETTLEMENT_PATH.write_text(json.dumps(payload, indent=2))
@@ -252,20 +296,24 @@ def update(
     if detected_settlement:
         settlement     = detected_settlement
         settlement_age = 0
+        settlement_at  = time.time()          # seen right now
         # Save to disk only on changes so we don't write every tick.
         if prev is None or prev.last_known_settlement != detected_settlement:
             _save_persisted_settlement(detected_settlement)
     elif prev is not None and prev.last_known_settlement is not None:
         settlement     = prev.last_known_settlement
         settlement_age = prev.last_known_settlement_age_ticks + 1
+        settlement_at  = prev.last_known_settlement_seen_at    # unchanged: still that sighting
     else:
         persisted = _ensure_persisted_loaded()
         if persisted:
             settlement     = persisted
-            settlement_age = 0    # unknown age across restart; treat as fresh-from-disk
+            settlement_age = 0    # no tick equivalent across a restart — read `seen_at`
+            settlement_at  = _persisted_settlement_at
         else:
             settlement     = None
             settlement_age = 0
+            settlement_at  = None
 
     obs = BotObservation(
         tick=tick,
@@ -277,6 +325,7 @@ def update(
         last_known_base_scene=base,
         last_known_settlement=settlement,
         last_action=last_action or (prev.last_action if prev else None),
+        last_known_settlement_seen_at=settlement_at,
         last_known_base_scene_age_ticks=base_age,
         last_known_settlement_age_ticks=settlement_age,
         nav=nav,

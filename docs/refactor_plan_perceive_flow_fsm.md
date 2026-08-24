@@ -1,5 +1,12 @@
 # Refactor Plan — Perceive / Flow / FSM (draft, 2026-08-02)
 
+> **Status (confirmed 2026-08-23): UNIMPLEMENTED, still accurate.** Goal #2 ("never
+> inner-loop-retries forever") remains unmet — `actions/sail_actions.py` carries 9 loops
+> and 18 back/exit calls, and four of those loops re-judge the bot's position with their
+> own private recovery policy. Superseded in FRAMING, not in content, by
+> `docs/one_loop_task_drives_state.md`, which supplies the missing piece: a single task
+> loop for primitives to report to.
+
 Companion to `docs/architecture_review_perceive_flows_2026-08.md`.  This is a
 **draft** direction for discussion, not a committed plan; open decisions are at
 the end.

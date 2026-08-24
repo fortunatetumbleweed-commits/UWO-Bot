@@ -1,0 +1,31 @@
+name: "London to Seville — 1 Round Trip"
+description: "London to Seville (direct) — short trade run"
+
+start_port: London
+rounds: 1
+
+loop:
+  # ── Forward leg: London → Seville ──
+  - action: sell_all
+    port: London
+    note: "Sell cargo at London"
+  - action: buy_all
+    port: London
+    note: "Buy recommended goods at London"
+  - action: sail_to
+    destination: Seville
+
+  # ── Return leg: Seville → London ──
+  - action: sell_all
+    port: Seville
+    note: "Sell cargo at Seville"
+  - action: buy_all
+    port: Seville
+    note: "Buy recommended goods at Seville"
+  - action: sail_to
+    destination: London
+
+report:
+  - profit_loss
+  - per_round
+  - unrecognized_scenes

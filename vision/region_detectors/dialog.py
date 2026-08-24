@@ -159,12 +159,27 @@ def detect_dialog(
     # title bar is at the top, the body in the middle, the action
     # buttons at the bottom).  So we use the anchor centroid to define
     # a horizontal band, and accept the entire usable vertical range.
-    anchor_pts = []
-    if close_btn:   anchor_pts.append(close_btn)
-    for a in action_btns: anchor_pts.append(a.bbox)
+    # ANCHORS MUST BELONG TO THE SAME DIALOG. `_find_x_close` returns the RIGHTMOST close-X
+    # on the frame, which is often a side panel's rather than this dialog's. Averaging it
+    # with the action row drags the band across unrelated UI, the cluster swallows the panel,
+    # and the "is this an info panel?" height guard below then rejects a real dialog.
+    #
+    # Live 2026-08-23, the departure Notice on the world map: Ok@1306 / Cancel@1091 with the
+    # Village Info panel's X at (2180,118). The mixed centroid was cx=1535, the band became
+    # (575,2400), the cluster spanned (826,113)-(2237,1044) — height 931 > 864 — and a modal
+    # dialog was reported as `kind=none`. The bot proceeded as though nothing blocked it.
+    #
+    # The action row is the reliable anchor: it is unambiguous, it belongs to the dialog by
+    # construction, and it sits inside the dialog's width. Use the close-X only when there is
+    # no action row, and only then as a last resort.
+    if action_btns:
+        anchor_pts = [a.bbox for a in action_btns]
+        band_half_w = int(0.20 * fw)     # tight: a dialog is not much wider than its buttons
+    else:
+        anchor_pts = [close_btn]
+        band_half_w = int(0.40 * fw)
 
     anchor_cx = sum((b[0] + b[2]) / 2 for b in anchor_pts) / len(anchor_pts)
-    band_half_w = int(0.40 * fw)
     rx1 = max(0,  int(anchor_cx - band_half_w))
     rx2 = min(fw, int(anchor_cx + band_half_w))
 

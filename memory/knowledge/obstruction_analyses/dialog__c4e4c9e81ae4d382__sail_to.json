@@ -1,0 +1,21 @@
+{
+  "purpose": "A limited-time in-app purchase offer called 'Shortcut to Growth 5' has appeared, bundling various game resources (coins, medals, tokens) at a discounted price, with roughly 24 hours remaining before the offer expires",
+  "full_text": "Shortcut to Growth 5. This item may be shown again in the same form. Even if not purchased, it may be displayed again after a certain time. Items included: 110, 260, 220, 540, 240, 160, 100 (various resource quantities). Time left: 23:59:49. Purchase.",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "c4e4c9e81ae4d382",
+  "goal_intent": "sail_to",
+  "cached_at": "2026-08-12T03:55:54.364961+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A limited-time in-app purchase offer called 'Shortcut to Growth 5' has appeared, bundling various game resources (coins, medals, tokens) at a discounted price, with roughly 24 hours remaining before the offer expires",
+    "full_text": "Shortcut to Growth 5. This item may be shown again in the same form. Even if not purchased, it may be displayed again after a certain time. Items included: 110, 260, 220, 540, 240, 160, 100 (various resource quantities). Time left: 23:59:49. Purchase.",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

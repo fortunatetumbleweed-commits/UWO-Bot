@@ -1,0 +1,59 @@
+{
+  "task_name": "London to Amsterdam — 1 Round Trip",
+  "started_at": "2026-08-12T03:25:29.158251+00:00",
+  "ended_at": "2026-08-12T04:18:28.372328+00:00",
+  "elapsed_seconds": 3179.214077,
+  "rounds_completed": 0,
+  "total_profit": 0,
+  "ducats_per_hour": 0.0,
+  "steps": [
+    {
+      "action": "sell_all",
+      "port": "London",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 221.68766262498684,
+      "notes": "sold 1 goods  +0d"
+    },
+    {
+      "action": "buy_all",
+      "port": "London",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 608.1594559579389,
+      "notes": "bought 9 goods  -0d (→Amsterdam)"
+    },
+    {
+      "action": "sail_to",
+      "port": "Amsterdam",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 756.7835719579598,
+      "notes": "arrived"
+    },
+    {
+      "action": "sell_all",
+      "port": "?",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 362.6625787910307,
+      "notes": "sold 0 goods  +0d"
+    },
+    {
+      "action": "buy_all",
+      "port": "Seville",
+      "ok": false,
+      "profit": 0,
+      "duration_s": 0.0,
+      "notes": "skipped — at 'Seville', expected 'Amsterdam'"
+    },
+    {
+      "action": "sail_to",
+      "port": "London",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 781.5940761669772,
+      "notes": "arrived"
+    }
+  ]
+}

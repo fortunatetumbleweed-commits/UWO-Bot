@@ -23,6 +23,7 @@
 
 from __future__ import annotations
 
+import random
 import time
 from typing import Optional, Tuple
 
@@ -73,16 +74,29 @@ def _ocr_frame(frame: Image.Image, min_conf: float = 0.30):
 
     Raw readtext output is cached by id(frame); repeated calls on the
     same frame (across perceive helpers) share one OCR inference.
+
+    The cache stores (frame, raw) so the entry PINS the frame alive: `id()` only
+    identifies a live object, and a freed PIL image's address is immediately reused by the
+    next one (measured: 200 images, 3 distinct ids). Caching the raw tokens against a bare
+    id let one screen's OCR be served for another — the world-map frame that came back
+    reading "Inn / recruit mates" from the port overworld (live 2026-08-21).
     """
     import numpy as np
     fid = id(frame)
-    raw = _OCR_CACHE.get(fid)
+    entry = _OCR_CACHE.get(fid)
+    raw = None
+    if entry is not None:
+        cached_frame, cached_raw = entry
+        if cached_frame is frame:
+            raw = cached_raw
+        else:
+            _OCR_CACHE.pop(fid, None)        # stale id — the old frame is gone
     if raw is None:
         if len(_OCR_CACHE) >= _OCR_CACHE_MAX:
             _OCR_CACHE.clear()
         from vision.ocr import _get_reader
         raw = _get_reader().readtext(np.array(frame), detail=1)
-        _OCR_CACHE[fid] = raw
+        _OCR_CACHE[fid] = (frame, raw)       # the reference pins the id
 
     out = []
     for bbox, text, conf in raw:
@@ -214,6 +228,7 @@ def _find_button(
     x_max: Optional[int] = None,
     y_min: Optional[int] = None,
     y_max: Optional[int] = None,
+    allow_title: bool = False,
 ) -> Optional[Tuple[int, int]]:
     """Find a button by label: OmniParser first, EasyOCR fallback.
 
@@ -221,8 +236,24 @@ def _find_button(
     of *label* against the candidate's label text.  This prevents short
     canonical labels (ok, x, no) from accidentally matching substrings
     inside unrelated words (Stock, Exit, Maximum).
+
+    The chromed TITLE is skipped unless `allow_title=True`. On every chromed screen the
+    title bar is a BACK control (the Android paradigm), and the title word is usually the
+    same word a caller is searching for — the Sell page is titled "Sell", the Purchase page
+    "Purchase". A forward-intent search therefore collides with it exactly when the bot has
+    ALREADY reached the screen it wanted, and the tap navigates back out. Live 2026-08-22:
+    `_find_button(frame, "sell")` matched the title at (107,53) on a Sell page already
+    showing Ebony 700 / Coral 797, left the market, and the mission planned zero rounds.
     """
     from vision.omniparser import get_omniparser, parse_fast_cached
+
+    def _is_title(cx: int, cy: int) -> bool:
+        """The `< Title` back control, in the TOP-LEFT corner. Kept as a fraction of the
+        frame so it survives rotation and the camera-cutout offset; scoped to the corner so
+        a dialog's own close-X (top-RIGHT of the dialog) is still findable."""
+        return (not allow_title
+                and cx < 0.15 * frame.width and cy < 0.10 * frame.height)
+
     parser = get_omniparser()
     if parser.yolo_available():
         for el in parse_fast_cached(frame):
@@ -230,6 +261,7 @@ def _find_button(
                 if not _label_matches(label, el.label):
                     continue
                 cx, cy = el.cx, el.cy
+                if _is_title(cx, cy): continue
                 if x_min is not None and cx < x_min: continue
                 if x_max is not None and cx > x_max: continue
                 if y_min is not None and cy < y_min: continue
@@ -241,6 +273,7 @@ def _find_button(
         for label in labels:
             if not _label_matches(label, text):
                 continue
+            if _is_title(cx, cy): continue
             if x_min is not None and cx < x_min: continue
             if x_max is not None and cx > x_max: continue
             if y_min is not None and cy < y_min: continue
@@ -373,6 +406,21 @@ def read_sea_hud(frame=None) -> dict:
         # Skip noise tokens (numbers, icons, single chars)
         if len(t) >= 3 and not re.match(r'^[\d\s\W]+$', t):
             dest_candidate = t
+
+    # Fallback: on a saved-ROUTE auto-sail the HUD reads "Sailing Route N" +
+    # "ETA" + "12d" as SEPARATE tokens, so the per-token regex above misses it.
+    # Re-run over the joined text.  Also surface the route name as destination.
+    eta_text = " ".join(t.lower() for t, _, _, _ in eta_tokens_sorted)
+    if result["eta_days"] is None and ("eta" in eta_text or "sailing route" in eta_text):
+        # Route HUD splits "ETA" and "12d" into separate tokens whose sort order
+        # varies, so match the standalone "<n>d" token in the ETA context.
+        m = re.search(r'(\d+)\s*d\b', eta_text)
+        if m:
+            result["eta_days"] = int(m.group(1))
+    if result["destination"] is None:
+        m = re.search(r'(sailing route\s*\d+)', eta_text)
+        if m:
+            result["destination"] = m.group(1)
 
     logger.debug(
         f"Sea HUD — supply={result['supply_days']}d  "
@@ -539,6 +587,22 @@ def _is_on_overworld(frame: Image.Image) -> bool:
                 sm.top_left.title.text if sm.top_left and sm.top_left.title
                 else "<none>"
             )
+            # The MAIN MENU sits ON TOP of the overworld, so the scene model is right to
+            # report kind=port_overworld with overlay=main_menu — but the overworld's
+            # controls are covered and cannot be tapped. Callers ask this to decide whether
+            # they can act, so an overlay means "no".
+            #
+            # Live 2026-08-22: `exit_to_overworld` reported "Port overworld confirmed" on
+            # the main menu while `open_world_map` — which classifies properly — kept
+            # reporting main_menu. The two deadlocked for all 10 attempts and the run died
+            # with one action recorded.
+            _ov = getattr(sm, "overlay", None)
+            if _ov is not None and getattr(_ov, "is_modal", False):
+                logger.info(
+                    f"  Not actionable overworld — a MODAL overlay "
+                    f"({getattr(_ov, 'kind', '?')!r}) is over it ({sm.summary()})"
+                )
+                return False
             logger.info(
                 f"  Overworld confirmed via SceneModel "
                 f"(title={title_text!r}, {sm.summary()})"
@@ -588,7 +652,8 @@ def _is_on_overworld(frame: Image.Image) -> bool:
     # No port name and no right panel — likely a full-screen overlay.
     # Tap to dismiss and let the caller retry.
     logger.info("  No home, no back, no port name, no right panel — likely overlay; tapping to dismiss")
-    tap(1200, 540)
+    from actions import ui as _ui
+    _ui.tap_centre(frame, why="dismiss a suspected full-screen overlay")
     return False
 
 
@@ -659,6 +724,101 @@ def exit_to_overworld(timeout: float = 90.0) -> bool:
 
 
 # ── Building navigation — shared state machine ────────────────────────────────
+
+# Known building names, to tell "the right panel is on the BUILDINGS tab" (list rendered) from
+# "it's on the Tasks / Players tab" (list absent) — the latter is why navigate_to_building can read
+# an empty building list on a perfectly-good port overworld (live 2026-08-19: Tasks tab auto-opened
+# on arrival at Jakarta → 60s timeout).
+# Common buildings ALWAYS near the top of the Buildings-tab list, chosen to be single words that do
+# NOT appear in Tasks/quest text — 'union'/'palace' were dropped because quests like "from Istanbul
+# Union" / "Palace:" false-matched a SUBSTRING check and made the bot think it was on the Buildings
+# tab when it was actually on Tasks (live 2026-08-19). Matched EXACTLY, not as substrings.
+_BUILDING_NAMES = frozenset({"harbor", "market", "shipyard", "bank", "inn", "sanctuary",
+                             "item shop", "bureau"})
+
+
+# A real building list names SEVERAL buildings; one stray match is not evidence.
+_MIN_BUILDING_MATCHES = 2
+
+
+def _on_buildings_tab(buildings) -> bool:
+    """True if the read list is the BUILDINGS tab.
+
+    Matched EXACTLY, not as substrings: Tasks entries 'from istanbul union' / 'palace:' must
+    not count (live 2026-08-19).
+
+    And matched at least twice. A single hit is not evidence, because the port overworld has
+    a standalone "⚓ Harbor" shortcut button that the list read picks up: at Jakarta on
+    2026-08-21 the PLAYER tab read as ['tropical', 'kingdavid', '0.#', 'lv 70', 'harbor'] —
+    one building word, from a button that is not in the list at all. That single match made
+    this return True, so the "wrong tab?" branch never ran, and `navigate_to_building`
+    scrolled a list of player names for 60s before giving up. A genuine building list carries
+    seven or more matches (harbor, market, shipyard, bank, inn, sanctuary, bureau…), so the
+    two cases are not close together.
+    """
+    hits = sum(1 for lbl, *_ in buildings
+               if lbl.strip().strip(":.").lower() in _BUILDING_NAMES)
+    return hits >= _MIN_BUILDING_MATCHES
+
+
+def _tab_strip_band() -> Tuple[int, int, int, int]:
+    """SEARCH region for the port-overworld tab strip, derived from the calibrated minimap.
+
+    A region is a safe use of a calibrated constant; a tap target is not. The strip sits just
+    above the minimap, so this brackets it generously and lets detection pick the icons out.
+    """
+    try:
+        from brain.ai_nav.vision_input import MINIMAP_CROP as _MC
+    except Exception:
+        _MC = (1984, 205, 2379, 395)
+    x0, y0, x1, y1 = _MC
+    return (x0 - 80, y0 - 100, x1 + 80, y0 - 5)
+
+
+def _tab_strip_candidates(frame) -> list:
+    """Detected tab icons above the minimap, ordered left→right.
+
+    The strip is Tasks / Buildings / Players / Location. Their POSITIONS are not stable — the
+    game re-bakes its camera-cutout offset per screen — so they are detected, not computed.
+    That distinction is not academic: `_buildings_tab_pos()` used to return a calibrated
+    ≈(2146,156), and on Jakarta 2026-08-21 the real tabs sat at ≈2016 (Buildings) and ≈2114
+    (Players). The constant landed on PLAYERS, so the bot selected the player tab itself,
+    the panel listed 'kingdavid LV 70' instead of buildings, and `gather:Jakarta` failed
+    twice with "Could not enter 'Market' after 60s" and aborted the mission.
+    """
+    try:
+        from vision.omniparser import parse_fast_cached
+        els = parse_fast_cached(frame) or []
+    except Exception as exc:
+        logger.debug(f"  tab-strip detection unavailable ({type(exc).__name__}: {exc})")
+        return []
+    bx0, by0, bx1, by1 = _tab_strip_band()
+    hits = [e for e in els if bx0 <= e.cx <= bx1 and by0 <= e.cy <= by1]
+    hits.sort(key=lambda e: e.cx)
+    if hits:
+        logger.info("  Tab-strip candidates: "
+                    + ", ".join(f"{e.label!r}@({e.cx},{e.cy})" for e in hits))
+    return [(e.cx, e.cy) for e in hits]
+
+
+# Screens whose title says the fleet is ALREADY UNDER WAY. Reaching a building is
+# meaningless once the ship has left, and forcing the screen back to match a stale plan
+# destroys the voyage that was just started.
+_UNDER_WAY_TITLE_MARKERS = ("sailing to", "en route to", "moving to")
+
+
+def _screen_says_under_way(location: str, title: str) -> bool:
+    """True when the SCREEN says the fleet has already departed.
+
+    The screen is ground truth (user 2026-08-22). A title that does not match the building
+    we were asked for usually means our own idea of where we are is stale — not that the
+    screen must be pressed back into line.
+    """
+    if location in ("sea", "sea_cinematic"):
+        return True
+    t = (title or "").lower()
+    return any(m in t for m in _UNDER_WAY_TITLE_MARKERS)
+
 
 def navigate_to_building(building_name: str, timeout: float = 60.0) -> bool:
     """
@@ -737,6 +897,35 @@ def navigate_to_building(building_name: str, timeout: float = 60.0) -> bool:
         found avoids unnecessary port-map fallback, which has its own
         in-transit retap risks.
         """
+        # ── Step 0: make sure the right panel is on the BUILDINGS tab ────
+        # The port-overworld tab bar (above the minimap) toggles Tasks / Buildings / Players; the
+        # building list only renders on the Buildings tab.  On arrival the Tasks tab can be auto-
+        # selected (live 2026-08-19: Jakarta → empty list → 60s timeout).  If the read doesn't look
+        # like the building list, tap the Buildings tab (house icon) and re-read.  Bounded: one tap.
+        frame = frame or capture_screen()
+        if not _on_buildings_tab(read_building_menu(frame)):
+            # Try the detected tabs in turn and VERIFY by re-reading the list, rather than
+            # trusting one computed position. Which index is Buildings varies with how many
+            # tabs a port shows, and a wrong guess does not fail quietly — it SELECTS another
+            # tab, which is how the bot put itself on the Players tab at Jakarta.
+            candidates = _tab_strip_candidates(frame)
+            if not candidates:
+                logger.warning("  Building list not on screen and no tab icons detected — "
+                               "proceeding with the current view")
+            for i, (bx, by) in enumerate(candidates):
+                logger.info(f"  Building list not on screen — trying tab {i + 1}/"
+                            f"{len(candidates)} @ ({bx},{by})")
+                tap(bx, by)
+                time.sleep(1.5)
+                frame = capture_screen()
+                if _on_buildings_tab(read_building_menu(frame)):
+                    logger.info(f"  Buildings tab selected @ ({bx},{by})")
+                    break
+            else:
+                if candidates:
+                    logger.warning(f"  None of the {len(candidates)} detected tabs showed a "
+                                   "building list")
+
         # ── Step 1: try current view (cheap, often hits) ─────────────────
         pos = _find_in_list(frame)
         if pos is not None:
@@ -744,7 +933,16 @@ def navigate_to_building(building_name: str, timeout: float = 60.0) -> bool:
             tap(*pos)
             return True
 
-        mx = (BUILDING_MENU_REGION[0] + BUILDING_MENU_REGION[2]) // 2
+        # Scroll within the ACTUAL list column, not the region centre.  The list sits at the right
+        # edge (x≈0.91·W ≈ 2184); a region-centre swipe (x≈2125) can miss it entirely, so the rewind
+        # never scrolls, the signature stays unchanged → "at top" is assumed, and clipped top
+        # buildings (Harbor/Market on 10-building ports) never come back (live 2026-08-19, Jakarta).
+        _bl = read_building_menu(frame if frame is not None else capture_screen())
+        if _bl:
+            xs = sorted(x for _, x, _ in _bl)
+            mx = xs[len(xs) // 2]                    # median entry x = the real list column
+        else:
+            mx = (BUILDING_MENU_REGION[0] + BUILDING_MENU_REGION[2]) // 2
         my = (BUILDING_MENU_REGION[1] + BUILDING_MENU_REGION[3]) // 2
 
         # ── Step 2: reset to top of list with up-swipes ─────────────────
@@ -919,6 +1117,18 @@ def navigate_to_building(building_name: str, timeout: float = 60.0) -> bool:
             if lbl.lower().strip() in _CANONICAL_BUILDINGS
         }))
 
+    def _reparse_for_always_present() -> None:
+        """A basic building the list scan + port map both missed this pass, but it
+        MUST exist (Harbor/Market/Inn/Bureau/Shipyard).  Don't give up — log it as
+        a perception miss and pace the loop so the next iteration re-captures and
+        re-scans (fresh frame + port-map retry), bounded by the outer deadline."""
+        import random
+        logger.warning(
+            f"  '{building_name}' not found this pass but it ALWAYS exists at every "
+            "port — reparsing (perception miss / scrolled off), not giving up"
+        )
+        time.sleep(random.uniform(0.6, 1.1))
+
     logger.info(f"Navigating to '{building_name}'…")
 
     deadline           = time.time() + timeout
@@ -941,6 +1151,25 @@ def navigate_to_building(building_name: str, timeout: float = 60.0) -> bool:
     # building once the scene loads (e.g. on an NPC mate inside the inn).
     TAP_RETRY_COOLDOWN  = 60.0
     MAX_WAIT_AFTER_TAP  = 120.0
+
+    # Basic buildings (Harbor, Market, Inn, Bureau, Shipyard) exist at EVERY
+    # port and the right-panel list is scrollable — so "not found in this parse"
+    # is a perception miss (scrolled off / icon-prefix mis-OCR), never absence.
+    # For these, don't give up on a single failed scan: reparse until the
+    # deadline (the port-map fallback + a fresh capture next iteration).  See
+    # brain.kb always_present_buildings / memory project_basic_buildings_always_present.
+    from brain.kb import control as _kb_control
+    _always_present = _kb_control().is_always_present(building_name)
+
+    # Cross-iteration no-progress tracker for the `building` handler.  A wrong
+    # building → Back normally returns to port_overworld, which the loop already
+    # drives to the target — so Back is a single action that hands control back to
+    # the perceive loop (NOT an inline perceive-and-branch).  Only when we keep
+    # landing in the SAME wrong building (Back changing nothing — a modal eating
+    # Back) do we escalate to a bounded Home-escape.  See
+    # docs/navigate_to_building_review.md.
+    _wrong_building_sig    = None
+    _wrong_building_streak = 0
 
     while time.time() < deadline:
         # Capture once per loop — share the frame with all sub-calls to avoid
@@ -1085,50 +1314,64 @@ def navigate_to_building(building_name: str, timeout: float = 60.0) -> bool:
                 time.sleep(2.0)
                 continue
 
-            # No KB match — try Back blindly as a last resort, then probe again.
+            # No KB match and this is the WRONG building.  The single correct
+            # action is Back: a wrong building → Back normally returns to
+            # port_overworld, which the loop's port_overworld handler already
+            # drives to the target (tap from list / port map).  Do NOT inline-
+            # perceive-and-branch here — press Back and hand control back to the
+            # loop top (perceive → dispatch).  Track no-progress so a Back that
+            # changes nothing (a modal eating Back) escalates to a bounded
+            # Home-escape rather than looping until the deadline.
+            _sig = (loc["location"], bld_title_short)
+            if _sig == _wrong_building_sig:
+                _wrong_building_streak += 1
+            else:
+                _wrong_building_sig    = _sig
+                _wrong_building_streak = 0
+
+            if _wrong_building_streak >= 2:
+                logger.warning(
+                    f"  Still in {bld_title_short!r} after {_wrong_building_streak + 1} "
+                    "Back attempts (Back not changing the screen) — Home-escape"
+                )
+                # Route through the canonical exit helper rather than tapping the Home slot
+                # blind. It checks the chrome first: that slot is the HAMBURGER on an
+                # overworld, so a blind tap there opens the main menu instead of leaving
+                # (memory: project_home_button_is_chromed_only_escape). It also prefers an
+                # on-screen close target over system Back.
+                from actions.screen_exit import exit_current_screen
+                res = exit_current_screen()
+                logger.info(f"  exit_current_screen → {getattr(res, 'method', res)}")
+                time.sleep(2.0)
+                last_tap_time          = time.time() - TAP_RETRY_COOLDOWN
+                first_tap_time         = 0.0
+                last_tap_signature     = None
+                _wrong_building_sig    = None
+                _wrong_building_streak = 0
+                continue
+
+            # BEFORE forcing anything: does the screen contradict the premise of this call?
+            # Live 2026-08-22 the departure had ALREADY succeeded and the screen read
+            # "sailing to Melanesian Village". This branch pressed Back, cancelled the
+            # voyage, and the mission re-ran the whole village search — four times, 18.5
+            # minutes, to achieve what the first attempt had done in 65 seconds.
+            #
+            # A stale caller does not get to overwrite what the bot can see. Hand the
+            # perceived state back and let the caller update itself.
+            if _screen_says_under_way(loc["location"], bld_title_short):
+                logger.info(
+                    f"  Screen says {bld_title_short!r} — the fleet is already under way, so "
+                    f"{building_name!r} is moot. Leaving the screen ALONE and reporting the "
+                    "real state instead of pressing Back."
+                )
+                return False
+
             logger.info(
                 f"  Title {bld_title_short!r} doesn't match {building_name!r} — "
-                "trying Back (unknown sub-screen of target building?)"
+                "pressing Back, then re-perceiving from the loop top"
             )
             press_back()
             time.sleep(2.0)
-            frame = capture_screen()
-            _pr2 = _perceive(frame)
-            loc2 = _pr2.to_location_dict()
-            bld_title2       = loc2.get("detail", "").replace("building:", "").strip().lower()
-            bld_title2_short = bld_title2.split(" — ", 1)[0].strip()
-            if loc2["location"] == "building" and (
-                target in bld_title2_short or token_sim(bld_title2_short, target) >= 0.65
-            ):
-                logger.info(f"  Back worked — now in {bld_title2_short!r}")
-                return True
-
-            # Still wrong after Back.  Try learned recovery on the post-Back screen.
-            if loc2["location"] == "building":
-                logger.info(
-                    f"  Still in {bld_title2_short!r} after Back — "
-                    f"asking reasoning chain how to reach {building_name!r}"
-                )
-                lr_text = f"building {bld_title2} navigate to {target}"
-                plan = _match_learned_recovery("building", lr_text)
-                if plan:
-                    from brain.human_escalation import _execute_plan
-                    logger.info(f"  Applying learned recovery: {plan.scenario_id!r}")
-                    _execute_plan(plan)
-                    time.sleep(2.0)
-                    continue  # re-check from top of loop
-
-            # Reasoning didn't help — escape to overworld and try again.
-            # Home button is always available when not in an atomic flow.
-            logger.warning(
-                f"  Cannot reach {building_name!r} from {bld_title2_short!r} — "
-                "tapping Home to escape to overworld"
-            )
-            tap(2300, 45)  # Home button
-            time.sleep(2.0)
-            last_tap_time      = time.time() - TAP_RETRY_COOLDOWN
-            first_tap_time     = 0.0   # fresh navigation cycle — reset total-wait clock
-            last_tap_signature = None  # fresh state — let next iteration tap immediately
 
         elif loc["location"] == "loading":
             pass  # transition in progress — wait for next poll
@@ -1167,6 +1410,10 @@ def navigate_to_building(building_name: str, timeout: float = 60.0) -> bool:
                     first_tap_time     = last_tap_time  # reset the total wait clock
                     last_tap_signature = _overworld_signature(capture_screen())
                     deadline           = time.time() + timeout
+                elif _always_present:
+                    _reparse_for_always_present()
+                    first_tap_time     = 0.0
+                    last_tap_signature = None
                 else:
                     logger.error(f"  Cannot find '{building_name}' anywhere — giving up")
                     return False
@@ -1197,17 +1444,41 @@ def navigate_to_building(building_name: str, timeout: float = 60.0) -> bool:
                         # Reset deadline so the new attempt gets its full time budget.
                         # Without this, a tap issued near the deadline has no time to confirm.
                         deadline = time.time() + timeout
+                    elif _always_present:
+                        _reparse_for_always_present()
+                        first_tap_time     = 0.0
+                        last_tap_signature = None
                     else:
                         logger.error(f"  Cannot find '{building_name}' anywhere — giving up")
                         return False
 
-        elif loc["location"] in ("sea", "world_map", "main_menu"):
-            logger.warning(f"  Unexpected {loc['location']!r} — pressing back to recover")
+        elif loc["location"] == "world_map":
+            # Back on the WORLD MAP safely returns to the overworld (this is NOT the Exit-Game
+            # trap — that's Back on the overworld / main_menu).
+            logger.info("  On world map — pressing Back to return to overworld")
             press_back()
-            last_tap_time = time.time()
-            deadline = time.time() + timeout  # reset after recovery too
+            time.sleep(1.5)
 
-        # "sea_cinematic" / "unknown" — likely overlay; wait and re-poll
+        elif loc["location"] in ("sea", "sea_cinematic", "main_menu"):
+            # DON'T blind-Back here.  Back is context-dependent: on the overworld / main_menu it
+            # opens the "Exit Game?" prompt (a shutdown near-miss, live 2026-08-19), and Back at sea
+            # is unhelpful.  Right after arrival the port is still SETTLING (arrival cinematic /
+            # stale sea overlays), so WAIT and RE-PERCEIVE until it settles into a stable
+            # port_overworld with the building list — never act on an assumed state.  If an Exit-
+            # Game / Notice dialog is already up, dismiss it (Back on a DIALOG = Cancel, which is
+            # safe; never tap OK).  We do NOT reset the deadline, so the outer timeout fires if it
+            # never settles and the caller can re-plan instead of looping forever.
+            if _screen_contains(frame, "exit game", "leave game", "quit game",
+                                "do you want to exit"):
+                logger.info("  Exit-Game dialog up — dismissing via Cancel (Back-on-dialog)")
+                press_back()
+                time.sleep(1.5)
+            else:
+                logger.info(f"  Unsettled {loc['location']!r} (port not ready) — waiting to "
+                            "re-perceive, NOT blind-Backing")
+                time.sleep(2.0)
+
+        # "unknown" — likely a transient overlay; wait and re-poll
 
     logger.error(f"Could not enter '{building_name}' after {timeout:.0f}s")
     return False
@@ -2083,6 +2354,11 @@ def _depart_from_harbour() -> bool:
         loc = where_am_i(frame)
         if loc["location"] in ("sea", "sea_cinematic"):
             logger.info("On sea view — departure confirmed")
+            # The remembered settlement was the fleet's LOCATION; once at sea it is only the
+            # voyage's origin. Dropping it here beats guessing an expiry — the moment the bot
+            # does the thing that makes a fact untrue is the moment it knows for certain.
+            from memory.observed_facts import forget
+            forget("settlement")
             return True
         if loc["location"] == "port_overworld":
             logger.warning(f"  On port overworld ({loc.get('port')!r}) — "
@@ -2400,102 +2676,205 @@ def _read_sea_speed(frame: Image.Image) -> Optional[float]:
     return None
 
 
-def _open_world_map_from_sea(_frame: Image.Image) -> bool:
-    """
-    Tap the mini-map on the sea view to open the world map.
-    Mini-map is at top-right of the sea HUD (coord: 2240, 250).
-    Must ensure sea view is active before tapping — idle cinematic intercepts taps.
-    Uses where_am_i() for reliable state detection (avoids false positives from
-    port names in the sea view right panel).
-    """
-    logger.info("Opening world map from sea view…")
+# States that are PLACES the fleet occupies, not screens laid over one. Leaving one costs
+# position, so a primitive may never do it to satisfy its own state test.
+_SETTLEMENT_STATES = ("village", "port_overworld")
 
-    for attempt in range(3):
-        # Capture once per attempt; reuse the frame for where_am_i, ensure_active,
-        # and clear_popups to avoid redundant screencaps + OCR calls.
+
+def _looks_like_a_village(frame) -> bool:
+    """True when the frame carries a VILLAGE's left menu, whatever the classifier said.
+
+    barter + gifting together appear on no port screen, and the menu is present on every
+    village sub-screen — including the barter panel, which the family classifier has called
+    both 'sea' and 'port_overworld' on different frames.
+    """
+    try:
+        from vision.omniparser import parse_fast_cached
+        from vision.region_detectors.left_menu import detect_left_menu
+        menu = detect_left_menu(list(parse_fast_cached(frame)), frame.width, frame.height)
+        labels = {l.strip().lower() for l in (menu.labels() if menu else [])}
+        return {"barter", "gifting"} <= labels
+    except Exception as exc:
+        logger.debug(f"[open_world_map] village check failed: {exc}")
+        return False
+
+
+_PORT_WORLD_MAP_GLOBE = (2227, 361)   # port minimap GLOBE icon → world map (proven set-sail path)
+
+
+def _sea_minimap_center() -> tuple:
+    """Centre of the live sea MINIMAP_CROP — the SAME calibrated region the nav reads every tick,
+    so a tap follows the minimap (notch-aware) instead of a stale hardcoded coord that drifts onto
+    the hamburger."""
+    try:
+        from brain.ai_nav.vision_input import MINIMAP_CROP as _MC
+    except Exception:
+        _MC = (1984, 205, 2379, 395)
+    x0, y0, x1, y1 = _MC
+    return ((x0 + x1) // 2, (y0 + y1) // 2)
+
+
+# How many patient re-perceives to spend on an unrecognised screen before concluding it is
+# not a passing overlay and trying to leave it. Chatter bubbles clear within a couple of
+# re-perceives; an open panel never does.
+_WAIT_BEFORE_EXIT_ATTEMPT = 3
+
+
+def open_world_map(context: Optional[str] = None) -> bool:
+    """ONE canonical way to open the world map — from PORT or SEA.
+
+      PORT: the minimap shows a GLOBE icon → tap it (_PORT_WORLD_MAP_GLOBE).
+      SEA:  there is NO globe — tap the MINIMAP itself.  Use the CENTRE of the calibrated
+            MINIMAP_CROP (the region the nav reads every tick) so the tap follows the minimap and
+            never drifts onto the hamburger.  The old sea path hardcoded (2240, 300–420) which
+            landed on the hamburger and opened the MAIN MENU instead — looping the whole voyage
+            (2026-08-19).
+
+    Verifies with _is_on_world_map(); retries a few times (waking an idle cinematic first).
+    `context` may be pre-supplied ('sea'/'sea_cinematic'/'port_overworld'); otherwise where_am_i()
+    derives it each attempt.  This replaces _open_world_map_from_sea and the duplicate port opens."""
+    logger.info("[open_world_map] opening world map…")
+    waited_out = 0
+    for attempt in range(10):
         frame = capture_screen()
-        loc = where_am_i(frame)
-        logger.info(f"  State before tap: {loc['location']!r} — {loc['detail']}")
-
-        if loc["location"] == "world_map":
-            logger.info("World map already open")
+        # The game drops into a "Slide up to unlock" standby whenever it sits idle, and it
+        # does so quickly between mission legs. Nothing downstream can act through it —
+        # perceive recognises the screen but only records a learning note — so a run that
+        # started against the lock made zero taps and simply timed out (live 2026-08-21).
+        # Wake first; it is a no-op when the game is already awake.
+        try:
+            from actions.route_execution import _wake_if_locked
+            if _wake_if_locked(frame):
+                logger.info("[open_world_map] game was on the standby lock — woke it")
+                frame = capture_screen()
+        except Exception as exc:
+            logger.debug(f"[open_world_map] wake check skipped: {exc}")
+        if _is_on_world_map(frame):
+            logger.info("[open_world_map] already open")
             return True
+        loc = context or where_am_i(frame).get("location")
 
-        if loc["location"] not in ("sea", "sea_cinematic"):
-            if loc["location"] == "port_overworld" and attempt == 0:
-                # False positive right after departure — the sea HUD text (e.g. zone name
-                # "Dangerous Waters") can confuse the port-name OCR briefly.  Wait and retry.
-                logger.info(f"  'port_overworld' right after departure (likely false positive) "
-                            f"— waiting 3s and retrying")
-                time.sleep(3.0)
+        if loc in ("sea", "sea_cinematic"):
+            if loc == "sea_cinematic":
+                frame = _ensure_active_sea_view(frame)
+                if frame is None:
+                    logger.warning("[open_world_map] not at sea (dialog/port) — aborting")
+                    return False
+            tx, ty = _sea_minimap_center()
+            logger.info(f"[open_world_map] SEA — tap minimap centre @ ({tx},{ty})")
+        elif loc == "port_overworld":
+            # CORROBORATE BEFORE TAPPING A CALIBRATED POINT. The globe coordinate is only
+            # meaningful on a real port overworld; on anything else it is a blind tap into
+            # whatever happens to be there. Live 2026-08-23 the village BARTER panel was
+            # classified 'port_overworld', this branch tapped (2227,361), hit a
+            # Check-Barter-Effect / Village-Influence control, and the loop then spun
+            # re-perceiving a screen it had opened itself.
+            #
+            # A village's left menu — barter / explore / gifting / loot / recruit crew —
+            # appears on every village screen and on no port screen, so it is the cheap
+            # disproof. (CLAUDE.md: "if you are about to write a number that means where on
+            # the screen, find the element instead" — until the globe itself is detected,
+            # this at least refuses to tap it on the wrong screen.)
+            if _looks_like_a_village(frame):
+                logger.warning("[open_world_map] classified 'port_overworld' but the left "
+                               "menu is a VILLAGE's — refusing to tap the port globe here; "
+                               "reporting so the caller can decide about leaving")
+                return False
+            tx, ty = _PORT_WORLD_MAP_GLOBE
+            logger.info(f"[open_world_map] PORT — tap globe @ ({tx},{ty})")
+        else:
+            # Not a state we can open from (transient / brief false port-overworld right
+            # after departure) — wait and re-perceive rather than blind-tapping.
+            #
+            # Patience matters here: a busy port carries ambient NPC chatter bubbles, and
+            # the family CNN calls those 'transient', which makes perceive gate the
+            # overworld verdict to 'unknown' (see brain/perceive _classify_nav_state).
+            # The bubbles drift away on their own, so re-perceiving across a couple of
+            # minutes lands on a clear frame — where 4 quick tries all hit chatter and the
+            # whole mission aborted at the first step (live 2026-08-21).
+            # Being INSIDE something is not transient — no amount of waiting turns a
+            # Market into an overworld. Walk out, then re-perceive. Live 2026-08-21: a
+            # mission started while the fleet was on the Market's Purchase screen spent
+            # its whole attempt budget re-perceiving 'sub_menu' and never once tried to
+            # leave. Waiting is right for chatter bubbles; it is useless for a building.
+            if loc in ("building", "sub_menu", "market"):
+                logger.info(f"[open_world_map] loc={loc!r} — inside a screen, exiting to "
+                            f"the overworld first (attempt {attempt + 1}/10)")
+                exit_to_overworld()
+                context = None
                 continue
-            logger.warning(f"  Expected sea view but got {loc['location']!r} — aborting")
-            return False
 
-        # Wake idle cinematic only if where_am_i() said so — it already checked
-        # the HUD, so calling _ensure_active_sea_view when loc == "sea" would be
-        # a redundant capture + OCR.
-        if loc["location"] == "sea_cinematic":
-            frame = _ensure_active_sea_view(frame)
-            if frame is None:
-                # Moondream confirmed we are NOT at sea (dialog or port blocking the HUD).
-                # Abort this sailing sub-flow — let recovery/main loop re-perceive.
-                logger.warning("  _ensure_active_sea_view: not at sea — aborting world map open")
+            # Patience is right for a genuinely TRANSIENT overlay (a chatter bubble drifts
+            # away on its own), but it is useless against a screen that is simply OPEN. The
+            # family CNN cannot always tell them apart: it labelled the fleet/cargo panel
+            # 'transient' → 'unknown', and this branch then re-perceived it ten times and
+            # gave up, ending a run with ZERO actions (live 2026-08-21).
+            #
+            # So: stay patient for a few rounds, then stop waiting and try to LEAVE. Bubbles
+            # will have cleared by then; a panel will not have. Exiting is harmless if we
+            # were already on an overworld.
+            # A PLACE is not a screen to escape. Leaving an unrecognised panel is mechanics
+            # — the same answer whatever the bot is doing — but leaving a SETTLEMENT spends
+            # position the task may have sailed for. Live 2026-08-22 the fleet stood in
+            # Melanesian Village, the mission's own destination with the materials aboard,
+            # and this loop pressed Back three times until it was at sea.
+            #
+            # So: report that the world map cannot be opened from here and let the caller
+            # decide whether leaving is acceptable (from a village it IS the only route to
+            # the map — but that is the task's call, not this primitive's).
+            # See docs/one_loop_task_drives_state.md — "the state machine owns the HOW, the
+            # task owns the WHETHER".
+            if loc in _SETTLEMENT_STATES:
+                logger.warning(f"[open_world_map] the fleet is AT {loc!r} — cannot open the "
+                               "world map from here without leaving. Reporting instead of "
+                               "forcing; the caller decides whether to give up the position.")
                 return False
 
-        # Only call _clear_sea_popups if there are actual popups to dismiss.
-        # where_am_i() just ran full OCR; if it returned clean 'sea' state, the
-        # frame is ready to tap — running another full OCR pass here wastes ~15s.
-        detail_lower = loc.get("detail", "").lower()
-        if any(kw in detail_lower for kw in ("notice", "warning", "dialog", "popup")):
-            frame = _clear_sea_popups(frame)
+            waited_out += 1
+            if waited_out >= _WAIT_BEFORE_EXIT_ATTEMPT:
+                # An unrecognised screen that is simply OPEN never clears by waiting — the
+                # fleet/cargo panel was labelled 'transient' → 'unknown' and re-perceived ten
+                # times, ending a run with ZERO actions (live 2026-08-21). Leaving a panel
+                # costs nothing, so this escalation stays.
+                logger.info(f"[open_world_map] loc={loc!r} has persisted {waited_out} "
+                            "re-perceives — not transient, trying to exit to the overworld")
+                exit_to_overworld()
+                waited_out = 0
+                context = None
+                continue
 
-        # Try multiple y-positions for the mini-map — it's below the top icon bar.
-        # (2240,250) = Hamburg button (opens main menu — wrong).
-        # Try progressively lower positions until world map opens.
-        y_candidates = [300, 340, 380, 420]
-        tap_x = 2240
-        tap_y = y_candidates[attempt % len(y_candidates)]
-        logger.info(f"  Tapping mini-map (attempt {attempt+1}) @ ({tap_x}, {tap_y})")
-        tap(tap_x, tap_y)
+            logger.info(f"[open_world_map] loc={loc!r} not port/sea — waiting to "
+                        f"re-perceive (attempt {attempt + 1}/10)")
+            time.sleep(random.uniform(3.0, 6.0))
+            context = None
+            continue
 
-        # Poll for world map confirmation — typically opens in 1-2s.
-        # Use lightweight _is_on_world_map() instead of full where_am_i().
-        confirmed = False
+        tap(tx, ty)
         for _ in range(10):
             time.sleep(1.0)
-            frame = capture_screen()
-            if _is_on_world_map(frame):
-                logger.info("  State after tap: 'world_map' — confirmed via OCR poll")
-                logger.info("World map opened")
-                return True
-            # Quick check for 'building' false positive (chrome matches port icon)
-            if _world_map_port_labels_visible(frame):
-                logger.info("  State after tap: world map (port labels visible in left area)")
-                logger.info("World map opened")
+            f2 = capture_screen()
+            if _is_on_world_map(f2) or _world_map_port_labels_visible(f2):
+                logger.info("[open_world_map] world map opened")
                 return True
 
-        # Poll timed out — run full where_am_i() to log what we actually see
-        frame = capture_screen()
-        loc = where_am_i(frame)
-        logger.info(f"  State after tap: {loc['location']!r} — {loc['detail']}")
-
-        if loc["location"] == "world_map":
-            logger.info("World map opened")
-            return True
-
-        # Check if main menu opened accidentally (Hamburg tapped instead of mini-map)
-        tokens = _ocr_frame(frame, min_conf=0.3)
-        full = " ".join(t.lower() for t, _, _, _ in tokens)
-        if fuzzy_contains(full, "company overview") or ("fleet" in full and "storage" in full):
-            logger.info("  Main menu opened accidentally — closing with back")
+        # Accidental main-menu (mis-tap) — close it and retry.
+        full = " ".join(t.lower() for t, _, _, _ in _ocr_frame(capture_screen(), min_conf=0.3))
+        if (fuzzy_contains(full, "company overview")
+                or ("fleet" in full and "storage" in full)
+                or ("auction" in full and "guild" in full)):
+            logger.info("[open_world_map] main menu opened accidentally — pressing back")
             press_back()
             time.sleep(1.5)
+        context = None                       # re-derive context next attempt
 
-        logger.info(f"  World map not confirmed after attempt {attempt+1}")
-
-    logger.warning("World map did not open after 3 attempts")
+    logger.warning("[open_world_map] failed to open world map after retries")
     return False
+
+
+def _open_world_map_from_sea(_frame: Image.Image = None) -> bool:
+    """Deprecated shim → the unified open_world_map().  Auto-detects port vs sea, so it also
+    handles the 'actually still at port' case the old sea-only version aborted on."""
+    return open_world_map()
 
 
 def _world_map_port_labels_visible(frame: Image.Image) -> bool:
@@ -2559,6 +2938,44 @@ _PORT_ALIASES: dict[str, list[str]] = {
     "aden":            ["aden"],
     "alexandria":      ["alexandria", "alexand"],  # OCR truncation seen in logs
 }
+
+
+def _ascii_search_prefix(destination: str, max_len: int = 4) -> str:
+    """The prefix to TYPE into the port search — ASCII-only, so accents can't break it.
+
+    The catalogue spells ports as the game does ('Malé'), while callers arrive with the
+    accent-stripped form ('Male', which is what `catalogue_coords()` produces). Typing
+    'Male' finds nothing, because the game's fourth character is 'é' — the very letter
+    that differs (live 2026-08-21: the gather leg could not reach its nearest supplier).
+    Typing 'Mal' matches both spellings, so truncate at the first non-ASCII character of
+    the CANONICAL name and let the shorter prefix filter the list."""
+    canonical = destination
+    try:
+        from vision.world_map_parser import load_port_catalogue
+        from actions.world_map_nav import WorldMapNavigator
+        folded = WorldMapNavigator._fold(destination)
+        for key, rec in load_port_catalogue().items():
+            if WorldMapNavigator._fold(key) == folded:
+                canonical = (rec.get("name") if isinstance(rec, dict) else None) or key
+                break
+    except Exception as exc:
+        logger.debug(f"[port-search] canonical lookup failed: {exc}")
+    ascii_run = ""
+    for ch in canonical:
+        if ord(ch) > 127:
+            break
+        ascii_run += ch
+    prefix = ascii_run[:max_len]
+    if len(prefix) < 2:
+        # The name is accented too early to give a usable ASCII run ('Málaga' → 'M'), so
+        # type the accent-FOLDED spelling instead. It is ASCII by construction, and ADB's
+        # `input text` cannot reliably send non-ASCII characters anyway.
+        from actions.world_map_nav import WorldMapNavigator
+        prefix = WorldMapNavigator._fold(canonical or destination)[:max_len]
+    if prefix.lower() != destination[:len(prefix)].lower():
+        logger.info(f"[port-search] typing ASCII-safe prefix {prefix!r} for "
+                    f"{destination!r} (canonical {canonical!r})")
+    return prefix
 
 
 def _port_names_to_search(destination: str) -> list[str]:
@@ -2708,12 +3125,46 @@ def pan_to_village(
     The only village-specific bits are (a) switching tabs and (b)
     using the village catalogue.
     """
+    # ── PRIMARY: anchor on the nearest catalogued PORT via the typed search ──
+    # Blind-panning to a village over open water proved fragile (live 2026-08-20:
+    # noisy water-tap lat/lon fixes around the Melanesian islands sent the camera
+    # east across the Pacific seam into the Caribbean; gave up after 8 pans).
+    # Ports are searchable by NAME — the typed search jumps the camera straight
+    # to the port, no panning, no odometry.  Every village has a port within a
+    # screen-width (Melanesian ← Samarai ~340 game units), so: search-select the
+    # nearest port → the map centres on it → switch to the Explore tab (closes
+    # the port panel, keeps the camera) → the village label is on screen →
+    # the navigator's FIRST visible-label parse finds it.
+    from actions.world_map_nav import make_village_navigator
+    nav = make_village_navigator()
+    v_info = nav._lookup_port(name)
+    if v_info is not None:
+        try:
+            from vision.world_map_parser import load_port_catalogue
+            ports = load_port_catalogue()
+            vx, vy = v_info["x"], v_info["y"]
+            anchor = min(
+                (p for p in ports.values() if p.get("x") is not None),
+                key=lambda p: (p["x"] - vx) ** 2 + (p["y"] - vy) ** 2,
+            )
+            logger.info(f"[pan_to_village] anchor port for {name!r}: "
+                        f"{anchor['name']!r} @ ({anchor['x']},{anchor['y']}) "
+                        f"(village @ ({vx},{vy}))")
+            if _try_port_search(anchor["name"]) is not None:
+                # Map is centred on the anchor (its info panel is open; do NOT
+                # tap Go to City).  Switching tabs closes the panel.
+                if select_world_map_tab("explore"):
+                    pos = nav.pan_to_port(name, max_pans=3)
+                    if pos is not None:
+                        return pos
+                    logger.warning(f"[pan_to_village] {name!r} not visible from "
+                                   f"anchor {anchor['name']!r} — falling back to pan")
+        except Exception as exc:
+            logger.warning(f"[pan_to_village] anchor-port search failed: {exc} — "
+                           "falling back to pan")
+
+    # ── FALLBACK: the original pan path ─────────────────────────────────────
     # Pre-calibrate on the Port tab when no persisted scale is on disk.
-    # Why: the Explore tab shows villages only (≤ a handful per view), which
-    # is too sparse for reliable pair-ratio calibration.  The Port tab
-    # shows 5–15 ports per view, so calibration there is robust.  Scale
-    # is a property of the camera (zoom) and is identical on both tabs,
-    # so a Port-tab scale transfers to Explore.
     from actions.world_map_nav import _load_persisted_scale
     sx, sy = _load_persisted_scale()
     if not (sx and sy):
@@ -2730,8 +3181,6 @@ def pan_to_village(
         )
         return None
 
-    from actions.world_map_nav import make_village_navigator
-    nav = make_village_navigator()
     return nav.pan_to_port(name, max_pans=max_pans, from_port=from_port)
 
 
@@ -3166,115 +3615,108 @@ def _try_port_search(destination: str) -> Optional[Tuple[int, int]]:
     icon_tapped = False
     frame_after_icon = capture_screen()
 
-    # ── Step 1a: try saved position first ────────────────────────────────────
-    if saved_pos:
-        logger.info(f"  Trying saved icon position {saved_pos}")
+    # ── Step 1: FIND the icon, don't assume where it is ──────────────────────
+    # The saved position is a PRIOR over detections, never a tap target on its own.
+    # Tapping it blind was the old first move, and when it goes stale — the game re-bakes
+    # a camera-cutout offset per screen, so the whole UI shifts between sessions — that
+    # tap lands on whatever is now at those pixels. At sea on 2026-08-21 that meant taps
+    # into the sea view and its destination list while the bot believed it was opening a
+    # search panel (user: "it was blindly tapping a position assuming the icon is there
+    # but it is not due to the screen rotation ... we need to really find where it is").
+    for omni_attempt in range(3):
+        fr = capture_screen()
+        candidates = _omniparser_icon_candidates(fr)
+        if candidates and saved_pos:
+            # Prefer the candidate nearest where the icon was last seen — the memory
+            # disambiguates between detections instead of replacing them.
+            candidates.sort(key=lambda c: (c[0] - saved_pos[0]) ** 2 + (c[1] - saved_pos[1]) ** 2)
+            logger.info(f"  Ranking {len(candidates)} candidate(s) by distance to the "
+                        f"last-known icon position {saved_pos}")
+        for ix, iy in candidates:
+            logger.info(f"  Tapping detected candidate @ ({ix},{iy})")
+            _tap(ix, iy)
+            time.sleep(3.0)
+            fr2 = capture_screen()
+            if _panel_is_open(fr2):
+                logger.info(f"  Panel opened @ ({ix},{iy}) (detect attempt {omni_attempt + 1})")
+                icon_tapped = True
+                _save_icon_pos(ix, iy)
+                time.sleep(1.5)
+                frame_after_icon = capture_screen()
+                break
+        if icon_tapped:
+            break
+        if candidates:
+            logger.info(f"  candidates tried, none opened the panel "
+                        f"(attempt {omni_attempt + 1}/3)")
+        else:
+            logger.info(f"  no icon detected (attempt {omni_attempt + 1}/3) — re-perceiving")
+            time.sleep(1.5)
+
+    # Last resort: the icon was never detected on any attempt. Only now is the remembered
+    # position worth a try, and it is announced as the guess it is.
+    if not icon_tapped and saved_pos:
+        logger.warning(f"  icon never detected — falling back to the remembered position "
+                       f"{saved_pos}, which may be stale if the UI has shifted")
         _tap(*saved_pos)
         time.sleep(3.0)
-        fr = capture_screen()
-        if _panel_is_open(fr):
-            logger.info(f"  Panel opened via saved position {saved_pos}")
+        if _panel_is_open(capture_screen()):
+            logger.info(f"  Panel opened via remembered position {saved_pos}")
             icon_tapped = True
             time.sleep(1.5)
             frame_after_icon = capture_screen()
-        else:
-            logger.info(f"  Saved position {saved_pos} did not open panel — trying OmniParser")
-
-    # ── Step 1b: OmniParser with up to 3 attempts ────────────────────────────
-    # The icon is always present; OmniParser detection can be inconsistent
-    # frame-to-frame, so retry up to 3 times before giving up.
-    if not icon_tapped:
-        for omni_attempt in range(3):
-            fr = capture_screen()
-            candidates = _omniparser_icon_candidates(fr)
-            if candidates:
-                for ix, iy in candidates:
-                    logger.info(f"  Tapping OmniParser candidate @ ({ix},{iy})")
-                    _tap(ix, iy)
-                    time.sleep(3.0)
-                    fr2 = capture_screen()
-                    if _panel_is_open(fr2):
-                        logger.info(f"  Panel opened @ ({ix},{iy}) (OmniParser attempt {omni_attempt+1})")
-                        icon_tapped = True
-                        _save_icon_pos(ix, iy)
-                        time.sleep(1.5)
-                        frame_after_icon = capture_screen()
-                        break
-                if icon_tapped:
-                    break
-                logger.info(f"  OmniParser candidates tried but none opened panel (attempt {omni_attempt+1})")
-            else:
-                logger.info(f"  OmniParser found no candidates (attempt {omni_attempt+1}/3) — retrying in 1.5s")
-                time.sleep(1.5)
 
     if not icon_tapped:
         logger.info("  Could not open port-list panel — skipping port search")
         return None
 
-    # ── Step 2: scan port list for destination, scroll if needed ─────────────
-    # ADB cannot inject touch events into the Android system keyboard overlay,
-    # so text input via the search field is not possible.  Instead, scan the
-    # port list directly — it shows nearby/recent ports and is part of the game
-    # window, so ADB taps work fine on it.  Scroll down up to _MAX_SCROLLS
-    # times if the destination is not in the initial view.
-    from actions.adb_actions import swipe_fast as _swipe_fast
-
+    # ── Step 2: TYPE the destination into the search box, then read the result ──
+    # input_text() injects per-CHARACTER keyevents (not on-screen-keyboard taps), which
+    # DO register in the game's search field — verified live 2026-08-18: tapping the
+    # 'Search' box + typing 'Masulipatnam' filtered the port list to exactly it.  The old
+    # list-scroll approach (below-comment claimed typing was impossible) could not reach
+    # mid-alphabet ports: the scroll swipe didn't advance the list, so it declared "end"
+    # after one scan and gave up (live 2026-08-18: Masulipatnam, an 'M' port, never found).
     dest_lower = destination.lower().strip()
-
-    # Left-panel crop covers the port list (x 0–650, y 150–1080).
-    # Cropping before OCR reduces the image area by ~75% → ~4× faster OCR.
-    _LIST_CROP = (0, 150, 650, 1080)
+    _LIST_CROP = (0, 150, 650, 1080)   # left panel; crop before OCR → ~4× faster
 
     def _scan_list(frame) -> Tuple[Optional[Tuple[int, int]], frozenset]:
-        """
-        OCR the left panel once.  Returns (best_match_coord | None, label_set).
-        best_match_coord is in full-frame coordinates.
-        """
-        crop = frame.crop(_LIST_CROP)
-        # _ocr_frame returns crop-relative coords; helper handles the
-        # offset translation back to full-frame coordinates.
+        """OCR the left panel once → (best_match_coord | None, label_set), full-frame coords."""
         return _match_port_list_tokens(
-            list(_ocr_frame(crop)),
-            dest_lower,
-            x_offset=_LIST_CROP[0],
-            y_offset=_LIST_CROP[1],
+            list(_ocr_frame(frame.crop(_LIST_CROP))),
+            dest_lower, x_offset=_LIST_CROP[0], y_offset=_LIST_CROP[1],
         )
 
-    _MAX_SCROLLS = 35   # 190 ports ÷ ~7 visible per page ≈ 27 pages; 35 gives headroom
+    # Locate + tap the search input box (OmniParser 'Search'/'input'/'edit' element, left).
+    search_xy = None
+    for el in parser.parse_fast(capture_screen()):
+        if el.cx < 650 and any(k in (el.label or "").lower()
+                               for k in ("search", "edit", "input", "field")):
+            search_xy = (el.cx, el.cy)
+            break
+    if search_xy is None:
+        search_xy = (420, 141)   # observed position; safe default if OmniParser misses it
+    # Type only a short PREFIX at a human interval (anti-cheat, user 2026-08-18): 4 chars
+    # filter the list enough to find the port without typing the whole word.  clear_first
+    # wipes any leftover query so a re-search doesn't append onto the previous one.
+    _typed = _ascii_search_prefix(destination)
+    logger.info(f"  Typing {_typed!r} (prefix of {destination!r}) into search box @ {search_xy}")
+    _tap(*search_xy)
+    time.sleep(1.0)
+    _input_text(_typed, max_chars=len(_typed), clear_first=True)
+    time.sleep(1.5)
+
     best_match: Optional[Tuple[int, int]] = None
-    _prev_labels: frozenset = frozenset()
-
-    for _scroll in range(_MAX_SCROLLS + 1):
-        frame = capture_screen()
-        best_match, _cur_labels = _scan_list(frame)
+    _labels: frozenset = frozenset()
+    for _try in range(2):                       # the filtered result can lag a moment
+        best_match, _labels = _scan_list(capture_screen())
         if best_match:
-            logger.info(f"  Found {destination!r} in list @ {best_match} "
-                        f"(scroll {_scroll})")
             break
-
-        at_end = (_cur_labels == _prev_labels and _scroll > 0)
-        _prev_labels = _cur_labels
-
-        if at_end:
-            logger.info(f"  List unchanged after scroll — reached end, "
-                        f"{destination!r} not in list")
-            break
-
-        # Log a sample of what we actually saw so failures are debuggable.
-        # _cur_labels is a frozenset — sort for stable ordering.
-        _sample = sorted(_cur_labels)[:10]
-        logger.info(
-            f"  {destination!r} not visible (scan {_scroll+1}) "
-            f"— saw {len(_cur_labels)} label(s); first {len(_sample)}: {_sample}"
-            + ("  — scrolling list" if _scroll < _MAX_SCROLLS else "  — giving up")
-        )
-        if _scroll < _MAX_SCROLLS:
-            # Swipe up inside the left panel to scroll the list downward
-            _swipe_fast(300, 430, 300, 230, duration_ms=300, settle_ms=800)
-
+        time.sleep(1.5)
     if best_match is None:
-        logger.info(f"  {destination!r} not found in port list — port search failed")
+        logger.info(f"  {destination!r} not found after typing — saw {sorted(_labels)[:8]}")
         return None
+    logger.info(f"  Found {destination!r} via search @ {best_match}")
 
     # ── Step 3: tap result; wait for "Go to City" ─────────────────────────────
     # IMPORTANT: after tapping, verify the City Info panel that opened is
@@ -3364,83 +3806,55 @@ def _navigate_world_map_to_port(destination: str, from_port: Optional[str] = Non
         # where_am_i() was already called above; use its port if available.
         from_port = loc.get("port") or ""
 
-    # ── Strategy 1: Coordinate-based pan (WorldMapNavigator) ──────────────────
-    # Bake-then-pan: every port's game (x, y) is in the catalogue at
-    # memory/knowledge/world_map/port_coordinates.json.  We pan toward
-    # the target using calibration from currently visible labels.
-    #
-    # This is the PRIMARY strategy as of 2026-05-13: the previous
-    # `_try_port_search` list-scroll could not resolve cross-ocean
-    # targets (the list only contains nearby/recent ports — London
-    # could not be found from the Caribbean, leading to the
-    # fleet-died-at-sea outcome of 2026-05-12).  The coordinate-based
-    # pan works at any distance because it uses absolute game-coords.
-    # See docs/four_layer_nav_classification.md + actions/world_map_nav.py.
+    # ── Strategy 1: TYPED port search (fast + deterministic for any DISCOVERED port) ──
+    # Typing a short name-prefix into the search box filters the port list to the exact
+    # match, at ANY distance (verified live 2026-08-18).  Primary over coordinate panning,
+    # which is slow and — near map edges / with few visible ports — mis-estimates scale and
+    # gets stuck (live 2026-08-18: the Masulipatnam pan aborted 'stuck' seeing only Kolkata,
+    # while a typed search resolved it instantly).  Was demoted to backup on 2026-05-13 when
+    # search meant list-SCROLL (couldn't reach mid-alphabet / far ports); typing removes that
+    # limitation, so search is primary again.
     pos = None
     _search_found_go_to_city = False
-    try:
-        from actions.world_map_nav import WorldMapNavigator
-        nav = WorldMapNavigator()
-        pos = nav.pan_to_port(destination, max_pans=8, from_port=from_port)
-        if pos is not None:
-            logger.info(
-                f"  WorldMapNavigator found {destination!r} @ {pos} — "
-                "tapping label, will resolve to 'Go to City' in Phase 1"
-            )
-    except Exception as e:
-        logger.warning(
-            f"  WorldMapNavigator failed ({type(e).__name__}: {e}) — "
-            "falling back to list-scroll port search"
-        )
-        pos = None
-
-    # ── Strategy 2: list-scroll port search (legacy primary, now backup) ──────
-    # The toolbar "Port" button opens a search panel showing nearby/
-    # recent ports.  Fast and reliable when the target is nearby, but
-    # unable to find cross-region targets.  Kept as a backup because for
-    # short-distance navigation it's faster than panning.
-    if pos is None:
-        go_pos = _try_port_search(destination)
-        if go_pos is not None:
-            logger.info(f"  Port search succeeded — 'Go to City' @ {go_pos}")
-            # Jump straight to tapping "Go to City" (Phase 3 below)
-            pos = go_pos
-            # Skip all panning/scanning by jumping to the Go-to-City tap section.
-            # We set a sentinel so the code below knows to skip Phase 1 (city tap).
-            _search_found_go_to_city = True
-        else:
-            logger.info(
-                "  Port search failed — falling back to legacy visual panning"
-            )
-
-        # Dismiss soft keyboard if still open — it covers the lower half of
-        # the world map, breaking visual port detection and panning.
-        # When the keyboard is up, pressing BACK closes only the keyboard
-        # (Android standard behaviour); it does NOT navigate away from the map.
-        _kb_frame = capture_screen()
-        _kb_toks = list(_ocr_frame(_kb_frame))
-        _kb_visible = sum(
-            1 for text, conf, cx, cy in _kb_toks
-            if len(text.strip()) <= 2 and cy > 500
-        ) >= 3  # ≥3 single-char tokens in lower area = keyboard present
-        if _kb_visible:
+    go_pos = _try_port_search(destination)
+    if go_pos is not None:
+        logger.info(f"  Port search succeeded — 'Go to City' @ {go_pos}")
+        pos = go_pos
+        _search_found_go_to_city = True   # skip Phase 1 city-tap; go straight to Go-to-City
+    else:
+        logger.info("  Port search failed — falling back to coordinate pan")
+        # Dismiss soft keyboard if still open — it covers the lower half of the world map,
+        # breaking visual port detection and panning.  BACK closes only the keyboard.
+        _kb_toks = list(_ocr_frame(capture_screen()))
+        if sum(1 for text, conf, cx, cy in _kb_toks
+               if len(text.strip()) <= 2 and cy > 500) >= 3:
             logger.info("  Soft keyboard detected — pressing BACK to dismiss before panning")
             from actions.adb_actions import press_back as _press_back
             _press_back()
             time.sleep(1.5)
 
         # Re-verify we're still on the world map before panning.
-        _wm_check = where_am_i()
-        _wm_loc = _wm_check["location"]
+        _wm_loc = where_am_i()["location"]
         if _wm_loc not in ("world_map", "building"):
-            logger.warning(
-                f"  World map lost after port search (now {_wm_loc!r}) — reopening"
-            )
-            frame_reopen = capture_screen()
-            if not _open_world_map_from_sea(frame_reopen):
+            logger.warning(f"  World map lost after port search (now {_wm_loc!r}) — reopening")
+            if not _open_world_map_from_sea(capture_screen()):
                 logger.error("  Could not reopen world map — aborting")
                 return False
             time.sleep(1.5)
+
+        # ── Strategy 2: coordinate pan — fallback for UNDISCOVERED ports (no search row) ──
+        # Every discovered port's game (x,y) is in the catalogue at
+        # memory/knowledge/world_map/port_coordinates.json; pan toward it using scale
+        # calibrated from visible labels.  See actions/world_map_nav.py.
+        try:
+            from actions.world_map_nav import WorldMapNavigator
+            nav = WorldMapNavigator()
+            pos = nav.pan_to_port(destination, max_pans=8, from_port=from_port)
+            if pos is not None:
+                logger.info(f"  WorldMapNavigator found {destination!r} @ {pos}")
+        except Exception as e:
+            logger.warning(f"  WorldMapNavigator failed ({type(e).__name__}: {e})")
+            pos = None
 
     # No further fallback — WorldMapNavigator (catalogue + odometry) and
     # port-search list-scroll are the two paths.  The legacy landmark
@@ -3680,6 +4094,13 @@ def _navigate_world_map_to_port(destination: str, from_port: Optional[str] = Non
     for go_attempt in range(3):
         logger.info(f"  Tapping 'Go to City' @ {go_pos} (attempt {go_attempt+1})")
         tap(*go_pos)
+        # The game raises "Moving to X after Auto Supply. Continue?" here, and NOTHING
+        # proceeds until it is answered — the state never becomes sea/loading while the
+        # modal is up, so the wait below would time out and this whole navigation would
+        # report failure. Live 2026-08-21 (Kochi → Malé) that is exactly what happened:
+        # "could not select 'Male' on the map", then a fallback to the harbour flow.
+        # Confirming has to happen HERE, between the tap and the verdict.
+        confirm_departure_notice(destination)
         loc = _wait_for_state_change(
             expected=("sea", "sea_cinematic", "loading", "port_overworld"),
             max_wait=8.0,
@@ -4018,7 +4439,8 @@ def _wait_for_arrival(
 
         # ── Anti-idle tap (also wakes idle cinematic and dismisses arrival overlay) ──
         if now - last_tap >= ANTI_IDLE:
-            tap(1200, 540)     # centre of screen — safe tap area
+            from actions import ui as _ui
+            _ui.tap_centre(why="anti-idle / wake the cinematic")
             last_tap = now
             time.sleep(1.0)
 
@@ -4257,3 +4679,245 @@ def sail_to_port(
     return _navigate_sea_to_destination(
         destination, from_port=current_port, timeout=arrival_timeout
     )
+
+
+# ── Depart from PORT by picking the destination on the world map ──────────────
+
+# Text that identifies the departure confirmation the game raises after a destination is
+# chosen from a port. The dialog is OURS — the bot asked for this move — so it must be
+# COMPLETED, not dismissed (CLAUDE.md dialog rule).
+_DEPART_NOTICE_MARKERS = ("auto supply", "continue")
+
+
+def _looks_like_departure_notice(text: str, destination: str) -> bool:
+    """True when this frame's text is the 'Moving to X after Auto Supply. Continue?' notice.
+
+    Matched on the Auto-Supply wording rather than on the word 'Notice' alone, because
+    'Notice' titles several unrelated popups and tapping OK on the wrong one is exactly
+    the class of mistake that closed the game once already.
+    """
+    t = (text or "").lower()
+    if not all(m in t for m in _DEPART_NOTICE_MARKERS):
+        return False
+    # The destination should be named in the dialog. Fold the accent so 'Malé' matches a
+    # 'Male' request (and vice versa) — the same folding the port lookup uses.
+    from actions.world_map_nav import fold_name
+    return fold_name(destination.split()[0]) in fold_name(t)
+
+
+def confirm_departure_notice(destination: str, *, attempts: int = 3) -> dict:
+    """Tap OK on the auto-supply departure confirmation, if it is up.
+
+    Returns {seen, confirmed, reason}. `seen=False` is NOT a failure — the game only
+    raises this dialog when "Do not show for a day" is unchecked.
+
+    Why this is a named step rather than something the recovery layer absorbs: the
+    perception layer deliberately REFUSES to auto-confirm dialogs it identified through
+    OCR ("Semantic dismissal 'tap_ok' — learning only, leaving action to caller"), because
+    a wrong OK is unrecoverable. Confirming is therefore the caller's job, and the caller
+    is the one that knows it just asked to sail to `destination`. Live 2026-08-21: without
+    this the run looped on the Malé notice for 70s, re-consulting Qwen every 8s and never
+    tapping anything.
+    """
+    for i in range(attempts):
+        frame = capture_screen()
+        text = " ".join((t or "") for t, _c, _x, _y in _ocr_frame(frame, min_conf=0.3))
+        if not _looks_like_departure_notice(text, destination):
+            if i == 0:
+                logger.info("[depart] no auto-supply notice on screen — nothing to confirm")
+                return {"seen": False, "confirmed": False, "reason": "no notice"}
+            return {"seen": True, "confirmed": True, "reason": "notice cleared"}
+
+        logger.info(f"[depart] auto-supply notice for {destination!r} — confirming (OK)")
+        from actions import ui
+        if not ui.tap_text(frame, "ok", why=f"confirm departure to {destination}"):
+            logger.warning("[depart] the notice is up but its OK button was not found")
+            return {"seen": True, "confirmed": False, "reason": "OK button not found"}
+        ui.settle("dialog")
+
+    return {"seen": True, "confirmed": False, "reason": f"notice still up after {attempts} taps"}
+
+
+def depart_from_port_via_world_map(destination: str, *, settle_s: float = 8.0,
+                                   motion_wait_s: float = 45.0,
+                                   max_retries: int = 2) -> dict:
+    """Set sail from a PORT by choosing the destination on the world map.
+
+    This is the short path, and the safe one for supply. Selecting Move to City / Move to
+    Village from inside a port makes the game do the whole departure itself: the player
+    runs to the harbour, the fleet is SUPPLIED automatically, and it sets sail. Picking the
+    destination at sea instead costs a separate harbour trip and leaves the fleet burning
+    supply while the bot pans the map (user 2026-08-21). The world-map operation is
+    identical either way — only the consequence differs.
+
+    Two things go wrong in practice, and neither announces itself, so both are checked:
+
+      1. **The fleet does not leave.** The destination is accepted but the player stays in
+         port. The fix is to walk to the harbour and tap Supply Departure by hand.
+      2. **It leaves but never moves** — a game bug where the fleet is at sea with speed 0
+         and the ETA never falls. The fix is to select the destination AGAIN, which kicks
+         it into motion.
+
+    Returns {ok, reason, departed_via, retries}."""
+    from actions.route_execution import is_moving
+    from actions.world_map_nav import fold_name
+
+    for attempt in range(max_retries + 1):
+        here = where_am_i()
+        loc = here.get("location")
+
+        # ALREADY THERE. Selecting the port you are standing in is a no-op: the world map
+        # closes straight back to the same overworld, `_wait_until_at_sea` sees "still in
+        # port", and the failure-1 path fires a manual Supply Departure — which puts the
+        # fleet to sea WITH NO DESTINATION. That is how the 2026-08-21 run left the fleet
+        # drifting off Malé at speed 0 having bought nothing: the mission's first gather
+        # node was `gather:Male` and the fleet was already docked at Malé.
+        # Departing is not the goal — BEING at the destination is, and we are.
+        # Folded compare because the mission carries 'Male' while the port reads 'Malé'.
+        here_port = here.get("port")
+        if loc in ("building", "sub_menu") and not here_port:
+            # Inside a building the port name is not on screen, but the bot still KNOWS
+            # where it is — `last_known_settlement` is carried across ticks and persisted
+            # to disk for exactly this. Without it, "am I already there?" answers "no"
+            # from inside a Market and the mission sails to the port it is standing in.
+            # Live 2026-08-21: gather:Jakarta ran while the fleet sat in Jakarta's Market
+            # Purchase screen — the one place it needed to be — and instead of buying, it
+            # tried to exit, open the world map and sail to Jakarta, failed to get out of
+            # the building, escalated to the teaching loop and aborted after 600s.
+            try:
+                from brain import observation as _obs
+                cur = _obs.current()
+                here_port = (cur.last_known_settlement if cur else None) \
+                    or _obs._ensure_persisted_loaded()
+            except Exception as exc:
+                logger.debug(f"[depart] could not resolve the settlement from inside a "
+                             f"building ({type(exc).__name__}: {exc})")
+
+        if loc in ("port_overworld", "building", "sub_menu"):
+            if here_port and fold_name(here_port) == fold_name(destination):
+                logger.info(f"[depart] already at {here_port!r} (state={loc!r}) — "
+                            "no sailing needed")
+                return {"ok": True, "reason": "already at the destination",
+                        "departed_via": "no departure needed", "retries": attempt}
+
+        if loc in ("sea", "sea_cinematic"):
+            # Already at sea (a retry, or we were never in port) — go straight to the
+            # motion check rather than re-running the harbour flow.
+            moved, hud = _confirm_making_way(motion_wait_s, is_moving)
+            if moved and not _bound_elsewhere(hud, destination):
+                return {"ok": True, "reason": "under way", "departed_via": "already at sea",
+                        "retries": attempt}
+        else:
+            if not open_world_map():
+                return {"ok": False, "reason": "could not open the world map",
+                        "departed_via": None, "retries": attempt}
+            if not _navigate_world_map_to_destination(destination):
+                return {"ok": False, "reason": f"could not select {destination!r} on the map",
+                        "departed_via": None, "retries": attempt}
+            # The game asks to confirm before it runs to the harbour: "Moving to X after
+            # Auto Supply. Continue?". Nothing happens until this is answered.
+            notice = confirm_departure_notice(destination)
+            if notice["seen"] and not notice["confirmed"]:
+                return {"ok": False,
+                        "reason": f"could not confirm the departure notice: {notice['reason']}",
+                        "departed_via": None, "retries": attempt}
+
+            logger.info(f"[depart] {destination!r} selected — the game should now run to "
+                        "the harbour, supply, and sail")
+            time.sleep(settle_s)
+
+            # FAILURE 1: still ashore. The auto-departure did not happen.
+            if not _wait_until_at_sea(settle_s):
+                logger.warning("[depart] still in port after selecting the destination — "
+                               "departing by hand via Supply Departure")
+                if _depart_from_harbour():
+                    # A hand-fired Supply Departure leaves the port but does NOT carry a
+                    # destination with it, so "moving" is not enough — check WHERE it is
+                    # headed (user 2026-08-21). A mismatch falls through to the retry,
+                    # which re-selects the destination from the map.
+                    moved, hud = _confirm_making_way(motion_wait_s, is_moving)
+                    if moved and not _bound_elsewhere(hud, destination):
+                        return {"ok": True, "reason": "under way after a manual departure",
+                                "departed_via": "supply_departure", "retries": attempt}
+                    logger.warning("[depart] departed by hand but the fleet is not making "
+                                   f"way toward {destination!r}")
+                else:
+                    logger.warning("[depart] manual Supply Departure did not work either")
+                continue
+
+            # FAILURE 2: at sea, but going nowhere — or going somewhere else.
+            moved, hud = _confirm_making_way(motion_wait_s, is_moving)
+            if moved and not _bound_elsewhere(hud, destination):
+                return {"ok": True, "reason": "under way", "departed_via": "auto",
+                        "retries": attempt}
+            logger.warning(f"[depart] at sea but not making way toward {destination!r} — "
+                           f"re-selecting it to set the fleet going "
+                           f"(attempt {attempt + 1}/{max_retries + 1})")
+
+    return {"ok": False, "reason": f"{destination!r} selected but the fleet never got "
+                                   f"under way after {max_retries + 1} attempts",
+            "departed_via": None, "retries": max_retries + 1}
+
+
+def _bound_elsewhere(hud: dict, destination: str) -> bool:
+    """True only when the HUD NAMES a different port than the one we asked for.
+
+    Deliberately narrow. The destination readout cannot be used to confirm a departure
+    worked — the game's own bug is that it shows the destination as set while the tap had
+    no effect (user 2026-08-21), so a matching name proves nothing and movement is what
+    decides. A blank or unreadable destination proves nothing either, and must NOT
+    override a fleet that is demonstrably making way.
+
+    What it does catch is the one case motion alone gets wrong: a hand-fired Supply
+    Departure leaves port carrying NO destination, and `is_moving` can still read as true
+    off a ticking day-at-sea. If the HUD names somewhere we did not ask for, re-select.
+    """
+    from actions.world_map_nav import fold_name
+    shown = (hud or {}).get("destination")
+    if not shown:
+        return False
+    if fold_name(shown) == fold_name(destination):
+        return False
+    logger.warning(f"[depart] the fleet is bound for {shown!r}, not {destination!r}")
+    return True
+
+
+def _wait_until_at_sea(settle_s: float) -> bool:
+    """True once perceive reports the fleet at sea. The auto-departure includes a walk to
+    the harbour and a loading screen, so this waits rather than judging on one frame."""
+    deadline = time.time() + max(20.0, settle_s * 3)
+    while time.time() < deadline:
+        loc = where_am_i().get("location")
+        if loc in ("sea", "sea_cinematic"):
+            return True
+        if loc == "loading":
+            time.sleep(3.0)
+            continue
+        time.sleep(random.uniform(2.0, 3.5))
+    return False
+
+
+def _confirm_making_way(motion_wait_s: float, is_moving_fn):
+    """(moving, hud_after) — whether the fleet is genuinely MOVING, not merely at sea.
+
+    Two HUD reads separated by enough time for a game-day to tick: motion shows up as a
+    falling ETA or a rising day-at-sea. A selected destination is not evidence of movement
+    — that is the whole point of the speed-0 bug: the game will happily DISPLAY the
+    destination while the tap that set it did nothing at all, and the only cure is to
+    re-open the world map and set it again. So movement is the decisive test here and the
+    destination readout is not; see `_bound_elsewhere` for the narrow thing it IS good for.
+
+    Returns the post-wait HUD too, so callers can inspect the destination without paying
+    for another OCR pass."""
+    before = read_sea_hud()
+    speed = before.get("speed")
+    time.sleep(max(20.0, motion_wait_s))
+    after = read_sea_hud()
+    if is_moving_fn(before, after):
+        logger.info(f"[depart] confirmed under way (eta {before.get('eta_days')}→"
+                    f"{after.get('eta_days')}d)")
+        return True, after
+    logger.info(f"[depart] no progress in {motion_wait_s:.0f}s "
+                f"(speed={speed}→{after.get('speed')}, eta={before.get('eta_days')}→"
+                f"{after.get('eta_days')})")
+    return False, after

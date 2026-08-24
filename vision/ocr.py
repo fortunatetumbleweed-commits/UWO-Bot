@@ -31,10 +31,26 @@ from config.settings import (
 _reader: easyocr.Reader | None = None
 
 
+def _ocr_gpu_available() -> bool:
+    """Use the GPU (Apple MPS / CUDA) for EasyOCR when present.  Measured 2026-08-18 on
+    MPS: 1.62 s vs 6.06 s per full-frame OCR (~3.7× faster) with IDENTICAL output.  OCR is
+    the dominant per-tick perceive cost (each sail tick ran several full-frame reads at
+    ~6 s on CPU → 26-32 s/tick), so this cuts nav/sail tick time substantially.  Falls back
+    to CPU on machines without a GPU (CI, etc.)."""
+    try:
+        import torch
+        if torch.cuda.is_available():
+            return True
+        mps = getattr(torch.backends, "mps", None)
+        return bool(mps and mps.is_available())
+    except Exception:
+        return False
+
+
 def _get_reader() -> easyocr.Reader:
     global _reader
     if _reader is None:
-        _reader = easyocr.Reader(["en"], gpu=False, verbose=False)
+        _reader = easyocr.Reader(["en"], gpu=_ocr_gpu_available(), verbose=False)
     return _reader
 
 
@@ -122,6 +138,16 @@ _BUILDING_LIST_NOISE_PATTERNS = (
         _re_ocr.IGNORECASE,
     ),
 )
+
+
+# A leading ICON artifact: OmniParser/OCR renders a building's icon as junk before
+# the name — notably the Harbour's anchor ⚓ becomes "&", giving "& Harbor". Strip a
+# leading run of non-alphanumerics so building matching sees a clean "harbor".
+_ICON_PREFIX_RE = _re_ocr.compile(r"^[^0-9a-z]+")
+
+
+def _strip_icon_prefix(label: str) -> str:
+    return _ICON_PREFIX_RE.sub("", label)
 
 
 def _is_building_list_noise(label: str) -> bool:
@@ -306,8 +332,14 @@ def read_port_name(
             raw = title.strip()
 
     if raw is None:
-        # Legacy fixed-crop fallback.
-        region = frame.crop(OCR_PORT_NAME_REGION)
+        # Fallback crop — use the NORMALIZED title region, NOT the absolute
+        # OCR_PORT_NAME_REGION: the 118px camera-notch/landscape shift moves the port
+        # name out of a fixed pixel box (the Malé port-name=None → round-trip bug). A
+        # normalized crop rides the shift. See docs/ui_region_cluster_perception_design.md
+        # / project_notch_orientation_shifts_ui_118px.
+        w, h = frame.width, frame.height
+        x0, y0, x1, y1 = _TITLE_REGION_NORM
+        region = frame.crop((int(x0 * w), int(y0 * h), int(x1 * w), int(y1 * h)))
         legacy = read_text(region)
         if not legacy:
             return None
@@ -328,6 +360,21 @@ def read_port_name(
     from vision.text_correction import _is_generic_title
     if _is_generic_title(raw):
         logger.debug(f"[read_port_name] {raw!r} is a UI title, not a port — returning None")
+        return None
+    # A port name is a NAME. It never contains digits, so anything with a number in it is
+    # a stat readout, a counter or a coordinate — not a place.
+    #
+    # This matters because callers treat ANY non-empty return as proof of where they are.
+    # Live 2026-08-22: on the main menu this read the player's level, 'LV 92', and
+    # `_is_on_overworld` concluded "Overworld confirmed: port name 'LV 92' visible" on all
+    # five labelled main-menu frames. `exit_to_overworld` then reported success while the
+    # bot sat on the main menu, and `open_world_map` — which classifies properly — kept
+    # waiting for a port, so the two deadlocked until the run gave up.
+    # (Earlier the same day the same pass-through returned 'World' on the world map and
+    #  aborted a destination selection.)
+    if any(ch.isdigit() for ch in raw):
+        logger.debug(f"[read_port_name] {raw!r} contains digits — not a port name, "
+                     "returning None")
         return None
     logger.warning(
         f"[read_port_name] raw OCR {raw!r} did not match any known port "
@@ -363,7 +410,7 @@ def read_building_menu(
                 continue
             if el.confidence < BUILDING_MENU_OCR_MIN_CONFIDENCE:
                 continue
-            label = el.label.strip().lower()
+            label = _strip_icon_prefix(el.label.strip().lower())   # '& harbor' → 'harbor'
             if len(label) < 2:
                 continue
             if _is_building_list_noise(label):
@@ -387,7 +434,7 @@ def read_building_menu(
     for bbox, text, confidence in results:
         if confidence < BUILDING_MENU_OCR_MIN_CONFIDENCE:
             continue
-        label = text.strip().lower()
+        label = _strip_icon_prefix(text.strip().lower())   # '& harbor' → 'harbor'
         if len(label) < 2:
             continue
         if _is_building_list_noise(label):

@@ -116,13 +116,71 @@ def _split_verb_cost(text: str) -> tuple:
     return " ".join(verb_toks).strip(), " ".join(cost_toks).strip()
 
 
+# Commit verbs that identify the yellow action button by its RIGHT-side label.
+# Used ONLY by the TEXT fallback below (when OmniParser fails to emit a button bbox
+# for the yellow pill and gives just its <cost> + <verb> as text elements).  Gated
+# on the yellow bottom band so goods-tile prices don't false-positive.  "ok" is
+# excluded (too generic).  See memory project_yellow_commit_button_style.
+COMMIT_VERBS = {
+    "sell", "buy", "purchase", "recruit", "confirm", "pay", "gift",
+    "exchange", "barter", "invest", "hire", "depart",
+}
+
+
+def _numeric_frac(s: str) -> float:
+    """Fraction of digit characters — a cost token like '557,550' is ~all digits."""
+    core = s.strip().replace(",", "").replace(".", "").replace(" ", "")
+    if not core:
+        return 0.0
+    return sum(c.isdigit() for c in core) / len(core)
+
+
+def _detect_from_text(elements, arr, frame, min_yellow) -> List[CommitButton]:
+    """Fallback: OmniParser gave no yellow BUTTON bbox for the commit pill, only its
+    canonical `<cost> … <verb>` TEXT.  Reconstruct the button from a commit-verb text
+    low on screen with a numeric cost to its LEFT on the same row, over a yellow
+    region.  Robust to the ~0.63 flakiness where OmniParser drops the button bbox."""
+    H = arr.shape[0]
+    def _txt(e):
+        return (getattr(e, "content", "") or getattr(e, "label", "") or "").strip()
+    texts = [e for e in elements
+             if getattr(e, "element_type", "") == "text"
+             and getattr(e, "cy", 0) > 0.85 * H]
+    out: List[CommitButton] = []
+    for v in texts:
+        if _txt(v).lower() not in COMMIT_VERBS:
+            continue
+        cost_el = None
+        for c in texts:
+            if c is v:
+                continue
+            if _numeric_frac(_txt(c)) >= 0.6 and abs(c.cy - v.cy) <= 30 and c.cx < v.cx:
+                cost_el = c
+                break
+        x1 = int((cost_el.x1 if cost_el else v.x1)) - 20
+        x2 = int(v.x2) + 20
+        y1 = int(min(v.y1, cost_el.y1 if cost_el else v.y1)) - 18
+        y2 = int(max(v.y2, cost_el.y2 if cost_el else v.y2)) + 18
+        x1, y1 = max(x1, 0), max(y1, 0)
+        yf = yellow_fraction(arr, x1, y1, x2, y2)
+        if yf < min_yellow:
+            continue
+        out.append(CommitButton(
+            verb=_txt(v), cost=(_txt(cost_el) if cost_el else ""),
+            currency=cost_currency(arr, x1, y1, x2, y2),
+            cx=int(v.cx), cy=int(v.cy),
+            x1=x1, y1=y1, x2=x2, y2=y2, yellow_frac=round(yf, 2)))
+    return out
+
+
 def detect_commit_buttons(elements, frame: Image.Image,
                           min_yellow: float = YELLOW_MIN_FRAC) -> List[CommitButton]:
     """Find yellow OmniParser buttons and re-OCR them into {verb, cost}.
 
     `elements` — raw OmniParser elements (need `.element_type`, `.x1..y2`, `.cx/cy`).
     Returns the normalised commit buttons on screen (usually one; markets can have
-    Buy + Sell).
+    Buy + Sell).  When OmniParser emits no yellow button bbox, falls back to
+    reconstructing the commit from its <cost>+<verb> text (`_detect_from_text`).
     """
     arr = np.asarray(frame.convert("RGB"))
     out: List[CommitButton] = []
@@ -147,4 +205,7 @@ def detect_commit_buttons(elements, frame: Image.Image,
                                 cx=int(getattr(e, "cx", (x1 + x2) // 2)),
                                 cy=int(getattr(e, "cy", (y1 + y2) // 2)),
                                 x1=x1, y1=y1, x2=x2, y2=y2, yellow_frac=round(yf, 2)))
+    # OmniParser flakiness: no yellow BUTTON bbox this frame → reconstruct from text.
+    if not out:
+        out = _detect_from_text(elements, arr, frame, min_yellow)
     return out

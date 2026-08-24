@@ -1,0 +1,21 @@
+{
+  "purpose": "A map overlay showing the global source locations where Kenaf (a textile commodity) can be purchased at market, with ports in Algiers, Dover, and Hamburg highlighted on the world map",
+  "full_text": "My Location | Port | Show Powerful Opponent | Combat Loot Area | Explore Land | Move",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "overlay",
+  "structural_hash": "36e99e2bc581fb1d",
+  "goal_intent": null,
+  "cached_at": "2026-08-14T16:26:14.352351+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A map overlay showing the global source locations where Kenaf (a textile commodity) can be purchased at market, with ports in Algiers, Dover, and Hamburg highlighted on the world map",
+    "full_text": "My Location | Port | Show Powerful Opponent | Combat Loot Area | Explore Land | Move",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

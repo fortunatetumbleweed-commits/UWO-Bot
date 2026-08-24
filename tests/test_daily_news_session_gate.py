@@ -1,134 +1,61 @@
-"""Tests for the daily-news Moondream session-level suppression.
+"""The daily-news detector no longer calls Moondream, and no longer suppresses itself.
 
-After the first Moondream NO verdict, subsequent calls within the TTL
-should short-circuit before reaching Moondream.
+This file used to test a session-level gate: after Moondream returned NO once, further
+checks short-circuited for `_DAILY_NEWS_NO_SUPPRESS_TTL_S` (60 minutes) to avoid paying
+~12s of inference repeatedly.
+
+Both the arbiter and the suppression were removed on 2026-08-22 after measurement:
+
+  * Against the EXACT production prompt over the labelled set, Moondream scored recall 2/4
+    with 3/5 false positives — noise in both directions, not corroboration. Every
+    rephrasing was worse (shape/contents 0/12, two-overlapping-windows 2/12): at the
+    800x360 thumbnail it receives, it cannot see the distinguishing detail.
+  * It also carried an "unavailable -> return True" default, so a MISSING model made the
+    detector MORE likely to fire — backwards for a precision-first check.
+  * The suppression existed only to limit that cost, and had its own hazard: one negative
+    answer blinded the detector for an hour. Live 2026-08-22 it returned False on a real
+    daily-news frame for exactly that reason.
+
+The replacement is size + dimming — see tests/test_daily_news_large_popup_gate.py, and
+`_large_dimmed_popup` for the measurements (recall 4/4, false positives 0/147).
 """
-import time
-import unittest
-from unittest.mock import MagicMock, patch
-
-from PIL import Image
+import inspect
 
 import brain.perceive as perceive_mod
 
 
-def _frame_with_close_x_signature():
-    """Build a real frame whose (1770-1820, 215-265) crop contains the
-    dark + bright pixel cluster Stage 1 expects.  Uses an alternating
-    checker pattern so >100 dark and >50 bright pixels are present in
-    the 50×50 crop (2500 total pixels)."""
-    img = Image.new("RGB", (2400, 1080), (128, 128, 128))
-    for y in range(215, 265):
-        for x in range(1770, 1820):
-            if (x + y) % 2 == 0:
-                img.putpixel((x, y), (10, 10, 10))     # dark
-            else:
-                img.putpixel((x, y), (250, 250, 250))  # bright
-    return img
-
-
-class DailyNewsSessionGateTests(unittest.TestCase):
-
-    def setUp(self):
-        # Reset the session gate before each test
-        perceive_mod._daily_news_no_suppress_until = 0.0
-
-    def _patch_overworld_chrome(self):
-        mock_chrome = MagicMock()
-        mock_chrome.has_home = False
-        mock_chrome.has_back_arrow = False
-        detector = MagicMock()
-        detector.detect.return_value = mock_chrome
-        return patch("vision.chrome_detector.get_chrome_detector",
-                     return_value=detector)
-
-    def test_first_call_invokes_moondream_then_suppresses(self):
-        frame = _frame_with_close_x_signature()
-        moondream_calls = []
-
-        def fake_ask_cached(_frame, _key, fn):
-            moondream_calls.append(_key)
-            return fn()
-
-        with self._patch_overworld_chrome(), \
-             patch("vision.moondream_cache.ask_cached",
-                   side_effect=fake_ask_cached), \
-             patch.object(perceive_mod,
-                          "_has_daily_news_close_x_moondream_inference",
-                          return_value=False):
-            # First call: Moondream invoked, returns NO, sets suppress
-            result1 = perceive_mod._has_daily_news_close_x(frame)
-            self.assertFalse(result1)
-            self.assertEqual(len(moondream_calls), 1)
-            self.assertGreater(
-                perceive_mod._daily_news_no_suppress_until, time.time(),
+class TestArbiterRemoved:
+    def test_the_detector_makes_no_model_call(self):
+        src = inspect.getsource(perceive_mod._has_daily_news_close_x)
+        for call in ("ask_cached", "get_vision(", "vision.ask"):
+            assert call not in src, (
+                f"{call} is back in the daily_news detector. It was measured as noise "
+                "(recall 2/4, false positives 3/5) — re-measure before reinstating."
             )
 
-            # Second call: suppressed, no Moondream
-            result2 = perceive_mod._has_daily_news_close_x(frame)
-            self.assertFalse(result2)
-            self.assertEqual(len(moondream_calls), 1)
+    def test_no_session_suppression_window(self):
+        """A single negative must not blind the detector for an hour."""
+        src = inspect.getsource(perceive_mod._has_daily_news_close_x)
+        assert "_daily_news_no_suppress_until" not in src, (
+            "session suppression is back; it existed only to limit Moondream cost, and it "
+            "silenced the detector for 60 minutes after one negative answer."
+        )
 
-            # Third call: still suppressed
-            result3 = perceive_mod._has_daily_news_close_x(frame)
-            self.assertFalse(result3)
-            self.assertEqual(len(moondream_calls), 1)
-
-    def test_suppression_expires_after_ttl(self):
-        frame = _frame_with_close_x_signature()
-        moondream_calls = []
-
-        def fake_ask_cached(_frame, _key, fn):
-            moondream_calls.append(_key)
-            return fn()
-
-        with self._patch_overworld_chrome(), \
-             patch("vision.moondream_cache.ask_cached",
-                   side_effect=fake_ask_cached), \
-             patch.object(perceive_mod,
-                          "_has_daily_news_close_x_moondream_inference",
-                          return_value=False):
-            # Trigger initial suppression
-            perceive_mod._has_daily_news_close_x(frame)
-            self.assertEqual(len(moondream_calls), 1)
-
-            # Force TTL expiry
-            perceive_mod._daily_news_no_suppress_until = time.time() - 1.0
-
-            # Next call: suppression expired, Moondream called again
-            perceive_mod._has_daily_news_close_x(frame)
-            self.assertEqual(len(moondream_calls), 2)
-
-    def test_chrome_context_guard_still_short_circuits_first(self):
-        """If we're inside a building (back-arrow visible), the Stage-2
-        context guard rejects before reaching Moondream regardless of
-        session suppression state."""
-        frame = _frame_with_close_x_signature()
-
-        mock_chrome = MagicMock()
-        mock_chrome.has_home = True
-        mock_chrome.has_back_arrow = True
-        detector = MagicMock()
-        detector.detect.return_value = mock_chrome
-
-        with patch("vision.chrome_detector.get_chrome_detector",
-                   return_value=detector), \
-             patch("vision.moondream_cache.ask_cached") as mock_md:
-            result = perceive_mod._has_daily_news_close_x(frame)
-            self.assertFalse(result)
-            mock_md.assert_not_called()
-
-    def test_pixel_signature_miss_skips_everything(self):
-        """A frame without the pixel pattern returns False without
-        touching chrome or Moondream."""
-        plain = Image.new("RGB", (2400, 1080), (128, 128, 128))
-        with patch("vision.chrome_detector.get_chrome_detector") as mock_cd, \
-             patch("vision.moondream_cache.ask_cached") as mock_md:
-            result = perceive_mod._has_daily_news_close_x(plain)
-            self.assertFalse(result)
-            mock_cd.assert_not_called()
-            mock_md.assert_not_called()
-
-
-if __name__ == "__main__":
-    unittest.main()
+    def test_the_detector_is_deterministic_for_a_given_frame(self):
+        """No model, no TTL — the same frame must give the same answer every time, which
+        is what makes the live traces reproducible."""
+        from unittest import mock
+        import numpy as np
+        from PIL import Image
+        img = Image.fromarray(np.full((1080, 2400, 3), 22, dtype=np.uint8))
+        crop = np.zeros((50, 50, 3), dtype=np.uint8)
+        crop[:30, :] = 255
+        big = mock.MagicMock(x1=100, y1=100, x2=1300, y2=800)
+        chrome = mock.MagicMock(has_home=False, has_back_arrow=False)
+        with mock.patch("vision.chrome_detector.get_chrome_detector") as gcd, \
+             mock.patch("actions.sail_actions._ocr_frame", return_value=[("Jakarta", .9, 0, 0)]), \
+             mock.patch("numpy.array", return_value=crop), \
+             mock.patch("vision.omniparser.parse_fast_cached", return_value=[big]):
+            gcd.return_value.detect.return_value = chrome
+            answers = {perceive_mod._has_daily_news_close_x(img) for _ in range(3)}
+        assert len(answers) == 1, f"non-deterministic verdicts: {answers}"

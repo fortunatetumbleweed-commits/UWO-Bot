@@ -1,5 +1,9 @@
 # Bot architecture — the layered design
 
+> **Status (reviewed 2026-08-23): TARGET design, not built.** The task/reasoning/skills/
+> perception split is still the intended shape; the navigation-layer half of it is
+> detailed in `docs/one_loop_task_drives_state.md`.
+
 How the bot should be structured, top to bottom: a **task layer** that takes
 natural-language tasks and manages them, a **reasoning/mission layer** that
 figures out *where the bot is and how to achieve a goal*, a **skills layer** of

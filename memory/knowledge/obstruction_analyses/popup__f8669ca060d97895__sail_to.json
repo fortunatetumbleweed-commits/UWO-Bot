@@ -1,0 +1,21 @@
+{
+  "purpose": "A seasonal event popup ('Season Trial of Myth') has appeared on screen, likely triggered by proximity to another player (TaylorFP) or an event zone, interrupting navigation",
+  "full_text": "Season Trial of Myth C/HW 0.0 17",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "f8669ca060d97895",
+  "goal_intent": "sail_to",
+  "cached_at": "2026-08-13T02:26:48.670581+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A seasonal event popup ('Season Trial of Myth') has appeared on screen, likely triggered by proximity to another player (TaylorFP) or an event zone, interrupting navigation",
+    "full_text": "Season Trial of Myth C/HW 0.0 17",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

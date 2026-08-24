@@ -148,6 +148,80 @@ _DAILY_NEWS_NO_SUPPRESS_TTL_S: float = 3600.0
 _daily_news_no_suppress_until: float = 0.0
 
 
+def _element_under_point(frame, x: int, y: int):
+    """Label of the interactive element under (x, y), or None if that point is empty.
+
+    Used to keep a "tap anywhere" dismissal from silently performing a transaction. A
+    detection failure returns None (permissive) — the caller only uses this to REFUSE an
+    action it would otherwise take, so failing closed here would block dismissals that work.
+    """
+    try:
+        from vision.omniparser import parse_fast_cached
+        for e in parse_fast_cached(frame) or []:
+            if getattr(e, "element_type", "") not in ("button", "icon"):
+                continue
+            if (getattr(e, "x1", 0) <= x <= getattr(e, "x2", 0)
+                    and getattr(e, "y1", 0) <= y <= getattr(e, "y2", 0)):
+                return (getattr(e, "label", "") or "").strip() or e.element_type
+    except Exception as exc:
+        logger.debug(f"[perceive] centre-occupancy check skipped: {exc}")
+    return None
+
+
+# Tiles unique to the main menu — the same vocabulary the state classifier keys on
+# ("tile_bar=matched(['auction', 'friend', 'guild', 'rank'])"). Two or more means the main
+# menu is up, which is NOT an overworld and therefore cannot be showing daily_news.
+_MAIN_MENU_TILE_WORDS = ("auction", "friend", "guild", "rank", "manage fleet", "mission")
+
+
+# A daily_news popup COVERS A LARGE PART OF THE SCREEN and dims the game behind it. Those
+# are the properties worth testing — not a 50x50 ornament, which cannot tell a dark disc
+# from dark text on a light tile (live 2026-08-22: the word "Fleet" on the main menu scored
+# 186 dark / 1440 bright and passed).
+#
+# Measured over 151 distinct labelled frames (uwo_v2 label server, types dialog_system /
+# announcement / dialog_* / main_menu / building_*):
+#
+#                       largest element      margin dimming
+#     daily_news (4)      7.5 - 21.3 %        18.2 - 27.5
+#     false positives     <= 5.0 %            >= 59.9        (6 main_menu, 1 gameplay)
+#
+#   pixel signature alone      : recall 4/4, false positives 7/147
+#   + area and dimming gates   : recall 4/4, false positives 0/147
+#
+# FALSE POSITIVES ARE THE EXPENSIVE FAILURE (user 2026-08-22): daily_news appears once a
+# day, so a miss merely leaves it on screen, while a false fire TAPS — and the dismissal
+# taps a remembered coordinate, which on the main menu is the Fleet tile. Hence AND, not OR.
+_DAILY_NEWS_MIN_AREA_PCT = 6.0     # true 7.5+, false <= 5.0
+_DAILY_NEWS_MAX_MARGIN_DIM = 40.0  # true <= 27.5, false >= 59.9
+
+
+def _large_dimmed_popup(frame) -> tuple:
+    """(is_large_dimmed_popup, largest_element_pct, margin_brightness).
+
+    Two independent large-scale signals, both robust to the camera-cutout shift because
+    neither depends on a fixed coordinate:
+      * the biggest OmniParser element — a modal popup is detected as one big box
+      * the brightness of the screen's outer margin — a modal dims the game behind it
+    """
+    import numpy as _np
+    try:
+        from vision.omniparser import parse_fast_cached
+        els = parse_fast_cached(frame) or []
+        biggest = max((( e.x2 - e.x1) * (e.y2 - e.y1) for e in els), default=0)
+        area_pct = 100.0 * biggest / float(frame.width * frame.height)
+
+        a = _np.asarray(frame.convert("L")).astype(float)
+        band = _np.concatenate([a[:60, :].ravel(), a[-60:, :].ravel(),
+                                a[:, :80].ravel(), a[:, -80:].ravel()])
+        dim = float(band.mean())
+        ok = area_pct >= _DAILY_NEWS_MIN_AREA_PCT and dim < _DAILY_NEWS_MAX_MARGIN_DIM
+        return ok, area_pct, dim
+    except Exception as exc:
+        logger.debug(f"[perceive] large-popup check failed: {exc}")
+        return False, 0.0, 255.0      # fail closed: no evidence => do not fire
+
+
 def _has_daily_news_close_x(frame) -> bool:
     """
     Detect the daily_news popup via a two-stage check on the round-X close
@@ -165,26 +239,20 @@ def _has_daily_news_close_x(frame) -> bool:
     on a non-daily-news screen because pixel match alone reported a
     false positive.
 
-    Stage 2 — Context guard (cheap chrome check).  The user-confirmed
-    invariant for daily_news: it ONLY shows on overworld screens (sea
-    or port_overworld), never inside a building, sub-menu, port map,
-    or any in-game dialog.  So if chrome detection reports has_home or
-    has_back_arrow we're inside something — daily_news cannot fire and
-    we can short-circuit before the expensive Moondream call.  This
-    guard alone would have caught the May-2 Purchase-modal incident
-    (Purchase is a sub-menu of the market building → has_back_arrow
-    True → daily_news rejected without any model call).
+    Stage 2 — Context guards.  The user-confirmed invariant: daily_news ONLY shows on
+    overworld screens (sea or port_overworld), never inside a building, sub-menu, port
+    map, dialog, or on the MAIN MENU.  Chrome detection catches "inside something"
+    (has_home / has_back_arrow), and a positive main-menu test catches the case chrome
+    cannot see — the main menu has neither of those, so absence of chrome was being read
+    as "must be an overworld".
 
-    Stage 3 — Moondream confirmation on the X-outside-dialog visual.
-    Daily_news has a unique close-button geometry: the round X is
-    positioned OUTSIDE the popup window, hanging just above its
-    top-right corner.  Every other in-game dialog (Purchase, recruit,
-    confirm) places its close X INSIDE the dialog frame.  This is the
-    visual cue Moondream is asked to verify.
+    Stage 3 — SIZE AND DIMMING.  daily_news covers a large part of the screen and dims the
+    game behind it; those properties identify it far better than the ornament does.  See
+    `_large_dimmed_popup` for the measurements.
 
-    Returns True only when all three stages agree.  When Moondream is
-    unavailable, falls back to stage-1 + stage-2 (preserves prior
-    behaviour for environments without the local vision model).
+    Returns True only when the signature, both context guards, and the size/dimming test
+    all agree.  Validated over 151 distinct labelled frames: recall 4/4, false positives
+    0/147 (the signature alone scored 7/147 false).
 
     Text-based detection is intentionally NOT relied upon for daily_news:
     the popup has two display states (article-list view and deep-linked
@@ -196,6 +264,17 @@ def _has_daily_news_close_x(frame) -> bool:
     arr  = np.array(crop.convert("L"))
     pixel_match = (arr < 50).sum() > 100 and (arr > 200).sum() > 50
     if not pixel_match:
+        return False
+
+    # The signature is a PRE-FILTER, never the verdict: it has perfect recall (4/4) but
+    # fires on 7/147 non-daily-news frames. Require the popup's large-scale properties too.
+    big, area_pct, dim = _large_dimmed_popup(frame)
+    if not big:
+        logger.info(
+            f"[perceive] daily_news pixel signature fired but the screen has no large "
+            f"dimmed popup (largest element {area_pct:.1f}%, margin brightness {dim:.0f}) "
+            f"— rejecting"
+        )
         return False
 
     # Stage 2: context guard — daily_news cannot fire inside a building
@@ -218,39 +297,46 @@ def _has_daily_news_close_x(frame) -> bool:
         # let a chrome failure mask a real daily_news.
         logger.debug(f"[perceive] daily_news context guard skipped: {e}")
 
-    # Stage 2.5: session-level suppression.  If Moondream already
-    # confirmed NO once in this session within the TTL, skip the next
-    # call.  The pixel signature keeps firing on sea frames (the HUD
-    # has a similar close-X) — without this gate, every false alarm
-    # pays the ~12 s Moondream cost.
-    global _daily_news_no_suppress_until
-    if time.time() < _daily_news_no_suppress_until:
-        logger.debug(
-            "[perceive] daily_news pixel signature fired but session-level "
-            "NO is still in effect — skipping Moondream confirm"
-        )
-        return False
-
-    # Stage 3: confirm with Moondream on the X-outside-dialog visual.
-    # Cached per (id(frame), "daily_news_close_x") so repeated calls on
-    # the same frame share inference cost.
+    # Stage 2b: the MAIN MENU is not an overworld either, and it has neither a Home nor a
+    # back arrow — so the chrome check above cannot see it. Inferring "not inside a screen"
+    # from the ABSENCE of chrome is what let this through.
+    #
+    # Live 2026-08-22: the ☰ opened the main menu, the pixel signature fired there, Moondream
+    # confirmed YES, and the dismissal tapped the remembered close position (1794, 240) —
+    # which on the main menu is the **Manage Fleet** tile. The bot navigated into Manage
+    # Fleet, `read_fleet_status` then found itself in 'building' with no ☰, and the run died
+    # at "cargo capacity unreadable".
     try:
-        from vision.moondream_cache import ask_cached
-        result = ask_cached(
-            frame, "daily_news_close_x",
-            lambda: _has_daily_news_close_x_moondream_inference(frame),
-        )
-        if not result:
-            # NO verdict — suppress further confirms for the TTL window.
-            _daily_news_no_suppress_until = time.time() + _DAILY_NEWS_NO_SUPPRESS_TTL_S
+        from actions.sail_actions import _ocr_frame as _ocr
+        text = " ".join((t or "").lower() for t, _c, _x, _y in _ocr(frame, min_conf=0.3))
+        hits = sum(1 for w in _MAIN_MENU_TILE_WORDS if w in text)
+        if hits >= 2:
             logger.info(
-                f"[perceive] daily_news confirmed NO — suppressing further "
-                f"Moondream confirms for {_DAILY_NEWS_NO_SUPPRESS_TTL_S/60:.0f} min"
+                f"[perceive] daily_news pixel signature fired BUT this is the MAIN MENU "
+                f"({hits} tile words) — daily_news only fires on sea/port_overworld, rejecting"
             )
-        return result
+            return False
     except Exception as e:
-        logger.debug(f"[perceive] daily_news Moondream confirm skipped: {e}")
-        return False
+        logger.debug(f"[perceive] daily_news main-menu guard skipped: {e}")
+
+    # DECISION. Moondream used to arbitrate here; it was measured and dropped.
+    #
+    # Against the exact production prompt on the labelled set it scored recall 2/4 with
+    # 3/5 false positives — noise in both directions, not corroboration, and it silently
+    # flipped the verdict between runs. Every rephrasing tried was worse: asking about the
+    # popup's shape/contents gave 0/12, asking about two overlapping windows 2/12. At the
+    # 800x360 thumbnail it receives, the model cannot see the distinguishing detail.
+    #
+    # It also cost 2-5s per check and carried an "unavailable -> return True" default,
+    # which made a MISSING model more likely to fire — backwards for a precision-first
+    # detector. The session-level NO-suppression that surrounded it went too: that existed
+    # to limit Moondream cost, and with no Moondream there is nothing to limit. It had its
+    # own hazard — one negative answer blinded the detector for 60 minutes.
+    logger.info(
+        f"[perceive] daily_news CONFIRMED — large dimmed popup "
+        f"(largest element {area_pct:.1f}%, margin brightness {dim:.0f}) + close-X signature"
+    )
+    return True
 
 
 def _has_daily_news_close_x_moondream_inference(frame) -> bool:
@@ -717,11 +803,28 @@ def _dismiss_interruptor(iid: str, frame, obstruction_bbox=None) -> None:
         elif method == "tap_anywhere":
             from actions.adb_actions import tap as _tap
             cx, cy = frame.width // 2, frame.height // 2
-            logger.info(
-                f"[perceive] consult tap_anywhere — tapping centre ({cx}, {cy})"
-            )
-            _tap(cx, cy)
-            time.sleep(1.0)
+            # "Tap anywhere to continue" is only safe on a screen where anywhere really is
+            # nothing — a splash or announcement. On a screen with controls under the
+            # centre point, this is not a dismissal, it is whatever that control does.
+            #
+            # Live 2026-08-21, Jakarta: the bot was on the market's Purchase grid, the
+            # consult returned tap_anywhere, and the centre tap landed on the Lac Powder
+            # tile — adding 385 units (130,900 ducats) to the cart. Back then raised
+            # "Moving to another menu will empty the cart. Continue?", and the next centre
+            # tap hit that dialog's body text, resolving nothing. The cycle repeated.
+            blocker = _element_under_point(frame, cx, cy)
+            if blocker is not None:
+                logger.warning(
+                    f"[perceive] consult tap_anywhere — REFUSING: the centre "
+                    f"({cx}, {cy}) is on {blocker!r}, so a 'dismissal' tap would "
+                    "activate it. Leaving this to the caller."
+                )
+            else:
+                logger.info(
+                    f"[perceive] consult tap_anywhere — tapping centre ({cx}, {cy})"
+                )
+                _tap(cx, cy)
+                time.sleep(1.0)
         elif method == "tap_ok":
             _dismiss_tap_ok(frame)
         elif method == "tap_accept":
@@ -2343,6 +2446,38 @@ _FAMILY_TRUST_FLOOR = 0.7
 _OVERWORLD_LOCATIONS = ("sea", "port_overworld", "world_map")
 
 
+def _has_village_menu(frame) -> bool:
+    """True when the left menu is a VILLAGE's — barter + gifting, on no port screen.
+
+    NARROW ON PURPOSE. The general rule is that a left MENU LIST means a chromed screen and
+    never an overworld (user, 2026-08-23; docs/ui_anatomy.md), and that rule is correct — but
+    `detect_left_menu` is not yet reliable enough to carry it. Measured 2026-08-23:
+
+        port overworld   items=[]                                 correct
+        market (chromed) items=[]                                 MISSED its Purchase/Sell
+        world map        items=['gold','Trade Event','Schedule']   FALSE POSITIVE
+
+    A generic "any left menu ⇒ chromed" gate would therefore mislabel the WORLD MAP as a
+    building. The village vocabulary is exact, so this fixes the case that actually bites —
+    a village has no top-right icon bar, so its chrome is indistinguishable from an
+    overworld's, and the cascade fell through to counting right-edge panels. Widen this once
+    the left-menu detector earns it.
+    """
+    try:
+        from vision.omniparser import parse_fast_cached
+        from vision.region_detectors.left_menu import detect_left_menu
+        menu = detect_left_menu(list(parse_fast_cached(frame)), frame.width, frame.height)
+        labels = {l.strip().lower() for l in (menu.labels() if menu else [])}
+        return _VILLAGE_MENU_MARKERS <= labels
+    except Exception as exc:
+        logger.debug(f"[classify] village-menu check failed: {exc}")
+        return False
+
+
+# Together these appear on no port screen; `barter` alone turns up elsewhere.
+_VILLAGE_MENU_MARKERS = {"barter", "gifting"}
+
+
 def _classify_nav_state(frame) -> dict:
     """Classify a frame, with the family CNN's coarse structure as a HARD gate.
 
@@ -2366,6 +2501,29 @@ def _classify_nav_state(frame) -> dict:
     chromed = bool(fam is not None and fam.family == "chromed"
                    and fam.confidence >= _FAMILY_TRUST_FLOOR)
 
+    # STRUCTURE BEATS THE CNN HERE. A LEFT MENU LIST under the title is present on every
+    # chromed screen and on no overworld (user, 2026-08-23; docs/ui_anatomy.md), so it is a
+    # positive test the family CNN's confidence cannot override.
+    #
+    # It matters most where every other signal fails: a VILLAGE has no top-right icon bar, so
+    # its chrome reads exactly like an overworld's (measured: port overworld home=False,
+    # village home=False, market home=True). With that discriminator gone the cascade fell
+    # through to counting right-edge panels — and a chromed right panel appears only in
+    # RESPONSE to selecting an item, so the count is a behaviour, not a state. The same
+    # village barter screen was classified village / building / port_overworld / sea /
+    # unknown inside one run, and when it landed on port_overworld `open_world_map` tapped
+    # the calibrated port globe into a Check-Barter-Effect control and the mission hung.
+    # Only when the verdict has NO PORT NAME. A port_overworld ALWAYS has a name (CLAUDE.md
+    # invariant), so a named verdict is a real port and needs no second opinion — and asking
+    # for one would drag OmniParser into the high-confidence short-circuit that exists to
+    # avoid it. A village misclassified as port_overworld has `port=None`, which is exactly
+    # the case worth the extra look.
+    if (not chromed and loc == "port_overworld" and not (result or {}).get("port")
+            and _has_village_menu(frame)):
+        logger.info(f"[classify] STRUCTURE GATE: cascade said {loc!r} but the left menu is a "
+                    "VILLAGE's (barter+gifting) — that is a chromed screen, not an overworld")
+        chromed = True
+
     # Family-CNN base GATE: a confidently chromed frame is a panel, never an
     # overworld. Override the cascade if it landed on one.
     if chromed and loc in _OVERWORLD_LOCATIONS:
@@ -2377,6 +2535,51 @@ def _classify_nav_state(frame) -> dict:
                   "detail": f"Chromed panel (family CNN chromed@{fam.confidence:.2f}; "
                             f"cascade said {loc})"}
         loc = "building"
+
+    # Family GATE (transient) — mirror of the chromed gate, per the principle "trust the CNN
+    # when it's confident".  A confident `transient` frame (loading / cinematic / MODAL DIALOG)
+    # is NEVER a stable overworld; but transient falls through to the signature cascade for
+    # refinement, and a weak signature (right_edge_panel visible behind a modal) can make the
+    # cascade say an overworld (live 2026-08-18: the Replenish-Stock refresh dialog —
+    # CNN=transient@1.00, cascade→port_overworld).  Override to 'unknown' so the FSM
+    # re-perceives / lets the interruptor layer handle the overlay instead of acting as if at
+    # the port.  (Only fires on the CONTRADICTION — transient + an overworld verdict — so it
+    # leaves correctly-classified transient states like 'loading' alone.)
+    transient = bool(fam is not None and fam.family == "transient"
+                     and fam.confidence >= _FAMILY_TRUST_FLOOR)
+    if transient and loc in _OVERWORLD_LOCATIONS:
+        logger.info(
+            f"[classify] family=transient@{fam.confidence:.2f} GATE: cascade said {loc!r} "
+            "but a transient overlay is never an overworld — → unknown"
+        )
+        result = {"location": "unknown", "port": None,
+                  "detail": f"Transient overlay (family CNN transient@{fam.confidence:.2f}; "
+                            f"cascade said {loc})"}
+        loc = "unknown"
+
+    # SECOND GATE (chrome detector) — the family CNN can MISS a chromed sub-screen (2026-08-18:
+    # it read the Manage-Fleet screen as 'sea'@0.59, below the trust floor), letting a WEAK
+    # fingerprint win — Manage Fleet's right-side Fleet-Info panel matched port_overworld's lone
+    # `right_edge_panel` signal.  Only SEA and PORT_OVERWORLD carry the top-right HAMBURGER; a
+    # HOME button + no hamburger there means it's really a chromed sub-screen → building.
+    # WORLD_MAP is EXCLUDED — it is a legit overworld that carries a HOME button (like buildings);
+    # the family CNN classifies it correctly (world_map@1.00), so gating it would wrongly demote
+    # the open world map to 'building' and loop the open.  Belt-and-suspenders: also skip if the
+    # CNN confidently says world_map (defer to the CNN when it's sure).
+    fam_world_map = bool(fam is not None and fam.family == "world_map"
+                         and fam.confidence >= _FAMILY_TRUST_FLOOR)
+    if loc in ("sea", "port_overworld") and not chromed and not fam_world_map:
+        try:
+            from vision.chrome_detector import get_chrome_detector
+            ch = get_chrome_detector().detect(frame)
+            if getattr(ch, "has_home", False) and not getattr(ch, "has_hamburger", False):
+                logger.info(f"[classify] chrome GATE: HOME button + no hamburger — {loc!r} is a "
+                            "chromed sub-screen, not an overworld → building")
+                result = {"location": "building", "port": None,
+                          "detail": f"Chromed panel (home button, no hamburger; cascade said {loc})"}
+                loc = "building"
+        except Exception as exc:
+            logger.debug(f"[classify] chrome gate skipped: {exc}")
 
     # Phase 3 panel-context reader: identify the panel from its LEFT MENU vs the
     # tiered vocab (Explore/Loot/Gifting/Barter → Village; Buy/Sell → Market; …).
@@ -3101,7 +3304,55 @@ def _detect_navigation_state(frame) -> tuple[str, Optional[str], str]:
 
 # ── Main perceive function ────────────────────────────────────────────────────
 
+_PERCEIVE_LAST_FRAME = None
+_PERCEIVE_LAST_RESULT = None
+_PERCEIVE_CACHE_HITS = 0
+# 0 = DISABLED (always fresh perceive).  The unchanged-screen cache is implicated in a live
+# departure regression 2026-08-18 (sail stuck in FLEET_CHECK, looping navigate-to-harbor —
+# the prior run departed cleanly; the cache is the only change touching that phase).  The
+# FSM's poll loops need fresh perception each tick.  Kept as opt-in (raise to re-enable) but
+# OFF by default until proven safe in the live nav loop.  `_PERCEIVE_LAST_*` are still
+# populated below (used by action_trace's live-perception attach).
+_PERCEIVE_MAX_CACHE_HITS = 0
+
+
+def clear_perceive_cache() -> None:
+    """Reset the unchanged-screen cache (tests + any caller that needs a guaranteed
+    fresh full perceive on the next call)."""
+    global _PERCEIVE_LAST_FRAME, _PERCEIVE_LAST_RESULT, _PERCEIVE_CACHE_HITS
+    _PERCEIVE_LAST_FRAME, _PERCEIVE_LAST_RESULT, _PERCEIVE_CACHE_HITS = None, None, 0
+
+
 def perceive(frame=None) -> PerceiveResult:
+    """Perceive with an UNCHANGED-SCREEN cache.
+
+    Re-running the full OCR + OmniParser pipeline on a screen that hasn't changed is pure
+    waste (live 2026-08-18: the idle port name was OCR'd ~4× while the bot sat deciding to
+    sail).  So: coarsely diff the new frame against the last perceived one — the diff
+    ignores the clock/HUD but flags dialogs / panel toggles / state changes — and when it's
+    "unchanged", reuse the cached result instead of re-perceiving.  Bounded by
+    `_PERCEIVE_MAX_CACHE_HITS` so a change the coarse diff misses can't strand a stale read.
+    """
+    global _PERCEIVE_LAST_FRAME, _PERCEIVE_LAST_RESULT, _PERCEIVE_CACHE_HITS
+    if frame is None:
+        frame = capture_screen()
+    if (_PERCEIVE_LAST_RESULT is not None and _PERCEIVE_LAST_FRAME is not None
+            and _PERCEIVE_CACHE_HITS < _PERCEIVE_MAX_CACHE_HITS):
+        try:
+            from vision.frame_diff import classify_action_outcome
+            if classify_action_outcome(_PERCEIVE_LAST_FRAME, frame).kind == "unchanged":
+                _PERCEIVE_CACHE_HITS += 1
+                logger.info(f"[perceive] screen unchanged — reusing cached result "
+                            f"(hit {_PERCEIVE_CACHE_HITS}/{_PERCEIVE_MAX_CACHE_HITS})")
+                return _PERCEIVE_LAST_RESULT
+        except Exception as exc:
+            logger.debug(f"[perceive] unchanged-check failed: {exc}")
+    result = _perceive_uncached(frame)
+    _PERCEIVE_LAST_FRAME, _PERCEIVE_LAST_RESULT, _PERCEIVE_CACHE_HITS = frame, result, 0
+    return result
+
+
+def _perceive_uncached(frame=None) -> PerceiveResult:
     """
     Three-pass perception.  Returns a PerceiveResult with full state picture.
 
@@ -3207,6 +3458,13 @@ def perceive(frame=None) -> PerceiveResult:
         m = _re.search(r"family-classifier@(\d+\.\d+)", detail)
         if m and float(m.group(1)) >= 0.95:
             detail_is_specific = True
+    # Sea / world_map are pure nav-TRANSIT states: the family classifier fully answers what
+    # the sail FSM needs (nav_state), and Qwen's "sailing to X" detail is never consumed
+    # there.  They classify at ~0.94 — just under the 0.95 gate above — so Qwen fired ~8 s
+    # on EVERY sail tick (live 2026-08-18: 6 calls / 48 s in one voyage, multiplied by
+    # world-map find retries).  Skip the VLM on these; nav needs only the state.
+    if nav_state in ("sea", "sea_cinematic", "world_map"):
+        detail_is_specific = True
     skip_qwen = nav_state != "unknown" and detail_is_specific
 
     l25_result   = None

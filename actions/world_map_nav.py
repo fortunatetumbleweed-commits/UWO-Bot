@@ -43,6 +43,7 @@ from __future__ import annotations
 import json
 import math
 import statistics
+import random
 import time
 from itertools import combinations
 from pathlib import Path
@@ -64,7 +65,45 @@ from vision.world_map_parser import VisiblePort, parse_visible_ports, load_port_
 # to the iterative loop and save the scale after the first successful
 # calibration there.  Subsequent calls (this session or future) can stride.
 
+def fold_name(s: str) -> str:
+    """Accent- and case-insensitive key: 'Malé' → 'male'.
+
+    The catalogue stores display spellings ('Malé'), map labels OCR WITHOUT the accent
+    ('male'), and callers arrive with either — `catalogue_coords()` hands the mission
+    the stripped form. Comparing raw strings therefore fails on every accented port:
+    live 2026-08-21 the gather leg reported "'Male' not in port catalogue" while Malé
+    sat right there, and the mission stalled on its nearest supplier.
+
+    Module-level so it is the ONE implementation: the departure-notice check in
+    sail_actions has to bridge the same 'Male'/'Malé' gap.
+    """
+    import unicodedata
+    return "".join(c for c in unicodedata.normalize("NFKD", s or "")
+                   if not unicodedata.combining(c)).lower().strip()
+
+
 _SCALE_CACHE_PATH = Path("memory/knowledge/world_map/calibration.json")
+
+
+def _frame_says_undiscovered(frame) -> bool:
+    """True when the map itself prints 'Undiscovered Area' — the game's own fog label."""
+    try:
+        from actions.sail_actions import _ocr_frame
+        text = " ".join((t or "").lower() for t, _c, _x, _y in _ocr_frame(frame, min_conf=0.3))
+        return "undiscovered" in text
+    except Exception as exc:
+        logger.debug(f"[pan_to_port] fog-label check failed: {exc}")
+        return False
+
+
+# Consecutive label-free (or explicitly fogged) frames that mean the camera is over
+# unexplored map rather than mid-pan.
+_BLANK_FRAMES_MEAN_UNEXPLORED = 4
+# How many times to recentre on the fleet before admitting the search cannot proceed.
+_MAX_RECENTERS = 2
+# Within this many game units, dead-reckoning considers the target reached — so a blank
+# screen here is contradictory rather than merely "not there yet".
+_NEAR_TARGET_UNITS = 400
 
 
 def _load_persisted_scale() -> Tuple[Optional[float], Optional[float]]:
@@ -459,6 +498,19 @@ class WorldMapNavigator:
         # the map didn't move and we're wasting budget.
         last_swipe: Optional[Tuple[int, int]] = None
         last_visible_keys: Optional[frozenset] = None
+        # Closed-loop swipe calibration (user 2026-08-20): each iteration we KNOW how many px we
+        # swiped and (via water-tap localize) how far the camera actually moved in game units —
+        # the ratio IS the true scale at the current zoom.  A stale persisted scale (calibrated at
+        # another zoom) made every swipe ~2× too far, ping-ponging across the target (Jakarta →
+        # Melanesian Village oscillated 7714↔9431 around 8554 and gave up).  Update the scale from
+        # each observed swipe so the pan converges.
+        cal_prev_wt: Optional[Tuple[float, float]] = None   # water-tap fix before the last swipe
+        cal_last_swipe: Optional[Tuple[int, int]] = None    # px actually swiped since that fix
+        cal_expected: Optional[Tuple[float, float]] = None  # camera we EXPECTED the swipe to reach
+        pan_step = 0                                        # per-swipe step counter (logging)
+        blank_streak = 0                                    # consecutive frames with NO labels
+        recenters = 0                                       # My Location recoveries used
+        last_delta: Optional[float] = None                  # game units still to travel
         for attempt in range(1, remaining + 1):
             frame = capture_screen()
             visible = parse_visible_ports(frame, self._ports, self._aliases)
@@ -468,9 +520,76 @@ class WorldMapNavigator:
                 f"{len(visible)} visible port(s)"
             )
 
-            # Hit?
+            # UNEXPLORED / CLOUD-COVERED: the world map fogs regions the player has never
+            # sailed, and no label renders under fog. Panning reads that as "not here yet"
+            # and keeps swiping until it runs out of attempts, then reports "not found" —
+            # which is misleading, because the target could be dead centre and still
+            # invisible (user 2026-08-21: "it swiped to an area the bot has not explored,
+            # so it is just cloud covered"). A populated map region always shows SOME
+            # port, so several consecutive label-free frames mean the camera is over fog
+            # or open ocean, and more swiping cannot help. Stop and say so.
+            # The game LABELS fog: an unexplored region renders the words "Undiscovered
+            # Area" on the map (seen live 2026-08-21 while hunting Melanesian Village).
+            # That is positive evidence the camera is over never-visited territory —
+            # far stronger than merely counting label-free frames, which can also mean
+            # "still crossing open ocean". Treat it as a blank frame so the streak reacts.
+            fogged = _frame_says_undiscovered(frame)
+            if not visible or fogged:
+                if fogged:
+                    logger.info("[pan_to_port] the map reads 'Undiscovered Area' here — "
+                                "this region has never been visited")
+                blank_streak += 1
+                # WHY nothing is visible has several possible answers, and they do not
+                # exclude one another (user 2026-08-21):
+                #   • still en route — a far target crosses open ocean with nothing in view;
+                #   • the area was never visited, so it renders as CLOUD (that is what
+                #     cloud MEANS — unexplored, not merely off-screen);
+                #   • the camera went somewhere wrong;
+                #   • or the target is simply not in view yet, cloud or no cloud.
+                # Blankness alone therefore proves nothing. What IS contradictory is blank
+                # WHILE dead-reckoning claims we have arrived: a catalogued port has been
+                # visited, so its surroundings are cleared and SOMETHING would render. That
+                # combination means the camera is lost, not the target.
+                arrived = last_delta is not None and last_delta <= _NEAR_TARGET_UNITS
+                if (blank_streak >= _BLANK_FRAMES_MEAN_UNEXPLORED and pans_used >= 1
+                        and arrived):
+                    if recenters < _MAX_RECENTERS and self._recenter_on_fleet(frame):
+                        recenters += 1
+                        blank_streak = 0
+                        total_swipe_dpx = total_swipe_dpy = 0   # the old track is void
+                        from_info = None                        # re-localize from scratch
+                        cal_expected = None
+                        logger.warning(
+                            f"[pan_to_port] cloud/open ocean — the camera is lost, not the "
+                            f"target ({name!r} is a known place and known places are never "
+                            f"fogged). Recentred on the fleet and restarting the search "
+                            f"(recentre {recenters}/{_MAX_RECENTERS})."
+                        )
+                        continue
+                    logger.warning(
+                        f"[pan_to_port] {blank_streak} frames with no port labels while "
+                        f"dead-reckoning says we are on top of {name!r}, and no way to "
+                        "recentre. Use the typed port search."
+                    )
+                    return None
+                if blank_streak == _BLANK_FRAMES_MEAN_UNEXPLORED and not arrived:
+                    logger.info(
+                        f"[pan_to_port] nothing in view, but still ~{last_delta:.0f} game "
+                        "units out — unexplored ocean en route looks exactly like this, "
+                        "so keep panning rather than assuming the camera is lost."
+                        if last_delta is not None else
+                        "[pan_to_port] nothing in view and no distance estimate yet — "
+                        "keep panning."
+                    )
+            else:
+                blank_streak = 0
+
+            # Hit?  Compare by CATALOGUE ENTRY, not key string — a village entry is reachable
+            # under two keys ('melanesian' AND 'melanesian village'); the visible-set reports the
+            # short key while the target key is the display name, and a string compare panned
+            # forever while staring at the target (live 2026-08-20).
             for vp in visible:
-                if vp.key == target_key:
+                if vp.key == target_key or self._ports.get(vp.key) is target_info:
                     logger.info(
                         f"[pan_to_port] FOUND {vp.name!r} @ {vp.tap_pos}"
                     )
@@ -539,6 +658,50 @@ class WorldMapNavigator:
                                     f"latlon=({loc['latlon'][0]:.2f},{loc['latlon'][1]:.2f}) "
                                     f"→ camera≈({wt_x:.0f},{wt_y:.0f})"
                                 )
+                                # PAN-STEP RESULT (perceive→act→VERIFY): where did the last swipe
+                                # actually land vs where we expected?
+                                if cal_expected is not None:
+                                    err_x = _wrap_dx(wt_x - cal_expected[0])
+                                    err_y = wt_y - cal_expected[1]
+                                    logger.info(
+                                        f"[pan-step {pan_step} RESULT] expected camera→"
+                                        f"({cal_expected[0]:.0f},{cal_expected[1]:.0f}), "
+                                        f"REACHED ({wt_x:.0f},{wt_y:.0f}) — "
+                                        f"error ({err_x:+.0f},{err_y:+.0f}) game-units"
+                                    )
+                                # CLOSED-LOOP SCALE UPDATE: compare the px we swiped since the
+                                # previous fix to the observed camera movement.  swipe +px drags
+                                # the camera -game, so scale = -swipe/Δcamera.  Blend 50/50 to
+                                # damp single-fix misreads; persist so the next open starts right.
+                                if cal_prev_wt is not None and cal_last_swipe is not None:
+                                    moved_x = _wrap_dx(wt_x - cal_prev_wt[0])
+                                    moved_y = wt_y - cal_prev_wt[1]
+                                    sdx, sdy = cal_last_swipe
+                                    updated = False
+                                    if abs(sdx) > 400 and abs(moved_x) > 80:
+                                        obs = -sdx / moved_x
+                                        if _is_plausible_scale(obs):
+                                            cached_scale_x = 0.5 * cached_scale_x + 0.5 * obs
+                                            updated = True
+                                    if abs(sdy) > 250 and abs(moved_y) > 60:
+                                        obs_y = -sdy / moved_y
+                                        if _is_plausible_scale(obs_y):
+                                            cached_scale_y = 0.5 * cached_scale_y + 0.5 * obs_y
+                                            updated = True
+                                    if updated:
+                                        logger.info(
+                                            f"[pan_to_port] swipe-calibrated scale → "
+                                            f"({cached_scale_x:.2f},{cached_scale_y:.2f}) "
+                                            f"(swiped {cal_last_swipe}, camera moved "
+                                            f"({moved_x:.0f},{moved_y:.0f}))"
+                                        )
+                                        try:
+                                            _save_persisted_scale(cached_scale_x, cached_scale_y)
+                                        except Exception:
+                                            pass
+                                        # Re-project this fix with the corrected scale.
+                                        wt_x = tap_cx - (tap_px - frame.width / 2) / cached_scale_x
+                                        wt_y = tap_cy - (tap_py - frame.height / 2) / cached_scale_y
                     except Exception as exc:
                         logger.debug(
                             f"[pan_to_port] water-tap localize raised: {exc}"
@@ -595,6 +758,7 @@ class WorldMapNavigator:
                     dpy = max(-max_dpy, min(max_dpy, dpy))
                     dpx = _enforce_min_pan(dpx)
                     dpy = _enforce_min_pan(dpy)
+                    last_delta = (dgx ** 2 + dgy ** 2) ** 0.5
                     logger.info(
                         f"[pan_to_port] no-anchor swipe ({camera_source}): "
                         f"camera≈({camera_x:.0f},{camera_y:.0f}) "
@@ -641,6 +805,24 @@ class WorldMapNavigator:
                     )
                     total_swipe_dpx += actual_dpx
                     total_swipe_dpy += actual_dpy
+                    # Remember (fix, issued swipe) so the NEXT water-tap fix can calibrate the
+                    # scale from observed movement.  Only pair with a CLEAN water-tap fix.
+                    cal_prev_wt = ((wt_x, wt_y) if (camera_source == "water-tap"
+                                                    and wt_x is not None) else None)
+                    cal_last_swipe = (actual_dpx, actual_dpy)
+                    # PAN-STEP log (user 2026-08-20): saw → decided → swiped → EXPECT.  The next
+                    # fix logs "[pan-step N RESULT] expected vs REACHED" to close the loop.
+                    pan_step += 1
+                    exp_x = camera_x - actual_dpx / cached_scale_x
+                    exp_y = camera_y - actual_dpy / cached_scale_y
+                    cal_expected = (exp_x, exp_y)
+                    logger.info(
+                        f"[pan-step {pan_step}] saw camera=({camera_x:.0f},{camera_y:.0f}) "
+                        f"[{camera_source}] target=({target_gx},{target_gy}) "
+                        f"Δgame=({dgx:.0f},{dgy:.0f}) scale=({cached_scale_x:.2f},"
+                        f"{cached_scale_y:.2f}) → swiped ({actual_dpx},{actual_dpy})px, "
+                        f"EXPECT camera→({exp_x:.0f},{exp_y:.0f})"
+                    )
                     time.sleep(_PAN_SETTLE_S)
                     continue
                 # No way to estimate position — give up.  Be specific
@@ -815,6 +997,10 @@ class WorldMapNavigator:
             # the safe-rect clamp shortened the stroke.  Honest odometry.
             total_swipe_dpx += actual_dpx
             total_swipe_dpy += actual_dpy
+            # Anchored-path swipe breaks the water-tap (fix, swipe) pairing — invalidate it so
+            # the closed-loop calibrator never ratios across an unrecorded swipe.
+            cal_prev_wt = None
+            cal_last_swipe = None
             time.sleep(_PAN_SETTLE_S)
 
         logger.warning(
@@ -825,8 +1011,28 @@ class WorldMapNavigator:
 
     # ── Internals ─────────────────────────────────────────────────────────────
 
+    def _recenter_on_fleet(self, frame) -> bool:
+        """Tap the world map's My Location control to bring the camera back to the fleet.
+
+        The fleet's own position is always explored, so this lands the camera somewhere
+        labels actually render — a known-good starting point after a pan has wandered into
+        fog. Found by LABEL, never by remembered coordinates."""
+        from actions.sail_actions import _find_button
+        from actions.adb_actions import tap
+        pos = _find_button(frame, "my location", "location")
+        if pos is None:
+            logger.warning("[pan_to_port] My Location control not found — cannot recentre")
+            return False
+        logger.info(f"[pan_to_port] recentring on the fleet via My Location @ {pos}")
+        tap(*pos)
+        time.sleep(random.uniform(1.8, 2.6))
+        return True
+
+    _fold = staticmethod(fold_name)
+
     def _lookup_port(self, name: str) -> Optional[dict]:
-        """Catalogue lookup that respects port aliases (Lisbon → Lisboa, etc.).
+        """Catalogue lookup that respects port aliases (Lisbon → Lisboa, etc.) and is
+        accent-insensitive (see `_fold`).
 
         Falls back to the global port catalogue if the lookup fails in
         this navigator's catalogue.  This matters for the village
@@ -840,6 +1046,7 @@ class WorldMapNavigator:
         key = name.lower().strip()
         if not key:
             return None
+        folded = self._fold(name)
 
         # 1. Local catalogue (the one we're navigating over).
         info = self._ports.get(key)
@@ -850,6 +1057,12 @@ class WorldMapNavigator:
             info = self._ports.get(v)
             if info is not None:
                 return info
+        # Accent-folded sweep — 'Male' must find the catalogue's 'Malé'.
+        for k, v in self._ports.items():
+            if self._fold(k) == folded:
+                logger.info(f"[_lookup_port] {name!r} matched catalogue entry {k!r} "
+                            "by accent-folded name")
+                return v
 
         # 2. Global port catalogue fallback — needed when *self* is a
         #    village navigator and *name* is the departing port.
@@ -861,6 +1074,11 @@ class WorldMapNavigator:
             info = ports.get(key)
             if info is not None:
                 return info
+            for k, v in ports.items():
+                if self._fold(k) == folded:
+                    logger.info(f"[_lookup_port] {name!r} matched port catalogue entry "
+                                f"{k!r} by accent-folded name")
+                    return v
             # Port-alias lookup against the global aliases table.
             try:
                 from actions.sail_actions import _PORT_ALIASES
@@ -1124,6 +1342,15 @@ def make_village_navigator() -> WorldMapNavigator:
     Callers MUST ensure the world map is on the Explore tab before
     invoking pan_to_port on this navigator (village labels are
     suppressed on the Port tab).
-    """
+
+    The baked catalogue is keyed by voyage.tw SHORT keys ('melanesian'),
+    but pan_to_port looks up (and OCR label-matching matches) the DISPLAY
+    name lowercased ('melanesian village') — re-key by display name, else
+    every village lookup misses (live 2026-08-20: 'Melanesian Village'
+    "not in port catalogue" → world-map open/close loop)."""
     from vision.world_map_parser import load_village_catalogue
-    return WorldMapNavigator(catalogue=load_village_catalogue(), aliases={})
+    cat = {}
+    for k, v in load_village_catalogue().items():
+        cat[k.lower().strip()] = v                          # short key ('berber')
+        cat[(v.get("name") or k).lower().strip()] = v       # display name ('berber village')
+    return WorldMapNavigator(catalogue=cat, aliases={})

@@ -1,5 +1,11 @@
 # Reasoning Fallback Layer — design
 
+> **Status (reviewed 2026-08-23): PARTIALLY BUILT.** The LLM consult exists
+> (`vision/obstruction_consult.py`, keyed by structural hash + goal), but it is gated
+> behind an obstruction verdict that misses real modals, so it rarely runs. See
+> `docs/one_loop_task_drives_state.md` for where the decision belongs (task, not
+> dismissal layer).
+
 A reasoning tier that sits **between automated recovery and human escalation**.
 When the bot is stuck, in the wrong place, or on an unfamiliar screen, it hands
 the **structured perceived state + its intent** to an LLM and gets back a

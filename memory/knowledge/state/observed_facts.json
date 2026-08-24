@@ -1,0 +1,25 @@
+{
+  "mission_progress": {
+    "at": 1787462152.849764,
+    "value": {
+      "age_s": 0.004428863525390625,
+      "good": "Camas",
+      "phase": "gathering",
+      "recipe": {
+        "good": "Camas",
+        "materials": {
+          "Avocado": 130,
+          "Cassava": 150
+        },
+        "obtain": 953
+      },
+      "rounds": 3,
+      "rounds_remaining": 7,
+      "village": "Apache Village"
+    }
+  },
+  "settlement": {
+    "at": 1787462152.868613,
+    "value": "Diu"
+  }
+}

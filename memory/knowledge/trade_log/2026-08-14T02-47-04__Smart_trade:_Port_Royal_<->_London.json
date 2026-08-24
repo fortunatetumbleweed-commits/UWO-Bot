@@ -1,0 +1,59 @@
+{
+  "task_name": "Smart trade: Port Royal <-> London",
+  "started_at": "2026-08-14T02:47:04.771842+00:00",
+  "ended_at": null,
+  "elapsed_seconds": 3151.2853674569633,
+  "rounds_completed": 0,
+  "total_profit": 5553166,
+  "ducats_per_hour": 6343886.785515949,
+  "steps": [
+    {
+      "action": "sell_all",
+      "port": "Port Royal",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 0.0,
+      "notes": "sold 0 goods  +0d"
+    },
+    {
+      "action": "buy_all",
+      "port": "Port Royal",
+      "ok": true,
+      "profit": -4265569,
+      "duration_s": 0.0,
+      "notes": "bought 6 goods  -4,265,569d (→London)"
+    },
+    {
+      "action": "sail_to",
+      "port": "London",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 1863.7445686659776,
+      "notes": "arrived"
+    },
+    {
+      "action": "sell_all",
+      "port": "London",
+      "ok": true,
+      "profit": 11837718,
+      "duration_s": 0.0,
+      "notes": "sold 1 goods  +11,837,718d"
+    },
+    {
+      "action": "buy_all",
+      "port": "London",
+      "ok": true,
+      "profit": -2018983,
+      "duration_s": 0.0,
+      "notes": "bought 7 goods  -2,018,983d (→Port Royal)"
+    },
+    {
+      "action": "sail_to",
+      "port": "Port Royal",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 1287.5407987909857,
+      "notes": "arrived"
+    }
+  ]
+}

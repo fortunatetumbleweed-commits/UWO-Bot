@@ -80,6 +80,15 @@ def long_press(x: int, y: int, duration_ms: int = 800) -> None:
     a quick tap is not recognised as a keyboard-show request.
     No anti-cheat delay after (caller controls timing).
     """
+    # Recorded like every other input: a trace that omits some primitives reads as if the
+    # bot skipped steps, and the missing ones are exactly the hard-to-explain moments
+    # (user 2026-08-22: "I am not sure why the steps before it was not recorded").
+    try:
+        from actions import action_trace
+        if action_trace.active():
+            action_trace.record_tap(int(x), int(y), "long_press")
+    except Exception:
+        pass
     _adb(["shell", "input", "swipe",
           str(x), str(y), str(x), str(y), str(duration_ms)])
     time.sleep(0.3)
@@ -94,6 +103,12 @@ def tap_fast(x: int, y: int, delay_ms: int = 150) -> None:
     same pixel.  The delay itself is randomised ±15 % around the requested
     value so the inter-tap cadence is never perfectly uniform.
     """
+    try:
+        from actions import action_trace
+        if action_trace.active():
+            action_trace.record_tap(int(x), int(y), "tap")
+    except Exception:
+        pass
     x += random.randint(-3, 3)
     y += random.randint(-3, 3)
     _adb(["shell", "input", "tap", str(x), str(y)])
@@ -107,6 +122,12 @@ def swipe(x1: int, y1: int, x2: int, y2: int, duration_ms: int = 300) -> None:
     ±4 px jitter on the start position and ±6 px drift on the end position
     so no two swipes are identical.  Duration is randomised ±15 %.
     """
+    try:
+        from actions import action_trace
+        if action_trace.active():
+            action_trace.record_tap(int(x1), int(y1), "swipe")
+    except Exception:
+        pass
     x1 += random.randint(-4, 4)
     y1 += random.randint(-4, 4)
     x2 += random.randint(-6, 6)
@@ -127,6 +148,12 @@ def swipe_fast(x1: int, y1: int, x2: int, y2: int,
     ±4 px jitter on start, ±6 px drift on end, duration ±15 %.
     settle_ms is also randomised ±10 % so the inter-scroll cadence varies.
     """
+    try:
+        from actions import action_trace
+        if action_trace.active():
+            action_trace.record_tap(int(x1), int(y1), "swipe")
+    except Exception:
+        pass
     x1 += random.randint(-4, 4)
     y1 += random.randint(-4, 4)
     x2 += random.randint(-6, 6)
@@ -153,6 +180,15 @@ def press_back() -> None:
 def wake() -> None:
     """Wake the screen (KEYCODE_WAKEUP) — used before dismissing the lock/
     screensaver, which the game idles into between steps."""
+    # Recorded like every other input: a trace that omits some primitives reads as if the
+    # bot skipped steps, and the missing ones are exactly the hard-to-explain moments
+    # (user 2026-08-22: "I am not sure why the steps before it was not recorded").
+    try:
+        from actions import action_trace
+        if action_trace.active():
+            action_trace.record_tap(-1, -1, "wake")
+    except Exception:
+        pass
     _adb(["shell", "input", "keyevent", "224"])   # KEYCODE_WAKEUP
     _human_delay()
 
@@ -182,6 +218,12 @@ def pinch_zoom(
     All sendevent commands are bundled into one adb shell call to avoid
     per-event round-trip latency (~30 ms each).
     """
+    try:
+        from actions import action_trace
+        if action_trace.active():
+            action_trace.record_tap(int(center_x), int(center_y), "pinch_zoom")
+    except Exception:
+        pass
     def _to_touch(sx: int, sy: int):
         tx = max(0, min(1079, 1079 - sy))
         ty = max(0, min(2399, sx))
@@ -232,15 +274,30 @@ def pinch_zoom(
         raise RuntimeError(f"pinch_zoom sendevent error: {result.stderr.decode().strip()}")
 
 
-def input_text(text: str) -> None:
+def input_text(text: str, max_chars: int | None = None, clear_first: bool = False) -> None:
     """
-    Type text into the currently focused input field.
-    Clears the field first (select-all + delete), then types the new value.
+    Type text into the currently focused input field, per-character.
 
     Uses per-character keyevent instead of batch 'input text' for compatibility
     with Unity game text fields — Unity only handles KeyEvent.ACTION_DOWN/UP
     and ignores the ACTION_MULTIPLE batch-insert sent by 'adb shell input text'.
+
+    Anti-cheat (user 2026-08-18): the game fingerprints automated input, so type at
+    a JITTERED human interval — never a fixed cadence.  `max_chars` types only the
+    first N characters: for a search box, a 3–4 char prefix filters the list enough
+    to find the target without typing the whole word (less input = lower risk).
+    `clear_first` wipes any leftover text (move-to-end + deletes) before typing —
+    without it a second search appends onto the first and matches nothing.
     """
+    # Recorded like every other input: a trace that omits some primitives reads as if the
+    # bot skipped steps, and the missing ones are exactly the hard-to-explain moments
+    # (user 2026-08-22: "I am not sure why the steps before it was not recorded").
+    try:
+        from actions import action_trace
+        if action_trace.active():
+            action_trace.record_tap(-1, -1, "input_text")
+    except Exception:
+        pass
     # Android named keycodes for printable characters
     _KEYCODE: dict[str, str] = {
         'a': 'KEYCODE_A', 'b': 'KEYCODE_B', 'c': 'KEYCODE_C', 'd': 'KEYCODE_D',
@@ -256,8 +313,16 @@ def input_text(text: str) -> None:
         '.': 'KEYCODE_PERIOD',
     }
 
+    if clear_first:
+        # Wipe leftover text: jump to end, then delete a generous number of chars.
+        _adb(["shell", "input", "keyevent", "KEYCODE_MOVE_END"])
+        for _ in range(20):
+            _adb(["shell", "input", "keyevent", "KEYCODE_DEL"])
+            time.sleep(random.uniform(0.03, 0.09))
+
+    to_type = text.lower()[:max_chars] if max_chars else text.lower()
     # Send each character as an individual key event (lowercase — search is case-insensitive)
-    for char in text.lower():
+    for char in to_type:
         code = _KEYCODE.get(char)
         if code is not None:
             _adb(["shell", "input", "keyevent", str(code)])
@@ -265,5 +330,5 @@ def input_text(text: str) -> None:
             # Fallback for unmapped characters (digits, accented letters, etc.)
             escaped = char.replace(" ", "%s")
             _adb(["shell", "input", "text", escaped])
-        time.sleep(0.05)
-    time.sleep(0.2)
+        time.sleep(random.uniform(0.12, 0.35))   # jittered human interval (anti-cheat)
+    time.sleep(random.uniform(0.3, 0.6))

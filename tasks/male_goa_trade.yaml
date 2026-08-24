@@ -1,0 +1,31 @@
+name: "Malé → Goa trade (keep Coral)"
+description: >
+  One-way Malé→Goa. The cargo (Ruby / Sapphire / Skipjack Tuna / Coral) was
+  bulk-bought at Malé earlier this session via the new goal-aware buy (the
+  buy_all `goods:` syntax is shown commented below for reuse). This run sails to
+  Goa and sells the PROFITABLE cargo while KEEPING Coral (the new sell `keep:`
+  goal). Exercises the navigate_to_building Back-handling fix + the goal-aware
+  buy/sell wiring in the task runner.
+
+start_port: Malé
+rounds: 1
+
+loop:
+  # Buy leg — already completed this session; syntax shown for reuse:
+  # - action: buy_all
+  #   port: Malé
+  #   goods: [Ruby, Sapphire, Skipjack Tuna, Coral]
+  #   note: "Bulk-load the listed goods (goal-aware buy)"
+
+  - action: sail_to
+    destination: Goa
+    note: "Free-sail Malé → Goa"
+
+  - action: sell_all
+    port: Goa
+    keep: [Coral]
+    note: "Sell profitable cargo, keep Coral"
+
+report:
+  - profit_loss
+  - unrecognized_scenes

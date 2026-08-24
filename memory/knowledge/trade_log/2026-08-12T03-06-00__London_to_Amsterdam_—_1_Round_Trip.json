@@ -1,0 +1,59 @@
+{
+  "task_name": "London to Amsterdam — 1 Round Trip",
+  "started_at": "2026-08-12T03:06:00.315994+00:00",
+  "ended_at": "2026-08-12T03:06:00.316678+00:00",
+  "elapsed_seconds": 0.000684,
+  "rounds_completed": 1,
+  "total_profit": 0,
+  "ducats_per_hour": 0.0,
+  "steps": [
+    {
+      "action": "sell_all",
+      "port": "London",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 2.7374946512281895e-05,
+      "notes": "dry-run"
+    },
+    {
+      "action": "buy_all",
+      "port": "London",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 2.720800694078207e-05,
+      "notes": "dry-run"
+    },
+    {
+      "action": "sail_to",
+      "port": "Amsterdam",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 2.5834073312580585e-05,
+      "notes": "dry-run"
+    },
+    {
+      "action": "sell_all",
+      "port": "London",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 2.6416033506393433e-05,
+      "notes": "dry-run"
+    },
+    {
+      "action": "buy_all",
+      "port": "London",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 2.504198346287012e-05,
+      "notes": "dry-run"
+    },
+    {
+      "action": "sail_to",
+      "port": "London",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 2.445792779326439e-05,
+      "notes": "dry-run"
+    }
+  ]
+}

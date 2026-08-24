@@ -90,12 +90,16 @@ class PanToVillageWrapperTests(unittest.TestCase):
     def test_pan_to_village_calls_select_explore_then_delegates(self):
         from actions.sail_actions import pan_to_village
 
-        # select_world_map_tab returns True, so we proceed to delegation.
-        # With a valid persisted scale on disk, pre-calibration is skipped.
+        # Anchor-port typed-search mocked OFF (it drives the DEVICE — never in tests)
+        # and the village lookup mocked to miss → the FALLBACK pan path runs:
+        # select Explore, delegate to the village navigator.
         mock_nav = MagicMock()
         mock_nav.pan_to_port.return_value = (1234, 567)
+        mock_nav._lookup_port.return_value = None    # skip the anchor-port primary path
         with patch("actions.world_map_nav._load_persisted_scale",
                    return_value=(2.5, 2.5)), \
+             patch("actions.sail_actions._try_port_search",
+                   return_value=None), \
              patch("actions.sail_actions.select_world_map_tab",
                    return_value=True) as mock_tab, \
              patch("actions.world_map_nav.make_village_navigator",
@@ -110,15 +114,20 @@ class PanToVillageWrapperTests(unittest.TestCase):
 
     def test_pan_to_village_returns_none_when_tab_select_fails(self):
         from actions.sail_actions import pan_to_village
+        mock_nav = MagicMock()
+        mock_nav._lookup_port.return_value = None    # skip the anchor-port primary path
         with patch("actions.world_map_nav._load_persisted_scale",
                    return_value=(2.5, 2.5)), \
+             patch("actions.sail_actions._try_port_search",
+                   return_value=None), \
              patch("actions.sail_actions.select_world_map_tab",
                    return_value=False), \
-             patch("actions.world_map_nav.make_village_navigator") as mock_factory:
+             patch("actions.world_map_nav.make_village_navigator",
+                   return_value=mock_nav):
             pos = pan_to_village("Berber")
         self.assertIsNone(pos)
-        # If tab-switch failed, we don't construct or call the navigator.
-        mock_factory.assert_not_called()
+        # If tab-switch failed, the navigator's pan must never run.
+        mock_nav.pan_to_port.assert_not_called()
 
     def test_pan_to_village_pre_calibrates_when_no_persisted_scale(self):
         """When no scale is on disk, run one-shot calibration on Port tab
@@ -128,8 +137,11 @@ class PanToVillageWrapperTests(unittest.TestCase):
 
         mock_nav = MagicMock()
         mock_nav.pan_to_port.return_value = (100, 200)
+        mock_nav._lookup_port.return_value = None    # skip the anchor-port primary path
         with patch("actions.world_map_nav._load_persisted_scale",
                    return_value=(None, None)), \
+             patch("actions.sail_actions._try_port_search",
+                   return_value=None), \
              patch("actions.sail_actions._calibrate_scale_on_port_tab",
                    return_value=True) as mock_precal, \
              patch("actions.sail_actions.select_world_map_tab",
@@ -146,8 +158,11 @@ class PanToVillageWrapperTests(unittest.TestCase):
 
         mock_nav = MagicMock()
         mock_nav.pan_to_port.return_value = (50, 60)
+        mock_nav._lookup_port.return_value = None    # skip the anchor-port primary path
         with patch("actions.world_map_nav._load_persisted_scale",
                    return_value=(2.3, 2.4)), \
+             patch("actions.sail_actions._try_port_search",
+                   return_value=None), \
              patch("actions.sail_actions._calibrate_scale_on_port_tab",
                    return_value=True) as mock_precal, \
              patch("actions.sail_actions.select_world_map_tab",

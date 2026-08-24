@@ -192,7 +192,8 @@ def _execute_transition(action: str, frame) -> None:
         time.sleep(2.0)
 
     elif action == "tap_centre":
-        tap(1200, 600)
+        from actions import ui as _ui
+        _ui.tap_centre(frame, why="learned recovery step 'tap_centre'")
         time.sleep(1.5)
 
     elif action == RECOVERY_WAIT:
@@ -250,7 +251,8 @@ def advance_mandatory_flow(
             return btn
 
     logger.debug("  [flow] No dialog button found — tapping centre")
-    tap(1200, 600)
+    from actions import ui as _ui
+    _ui.tap_centre(frame, why="no dialog button found")
     time.sleep(1.0)
     return None
 
@@ -866,15 +868,55 @@ def _tap_building_action(building_type: str, sub_menu_id: str) -> bool:
 # "acknowledge a blocking dialog" tap, not a transaction.
 _DIALOG_OK_WORDS = frozenset({"ok", "confirm", "continue", "yes"})
 
+# Dialogs whose positive button must NEVER be tapped by blind recovery. Confirming this
+# one closes the GAME — which is exactly what happened on 2026-08-21: recovery pressed
+# Back on port_overworld (which opens "Exit Game?"), the screen then no longer classified
+# as port_overworld so the call-site guard lapsed, and _tap_dialog_ok found "OK".
+# Back is the safe action here — pressing it again dismisses the prompt (user 2026-08-21).
+_NEVER_CONFIRM_PHRASES = ("exit game", "exit the game", "leave game", "quit game",
+                          "do you want to exit", "close the game")
+
+
+def _consult_dialog(frame, tokens):
+    """Read the dialog's CONTENT and have it interpreted, instead of guessing from a
+    button word.
+
+    This is the canonical path `brain/perceive.py` already uses: classify the obstruction
+    to get its bbox, then `consult_obstruction` crops the tokens inside that bbox,
+    structural-hashes them, and answers cache-first (the model is only consulted for a
+    dialog never seen before). Returns the ObstructionAnalysis, or None when nothing can
+    be determined.
+
+    Recovery used to skip all of this and tap whatever said "OK". On 2026-08-21 that
+    closed the game — while the cache already held TEN analyses of the Exit Game prompt,
+    every one of them correctly saying `tap_decline`. The knowledge was there; nothing
+    asked for it."""
+    try:
+        from vision.screen_perception import parse_screen
+        from vision.obstruction_classifier import classify_obstruction, KIND_NONE
+        from vision.obstruction_consult import consult_obstruction
+        from brain.goal_context import current_goal
+        obstruction = classify_obstruction(parse_screen(frame))
+        if obstruction.kind == KIND_NONE or obstruction.bbox is None:
+            return None
+        return consult_obstruction(frame=frame, obstruction=obstruction,
+                                   ocr_tokens=tokens, goal_context=current_goal())
+    except Exception as exc:
+        logger.debug(f"  [recovery] dialog consult unavailable: {exc}")
+        return None
+
 
 def _tap_dialog_ok(frame) -> bool:
-    """Tap a blocking confirmation dialog's OK/Continue/Yes button, if present.
+    """Clear a blocking dialog — by UNDERSTANDING it, not by matching a button word.
 
-    The 'different action' recovery tries when press_back keeps bouncing off a
-    confirmation Notice (e.g. "Moving to another menu will empty the cart.
-    Continue?" — OK empties the cart and lets us leave). Returns True if a
-    positive confirmation button was found and tapped. Never taps a commit/spend
-    button (those words aren't in _DIALOG_OK_WORDS).
+    Order:
+      1. Refuse outright anything asking whether to EXIT THE GAME. This is a code-level
+         invariant, never a judgement call delegated to a model: Back dismisses that
+         prompt safely, OK closes the game (user 2026-08-21).
+      2. Consult the dialog's content (cache-first) and follow its verdict — decline,
+         close-X, accept — or do nothing when it says the thing is irrelevant.
+      3. Only if nothing could be determined, fall back to the old keyword tap, which
+         never taps a commit/spend button (those words aren't in _DIALOG_OK_WORDS).
     """
     from actions.adb_actions import tap
     try:
@@ -883,10 +925,44 @@ def _tap_dialog_ok(frame) -> bool:
     except Exception as exc:
         logger.debug(f"  [recovery] _tap_dialog_ok OCR failed: {exc}")
         return False
+
+    joined = " ".join((t or "").lower() for t, _c, _x, _y in tokens)
+    for phrase in _NEVER_CONFIRM_PHRASES:
+        if phrase in joined:
+            logger.warning(f"  [recovery] dialog says {phrase!r} — REFUSING to confirm; "
+                           "Back dismisses this one, OK would close the game")
+            return False
+
+    analysis = _consult_dialog(frame, tokens)
+    if analysis is not None:
+        logger.info(f"  [recovery] dialog understood: {analysis.purpose[:90]!r} "
+                    f"→ {analysis.dismissal!r} (outcome={analysis.outcome_for_goal})")
+        if analysis.outcome_for_goal == "irrelevant":
+            return False                       # not a blocker; leave it alone
+        if analysis.dismissal in ("tap_decline", "press_back"):
+            # The dialog wants a NO. Back is the safe no, and is what clears the
+            # Exit Game prompt without closing the game.
+            from actions.sail_actions import press_back
+            press_back()
+            return True
+        if analysis.dismissal in ("tap_accept", "tap_ok"):
+            for text, _conf, cx, cy in tokens:
+                if text.strip().lower() in _DIALOG_OK_WORDS:
+                    logger.info(f"  [recovery] consult says accept — tapping {text!r}")
+                    tap(cx, cy)
+                    return True
+            return False
+        if analysis.dismissal == "tap_close_x":
+            for text, _conf, cx, cy in tokens:
+                if text.strip().lower() in ("x", "close"):
+                    tap(cx, cy)
+                    return True
+            return False
+
     for text, _conf, cx, cy in tokens:
         if text.strip().lower() in _DIALOG_OK_WORDS:
-            logger.info(f"  [recovery] variation: tapping dialog '{text}' @ ({cx},{cy}) "
-                        "(attempt-memory: press_back wasn't working)")
+            logger.info(f"  [recovery] no analysis available — falling back to the "
+                        f"keyword tap on {text!r} @ ({cx},{cy})")
             tap(cx, cy)
             return True
     return False

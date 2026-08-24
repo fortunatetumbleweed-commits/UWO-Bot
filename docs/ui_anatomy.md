@@ -85,3 +85,38 @@ The sailing HUD contains the live ship state.  Key elements (see
   `ship_status`}; switches contextually as nearby targets change.
 - **Bottom-left** — round rudder / anchor toggle plus L / R arrow icons
   for manual steering.
+
+## Chromed vs overworld — which signals are actually reliable
+
+Measured 2026-08-23 across a port overworld (Banda), a market, and two village screens.
+
+**A chromed screen has:** a title at the top-left (which is also a BACK control and names the
+open sub-menu), a **menu item list on the left directly under the title**, a centre panel, a
+right panel, and a top-right icon bar — *except a VILLAGE, which has no top-right icon bar*.
+
+**Which of those can be trusted, and which cannot:**
+
+| Signal | Reliability |
+|---|---|
+| **Left menu list under the title** | **Always present on chromed. Never on an overworld.** The strongest positive test. |
+| **Right panel is SOLID** | Chromed — but only when the panel is showing. |
+| **Right panel is TRANSLUCENT and always present** | Overworld. The scene bleeds through it. |
+| Right panel *presence* | **Unreliable.** On a chromed screen the panel appears in RESPONSE to selecting an item — the village barter screen has none until a trade good is tapped. Counting panels is therefore a behaviour, not a state. |
+| Home button / top-right icon bar | **Cannot separate a village from an overworld** — a village has neither, exactly like an overworld. Measured: port overworld `home=False`, market `home=True`, village landing `home=False`, village barter `home=False`. |
+
+Measured translucency (mean horizontal detail inside the right-panel band — scene showing
+through keeps it high):
+
+    port overworld   4.59      <- translucent
+    village landing  2.09      <- solid
+    village barter   0.90      <- solid
+
+**Why this matters.** With no Home button and a panel that comes and goes, nothing reliable
+separated a village from a port overworld, so the verdict fell through to whichever weak
+signal fired that frame. The SAME village barter screen was classified `village`, `building`,
+`port_overworld`, `sea` and `unknown` within one run (2026-08-23). When it landed on
+`port_overworld`, `open_world_map` tapped the calibrated port globe at (2227,361) — a
+Check-Barter-Effect control on that screen — and the mission hung.
+
+A village's left menu is `barter / explore / gifting / loot / recruit crew`; `barter` +
+`gifting` together appear on no port screen.

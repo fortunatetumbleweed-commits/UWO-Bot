@@ -31,6 +31,8 @@ class OcrFrameCacheTests(unittest.TestCase):
     def setUp(self):
         from actions.sail_actions import clear_ocr_frame_cache
         clear_ocr_frame_cache()
+        from brain.perceive import clear_perceive_cache
+        clear_perceive_cache()
 
     def test_two_calls_same_frame_share_one_readtext(self):
         """A second _ocr_frame call on the same frame must NOT re-run readtext."""
@@ -100,6 +102,8 @@ class QwenSkipGateTests(unittest.TestCase):
         clear_ocr_frame_cache()
         from vision.moondream_cache import clear_cache
         clear_cache()
+        from brain.perceive import clear_perceive_cache
+        clear_perceive_cache()   # the unchanged-screen cache must not carry across tests
 
     def _run_perceive_with_state(self, nav_state: str, detail: str):
         """Helper — invoke perceive with nav_state/detail forced."""
@@ -149,6 +153,8 @@ class MoondreamCacheTests(unittest.TestCase):
     def setUp(self):
         from vision.moondream_cache import clear_cache
         clear_cache()
+        from brain.perceive import clear_perceive_cache
+        clear_perceive_cache()
 
     def test_repeat_same_question_hits_cache(self):
         from vision.moondream_cache import ask_cached

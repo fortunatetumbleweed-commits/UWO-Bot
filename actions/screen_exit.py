@@ -113,24 +113,40 @@ def exit_current_screen(
         logger.warning(f"[exit_current_screen] chrome detect failed: {e!r}")
         chrome = None
 
-    if chrome is not None and chrome.has_home:
+    # The Home slot (2300,45) means "back to overworld" ONLY on chromed screens
+    # (buildings / sub-menus / world map). On the OVERWORLDS themselves it is the ☰
+    # hamburger → tapping it OPENS Company Overview (the bug that stranded the gather
+    # run 2026-08-17). has_hamburger flags an overworld → never tap Home there.
+    # See memory project_home_button_is_chromed_only_escape.
+    if chrome is not None and chrome.has_home and not chrome.has_hamburger:
+        # Tap where the icon WAS DETECTED, falling back to the calibrated slot only when
+        # the detector could not say. The game re-bakes its camera-cutout offset per
+        # screen: on Jakarta's Market the Home icon was at (2219,44) while this slot says
+        # (2300,45) — 81px away, on nothing.
+        xy = (chrome.positions or {}).get("home") or _HOME_SLOT_XY
         logger.info(
-            f"[exit_current_screen] Home (or main-menu X) at "
-            f"{_HOME_SLOT_XY} — "
-            f"{'would tap' if dry_run else 'tapping'}"
+            f"[exit_current_screen] Home (or main-menu X) at {xy}"
+            f"{'' if (chrome.positions or {}).get('home') else ' (calibrated slot — not detected)'}"
+            f" — {'would tap' if dry_run else 'tapping'}"
         )
         if not dry_run:
-            tap(*_HOME_SLOT_XY)
+            tap(*xy)
         return ExitResult(True, "home_or_menu_x")
+    if chrome is not None and chrome.has_home and chrome.has_hamburger:
+        logger.info(
+            "[exit_current_screen] Home slot is the ☰ hamburger (overworld) — "
+            "refusing to tap it (would open Company Overview)"
+        )
 
     if chrome is not None and chrome.has_back_arrow:
+        xy = (chrome.positions or {}).get("back_arrow") or _BACK_ARROW_SLOT_XY
         logger.info(
-            f"[exit_current_screen] in-game back arrow at "
-            f"{_BACK_ARROW_SLOT_XY} — "
-            f"{'would tap' if dry_run else 'tapping'}"
+            f"[exit_current_screen] in-game back arrow at {xy}"
+            f"{'' if (chrome.positions or {}).get('back_arrow') else ' (calibrated slot — not detected)'}"
+            f" — {'would tap' if dry_run else 'tapping'}"
         )
         if not dry_run:
-            tap(*_BACK_ARROW_SLOT_XY)
+            tap(*xy)
         return ExitResult(True, "back_arrow")
 
     # 3) Last resort — system press_back, with guards.

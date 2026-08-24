@@ -227,22 +227,34 @@ def _largest_left_column(
     candidates: List[DetectedElement],
     frame_width: int,
 ) -> Optional[List[DetectedElement]]:
-    """Cluster candidates by cx and return the largest cluster.
+    """Cluster candidates by their LEFT EDGE and return the largest cluster.
 
     The largest cluster (most members) is the menu column.  Ties broken
-    by mean-cx (leftmost wins).
+    by mean left edge (leftmost wins).
+
+    Clustering by CENTRE splits a real menu whenever OmniParser boxes its rows
+    inconsistently, which it does routinely. Measured on the Market greeting page
+    (2026-08-23):
+
+        Purchase   x1=0   width=354   cx=177     <- full-row box
+        Sell       x1=31  width=68    cx=65      <- tight box around the word
+
+    Same menu, two conventions: the centres are 112px apart, past the 80px tolerance, so the
+    two items landed in different clusters and the detector returned a single-item column —
+    reporting NO MENU on a screen whose menu is a clean, evenly spaced column. Menu rows are
+    LEFT-ALIGNED, so their left edges agree (0 vs 31) whatever the box width.
     """
     if not candidates:
         return None
 
     tolerance_x = _CLUSTER_TOLERANCE_X_NORM * frame_width
-    candidates = sorted(candidates, key=lambda e: e.cx)
+    candidates = sorted(candidates, key=lambda e: e.x1)
 
     clusters: List[List[DetectedElement]] = []
     for el in candidates:
         for c in clusters:
-            mean_cx = sum(x.cx for x in c) / len(c)
-            if abs(el.cx - mean_cx) <= tolerance_x:
+            mean_x1 = sum(x.x1 for x in c) / len(c)
+            if abs(el.x1 - mean_x1) <= tolerance_x:
                 c.append(el)
                 break
         else:

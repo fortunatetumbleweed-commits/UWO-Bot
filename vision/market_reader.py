@@ -386,26 +386,41 @@ def _apply_claude_fallback(
 # PRECISION over speed. See memory: perception is mode-dependent (nav=fast,
 # buildings/port=precise via OmniParser).
 
-def _parse_tile_from_button(button, text_els, tab: str) -> Optional[MarketGood]:
+def _parse_tile_from_button(button, text_els, tab: str,
+                            label: Optional[str] = None) -> Optional[MarketGood]:
     """Build a MarketGood from an OmniParser tile BUTTON + the text elements
     inside it. Name = the button label (clean); price/index/qty/etc. from the
     inner text via `_classify_token`, with y scaled to the `_TILE_H` reference so
     the zone thresholds hold regardless of the detected tile's actual height."""
-    name = re.sub(r"\s+", " ", (button.label or "").strip())
+    name = re.sub(r"\s+", " ", ((button.label if label is None else label) or "").strip())
     tile_h = max(1, button.y2 - button.y1)
     text_x0 = button.x1 + _IMG_ZONE_W
 
-    index_pct = price = available_qty = None
+    index_pct = price = available_qty = profit = owned_qty = None
     sold_out = False
     category = ""
     trend = "unknown"
-    name_tokens: list[tuple[str, int, int]] = []
+    # Text in the tile's upper zone, right of the thumbnail — the good's name sits on the TOP
+    # line, the category on the one below. Collected by POSITION, not classification, because
+    # some goods ARE category words ("Textiles" is both), so a name-only list would lose them.
+    top_tokens: list[tuple[str, int, int]] = []
 
     for e in text_els:
         text = (e.label or "").strip()
         if not text:
             continue
         rel_y = int((e.cy - button.y1) * _TILE_H / tile_h)   # scale to _TILE_H frame
+        # SELL-tile tokens, matched by SHAPE before the buy-oriented _classify_token (which drops
+        # comma'd "price (profit)" as skip and mistakes the owned-qty badge for a price):
+        m = re.match(r"^([\d,]+)\s*\(\s*([-+]?[\d,]+)\s*\)$", text)
+        if m:                                     # "price (profit/unit)" — sell price + profit
+            pv = int(m.group(1).replace(",", ""))
+            if price is None or pv > price:
+                price, profit = pv, int(m.group(2).replace(",", ""))
+            continue
+        if tab != "purchase" and re.fullmatch(r"\d{1,4}", text) and 80 < rel_y < 150:
+            owned_qty = int(text)                 # units of this good in cargo (upper-middle badge)
+            continue
         kind = _classify_token(text, rel_y)
         if kind == "timer":
             sold_out = True
@@ -428,13 +443,22 @@ def _parse_tile_from_button(button, text_els, tab: str) -> Optional[MarketGood]:
             trend = _TREND_MAP[text.lower()]
         elif kind == "category":
             category = text.title()
+            if e.cx > text_x0:
+                top_tokens.append((text, e.cx, e.cy))
         elif kind == "name" and e.cx > text_x0:
-            name_tokens.append((text, e.cx, e.cy))
+            top_tokens.append((text, e.cx, e.cy))
 
-    # Prefer the button label; fall back to joined name tokens.
-    if len(name) < 3 and name_tokens:
-        name_tokens.sort(key=lambda t: (t[2], t[1]))
-        name = " ".join(t[0] for t in name_tokens[:2]).strip()
+    # OmniParser labels a tile with its most prominent text, which on a SPECIALTY tile is the
+    # yellow "Specialties" banner rather than the good. Live 2026-08-22 at Kolkata the Textiles
+    # tile came back named "Specialties", so the hold read as 0 Textiles and the bot re-bought
+    # 920 units it was already carrying for 235,520 ducats. A banner is never a good's name.
+    if name.lower() in _BADGES:
+        name = ""
+    # Fall back to the tile's own text: the TOP line of the upper zone.
+    if len(name) < 3 and top_tokens:
+        top_tokens.sort(key=lambda t: (t[2], t[1]))
+        y0 = top_tokens[0][2]
+        name = " ".join(t[0] for t in top_tokens if abs(t[2] - y0) <= 28).strip()
     if len(name) < 2:
         return None
 
@@ -452,7 +476,35 @@ def _parse_tile_from_button(button, text_els, tab: str) -> Optional[MarketGood]:
         good.buy_price = None if sold_out else price
     else:
         good.sell_price = price
+        good.profit_per_unit = profit
+        good.is_loss = profit is not None and profit < 0
+        good.owned_qty = owned_qty
     return good
+
+
+def _tile_label(cell, elements) -> str:
+    """The tile's good name, preferring a detection that is NOT the yellow banner.
+
+    OmniParser often reports a specialty tile twice — once labelled with the good, once with
+    the "Specialties" banner painted across it. Live 2026-08-22 at Kolkata the banner detection
+    won the grid slot, the Textiles tile was read as 'Specialties', so the hold looked like
+    0 Textiles and the bot re-bought the 920 units it was already carrying for 235,520 ducats.
+    """
+    label = (getattr(cell, "label", "") or "").strip()
+    if label.lower() not in _BADGES:
+        return label
+    for e in elements:
+        if e is cell or getattr(e, "element_type", "") != "button":
+            continue
+        other = (getattr(e, "label", "") or "").strip()
+        if not other or other.lower() in _BADGES:
+            continue
+        ox = min(cell.x2, e.x2) - max(cell.x1, e.x1)
+        oy = min(cell.y2, e.y2) - max(cell.y1, e.y1)
+        area = (e.x2 - e.x1) * (e.y2 - e.y1)
+        if ox > 0 and oy > 0 and area and (ox * oy) / area >= 0.6:
+            return other           # same tile, seen twice — take the one naming the good
+    return label
 
 
 def read_market_page_omni(
@@ -482,7 +534,12 @@ def read_market_page_omni(
     W, H = frame.width, frame.height
     # goods zone: right of the left sub-menu, left of the cargo panel, below header
     zone = (0.17 * W, 0.14 * H, 0.78 * W, 0.92 * H)
-    grid = detect_grid(elements, W, H, zone=zone, cell_types=("button",))
+    # SELL pages list only the goods in CARGO — legitimately 1-3 tiles (a single row, or a lone
+    # tile after a barter run), which the default min_cells=4 rejects → "no goods grid detected"
+    # → sell_goods concluded "nothing to sell" while holding ~605 Box of Nutmeg (live 2026-08-20).
+    # Purchase pages keep the stricter minimum (they always show a full grid).
+    grid = detect_grid(elements, W, H, zone=zone, cell_types=("button",),
+                       min_cells=(1 if tab != "purchase" else 4))
     if grid is None:
         logger.info(f"[{tab}] omni: no goods grid detected")
         return []
@@ -491,7 +548,7 @@ def read_market_page_omni(
     goods: list[MarketGood] = []
     for cell in grid.in_reading_order():
         cell_text = [e for e in text_els if cell.contains(e.cx, e.cy)]
-        good = _parse_tile_from_button(cell, cell_text, tab)
+        good = _parse_tile_from_button(cell, cell_text, tab, label=_tile_label(cell, elements))
         if not good:
             continue
         # Template-guided recovery: the index % sits at the bottom-left of EVERY
@@ -499,6 +556,13 @@ def read_market_page_omni(
         # when it's missing, re-read exactly that sub-region instead of guessing.
         if good.index_pct is None:
             good.index_pct = _recover_cell_index(frame, cell)
+        # SELL tab: the owned-count overlay (white, bottom-left of the icon) is too small for the
+        # general OmniParser pass — it mangles multi-digit counts (1,444→444/14444). Read it
+        # directly from that sub-region (threshold the white digits + targeted OCR).
+        if tab != "purchase":
+            q = _read_owned_qty(frame, cell)
+            if q is not None:
+                good.owned_qty = q
         goods.append(good)
 
     if claude_fallback:
@@ -507,6 +571,40 @@ def read_market_page_omni(
         f"[{tab}] omni grid {grid.n_rows}×{grid.n_cols}: {len(goods)} goods"
     )
     return goods
+
+
+def _read_owned_qty(frame: Image.Image, cell) -> Optional[int]:
+    """Units of this good in cargo, from the SELL tile's white count overlay at the icon's
+    bottom-left.  The overlay is small and the general OmniParser text pass mis-OCRs multi-digit
+    counts (1,444 read as 444 or 14444), so read it directly: crop that sub-region, KEEP only the
+    bright digit pixels (threshold), upscale, OCR, and take the digits.  Bounded by cargo capacity
+    (~4,108) to drop OCR garbage.  Returns None if unreadable."""
+    import numpy as np
+    from vision.ocr import _get_reader
+    x0, y0, x1, y1 = cell.rel_region(0.0, 0.42, 0.37, 0.66)   # bottom-left of the icon square
+    x0, y0 = max(0, x0), max(0, y0)
+    x1, y1 = min(frame.width, x1), min(frame.height, y1)
+    if x1 <= x0 or y1 <= y0:
+        return None
+    a = np.asarray(frame.crop((x0, y0, x1, y1)).convert("L")).astype(np.int16)
+    binimg = Image.fromarray((255 - (a > 170).astype(np.uint8) * 255).astype(np.uint8))
+    up = binimg.resize((binimg.width * 5, binimg.height * 5), Image.LANCZOS)
+    try:
+        toks = _get_reader().readtext(np.array(up), detail=0)
+    except Exception:
+        return None
+    # Take the LONGEST digit token, not the first: a BRIGHT icon (e.g. the white Textiles fabric)
+    # leaves threshold blobs beside the count that OCR as short spurious digits — live 2026-08-20
+    # the strip read ['2', '900'] and first-token returned 2.  The real count is the dominant
+    # (longest) number; artifacts are 1-2 stray digits.
+    cands = []
+    for t in toks:
+        d = re.sub(r"\D", "", t)
+        if d and 0 < int(d) <= 4108:
+            cands.append(d)
+    if not cands:
+        return None
+    return int(max(cands, key=len))
 
 
 def _recover_cell_index(frame: Image.Image, cell) -> Optional[int]:

@@ -41,6 +41,7 @@ debug_capture.png
 debug_*.png
 *.png
 !vision/assets/**/*.png
+!data/reference/**/*.png
 memory/logs/
 memory/discoveries/*.json
 

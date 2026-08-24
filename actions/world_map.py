@@ -36,27 +36,28 @@ from PIL import Image
 from utils.fuzzy import fuzzy_contains
 
 
-# ── Port region database ──────────────────────────────────────────────────────
-# Approximate normalised (x, y) position on the world map.
-# (0.0, 0.0) = top-left (north-west) corner of the full world map.
-# (1.0, 1.0) = bottom-right (south-east) corner.
-#
-# Positions are loaded from memory/knowledge/config/port_positions.json.
-# To add a new port or correct a coordinate: edit that file — no code change needed.
-
-_PORT_POSITIONS_FILE = Path("memory/knowledge/config/port_positions.json")
+# ── Port name/position database ───────────────────────────────────────────────
+# {port_name(lowercase): (x, y)} used for landmark localisation (matching OCR'd
+# port labels to known ports). Sourced from the CANONICAL 224-port catalogue
+# (memory/knowledge/world_map/port_coordinates.json), which holds the GAME's actual
+# port names. The old config/port_positions.json (82, normalised coords) was removed
+# 2026-08-15: its coord VALUES were never consumed, and ~15 of its unique names were
+# stale real-world names (Beijing/Busan/Colombo) that the game never shows — the
+# game uses Peking/Ceylon/Kozhikode, which ARE in the catalogue. See
+# memory project_duplicate_port_lists. Only the KEYS (names) matter here; the
+# catalogue coords are carried but unused by this module.
 
 
 def _load_port_positions() -> dict[str, Tuple[float, float]]:
     try:
-        raw = json.loads(_PORT_POSITIONS_FILE.read_text())
-        return {
-            k: (float(v[0]), float(v[1]))
-            for k, v in raw.items()
-            if not k.startswith("_")  # skip comment keys
-        }
+        from vision.world_map_parser import load_port_catalogue
+        out: dict[str, Tuple[float, float]] = {}
+        for name, rec in load_port_catalogue().items():
+            if isinstance(rec, dict) and rec.get("x") is not None:
+                out[str(name).lower()] = (float(rec["x"]), float(rec["y"]))
+        return out
     except Exception as exc:
-        logger.error(f"Failed to load port_positions.json: {exc}")
+        logger.error(f"Failed to load port catalogue: {exc}")
         return {}
 
 
@@ -64,10 +65,10 @@ PORT_POSITIONS: dict[str, Tuple[float, float]] = _load_port_positions()
 
 
 def reload_port_positions() -> None:
-    """Reload PORT_POSITIONS from disk (e.g. after editing the JSON file)."""
+    """Reload PORT_POSITIONS from the port catalogue."""
     global PORT_POSITIONS
     PORT_POSITIONS = _load_port_positions()
-    logger.info(f"Reloaded {len(PORT_POSITIONS)} port positions")
+    logger.info(f"Reloaded {len(PORT_POSITIONS)} port positions from catalogue")
 
 # ── Landmark-based self-localization ─────────────────────────────────────────
 # When the bot sees port labels on the world map it can cross-reference them
@@ -192,6 +193,126 @@ def read_city_info_panel(frame: Image.Image) -> Optional[CityInfoPanel]:
         f"goods={panel.goods[:5]} facilities={panel.facilities[:5]}"
     )
     return panel
+
+
+# ── City Info: Trade sub-tabs (Preference / Cargo) ─────────────────────────────
+# The City Info panel's Trade tab has sub-tabs: Market / Cargo / Preference.
+#   • Preference — per-CATEGORY seasonal markup (Textile +50%, Food +30%, …).
+#     ALWAYS readable regardless of trade-level range → drives sell-port choice.
+#   • Cargo — the selected good's sell price + index%, shown ONLY when the port is
+#     within trade-level visibility range (absent = out of range).
+# Readers are stateless: the caller opens the sub-tab, the reader parses whatever
+# is shown and returns None if its tab isn't the one visible.
+
+import re as _re
+from dataclasses import dataclass as _dataclass
+
+# Tab / header words that are never a preference category or a good name.
+_CITYINFO_CHROME = {
+    "city", "info", "base", "trade", "facility", "invest", "market", "cargo",
+    "preference", "free", "port", "safe", "waters", "dangerous", "storage",
+}
+_PCT_RE = _re.compile(r"([+-]?\d+)\s*%")
+# Preference markups are SIGNED (+50%, +30%); requiring the sign avoids mistaking
+# the Cargo sub-tab's unsigned index% (e.g. '101%') for a category preference.
+_PREF_PCT_RE = _re.compile(r"([+-]\d+)\s*%")
+_PRICE_RE = _re.compile(r"^\d[\d,]*$")
+
+
+def _cityinfo_tokens(frame: "Image.Image"):
+    """OCR the right-side City Info panel → (text, conf, cx, cy) in panel-local px."""
+    from actions.sail_actions import _ocr_frame
+    panel_x = int(_SCREEN_W * 0.62)
+    return _ocr_frame(frame.crop((panel_x, 0, _SCREEN_W, _SCREEN_H)), min_conf=0.25)
+
+
+def _parse_preferences(tokens, row_tol: int = 28) -> dict[str, int]:
+    """Pair each '+N%' token with the category label on its row (to its left).
+
+    Pure over (text, conf, cx, cy) tokens.  Junk tokens right of the % column or
+    matching City Info chrome are excluded."""
+    pcts, labels = [], []
+    for text, _c, cx, cy in tokens:
+        m = _PREF_PCT_RE.search(text or "")
+        if m:
+            pcts.append((cx, cy, int(m.group(1))))
+            continue
+        clean = (text or "").strip()
+        alpha = "".join(ch for ch in clean if ch.isalpha())
+        if len(alpha) >= 3 and clean.lower() not in _CITYINFO_CHROME:
+            labels.append((cx, cy, clean))
+    prefs: dict[str, int] = {}
+    for pcx, pcy, pct in pcts:
+        row = [(lcx, lt) for lcx, lcy, lt in labels
+               if abs(lcy - pcy) <= row_tol and lcx < pcx]
+        if not row:
+            continue
+        _, category = max(row, key=lambda z: z[0])   # nearest label left of the %
+        prefs[category] = pct
+    return prefs
+
+
+def read_port_preferences(frame: "Image.Image", port: str = "", season: str = ""):
+    """Read the City Info → Trade → Preference sub-tab into a PortPreference.
+
+    Returns None if no category/percent rows are visible (wrong sub-tab or no
+    panel).  `port` should be supplied by the caller (it selected the city)."""
+    from memory.barter_kb import PortPreference
+    prefs = _parse_preferences(_cityinfo_tokens(frame))
+    if not prefs:
+        logger.debug("Preference sub-tab not detected (no category %% rows)")
+        return None
+    logger.info(f"Port preferences [{port or '?'}]: {prefs}")
+    return PortPreference(port=port, season=season, preferences=prefs)
+
+
+@_dataclass
+class PortGoodPrice:
+    """The City Info → Cargo sub-tab reading for one good.  price/index_pct are
+    None when the port is OUT of trade-level range (no price shown)."""
+    good: str
+    price: Optional[int] = None
+    index_pct: Optional[int] = None
+    in_range: bool = False
+
+
+def _parse_good_price(tokens, row_tol: int = 28) -> Optional[PortGoodPrice]:
+    """From the Cargo sub-tab: the good label + its price/index on the same row.
+
+    A price shows only in range; its absence (good listed, no bare number) means
+    out of range → in_range=False.  Returns None if no good row is found."""
+    # Candidate good labels: alpha tokens in the content area, left column.
+    labels = [(cx, cy, (t or "").strip()) for t, _c, cx, cy in tokens
+              if cy > 380 and cx < 560
+              and len("".join(ch for ch in (t or "") if ch.isalpha())) >= 3
+              and (t or "").strip().lower() not in _CITYINFO_CHROME]
+    if not labels:
+        return None
+    lcx, lcy, good = min(labels, key=lambda z: z[1])   # topmost good row
+    price, index_pct = None, None
+    for text, _c, cx, cy in tokens:
+        if abs(cy - lcy) > row_tol or cx <= lcx:
+            continue
+        clean = (text or "").strip()
+        m = _PCT_RE.search(clean)
+        if m:
+            index_pct = int(m.group(1))
+        elif _PRICE_RE.match(clean.replace(" ", "")):
+            price = int(clean.replace(",", "").replace(" ", ""))
+    return PortGoodPrice(good=good, price=price, index_pct=index_pct,
+                         in_range=price is not None)
+
+
+def read_port_good_price(frame: "Image.Image") -> Optional[PortGoodPrice]:
+    """Read the City Info → Trade → Cargo sub-tab: selected good's sell price +
+    whether the port is within trade-level visibility range."""
+    result = _parse_good_price(_cityinfo_tokens(frame))
+    if result is None:
+        logger.debug("Cargo sub-tab good row not detected")
+    else:
+        logger.info(f"Cargo price: {result.good} price={result.price} "
+                    f"in_range={result.in_range}")
+    return result
 
 
 # ── Zoom support ───────────────────────────────────────────────────────────────

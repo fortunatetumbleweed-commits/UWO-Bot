@@ -119,3 +119,80 @@ def on_screen(base: Optional[str] = None, context: Optional[str] = None,
             return False
         return True
     return done
+
+
+# ── Combinators ────────────────────────────────────────────────────────────────
+
+def all_of(*dones: DoneFn) -> DoneFn:
+    """Done only when EVERY sub-condition is satisfied."""
+    return lambda wm, obs: all(d(wm, obs) for d in dones)
+
+
+def any_of(*dones: DoneFn) -> DoneFn:
+    """Done when ANY sub-condition is satisfied."""
+    return lambda wm, obs: any(d(wm, obs) for d in dones)
+
+
+def negate(done: DoneFn) -> DoneFn:
+    """Done when the sub-condition is NOT satisfied."""
+    return lambda wm, obs: not done(wm, obs)
+
+
+# ── Barter-domain done-conditions (for the P4 executors #24/#26/#27) ───────────
+# Readers are injectable so these are pure-testable; live defaults read obs.frame.
+
+def amity_increased(baseline_points: Optional[int], read_panel=None) -> DoneFn:
+    """Barter/gift done: the village's amity points rose above `baseline_points`
+    (read from the barter panel on obs.frame)."""
+    def done(wm, obs) -> bool:
+        if baseline_points is None:
+            return False
+        rp = read_panel or _default_read_panel
+        r = rp(getattr(obs, "frame", None))
+        pts = getattr(r, "amity_points", None) if r is not None else None
+        return pts is not None and pts > baseline_points
+    return done
+
+
+def red_note_cleared(box, has_badge=None) -> DoneFn:
+    """Gift/rounds done: the red attention note in `box` (a menu-item bbox) is gone.
+    From the walkthrough: after a successful gift the red note disappears."""
+    def done(wm, obs) -> bool:
+        frame = getattr(obs, "frame", None)
+        if frame is None:
+            return False
+        hb = has_badge or _default_has_red_badge
+        return not hb(frame, box)
+    return done
+
+
+def dialog_absent(*phrases: str, ocr_text_fn=None) -> DoneFn:
+    """Done when NONE of `phrases` appear on screen — e.g. the 'Insufficient Empty
+    Space' overflow dialog is cleared after jettison (#27)."""
+    wanted = tuple(p.lower() for p in phrases)
+
+    def done(wm, obs) -> bool:
+        frame = getattr(obs, "frame", None)
+        if frame is None:
+            return False
+        tf = ocr_text_fn or _default_frame_text
+        text = (tf(frame) or "").lower()
+        return not any(p in text for p in wanted)
+    return done
+
+
+def _default_read_panel(frame):
+    if frame is None:
+        return None
+    from actions.barter_reader import read_barter_panel
+    return read_barter_panel(frame)
+
+
+def _default_has_red_badge(frame, box):
+    from vision.hud_indicators import has_red_badge
+    return has_red_badge(frame, box)
+
+
+def _default_frame_text(frame) -> str:
+    from actions.sail_actions import _ocr_frame
+    return " ".join(t for t, _c, _x, _y in _ocr_frame(frame, min_conf=0.3))

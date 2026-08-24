@@ -164,13 +164,32 @@ def _exit_to_overworld() -> bool:
 
 
 def run_sell_all(port: str, report: TaskReport, dry_run: bool,
-                 exit_after: bool = True) -> StepResult:
-    logger.info(f"[sell_all] @ {port}")
+                 exit_after: bool = True,
+                 keep: Optional[list] = None) -> StepResult:
+    logger.info(f"[sell_all] @ {port}" + (f" (keep {keep})" if keep else ""))
     if dry_run:
         return StepResult("sell_all", port, ok=True, notes="dry-run")
 
     if not _navigate_to_market(port, home_port=port):
         return StepResult("sell_all", port, ok=False, notes="could not enter market")
+
+    # Goal-aware sell: sell only the PROFITABLE cargo goods NOT in `keep`
+    # (perceive-act-perceive; sell_goods taps the Sell tab itself).  Used by the
+    # Malé→Goa run to keep Coral.  See actions/sell_goods.py.
+    if keep:
+        from actions.sell_goods import sell_goods
+        try:
+            res  = sell_goods(port, exclude=list(keep))
+            sold = res.get("sold") or []
+            if exit_after:
+                _exit_to_overworld()
+            return StepResult("sell_all", port, ok=bool(res.get("ok")),
+                              notes=f"sold {len(sold)} goods, kept {list(keep)}"
+                                    + (f" — {res.get('reason')}" if res.get("reason") else ""))
+        except Exception as exc:
+            logger.error(f"  sell (keep) failed: {exc}")
+            _exit_to_overworld()
+            return StepResult("sell_all", port, ok=False, notes=str(exc))
 
     from actions.market_actions import sell_all_cargo
     try:
@@ -195,13 +214,37 @@ def run_buy_all(
     dry_run: bool,
     destination: Optional[str] = None,
     enter_market: bool = True,
+    goods: Optional[list] = None,
 ) -> StepResult:
-    logger.info(f"[buy_all] @ {port}" + (f" → {destination}" if destination else ""))
+    logger.info(f"[buy_all] @ {port}"
+                + (f" → {destination}" if destination else "")
+                + (f" goods={goods}" if goods else ""))
     if dry_run:
         return StepResult("buy_all", port, ok=True, notes="dry-run")
 
     if enter_market and not _navigate_to_market(port, home_port=port):
         return StepResult("buy_all", port, ok=False, notes="could not enter market")
+
+    # Goal-aware buy: bulk-load a SPECIFIC list of goods (perceive-act-perceive).
+    # purchase_goods needs the Purchase grid, so tap the Purchase tab first (auto_buy
+    # does the same).  Used by the Malé→Goa run.  See actions/buy_materials.py.
+    if goods:
+        import time as _t
+        from actions.adb_actions import tap as _tap
+        from actions.market_actions import MARKET_COORDS
+        from actions.buy_materials import purchase_goods
+        try:
+            _tap(*MARKET_COORDS["purchase"])   # switch to Purchase tab
+            _t.sleep(2.0)
+            res   = purchase_goods(port, goods=list(goods))
+            spent = res.get("cost", 0) or 0
+            _exit_to_overworld()
+            return StepResult("buy_all", port, ok=bool(res.get("ok")), profit=-spent,
+                              notes=f"bought {res.get('tapped')}  -{spent:,}d")
+        except Exception as exc:
+            logger.error(f"  buy (goods) failed: {exc}")
+            _exit_to_overworld()
+            return StepResult("buy_all", port, ok=False, notes=str(exc))
 
     from actions.market_actions import auto_buy
     try:
@@ -243,8 +286,17 @@ def run_sail_to(
     from brain.goals.sail_to import SailToGoal
 
     goal = SailToGoal(destination=destination, from_port=from_port)
+    next_supply_check = time.monotonic()          # look once as soon as we are under way
     while not goal.is_complete and not goal.is_failed:
         result = goal.tick()
+        # Mid-voyage supply watch on a SUPPLY-DERIVED cadence: come back about a game day
+        # before the tank runs dry, rather than on a fixed clock.
+        if time.monotonic() >= next_supply_check:
+            days = _ensure_supply(destination)
+            wait = _next_supply_check_s(days)
+            next_supply_check = time.monotonic() + wait
+            logger.debug(f"  Next supply check in {wait / 60:.1f} min "
+                         f"(supply {days}d)")
         # Inter-tick anti-cheat jitter.  See run.py:308 for the same
         # rationale — perception already supplies most of the human-
         # scale delay between transactional taps.
@@ -277,34 +329,78 @@ def run_sail_to(
                       notes="arrived" if ok else f"failed: {goal._fail_reason}")
 
 
-def _ensure_supply(destination: str) -> None:
+# Supply buffer (game-days) beyond ETA before we divert to resupply.
+_RESUPPLY_BUFFER_DAYS = 2
+# Mid-voyage supply watch cadence — DYNAMIC (user 2026-08-20): read the days on the HUD
+# once under way, then come back roughly ONE GAME DAY BEFORE they run out.  A fixed clock
+# was wrong in both directions: 180s is ~2 game days (a game day is ~1.5 real minutes, not
+# the 12 this file used to claim), so a full tank was re-OCR'd needlessly while a nearly
+# dry one could cross the divert threshold unseen.  The maths lives in
+# brain.supply_planner.supply_checkback_seconds — (days − 1 margin) × 90s, floored.
+#
+# Used only when the HUD can't be read (blind → look again soon-ish, but don't re-OCR
+# every tick).
+_SUPPLY_CHECK_FALLBACK_S = 120.0
+
+
+def _next_supply_check_s(days_left: Optional[float]) -> float:
+    """Seconds until the next supply look, from the days currently aboard.
+
+    Unreadable supply is NOT treated as "plenty" — it falls back to a short fixed wait."""
+    if days_left is None:
+        return _SUPPLY_CHECK_FALLBACK_S
+    from brain.supply_planner import supply_checkback_seconds
+    return supply_checkback_seconds(days_left)
+
+
+def _supply_sufficient(supply_days, eta_days, buffer_days: int = _RESUPPLY_BUFFER_DAYS):
+    """True if free-sail supply covers the ETA plus a safety buffer, False if not,
+    None when either HUD value is unreadable (caller must NOT assume sufficiency)."""
+    if supply_days is None or eta_days is None:
+        return None
+    return supply_days >= eta_days + buffer_days
+
+
+def _ensure_supply(destination: str, min_days: Optional[float] = None) -> Optional[float]:
     """
     Read the sea HUD supply days and ETA.  If supply is insufficient for the
     voyage, sail to the nearest resupply port first.
 
     Only acts when the bot is actually at sea (sail_to was called mid-voyage
     or after a cinematic skip).  If the bot is in port, the harbour's
-    Supply Departure button already handles restocking automatically.
+    Supply Departure button already handles restocking automatically — a fleet showing
+    0 supply IN PORT is normal, not a fault (user 2026-08-21).
+
+    `min_days` is an absolute floor for legs that CANNOT resupply at the far end — a
+    village has no harbour, so the fleet must carry the return trip too.  Without it the
+    check only covers the one-way ETA plus a buffer.
+
+    RETURNS the days-of-supply it read (None when in port or unreadable) so the caller
+    can time the NEXT check off it — see `_next_supply_check_s`.
     """
     from actions.sail_actions import read_sea_hud, where_am_i
 
     loc = where_am_i()
     if loc.get("location") not in ("sea", "sea_cinematic"):
-        return   # in port — Supply Departure handles it
+        return None   # in port — Supply Departure handles it
 
     hud = read_sea_hud()
     supply = hud.get("supply_days")
     eta    = hud.get("eta_days")
 
-    if supply is None or eta is None:
+    sufficient = _supply_sufficient(supply, eta)
+    if min_days is not None and supply is not None:
+        # A no-resupply leg: the floor wins whenever it is the stricter of the two.
+        sufficient = bool(supply >= min_days) and (sufficient is not False)
+    if sufficient is None:
         logger.debug("  Supply check skipped — HUD values not readable")
-        return
+        return supply
 
-    logger.info(f"  Supply check: {supply}d remaining, ETA {eta}d to {destination}")
+    floor = f", floor {min_days}d (no resupply at destination)" if min_days else ""
+    logger.info(f"  Supply check: {supply}d remaining, ETA {eta}d to {destination}{floor}")
 
-    # Add a 2-day buffer so we don't cut it too close
-    if supply >= eta + 2:
-        return   # sufficient supply
+    if sufficient:
+        return supply   # supply covers ETA + buffer (and the floor, when set)
 
     logger.warning(
         f"  Insufficient supply ({supply}d) for voyage to {destination} (ETA {eta}d) "
@@ -323,11 +419,12 @@ def _ensure_supply(destination: str) -> None:
             resupply_port = waypoints[-1]   # destination itself if no stops
     else:
         logger.warning("  Cannot determine current port for resupply routing")
-        return
+        return supply
 
     logger.info(f"  Diverting to {resupply_port!r} for resupply")
     sail_to_port(resupply_port, from_building=False)
     # Supply Departure at the resupply port is handled by the harbour flow
+    return supply
 
 
 # ── Core executor ──────────────────────────────────────────────────────────────
@@ -654,12 +751,14 @@ def run_task(task_path: str | Path, dry_run: bool = False) -> TaskReport:
                 result = run_sail_to(destination, report, dry_run,
                                      from_port=last_known_port if last_known_port != "?" else None)
             elif action == "sell_all":
-                result = run_sell_all(port, report, dry_run, exit_after=not sell_then_buy)
+                result = run_sell_all(port, report, dry_run, exit_after=not sell_then_buy,
+                                      keep=step.get("keep"))
                 market_open = sell_then_buy and result.ok
             elif action == "buy_all":
                 result = run_buy_all(port, report, dry_run,
                                      destination=next_destination,
-                                     enter_market=not market_open)
+                                     enter_market=not market_open,
+                                     goods=step.get("goods"))
                 market_open = False
             elif action == "explore":
                 # explore needs the full step dict for side/dest/max_ticks

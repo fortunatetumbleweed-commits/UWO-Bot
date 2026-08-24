@@ -559,19 +559,28 @@ def parse_fast_cached(frame: Image.Image) -> List[DetectedElement]:
     parse_fast runs ~0.3-0.5s per call and dominates the tick budget.
     With caching, only the first caller pays the cost.
 
-    Cross-tick safety: PIL frames are short-lived; id() reuse after GC
-    is bounded by the cap (4 entries, cleared wholesale on overflow).
+    Cross-tick safety: the cache holds a REFERENCE to the frame alongside its elements.
+    That is load-bearing, not incidental — `id()` is only unique while the object is
+    alive, and CPython hands the same address to the next allocation once a frame is
+    freed. Measured: 200 sequentially-created 2400x1080 PIL images occupied just THREE
+    distinct ids, i.e. 197 collisions. Without the reference, a frame silently inherits a
+    previous, unrelated frame's elements — which is how a world-map frame came back
+    carrying the port overworld's buildings (live 2026-08-21), and any consumer keyed on
+    those elements then acts on a screen that is not in front of it.
     """
     fid = id(frame)
     cached = _FRAME_CACHE.get(fid)
     if cached is not None:
-        return cached
+        cached_frame, elements = cached
+        if cached_frame is frame:
+            return elements
+        _FRAME_CACHE.pop(fid, None)          # stale id — the old frame is gone
 
     if len(_FRAME_CACHE) >= MAX_CACHE_ENTRIES:
         _FRAME_CACHE.clear()
 
     elements = get_omniparser().parse_fast(frame)
-    _FRAME_CACHE[fid] = elements
+    _FRAME_CACHE[fid] = (frame, elements)    # the reference pins the id
     return elements
 
 

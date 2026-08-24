@@ -1,0 +1,21 @@
+{
+  "purpose": "A Season 1 'Admiral of Myth' rank achievement or weather notification popup has appeared mid-sail, displaying cloudy weather with no active weather effects",
+  "full_text": "Season 1 Admiral of Myth. Cloudy. There are no weather effects.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "d31e7724afa1369f",
+  "goal_intent": "sail_to",
+  "cached_at": "2026-08-13T17:18:13.916467+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A Season 1 'Admiral of Myth' rank achievement or weather notification popup has appeared mid-sail, displaying cloudy weather with no active weather effects",
+    "full_text": "Season 1 Admiral of Myth. Cloudy. There are no weather effects.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

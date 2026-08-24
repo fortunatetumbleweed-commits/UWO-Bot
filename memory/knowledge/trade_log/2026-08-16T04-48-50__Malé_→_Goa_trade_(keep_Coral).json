@@ -1,0 +1,27 @@
+{
+  "task_name": "Malé → Goa trade (keep Coral)",
+  "started_at": "2026-08-16T04:48:50.341130+00:00",
+  "ended_at": "2026-08-16T04:48:50.341581+00:00",
+  "elapsed_seconds": 0.000451,
+  "rounds_completed": 1,
+  "total_profit": 0,
+  "ducats_per_hour": 0.0,
+  "steps": [
+    {
+      "action": "sail_to",
+      "port": "Goa",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 2.4625100195407867e-05,
+      "notes": "dry-run"
+    },
+    {
+      "action": "sell_all",
+      "port": "Malé",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 2.4208100512623787e-05,
+      "notes": "dry-run"
+    }
+  ]
+}

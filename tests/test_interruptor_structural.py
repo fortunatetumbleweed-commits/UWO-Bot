@@ -375,14 +375,19 @@ class ConsultDeclineWiringTests(unittest.TestCase):
             confidence="high",
         )
 
-    def _make_analysis(self, dismissal: str):
+    def _make_analysis(self, dismissal: str, outcome_for_goal: str = "still_blocking"):
         from vision.obstruction_consult import ObstructionAnalysis
         return ObstructionAnalysis(
             purpose="Exit Game confirmation",
             full_text="Quit the game?",
             dismissal=dismissal,
             relates_to_goal=False,
-            outcome_for_goal="irrelevant",
+            # NOT 'irrelevant': since 2026-05-28 an irrelevant verdict short-circuits
+            # dismissal entirely (the right-side nav panel was being tap_anywhere'd every
+            # tick). A dialog that is genuinely in the way is 'still_blocking' — the
+            # fixture said 'irrelevant' while the test asserted it WOULD be dismissed,
+            # which is self-contradictory once the short-circuit exists.
+            outcome_for_goal=outcome_for_goal,
             confidence="high",
             obstruction_kind="dialog",
             structural_hash="abcdef12",
@@ -520,3 +525,57 @@ class DismissInterruptorConsultDispatchTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ConsultIrrelevantVerdictTests(unittest.TestCase):
+    """An 'irrelevant' consult verdict must NOT produce a dismissal.
+
+    `dismissal` is Claude's "if you HAD to dismiss this, how would you" — not a
+    directive. Acting on it regardless is what made the bot tap the centre of the
+    screen every tick over the right-side nav panel (2026-05-28).
+
+    This case had no coverage, which is why the three ConsultDeclineWiringTests
+    could sit on an 'irrelevant' fixture and still look like they were testing
+    the dismissal path.
+    """
+
+    def _run(self, outcome: str):
+        from unittest.mock import patch
+        from brain.perceive import _detect_interruptors
+        from PIL import Image
+        from vision.obstruction_classifier import ObstructionResult, KIND_DIALOG
+        from vision.obstruction_consult import ObstructionAnalysis
+
+        class _Inv:
+            raw_elements = []
+            tagged = []
+            by_role: dict = {}
+            frame_dims = (2400, 1080)
+            nav_state = None
+
+        analysis = ObstructionAnalysis(
+            purpose="Right-side navigation panel",
+            full_text="mini-map | ports",
+            dismissal="tap_anywhere",
+            relates_to_goal=False,
+            outcome_for_goal=outcome,
+            confidence="high",
+            obstruction_kind="dialog",
+            structural_hash="abcdef12",
+        )
+        with patch("vision.screen_perception.parse_screen", return_value=_Inv()), \
+             patch("vision.obstruction_classifier.classify_obstruction",
+                   return_value=ObstructionResult(kind=KIND_DIALOG,
+                                                  bbox=(957, 254, 1702, 830),
+                                                  confidence="high")), \
+             patch("vision.obstruction_consult.consult_obstruction", return_value=analysis), \
+             patch("brain.perceive._has_daily_news_close_x", return_value=False):
+            found, _obs = _detect_interruptors(
+                Image.new("RGB", (2400, 1080), color=(0, 0, 0)), [])
+        return found
+
+    def test_irrelevant_verdict_injects_no_dismissal(self):
+        self.assertEqual([f for f in self._run("irrelevant") if f.startswith("_consult:")], [])
+
+    def test_still_blocking_verdict_does_inject_dismissal(self):
+        self.assertIn("_consult:tap_anywhere", self._run("still_blocking"))

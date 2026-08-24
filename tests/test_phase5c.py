@@ -333,28 +333,30 @@ class DailyNewsConfirmTests(unittest.TestCase):
         c.has_right_panel = has_right_panel
         return c
 
-    def test_x_outside_dialog_yes_on_overworld_returns_true(self):
-        """Pixel match + chrome shows overworld + Moondream confirms the
-        X-outside-dialog geometry → daily_news detected."""
+    def test_large_dimmed_popup_on_overworld_returns_true(self):
+        """Pixel signature + overworld chrome + a LARGE DIMMED POPUP → daily_news.
+
+        Moondream used to arbitrate here. Measured on the labelled set with the exact
+        production prompt it scored recall 2/4 / false positives 3/5, so it was replaced
+        by size + dimming (recall 4/4, false positives 0/147 over 151 frames).
+        """
         from unittest.mock import MagicMock, patch
+        import numpy as np
+        from PIL import Image
         from brain.perceive import _has_daily_news_close_x
 
         fake_arr = self._patched_pixel_signature()
-        fake_frame = MagicMock()
-        fake_frame.crop.return_value = MagicMock()
-        fake_frame.copy.return_value = MagicMock()
+        dim_frame = Image.fromarray(np.full((1080, 2400, 3), 22, dtype=np.uint8))
+        popup = MagicMock(x1=100, y1=100, x2=1300, y2=800)      # ~10% of the screen
 
         with patch("numpy.array", return_value=fake_arr), \
              patch("vision.chrome_detector.get_chrome_detector") as MockChrome, \
-             patch("vision.local_vision.get_vision") as MockVision:
+             patch("vision.omniparser.parse_fast_cached", return_value=[popup]), \
+             patch("actions.sail_actions._ocr_frame", return_value=[("Jakarta", .9, 0, 0)]):
             MockChrome.return_value.detect.return_value = self._make_chrome(
-                has_hamburger=True,  # port_overworld
+                has_hamburger=True,   # port_overworld
             )
-            MockVision.return_value.check_available.return_value = True
-            MockVision.return_value.ask.return_value = (
-                "Yes, the X close button is outside the popup."
-            )
-            self.assertTrue(_has_daily_news_close_x(fake_frame))
+            self.assertTrue(_has_daily_news_close_x(dim_frame))
 
     def test_inside_building_short_circuits_to_false(self):
         """The May-2 incident: bot inside market → has_back_arrow True →
@@ -459,27 +461,15 @@ class DailyNewsConfirmTests(unittest.TestCase):
             )
             self.assertFalse(_has_daily_news_close_x(fake_frame))
 
-    def test_moondream_unavailable_still_accepts(self):
-        """If the model isn't available, fall back to stages 1+2 alone
-        (pixel signature + context guard).  Preserves daily_news detection
-        for environments without Moondream."""
-        from unittest.mock import MagicMock, patch
-        from brain.perceive import _has_daily_news_close_x
+    def test_no_model_is_consulted_at_all(self):
+        """The detector no longer depends on a model being present.
 
-        fake_arr = self._patched_pixel_signature()
-        fake_frame = MagicMock()
-        fake_frame.crop.return_value = MagicMock()
-        fake_frame.copy.return_value = MagicMock()
-
-        with patch("numpy.array", return_value=fake_arr), \
-             patch("vision.chrome_detector.get_chrome_detector") as MockChrome, \
-             patch("vision.local_vision.get_vision") as MockVision:
-            MockChrome.return_value.detect.return_value = self._make_chrome(
-                has_hamburger=True,
-            )
-            MockVision.return_value.check_available.return_value = False
-            self.assertTrue(_has_daily_news_close_x(fake_frame))
-
-
-if __name__ == "__main__":
-    unittest.main()
+        It used to treat "Moondream unavailable" as ACCEPT, so a missing model made the
+        detector MORE likely to fire — backwards for a check whose false positives cause
+        the harm (they tap a remembered coordinate on a misread screen).
+        """
+        import inspect
+        from brain import perceive as _p
+        src = inspect.getsource(_p._has_daily_news_close_x)
+        for call in ("ask_cached", "get_vision(", "vision.ask"):
+            self.assertNotIn(call, src)

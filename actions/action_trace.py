@@ -66,6 +66,34 @@ def set_label(label: Optional[str]) -> None:
     _label = label
 
 
+def _capture_with_perception():
+    """Capture the pre-action frame and, when it matches the frame the bot JUST perceived
+    (coarse diff), attach that perceive's already-computed OmniParser / OCR / state — so the
+    viewer reuses it instead of re-running OmniParser (~2 s/frame).  The omni/ocr reads are
+    cache HITS on the perceive frame (no inference).  Returns (frame, perception|None)."""
+    from capture.adb_capture import capture_screen
+    frame = capture_screen()
+    try:
+        from brain import perceive as _p
+        pf, pr = _p._PERCEIVE_LAST_FRAME, _p._PERCEIVE_LAST_RESULT
+        if pf is None or pr is None:
+            return frame, None
+        from vision.frame_diff import classify_action_outcome
+        if classify_action_outcome(pf, frame).kind != "unchanged":
+            return frame, None                          # different screen — don't misattribute
+        from vision.omniparser import parse_fast_cached
+        from actions.sail_actions import _ocr_frame
+        omni = [e.to_dict() for e in parse_fast_cached(pf)]          # cache hit
+        ocr = [{"text": t, "conf": round(float(c), 2), "cx": int(cx), "cy": int(cy)}
+               for t, c, cx, cy in _ocr_frame(pf, 0.3)]              # cache hit
+        return frame, {"omni": omni, "ocr": ocr,
+                       "state": getattr(pr, "state", None),
+                       "detail": getattr(pr, "detail", None)}
+    except Exception as exc:
+        logger.debug(f"[action_trace] perception attach skipped: {exc}")
+        return frame, None
+
+
 def record_tap(x: int, y: int, kind: str = "tap") -> None:
     """Capture the PRE-action frame + the tap target. Called by the tap/back
     primitives when a session is active. Never raises."""
@@ -73,8 +101,7 @@ def record_tap(x: int, y: int, kind: str = "tap") -> None:
     if _dir is None:
         return
     try:
-        from capture.adb_capture import capture_screen
-        frame = capture_screen()
+        frame, perception = _capture_with_perception()
         fn = f"frame_{_idx:04d}.png"
         frame.save(_dir / fn)
         if kind == "tap":
@@ -83,6 +110,8 @@ def record_tap(x: int, y: int, kind: str = "tap") -> None:
                  "label": _label, "t": time.strftime("%H:%M:%S"), "frame": fn}
         with (_dir / "actions.jsonl").open("a") as f:
             f.write(json.dumps(entry) + "\n")
+        if perception is not None:                      # viewer reuses this — no OmniParser re-run
+            (_dir / f"frame_{_idx:04d}.json").write_text(json.dumps(perception))
         _idx += 1
     except Exception as exc:
         logger.debug(f"[action_trace] record failed: {exc}")
@@ -97,8 +126,7 @@ def record_decision(inputs: dict, output: dict, model: str, label: str = "decisi
     if _dir is None:
         return
     try:
-        from capture.adb_capture import capture_screen
-        frame = capture_screen()
+        frame, perception = _capture_with_perception()
         fn = f"frame_{_idx:04d}.png"
         frame.save(_dir / fn)
         entry = {"idx": _idx, "kind": "decision", "x": -1, "y": -1, "label": label,
@@ -106,6 +134,8 @@ def record_decision(inputs: dict, output: dict, model: str, label: str = "decisi
                  "inputs": inputs, "output": output, "model": model}
         with (_dir / "actions.jsonl").open("a") as f:
             f.write(json.dumps(entry) + "\n")
+        if perception is not None:
+            (_dir / f"frame_{_idx:04d}.json").write_text(json.dumps(perception))
         _idx += 1
     except Exception as exc:
         logger.debug(f"[action_trace] record_decision failed: {exc}")

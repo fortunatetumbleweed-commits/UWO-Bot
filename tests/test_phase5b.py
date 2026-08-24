@@ -130,9 +130,15 @@ class VisionLedFallbackTests(unittest.TestCase):
 
             result = _classify_nav_state(self._make_fake_frame())
             self.assertEqual(result["location"], "port_overworld")
-            self.assertIn("port_overworld_with_overlay", result["detail"])
+            # The recovery now happens at the EARLIER Moondream family arbiter rather
+            # than the later vision-led fallback that produced
+            # "port_overworld_with_overlay". Same outcome, cheaper path — so assert the
+            # outcome and that Moondream drove it, not the exact wording of one branch.
+            self.assertIn("Moondream", result["detail"])
             mock_in_town.assert_called_once()
-            mock_at_sea.assert_not_called()  # short-circuited
+            # The arbiter asks BOTH questions before deciding the family, so at_sea is
+            # consulted too — it is no longer short-circuited by an in_town yes.
+            mock_at_sea.assert_called_once()
 
     def test_sparse_elements_returns_pending_without_moondream(self):
         """

@@ -111,14 +111,29 @@ PORT_WALK_WAYPOINTS: list = [
 # Template PNG files live in vision/assets/chrome/.
 # Capture them once with:  python -m vision.chrome_detector capture
 #
-# Regions are intentionally tight around the known button positions so that
-# template matching is fast and avoids false positives from game content.
+# Regions are kept to the correct CORNER (fast, and avoids false positives from game
+# content) but must be wide enough to absorb the game's camera-cutout shift: the safe-area
+# offset is re-baked per screen, so the whole chrome row slides by ~100-250px between
+# screens and sessions.
+#
+# A region tight to one position does not degrade gracefully when that happens — it fails
+# completely. Measured on Jakarta's Market, 2026-08-21: the Home icon sat at x 2159-2279
+# while CHROME_HOME_REGION was (2280, 5, 2400, 80). ZERO overlap. The template scored
+# -0.085 inside the region and 0.971 against the top strip — a near-perfect match, entirely
+# outside the window it was allowed to look in.
+#
+# Everything downstream reads has_home / has_back_arrow, so an all-False chrome result is
+# not a small miss: `exit_current_screen` skipped both its on-screen exits and fell through
+# to blind press_back, `recover_to_port_overworld` failed, the run escalated to the teaching
+# loop and aborted after 600s — and the daily_news guard ("if has_home or has_back_arrow we
+# are inside something, so it cannot be daily_news") let 5 taps fire at a hardcoded popup
+# coordinate on a Market screen.
 CHROME_TEMPLATES_DIR: str = "vision/assets/chrome"
 
 # Search regions for each chrome element
-CHROME_HAMBURGER_REGION:        tuple = (2280, 5,   2400, 80)    # ≡ top-right, port overworld only
-CHROME_HOME_REGION:             tuple = (2280, 5,   2400, 80)    # ⌂ top-right, buildings + port map
-CHROME_BACK_ARROW_REGION:       tuple = (0,    0,   220,  80)    # ← top-left, buildings + port map
+CHROME_HAMBURGER_REGION:        tuple = (2020, 0,   2400, 115)   # ≡ top-right, port overworld only
+CHROME_HOME_REGION:             tuple = (2020, 0,   2400, 115)   # ⌂ top-right, buildings + port map
+CHROME_BACK_ARROW_REGION:       tuple = (0,    0,   420,  115)   # ← top-left, buildings + port map
 CHROME_WORLD_MAP_BTN_REGION:    tuple = (0,    880, 320,  1080)  # globe+"World map", bottom-left, port map only
 CHROME_RIGHT_PANEL_REGION:      tuple = (2050, 100, 2400, 420)   # tab bar + mini map, overworld only
 

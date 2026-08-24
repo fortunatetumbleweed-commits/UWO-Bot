@@ -1,0 +1,21 @@
+{
+  "purpose": "A Season 1 'Admiral of Myth' ranking achievement popup is being displayed, showing player TaylorFP's accomplishment stats including Sea Exploration (×780), Explore Land (×1,535), Fishing (×968), and Cannot Salvage (×140) milestones earned during the season.",
+  "full_text": "Season 1 Admiral of Myth — TaylorFP: Sea Exploration ×780, Explore Land ×1,535, Fishing ×968, Cannot Salvage ×140",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "a75dca6d027efc1e",
+  "goal_intent": "sail_to",
+  "cached_at": "2026-08-12T04:14:15.536246+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A Season 1 'Admiral of Myth' ranking achievement popup is being displayed, showing player TaylorFP's accomplishment stats including Sea Exploration (×780), Explore Land (×1,535), Fishing (×968), and Cannot Salvage (×140) milestones earned during the season.",
+    "full_text": "Season 1 Admiral of Myth — TaylorFP: Sea Exploration ×780, Explore Land ×1,535, Fishing ×968, Cannot Salvage ×140",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

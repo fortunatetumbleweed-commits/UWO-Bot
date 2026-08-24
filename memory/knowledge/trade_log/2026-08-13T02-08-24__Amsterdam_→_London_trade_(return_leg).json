@@ -1,0 +1,35 @@
+{
+  "task_name": "Amsterdam → London trade (return leg)",
+  "started_at": "2026-08-13T02:08:24.800807+00:00",
+  "ended_at": "2026-08-13T02:35:46.937822+00:00",
+  "elapsed_seconds": 1642.137015,
+  "rounds_completed": 1,
+  "total_profit": -207429,
+  "ducats_per_hour": -454739.39944042976,
+  "steps": [
+    {
+      "action": "buy_all",
+      "port": "?",
+      "ok": true,
+      "profit": -1436556,
+      "duration_s": 595.3026682500495,
+      "notes": "bought 5 goods  -1,436,556d (→London)"
+    },
+    {
+      "action": "sail_to",
+      "port": "London",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 524.3903837079415,
+      "notes": "arrived"
+    },
+    {
+      "action": "sell_all",
+      "port": "London",
+      "ok": true,
+      "profit": 1229127,
+      "duration_s": 250.4470793340588,
+      "notes": "sold 1 goods  +1,229,127d"
+    }
+  ]
+}

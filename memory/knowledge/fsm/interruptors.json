@@ -482,5 +482,156 @@
     "learned_at": "2026-05-21T16:46:14.520050+00:00",
     "learned_from": "claude",
     "correction_count": 0
+  },
+  {
+    "id": "game_lock_screen_sleep_screen_for_world",
+    "description": "Game lock screen / sleep screen for World of Warships Blitz (or similar naval game) showing 'London' with an anchor emblem and 'Slide up to unlock' prompt",
+    "atomic": true,
+    "detection_keywords": [
+      "London",
+      "Slide up to unlock",
+      "anchor"
+    ],
+    "dismissal": "tap_anywhere",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-08-07T22:36:56.048537+00:00",
+    "learned_from": "claude",
+    "correction_count": 0
+  },
+  {
+    "id": "lock_screen_loading_screen_for_the_londo",
+    "description": "Lock screen / loading screen for the 'London' map or port in World of Warships (or similar naval game), showing an anchor emblem with 'Slide up to unlock' prompt",
+    "atomic": true,
+    "detection_keywords": [
+      "London",
+      "Slide up to unlock",
+      "anchor",
+      "Atlantic Ocean"
+    ],
+    "dismissal": "tap_anywhere",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-08-07T22:38:15.014915+00:00",
+    "learned_from": "claude",
+    "correction_count": 0
+  },
+  {
+    "id": "game_lock_screen_splash_screen_for_londo",
+    "description": "Game lock screen / splash screen for 'London' requiring a swipe up gesture to unlock/enter",
+    "atomic": true,
+    "detection_keywords": [
+      "London",
+      "Slide up to unlock",
+      "anchor"
+    ],
+    "dismissal": "tap_anywhere",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-08-08T02:21:49.450668+00:00",
+    "learned_from": "claude",
+    "correction_count": 0
+  },
+  {
+    "id": "lock_screen_splash_screen_for_amsterdam",
+    "description": "Lock screen / splash screen for 'Amsterdam' with an anchor medallion logo and 'Slide up to unlock' prompt",
+    "atomic": true,
+    "detection_keywords": [
+      "Amsterdam",
+      "Slide up to unlock",
+      "anchor"
+    ],
+    "dismissal": "tap_anywhere",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-08-13T02:10:53.790882+00:00",
+    "learned_from": "claude",
+    "correction_count": 0
+  },
+  {
+    "id": "exit_game_notice_harbor_exit_game_auto_s",
+    "description": "Exit Game? Notice: Harbor Exit Game? Auto Sail: Auto Sail",
+    "atomic": true,
+    "detection_keywords": [],
+    "dismissal": "tap_ok",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-08-19T21:24:06.514481+00:00",
+    "learned_from": "qwen",
+    "correction_count": 0
+  },
+  {
+    "id": "slide_up_to_unlock",
+    "description": "Slide up to unlock",
+    "atomic": true,
+    "detection_keywords": [
+      "Slide up to unlock"
+    ],
+    "dismissal": "tap_ok",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-08-21T20:57:30.246591+00:00",
+    "learned_from": "qwen",
+    "correction_count": 0
+  },
+  {
+    "id": "exit_game_auto_sail_auto_sail",
+    "description": "Exit Game? Auto Sail: Auto Sail",
+    "atomic": true,
+    "detection_keywords": [],
+    "dismissal": "tap_ok",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-08-21T21:00:22.689865+00:00",
+    "learned_from": "qwen",
+    "correction_count": 0
+  },
+  {
+    "id": "world_map_with_port_route_trade_base_fac",
+    "description": "World map with Port, Route, Trade, Base, Facility, Invest, Lawless Waters, Notice, Malacca, Base, Trade, Facility, Invest, Male, Guatemala, Leylon, Mayor, Moving to Male after Auto Supply: Continue?",
+    "atomic": true,
+    "detection_keywords": [
+      "World",
+      "Port",
+      "Route",
+      "Trade",
+      "Base",
+      "Facility",
+      "Invest",
+      "Lawless Waters",
+      "Notice",
+      "Malacca",
+      "Base",
+      "Trade",
+      "Facility",
+      "Invest",
+      "Male",
+      "Guatemala",
+      "Leylon",
+      "Mayor"
+    ],
+    "dismissal": "tap_ok",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-08-22T01:17:20.947171+00:00",
+    "learned_from": "qwen",
+    "correction_count": 0
+  },
+  {
+    "id": "a_dialog_with_a_title_wi_fi_and_a_subtit",
+    "description": "A dialog with a title 'Wi-Fi' and a subtitle '4.0803.091.322 2608211115 Atlantic Ocean'",
+    "atomic": true,
+    "detection_keywords": [],
+    "dismissal": "tap_ok_or_x",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-08-22T04:40:48.063048+00:00",
+    "learned_from": "qwen",
+    "correction_count": 0
+  },
+  {
+    "id": "a_notice_about_moving_to_a_melanesian_vi",
+    "description": "A notice about moving to a Melanesian Village and a barter event.",
+    "atomic": true,
+    "detection_keywords": [
+      "Notice",
+      "Move to Melanesian Village"
+    ],
+    "dismissal": "tap_ok",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-08-23T18:12:36.482803+00:00",
+    "learned_from": "qwen",
+    "correction_count": 0
   }
 ]

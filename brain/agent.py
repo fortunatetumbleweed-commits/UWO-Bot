@@ -581,8 +581,8 @@ class Agent:
             return   # open_port_map has its own timing; skip the pause below
 
         elif atype == "open_world_map":
-            from config.settings import MINIMAP_WORLD_MAP_COORD
-            tap(*MINIMAP_WORLD_MAP_COORD)
+            from actions.sail_actions import open_world_map
+            open_world_map()   # ONE canonical open (port globe / sea minimap)
 
         elif atype in ("wait", "done", "stuck"):
             pass   # handled by the caller

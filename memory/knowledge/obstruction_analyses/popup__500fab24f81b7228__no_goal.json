@@ -1,0 +1,21 @@
+{
+  "purpose": "The Recruit Crew panel is open, showing the fleet has 1,403 Ming standby crew available and is ready to recruit 2,275 crew members across all ships for a total cost of 82,707,048 gold.",
+  "full_text": "Standby Crew: 1403 Ming. Recruit Crew: 2,275/2,275. Min | Max Waiting Time | Max. Emergency Recruit: 82,404,000. Normal Recruit: 303,048. Total: 82,707,048. [Recruit]",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "500fab24f81b7228",
+  "goal_intent": null,
+  "cached_at": "2026-08-07T21:46:17.648558+00:00",
+  "visit_count": 20,
+  "raw_api_response": {
+    "purpose": "The Recruit Crew panel is open, showing the fleet has 1,403 Ming standby crew available and is ready to recruit 2,275 crew members across all ships for a total cost of 82,707,048 gold.",
+    "full_text": "Standby Crew: 1403 Ming. Recruit Crew: 2,275/2,275. Min | Max Waiting Time | Max. Emergency Recruit: 82,404,000. Normal Recruit: 303,048. Total: 82,707,048. [Recruit]",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

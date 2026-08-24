@@ -14,11 +14,11 @@
         "hint": "back at port_overworld with the harbor entrance visible",
         "expected_state": "port_overworld"
       },
-      "travel_count": 26,
-      "success_count": 25,
+      "travel_count": 29,
+      "success_count": 28,
       "failure_count": 1,
-      "avg_duration_secs": 189.82769868309134,
-      "last_traveled_at": "2026-05-23T16:51:27.607965+00:00"
+      "avg_duration_secs": 180.86980921159554,
+      "last_traveled_at": "2026-08-14T02:59:12.008605+00:00"
     },
     {
       "step_id": "step_2_navigate_inn",
@@ -31,11 +31,11 @@
         "hint": "inside the inn building (NPC + sub-menus visible)",
         "expected_detail_substring": "inn"
       },
-      "travel_count": 26,
-      "success_count": 22,
+      "travel_count": 29,
+      "success_count": 25,
       "failure_count": 4,
-      "avg_duration_secs": 135.51418169349716,
-      "last_traveled_at": "2026-05-23T16:59:07.429956+00:00"
+      "avg_duration_secs": 133.83249989766207,
+      "last_traveled_at": "2026-08-14T03:01:24.859102+00:00"
     },
     {
       "step_id": "step_3_open_recruit_crew",
@@ -49,11 +49,11 @@
         "hint": "Recruit Crew sub-screen visible — list of ships with crew counts on the left, gold Recruit button on the right panel",
         "expected_detail_substring": "recruit crew"
       },
-      "travel_count": 22,
+      "travel_count": 25,
       "success_count": 19,
-      "failure_count": 3,
+      "failure_count": 6,
       "avg_duration_secs": 109.15323930789079,
-      "last_traveled_at": "2026-05-23T16:17:01.794074+00:00"
+      "last_traveled_at": "2026-08-14T03:01:49.223917+00:00"
     },
     {
       "step_id": "replan_inserted_1",
@@ -219,7 +219,7 @@
   ],
   "description": "Resolve 'not enough crew' by exiting the harbor, navigating to the inn's Recruit Crew sub-menu, committing the recruit transaction via the OmniParser-driven commit_via_positive_taps primitive, and re-entering the harbor to verify.",
   "notes": "Hand-authored.  step_3b_commit_recruit is replan-protected (apply_replan_to_plan preserves commit_via_positive_taps action kinds in DECISION_REPLACE) so Claude replan cannot drop the positive-button cycle from the plan.; replan replaced steps from index 6: \"The harbor screen shows 'Ready to sail' with crew at 953/2,275 and no 'not enoug\"; replan inserted 2 step(s) at index 6: \"The crew goal condition (953 crew, 'Ready to sail' visible, no crew warning) app\"; replan inserted 2 step(s) at index 3: 'The commit_via_positive_taps step returned no_progress because it tried to tap p'",
-  "travel_count": 18,
-  "failure_count": 14,
-  "last_traveled_at": "2026-05-23T16:59:07.430109+00:00"
+  "travel_count": 21,
+  "failure_count": 17,
+  "last_traveled_at": "2026-08-14T03:01:49.223949+00:00"
 }

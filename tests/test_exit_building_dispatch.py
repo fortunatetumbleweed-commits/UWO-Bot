@@ -13,10 +13,18 @@ from unittest.mock import MagicMock, patch
 from brain.goals.sail_to import SailToGoal
 
 
-def _chrome(home=False, back=False):
+def _chrome(home=False, back=False, hamburger=False):
+    """Chrome stub with has_hamburger stated EXPLICITLY.
+
+    MagicMock auto-vivifies unknown attributes as truthy Mocks, so leaving
+    has_hamburger unset silently made every case look like an overworld — where
+    the Home slot is the ☰ and must not be tapped — and the Home branch could
+    never be reached.
+    """
     c = MagicMock()
     c.has_home = home
     c.has_back_arrow = back
+    c.has_hamburger = hamburger
     return c
 
 
@@ -42,6 +50,14 @@ class ExitBuildingDispatchTests(unittest.TestCase):
         taps, backs = self._run(_chrome(home=True, back=True))
         self.assertEqual(taps, [(2300, 45)])
         self.assertEqual(backs, [])
+
+    def test_hamburger_overworld_does_not_tap_home(self):
+        """On an overworld the Home slot is the ☰ — tapping it opens Company
+        Overview instead of exiting (the bug that stranded the gather run
+        2026-08-17), so fall through to the on-screen back arrow."""
+        taps, backs = self._run(_chrome(home=True, back=True, hamburger=True))
+        self.assertNotIn((2300, 45), taps)
+        self.assertEqual(taps, [(110, 40)])
 
     def test_back_arrow_used_when_home_absent(self):
         """Regression: when only back-arrow is visible, tap the on-screen

@@ -13,12 +13,24 @@ from brain.goals.hug_shore import (
 )
 
 
+from vision.navigation_view import SECTOR_COUNT
+
+# Beam indices in the 16-sector model that `_derive_signals` reads for drift rate
+# (`t_idx = 4 if side == "starboard" else 12`). These tests used to build 8-element
+# readings with the beam at index 2, which is a 22.5°-per-sector mismatch: index 2 is
+# bow-starboard in the real model, so the drift tests were measuring an all-clear
+# sector and asserting on a rate that was structurally 0.0 — and the port case indexed
+# past the end of the tuple.
+_STBD_BEAM = 4      # 90°
+_PORT_BEAM = 12     # 270°
+
+
 def _rec(tick, sectors=None, heading=None, lat=None, lon=None,
          speed_kt=None, commanded_deg=0.0, actual_delta=None,
          phase=HugPhase.HUGGING):
     """Concise TickRecord factory.  `sectors` defaults to all-clear."""
     if sectors is None:
-        sectors = tuple((0.0, 1.0) for _ in range(8))
+        sectors = tuple((0.0, 1.0) for _ in range(SECTOR_COUNT))
     return TickRecord(
         tick=tick, wall_time=float(tick),
         heading=heading, raw_heading=heading, rejected=False,
@@ -46,7 +58,7 @@ def test_target_shore_last_seen_starboard():
     # Tick 5 had sector 2 loaded (stbd-beam); ticks 6+ are all clear.
     sectors_loaded = tuple(
         (0.8 if i == 2 else 0.0, 0.1 if i == 2 else 1.0)
-        for i in range(8)
+        for i in range(SECTOR_COUNT)
     )
     history = deque([
         _rec(1), _rec(2), _rec(3), _rec(4),
@@ -61,7 +73,7 @@ def test_target_shore_last_seen_starboard():
 def test_target_shore_last_seen_picks_most_recent():
     """If multiple recent ticks have shore, the LAST one wins."""
     def loaded(i):
-        return tuple((0.5 if j == i else 0.0, 0.1) for j in range(8))
+        return tuple((0.5 if j == i else 0.0, 0.1) for j in range(SECTOR_COUNT))
     history = deque([
         _rec(1, sectors=loaded(2)),
         _rec(2, sectors=loaded(1)),
@@ -77,7 +89,7 @@ def test_target_shore_last_seen_picks_most_recent():
 def test_target_shore_for_port_side_uses_opposite_indices():
     """For port hug, target sectors are 5, 6, 7."""
     sectors = tuple(
-        (0.7 if i == 6 else 0.0, 0.1) for i in range(8)
+        (0.7 if i == 6 else 0.0, 0.1) for i in range(SECTOR_COUNT)
     )
     history = deque([_rec(1, sectors=sectors)])
     sig = _derive_signals(history, "port")
@@ -88,7 +100,7 @@ def test_target_shore_for_port_side_uses_opposite_indices():
 def test_opposite_shore_last_seen():
     """For starboard hug, opposite sectors are 5, 6, 7."""
     sectors = tuple(
-        (0.7 if i == 6 else 0.0, 0.1) for i in range(8)
+        (0.7 if i == 6 else 0.0, 0.1) for i in range(SECTOR_COUNT)
     )
     history = deque([_rec(1, sectors=sectors)])
     sig = _derive_signals(history, "starboard")
@@ -226,8 +238,8 @@ def test_target_drift_rate_receding_is_positive():
     """Target-beam dist grows by ~0.05/tick → drift_rate > 0."""
     def sectors_with_t_dist(d):
         return tuple(
-            (0.30, d) if i == 2 else (0.0, 1.0)
-            for i in range(8)
+            (0.30, d) if i == _STBD_BEAM else (0.0, 1.0)
+            for i in range(SECTOR_COUNT)
         )
     history = deque([
         _rec(1, sectors=sectors_with_t_dist(0.20)),
@@ -245,8 +257,8 @@ def test_target_drift_rate_approaching_is_negative():
     """Target-beam dist shrinks → drift_rate < 0."""
     def sectors_with_t_dist(d):
         return tuple(
-            (0.30, d) if i == 2 else (0.0, 1.0)
-            for i in range(8)
+            (0.30, d) if i == _STBD_BEAM else (0.0, 1.0)
+            for i in range(SECTOR_COUNT)
         )
     history = deque([
         _rec(1, sectors=sectors_with_t_dist(0.40)),
@@ -261,8 +273,8 @@ def test_target_drift_rate_approaching_is_negative():
 def test_target_drift_rate_stable_is_near_zero():
     """Target dist holds steady → drift_rate ~ 0."""
     sectors = tuple(
-        (0.30, 0.20) if i == 2 else (0.0, 1.0)
-        for i in range(8)
+        (0.30, 0.20) if i == _STBD_BEAM else (0.0, 1.0)
+        for i in range(SECTOR_COUNT)
     )
     history = deque([_rec(t, sectors=sectors) for t in range(1, 5)])
     sig = _derive_signals(history, "starboard")
@@ -271,13 +283,13 @@ def test_target_drift_rate_stable_is_near_zero():
 
 
 def test_target_drift_rate_uses_port_sector_for_port_side():
-    """For port-side hug, drift rate is read off sector 6 (port beam)."""
+    """For port-side hug, drift rate is read off the port beam."""
     history = deque([
         _rec(1, sectors=tuple(
-            (0.30, 0.20) if i == 6 else (0.0, 1.0) for i in range(8)
+            (0.30, 0.20) if i == _PORT_BEAM else (0.0, 1.0) for i in range(SECTOR_COUNT)
         )),
         _rec(2, sectors=tuple(
-            (0.30, 0.30) if i == 6 else (0.0, 1.0) for i in range(8)
+            (0.30, 0.30) if i == _PORT_BEAM else (0.0, 1.0) for i in range(SECTOR_COUNT)
         )),
     ])
     sig = _derive_signals(history, "port")

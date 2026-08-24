@@ -1,0 +1,18 @@
+name: "Amsterdam → London trade (return leg)"
+description: "Buy at Amsterdam, sail to London, sell there"
+
+start_port: Amsterdam
+rounds: 1
+
+loop:
+  - action: buy_all
+    port: Amsterdam
+    note: "Buy recommended goods at Amsterdam (fast cart-diff loading)"
+  - action: sail_to
+    destination: London
+  - action: sell_all
+    port: London
+    note: "Sell the Amsterdam cargo at London"
+
+report:
+  - profit_loss

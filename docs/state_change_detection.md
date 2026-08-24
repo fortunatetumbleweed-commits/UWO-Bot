@@ -1,5 +1,8 @@
 # State-Change / Progress Detection
 
+> **Status (reviewed 2026-08-23): design, partially built.** Progress/change detection is
+> what the one-loop design ticks on; see `docs/one_loop_task_drives_state.md`.
+
 How the bot answers *"did my action make progress, or did nothing happen?"* —
 the signal that drives the task executor's **attempt memory** (don't repeat a
 no-op), **done-conditions** (did the task complete?), and **stuck detection**

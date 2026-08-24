@@ -24,9 +24,10 @@
 
 from __future__ import annotations
 
+import random
 import time
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 import numpy as np
 from loguru import logger
@@ -925,67 +926,13 @@ def _sell_one_good(
 
 # ── Per-good sell profitability ─────────────────────────────────────────────
 #
-# The Sell page shows each good as `<sell_price> (<profit/unit>)`.  The
-# parenthetical is the game's PER-UNIT PROFIT for selling HERE — it already bakes
-# in the trade-DISTANCE bonus (the separate % is only the local market trend, NOT
-# profit; a nearby port at 96% can be worth far less than a distant one at 75%).
-# A LOSS renders the profit red / negative.  Reading this lets the seller sell
-# only profitable goods and skip losses — which also enforces "don't sell where
-# you bought" (those goods show a loss here).
-
-
-@dataclass
-class SellGoodInfo:
-    name: str
-    sell_price: int
-    profit_per_unit: int      # includes the distance bonus; < 0 = loss
-    is_loss: bool             # profit < 0 OR the number renders red
-    tap_x: int                # tile tap target (to load this good selectively)
-    tap_y: int
-
-
-def _profit_is_red(arr, cx: int, cy: int) -> bool:
-    """True if the profit number at (cx,cy) renders red (a loss)."""
-    r = arr[max(0, cy - 14):cy + 14, max(0, cx - 65):cx + 65]
-    if r.size == 0:
-        return False
-    R, G, B = r[:, :, 0].astype(int), r[:, :, 1].astype(int), r[:, :, 2].astype(int)
-    return float(((R > 130) & (G < 90) & (B < 90) & (R - G > 50)).mean()) > 0.01
-
-
-_GOOD_SUBTITLES = {"food", "liquor", "fabrics", "crafts", "wares", "seasoning",
-                   "livestock", "specialties", "medicine", "luxury", "sundries",
-                   "textiles", "ore", "dyes", "weapons", "gems"}
-
-
-def read_sell_page_profits(frame: Image.Image) -> List[SellGoodInfo]:
-    """Parse the Sell-page goods grid into per-good {sell_price, profit/unit,
-    is_loss, tap target}.  See the section header above for the mechanic."""
-    import re
-    arr = np.asarray(frame.convert("RGB"))
-    toks = _ocr_frame(frame, 0.3)
-    names = [(t.strip(), cx, cy) for t, c, cx, cy in toks
-             if t.replace(" ", "").isalpha() and len(t) > 2
-             and 180 < cy < 560 and 350 < cx < 1700
-             and t.strip().lower() not in _GOOD_SUBTITLES]
-    pat = re.compile(r"^([\d,]+)\s*\((-?[\d,]+)\)$")
-    out: List[SellGoodInfo] = []
-    for t, c, cx, cy in toks:
-        m = pat.match(t.strip())
-        if not m:
-            continue
-        price = int(m.group(1).replace(",", ""))
-        profit = int(m.group(2).replace(",", ""))
-        above = [(n, nx, ny) for n, nx, ny in names if ny < cy and abs(nx - cx) < 160]
-        if above:
-            name, nx, ny = min(above, key=lambda z: cy - z[2])
-            tap_x, tap_y = (nx + cx) // 2, (ny + cy) // 2
-        else:
-            name, tap_x, tap_y = "?", cx, cy - 90
-        out.append(SellGoodInfo(name, price, profit,
-                                profit < 0 or _profit_is_red(arr, cx, cy),
-                                tap_x, tap_y))
-    return out
+# RETIRED 2026-08-19: the OCR reader read_sell_page_profits / SellGoodInfo was
+# replaced by vision.market_reader.read_market_page_omni(tab="sell"), which parses
+# each tile by OmniParser BBOX and now yields name + sell_price + profit_per_unit +
+# is_loss + owned_qty (see MarketGood).  The sell price/profit mechanic:
+# `<sell_price> (<profit/unit>)` — the parenthetical is the game's PER-UNIT PROFIT
+# (already bakes in the trade-DISTANCE bonus; the separate % is only the local
+# market trend).  A loss renders the profit red / negative.
 
 
 # ── Ground-truth sale verification ──────────────────────────────────────────
@@ -1086,7 +1033,8 @@ def sell_all_cargo(
     # than dump it at a loss.  Falls back to Load All if the profit read fails.
     selective = None
     try:
-        profits = read_sell_page_profits(frame)
+        from vision.market_reader import read_market_page_omni
+        profits = read_market_page_omni(frame, tab="sell", port=port)
     except Exception as exc:
         profits = []
         logger.debug(f"[{port}] sell-profit read failed: {exc}")
@@ -1309,13 +1257,147 @@ class BuyResult:
             self.goods = []
 
 
-def _detect_keypad_digit_positions(frame: Image.Image) -> dict:
+def detect_keypad_grid(frame, elements=None) -> dict:
+    """The Enter-Number keypad as a GRID, keyed by what each button does.
+
+    Returns {"1".."9", "0", "enter", "backspace", "max"} -> (cx, cy), or {} when the
+    keypad is not on screen.
+
+    Identity comes from GRID POSITION, not from reading each glyph. The keypad is a
+    uniform 3x4 block of ~120x107 buttons anchored under the "Enter Number" title:
+
+        row0:  1   2   3   <backspace>
+        row1:  4   5   6   <enter, tall: spans rows 1-3>
+        row2:  7   8   9
+        row3:  0   [ Max spans two columns ]
+
+    Everything is measured RELATIVE TO THE DIALOG (user 2026-08-22: "instead of using
+    absolute positions, please get the dialog bbox, and use relative positions"), so it
+    follows the keypad wherever the game draws it.
+
+    The previous approach ran EasyOCR with a digit allowlist over a crop `x > x_min` and
+    filtered by glyph size. It failed both ways on the live SELL trim: it matched stray
+    numerals from the price chart underneath, and missed real keys — 2026-08-22 it aborted
+    on "digit '8' not detected", then "digit '9' not detected", and the trim never ran.
+    On that frame it returned {'0': (1366,186), '5': (1867,830)} — neither inside the
+    keypad at all.
+    """
+    try:
+        if elements is None:
+            from vision.omniparser import parse_fast_cached
+            elements = parse_fast_cached(frame)
+        els = list(elements or [])
+
+        title = next((e for e in els
+                      if "enter number" in (getattr(e, "label", "") or "").strip().lower()),
+                     None)
+        if title is None:
+            return {}
+
+        # THE DIALOG'S OWN BOUNDS. The number display sits directly under the title and
+        # spans the keypad's full width, so it defines the x-range of the block. Without
+        # this, unrelated elements elsewhere on screen join the grid and shift every
+        # column: on the live frame a stray box at x=287 created a phantom first column,
+        # so "1" was read as "2" and every digit was off by one.
+        below = [e for e in els if e.y1 >= title.y2 and (e.y1 - title.y2) < 120]
+        if not below:
+            return {}
+        display = max(below, key=lambda e: e.x2 - e.x1)
+        pad_x1, pad_x2 = display.x1, display.x2
+        if pad_x2 - pad_x1 < 200:
+            return {}
+
+        # Keys are the uniform blocks below the display, INSIDE the dialog's width. Size
+        # is taken from the population itself, so a different screen scale still works.
+        cand = [e for e in els
+                if e.y1 >= display.y2 - 10
+                and e.x1 >= pad_x1 - 20 and e.x2 <= pad_x2 + 20
+                and 60 <= (e.x2 - e.x1) <= 260
+                and 60 <= (e.y2 - e.y1) <= 400]
+        if len(cand) < 8:
+            return {}
+
+        import statistics
+        keyw = statistics.median(e.x2 - e.x1 for e in cand)
+        keyh = statistics.median(e.y2 - e.y1 for e in cand)
+
+        # Columns and rows by clustering centres at half-key tolerance.
+        def cluster(vals, tol):
+            out = []
+            for v in sorted(vals):
+                if out and v - out[-1][-1] <= tol:
+                    out[-1].append(v)
+                else:
+                    out.append([v])
+            return [sum(g) / len(g) for g in out]
+
+        # COLUMNS come from the dialog's own width, not from clustering the detections:
+        # four evenly-pitched columns span it. Clustering was fooled by stray sub-elements
+        # (measured at cx 1091 and 1313) that bridged neighbouring columns, collapsing
+        # three digit columns into two so "3" resolved to "2"'s position.
+        n_cols = 4
+        pitch = (pad_x2 - pad_x1 - keyw) / (n_cols - 1)
+        cols = [pad_x1 + keyw / 2 + i * pitch for i in range(n_cols)]
+        rows = cluster([(e.y1 + e.y2) / 2 for e in cand
+                        if (e.y2 - e.y1) < keyh * 1.6], keyh * 0.5)
+        if len(rows) < 4:
+            return {}
+
+        def at(r, c, tol_w, tol_h):
+            for e in cand:
+                if (abs((e.x1 + e.x2) / 2 - cols[c]) <= tol_w
+                        and abs((e.y1 + e.y2) / 2 - rows[r]) <= tol_h):
+                    return (int((e.x1 + e.x2) / 2), int((e.y1 + e.y2) / 2))
+            return None
+
+        grid: dict = {}
+        layout = (("1", "2", "3"), ("4", "5", "6"), ("7", "8", "9"))
+        for r, labels in enumerate(layout):
+            for c, name in enumerate(labels):
+                pos = at(r, c, keyw * 0.6, keyh * 0.6)
+                if pos:
+                    grid[name] = pos
+        zero = at(3, 0, keyw * 0.6, keyh * 0.6)
+        if zero:
+            grid["0"] = zero
+
+        # Right-hand column: backspace on the top row, the tall Enter below it.
+        right = [e for e in cand if (e.x1 + e.x2) / 2 > cols[-1] - keyw * 0.6]
+        if right:
+            top = min(right, key=lambda e: e.y1)
+            grid["backspace"] = (int((top.x1 + top.x2) / 2), int((top.y1 + top.y2) / 2))
+            tall = max(right, key=lambda e: e.y2 - e.y1)
+            if (tall.y2 - tall.y1) > keyh * 1.6:
+                grid["enter"] = (int((tall.x1 + tall.x2) / 2),
+                                 int((tall.y1 + tall.y2) / 2))
+        mx = next((e for e in els
+                   if (getattr(e, "label", "") or "").strip().lower() == "max"
+                   and e.y1 > title.y2), None)
+        if mx is not None:
+            grid["max"] = (int((mx.x1 + mx.x2) / 2), int((mx.y1 + mx.y2) / 2))
+        # The number display's own bbox, so the readback looks ONLY at it — and its own
+        # label, which OmniParser has usually already read ('981'), making the readback
+        # free. When the field is empty the label comes back as 'icon', so the OCR path
+        # below remains the fallback.
+        grid["display_box"] = (int(display.x1), int(display.y1),
+                               int(display.x2), int(display.y2))
+        grid["display_label"] = (getattr(display, "label", "") or "").strip()
+        return grid
+    except Exception as exc:
+        logger.debug(f"[keypad] grid detection failed: {exc}")
+        return {}
+
+
+def _detect_keypad_digit_positions(frame: Image.Image, x_min: int = 1350) -> dict:
     """
     Detect where the numeric keypad digit buttons actually are on screen.
 
     The keypad dialog occupies the right portion of the screen.  We crop to
-    x > 1350 (x=1320 has been observed to be outside the dialog) and run OCR
-    with digits-only allowlist.  Digit *buttons* are large and roughly square
+    x > `x_min` (default 1350; x=1320 has been observed to be outside the BUY
+    dialog) and run OCR with digits-only allowlist.  The SELL trim dialog puts the
+    same keypad further left (digits observed at x≈1015/1138/1261 live 2026-08-20),
+    so that caller passes a smaller x_min — the size/shape filters below are what
+    reject price text, not the crop.  Digit *buttons* are large and roughly square
     (~50-120px wide); price text in the underlying dialog groups into wide
     multi-digit strings that EasyOCR reports with proportionally wider bboxes.
 
@@ -1325,7 +1407,7 @@ def _detect_keypad_digit_positions(frame: Image.Image) -> dict:
     """
     from vision.ocr import _get_reader
 
-    x_off, y_off = 1350, 100
+    x_off, y_off = x_min, 100
     crop = frame.crop((x_off, y_off, frame.width, frame.height - 100))
     arr = np.array(crop)
     raw = _get_reader().readtext(arr, detail=1, allowlist="0123456789")
@@ -1354,6 +1436,164 @@ def _detect_keypad_digit_positions(frame: Image.Image) -> dict:
 
     logger.debug(f"  Keypad auto-detected {len(positions)}/10 digit positions")
     return positions
+
+
+# Recorded live geometry for the SELL trim keypad (2400×1080, Jakarta 2026-08-20).
+# Fallbacks only — detection wins when it works.
+_SELL_KEYPAD_X_MIN = 900
+_SELL_KEYPAD_ENTER = (1383, 667)
+_SELL_QTY_DISPLAY = (1560, 708)          # the "n / owned" field in the Trade Goods Info dialog
+_SELL_LOAD_BUTTON = (1313, 943)
+
+
+def keypad_display_value(frame, grid=None) -> Optional[int]:
+    """The number currently in the keypad's display, or None if it can't be read.
+
+    Everything is relative to the DISPLAY ELEMENT that OmniParser found (user 2026-08-22:
+    "the crop should be a relative position in the dialog using the bbox provided by
+    Omniparser, and the keys too"):
+
+      1. its LABEL, which OmniParser has usually already read — free, no OCR;
+      2. failing that, OCR of its own bbox.
+
+    Neither derives a region by padding out from the keys. That is what broke: the old band
+    ran x max(keys)+140 = 1401 while the display extends to 1444, so the last digit sat
+    OUTSIDE the crop. With 981 on screen it read '98', concatenated it with digits from the
+    "Enter Number" title above, and returned 11461 — so the typed value never matched and
+    the routine cleared and retyped until it gave up (live 2026-08-22).
+    """
+    if grid is None:
+        grid = detect_keypad_grid(frame)
+    if not grid:
+        return None
+    lab = (grid.get("display_label") or "").replace(",", "").strip()
+    if lab.isdigit():
+        return int(lab)
+    box = grid.get("display_box")
+    return _read_keypad_display(frame, {}, display_box=box) if box else None
+
+
+def _read_keypad_display(frame: Image.Image, digits: dict,
+                         display_box=None) -> Optional[int]:
+    """OCR the number currently typed into the keypad.
+
+    `display_box` is the display's OWN bbox from `detect_keypad_grid` — pass it. Deriving a
+    band from the digit geometry instead swept in the "Enter Number" title and parts of the
+    dialog underneath, and since every digit character found was concatenated, the readback
+    came out as 1146198 while 981 was on screen (live 2026-08-22). The typed value then
+    never matched, so the routine cleared and retyped until it gave up.
+
+    Returns None when it can't be read — callers must treat that as 'unverified', never as
+    'correct'."""
+    if display_box is not None:
+        box = tuple(int(v) for v in display_box)
+    else:
+        if not digits:
+            return None
+        xs = [p[0] for p in digits.values()]
+        ys = [p[1] for p in digits.values()]
+        left, right, top = min(xs) - 140, max(xs) + 140, min(ys)
+        box = (max(0, left), max(0, top - 190), min(frame.width, right), max(0, top - 40))
+    if box[2] <= box[0] or box[3] <= box[1]:
+        return None
+    try:
+        from vision.ocr import _get_reader
+        raw = _get_reader().readtext(np.array(frame.crop(box)), detail=0,
+                                     allowlist="0123456789")
+    except Exception as exc:
+        logger.debug(f"  Keypad display OCR failed: {exc}")
+        return None
+    # The LONGEST single token, not every digit on the crop concatenated: joining them is
+    # how "1" and "146198" became 1146198.
+    import re as _re
+    runs = [m for tok in raw for m in _re.findall(r"\d+", str(tok).replace(",", ""))]
+    if not runs:
+        return None
+    return int(max(runs, key=len))
+
+
+def type_quantity_on_keypad(quantity: int, *, x_min: int = _SELL_KEYPAD_X_MIN,
+                            enter_pos: Tuple[int, int] = _SELL_KEYPAD_ENTER,
+                            capture_fn: Optional[Callable] = None,
+                            tap_fn: Optional[Callable] = None,
+                            max_attempts: int = 3) -> bool:
+    """Type `quantity` on the Enter-Number keypad and CONFIRM the display before ↵.
+
+    The recorded failure is a dropped digit — '21' typed instead of '218' (live
+    2026-08-20) — which on a SELL would dump the wrong amount of cargo. So the typed
+    value is read back and retyped on mismatch, and **↵ is only pressed once the display
+    matches**. Returns False without pressing ↵ if it never matches, leaving the caller
+    to abort while nothing has been committed."""
+    capture_fn = capture_fn or capture_screen
+    tap_fn = tap_fn or tap
+    want = str(int(quantity))
+
+    for attempt in range(max_attempts):
+        frame = capture_fn()
+        # GRID FIRST: identity from position within the dialog, which needs no OCR of the
+        # glyphs and no absolute coordinates. The OCR-per-glyph detector remains as a
+        # fallback, but it is what failed live on 2026-08-22 ("digit '8' not detected",
+        # then "digit '9' not detected") while matching stray numerals from the price
+        # chart underneath the dialog.
+        grid = detect_keypad_grid(frame)
+        digits = {k: v for k, v in grid.items() if k.isdigit()}
+        if not digits:
+            digits = _detect_keypad_digit_positions(frame, x_min=x_min)
+        if not digits:
+            logger.warning("  Keypad: no digit buttons detected — cannot type safely")
+            return False
+        # ANTI-CHEAT: keypad entry is the densest tap sequence in the whole bot, so it
+        # needs the most discipline (CLAUDE.md: never ≥3 taps in <1s, never a fixed
+        # cadence).  Two measures: (1) clear only as many digits as are actually SHOWN
+        # instead of a blind fixed burst, and (2) jitter every gap to ≥0.5s so no three
+        # taps ever fall inside a second.
+        dbox = grid.get("display_box")
+        shown_now = keypad_display_value(frame, grid)
+        bs = grid.get("backspace") or _keypad_backspace_pos(digits)
+        # Clear ONLY what is actually there, re-reading between presses, and stop as soon
+        # as the field is empty. The old loop pressed a fixed count derived from a misread
+        # value: on 2026-08-22 the readback said 1146198, so it kept pressing backspace on
+        # an already-empty field — and when the display was right it wiped it again
+        # (user: "kept tapping the back arrow key when it was already 0, and it cleared
+        # the number typed in").
+        if bs:
+            for _ in range(8):
+                if not shown_now:
+                    break
+                tap_fn(*bs)
+                time.sleep(random.uniform(0.5, 0.8))
+                shown_now = keypad_display_value(capture_fn())
+        for ch in want:
+            pos = digits.get(ch)
+            if pos is None:
+                logger.warning(f"  Keypad: digit '{ch}' not detected — aborting")
+                return False
+            tap_fn(*pos)
+            time.sleep(random.uniform(0.5, 0.85))
+        shown = keypad_display_value(capture_fn())
+        # The desired number is in the field -> press RETURN (user 2026-08-22).
+        if shown == int(quantity):
+            tap_fn(*(grid.get("enter") or enter_pos))
+            time.sleep(random.uniform(0.5, 0.9))
+            logger.info(f"  Keypad: {quantity} entered and confirmed")
+            return True
+        logger.warning(f"  Keypad: display reads {shown!r}, wanted {quantity} "
+                       f"(attempt {attempt + 1}/{max_attempts}) — retyping")
+    logger.error(f"  Keypad: could not confirm {quantity} — NOT pressing Enter")
+    return False
+
+
+def _keypad_backspace_pos(digits: dict) -> Optional[Tuple[int, int]]:
+    """Backspace sits on the bottom row of the keypad, left of '0'. Derived from the
+    detected grid so it follows the dialog instead of a hardcoded point."""
+    zero = digits.get("0")
+    if zero is None:
+        return None
+    xs = sorted({p[0] for p in digits.values()})
+    if len(xs) < 2:
+        return None
+    col_w = xs[1] - xs[0]
+    return (zero[0] - col_w, zero[1])
 
 
 def _enter_keypad_quantity(flow: dict, quantity: int) -> bool:
@@ -1693,36 +1933,63 @@ def _find_put_in_bulk_anchor(frame: Image.Image) -> Optional[Tuple[int, int]]:
     return None
 
 
+# Where the green checkmark was last seen, so the toggle taps the BOX rather than an
+# assumed offset from the label. One slot; refreshed on every positive detection.
+_BULK_CHECKBOX_POS: list = [None]
+
+
+def _find_bulk_button(frame: Image.Image, elements=None):
+    """The 'Put In Bulk' control as a DETECTED element.
+
+    OmniParser reports it as a button whose bbox INCLUDES the checkbox (user 2026-08-22),
+    measured live at (481,986)-(684,1030) with the green tick at (504,1007). So both the
+    state and the tap target come from inside that box — no offset from the label, which is
+    what went wrong before: the old code sampled put_x-70..put_x-5 (533..598) while the tick
+    sits at 493..517, never overlapping, so bulk always read OFF.
+    """
+    try:
+        if elements is None:
+            from vision.omniparser import parse_fast_cached
+            elements = parse_fast_cached(frame)
+        for e in elements or []:
+            if "put in bulk" in (getattr(e, "label", "") or "").strip().lower():
+                return e
+    except Exception as exc:
+        logger.debug(f"[bulk] element lookup failed: {exc}")
+    return None
+
+
+def _bulk_green_centre(frame: Image.Image, el):
+    """Centre of the green tick inside `el`'s bbox, or None when the box is unticked."""
+    a = np.array(frame)[el.y1:el.y2, el.x1:el.x2]
+    if a.size == 0:
+        return None
+    r, g, b = (a[:, :, i].astype(int) for i in range(3))
+    mask = (g - r > 50) & (g - b > 50) & (g > 100)
+    if int(mask.sum()) < 5:
+        return None
+    ys, xs = np.nonzero(mask)
+    return (int(el.x1 + xs.mean()), int(el.y1 + ys.mean()))
+
+
 def _is_bulk_mode_on(frame: Image.Image) -> bool:
+    """True if the 'Put in Bulk' checkbox shows a green checkmark.
+
+    Read from INSIDE the detected button's bbox — see `_find_bulk_button`. Returns False
+    when the control cannot be found at all, which callers must treat as "unknown", not
+    "off": `_ensure_bulk_mode` conflating those is what left bulk ON while reporting
+    success, so a tile tap bulk-loaded a 1,681-unit stack instead of opening the quantity
+    dialog (live 2026-08-22).
     """
-    Return True if the 'Put in Bulk' checkbox shows a green checkmark.
-
-    The checkbox sits immediately to the LEFT of the word "Put".
-    Green detection: G−R > 50 and G−B > 50 and G > 100, ≥5 pixels in the
-    ~50×50px region to the left of the "Put" anchor.
-    """
-    anchor = _find_put_in_bulk_anchor(frame)
-    if anchor is None:
+    el = _find_bulk_button(frame)
+    if el is None:
         return False
-
-    put_x, put_y = anchor
-    arr = np.array(frame)
-
-    # Checkbox is ~30-60px to the left of "Put", vertically centred on it
-    x1 = max(0, put_x - 70)
-    x2 = max(0, put_x - 5)
-    y1 = max(0, put_y - 25)
-    y2 = min(arr.shape[0], put_y + 25)
-    region = arr[y1:y2, x1:x2]
-    if region.size == 0:
-        return False
-
-    r = region[:, :, 0].astype(int)
-    g = region[:, :, 1].astype(int)
-    b = region[:, :, 2].astype(int)
-    green_pixels = int(((g - r > 50) & (g - b > 50) & (g > 100)).sum())
-    is_on = green_pixels >= 5
-    logger.debug(f"'Put in Bulk' checkbox: {green_pixels} green px → {'ON' if is_on else 'OFF'}")
+    centre = _bulk_green_centre(frame, el)
+    if centre is not None:
+        _BULK_CHECKBOX_POS[0] = centre
+    is_on = centre is not None
+    logger.debug(f"'Put in Bulk' bbox=({el.x1},{el.y1})-({el.x2},{el.y2}) "
+                 f"tick={centre} → {'ON' if is_on else 'OFF'}")
     return is_on
 
 
@@ -1756,27 +2023,44 @@ def _ensure_bulk_mode(target_on: bool, frame: Image.Image) -> bool:
     anchor = _find_put_in_bulk_anchor(frame)
 
     if anchor is None:
-        logger.debug("'Put in Bulk' label not found — assuming already "
-                     f"{'ON' if target_on else 'OFF'}, proceeding")
+        # WARNING, not debug: this returns success without having read or changed anything,
+        # and the caller acts on that. Live 2026-08-22 the silent version let `sell_down_to`
+        # proceed with bulk still ON, so tapping a good bulk-loaded its entire 1,681-unit
+        # stack into the cart instead of opening the quantity dialog.
+        logger.warning("'Put in Bulk' control not found — cannot read or change it; "
+                       f"assuming already {'ON' if target_on else 'OFF'} and proceeding")
         return True
 
     if target_on:
         if current:
             logger.debug("'Put in Bulk' confirmed ON")
+            return True
+        # Detection is trustworthy now: the checkbox is read from INSIDE the detected
+        # "Put In Bulk" button's bbox, so finding the control but no green tick means it
+        # is genuinely OFF — not "unreadable". The old policy never tapped when targeting
+        # ON, which made `_restore_bulk` a no-op: after a sell-trim turned bulk off, the
+        # market was handed back OFF and the next buy silently loaded nothing (live
+        # 2026-08-22 at Kolkata — "tap Purchase ... cost=0", over and over).
+        chk_x, chk_y = _BULK_CHECKBOX_POS[0] or (anchor[0] - 40, anchor[1])
+        logger.info(f"  Tapping 'Put in Bulk' checkbox @ ({chk_x}, {chk_y}) (OFF -> ON)")
+        tap(chk_x, chk_y)
+        time.sleep(0.6)
+        if _is_bulk_mode_on(capture_screen()):
+            logger.info("  'Put in Bulk' restored ON")
         else:
-            # False = "OFF or undetectable" — don't tap; assume it's already ON
-            logger.debug("'Put in Bulk' not confirmed ON (green not detected) — "
-                         "assuming already ON, proceeding without toggle")
+            logger.warning("  'Put in Bulk' still not ON after tapping — the next buy "
+                           "may load nothing")
         return True
 
     else:  # target OFF
         if not current:
             logger.debug("'Put in Bulk' not detected as ON — assuming already OFF")
             return True
-        # Green IS detected → definitely ON → need to turn it OFF
+        # Green IS detected → definitely ON → need to turn it OFF.
+        # Tap where the mark WAS SEEN; put_x-40 was another assumed offset and lands
+        # between the box and the label (measured 2026-08-22: box ~110px left, not 40).
         put_x, put_y = anchor
-        chk_x = put_x - 40
-        chk_y = put_y
+        chk_x, chk_y = _BULK_CHECKBOX_POS[0] or (put_x - 40, put_y)
         logger.info(f"  Tapping 'Put in Bulk' checkbox @ ({chk_x}, {chk_y}) (ON → OFF)")
         tap(chk_x, chk_y)
         time.sleep(0.5)
@@ -2324,6 +2608,81 @@ def _save_buy_summary(port: str, result: BuyResult) -> None:
         json.dumps(record, indent=2, ensure_ascii=False)
     )
     logger.debug(f"Buy transaction saved to market KB: {port}")
+
+
+# ── Trade Point awards ────────────────────────────────────────────────────────
+#
+# The market's left panel shows a "Trade Points" widget: a `N/1,000` counter with
+# a green bar, and — when N ≥ 1,000 — a treasure-CHEST badge labelled "X<k>" at
+# the RIGHT end of the counter row (k = pending awards, one per 1,000 points).
+# Tapping the chest claims the award(s); the game shows a TRANSIENT reward dialog
+# that auto-dismisses after a couple of seconds, so a polling tick can miss it —
+# the reliable verification is the STATE change: points drop below 1,000 and the
+# X<k> badge disappears (user 2026-08-20).  OmniParser folds the chest into the
+# counter's button bbox, so "points ≥ 1,000" is the availability signal and the
+# tap target is the right end of that bbox.
+
+
+def _read_trade_points(elements):
+    """(points, counter_element) from the left-panel 'N/1,000' counter, or (None, None)."""
+    import re
+    for e in elements or []:
+        if getattr(e, "element_type", "") not in ("button", "text"):
+            continue
+        if getattr(e, "cx", 9999) > 520:          # left panel only
+            continue
+        m = re.fullmatch(r"([\d,]+)\s*/\s*1[,.]?000",
+                         (getattr(e, "label", "") or "").strip())
+        if m:
+            return int(m.group(1).replace(",", "")), e
+    return None, None
+
+
+def get_trade_point_award(*, capture_fn=None, tap_fn=None, omni_fn=None,
+                          settle: float = 2.0, max_verify: int = 3) -> dict:
+    """Claim pending Trade Point awards from the market screen (perceive→act→verify).
+
+    PERCEIVE: read the 'N/1,000' counter; awards are available when N ≥ 1,000.
+    ACT:      tap the chest at the right end of the counter row.
+    VERIFY:   don't wait for the transient reward dialog — re-perceive until the
+              points read BELOW 1,000 (the claim consumed them).  Bounded.
+    Returns {ok, claimed, points_before, points_after, reason}."""
+    if capture_fn is None:
+        from capture.adb_capture import capture_screen as capture_fn
+    if tap_fn is None:
+        from actions.adb_actions import tap as tap_fn
+    if omni_fn is None:
+        from vision.omniparser import parse_fast_cached as omni_fn
+
+    points, counter = _read_trade_points(omni_fn(capture_fn()))
+    if points is None:
+        return {"ok": False, "claimed": False, "points_before": None,
+                "points_after": None, "reason": "trade-point counter not visible"}
+    if points < 1000:
+        return {"ok": True, "claimed": False, "points_before": points,
+                "points_after": points, "reason": f"no award pending ({points}/1,000)"}
+
+    # Chest centre = counter right end minus ~half the chest width (chest spans the last ~80px).
+    # One tap claims ALL pending awards ("Obtained times: k").  A tap can occasionally be
+    # swallowed (live 2026-08-20: first tap no-oped, an 11px-different retry claimed) → verify by
+    # the points DROP and re-tap once if nothing changed.
+    tx, ty = counter.x2 - 49, (counter.y1 + counter.y2) // 2
+    after = None
+    for attempt in range(2):
+        logger.info(f"[trade-award] {points}/1,000 → tapping award chest @ ({tx},{ty}) "
+                    f"(attempt {attempt + 1})")
+        tap_fn(tx, ty)
+        for _ in range(max_verify):
+            time.sleep(settle)
+            after, _c = _read_trade_points(omni_fn(capture_fn()))
+            if after is not None and after < 1000:
+                logger.info(f"[trade-award] claimed: points {points} → {after}")
+                return {"ok": True, "claimed": True, "points_before": points,
+                        "points_after": after, "reason": f"claimed ({points}→{after})"}
+            # counter occluded by the transient dialog / unchanged → re-perceive
+    return {"ok": False, "claimed": False, "points_before": points,
+            "points_after": after,
+            "reason": f"points did not drop below 1,000 (before={points}, after={after})"}
 
 
 # ── Market layout discovery (used by test scripts) ────────────────────────────

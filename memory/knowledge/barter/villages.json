@@ -1,0 +1,29 @@
+{
+  "apache_village": {
+    "name": "Apache Village",
+    "lat": null,
+    "lon": null,
+    "amity": "Friendly",
+    "amity_points": 93068,
+    "barter_rounds_total": 7,
+    "barter_rounds_remaining": 7,
+    "eligible_goods": [
+      "Camas",
+      "Pulque"
+    ],
+    "locked_goods": []
+  },
+  "melanesian_village": {
+    "name": "Melanesian Village",
+    "lat": null,
+    "lon": null,
+    "amity": "Trusting",
+    "amity_points": null,
+    "barter_rounds_total": 6,
+    "barter_rounds_remaining": 6,
+    "eligible_goods": [
+      "Box of Nutmeg"
+    ],
+    "locked_goods": []
+  }
+}

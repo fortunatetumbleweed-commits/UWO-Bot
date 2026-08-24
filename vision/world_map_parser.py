@@ -57,10 +57,36 @@ from loguru import logger
 # ── Constants ────────────────────────────────────────────────────────────────
 
 # Map-area crop bounds (validated on 7 labelled world-map frames).
+# MAP_X_MAX is the FALLBACK right bound: it was tuned for the Port tab where the right ~540px is
+# the port-list panel.  On the Explore tab there is NO right panel and the map runs nearly
+# full-width — a fixed 1860 crop silently discarded every village label in the right band
+# (Melanesian hunt, 2026-08-20: Tongatapu/Yawuru/Apache all matched then dropped → "0 visible" →
+# panned straight past the target).  parse_visible_ports now DETECTS the list panel (a chromed UI
+# column of stacked rows) and excludes only that; the map area otherwise extends to the frame edge.
 MAP_X_MIN = 50
 MAP_Y_MIN = 80
 MAP_X_MAX = 1860
 MAP_Y_MAX = 950
+
+
+def _detect_list_panel_xmin(elements, frame_w: int) -> Optional[int]:
+    """Left edge of the right-side LIST PANEL (port list / search results) if one is open,
+    else None.  The panel is chromed UI — a vertical COLUMN of ≥4 stacked text/button rows with
+    near-identical x-centres spanning a tall run — structurally unlike scattered map labels
+    (user 2026-08-20: exclude detected chrome, not a fixed slice of the map)."""
+    right = [el for el in elements
+             if el.element_type in ("text", "button")
+             and el.cx > 0.72 * frame_w and (el.label or "").strip()]
+    if len(right) < 4:
+        return None
+    xs = sorted(el.cx for el in right)
+    med = xs[len(xs) // 2]
+    col = [el for el in right if abs(el.cx - med) < 45]
+    if len(col) >= 4:
+        ys = sorted(el.cy for el in col)
+        if ys[-1] - ys[0] > 300:                 # a tall stacked run = a list panel
+            return min(el.x1 for el in col) - 12
+    return None
 
 # Path to the baked port catalogue (224 ports from voyage.tw).
 _PORT_CATALOGUE_PATH = Path("memory/knowledge/world_map/port_coordinates.json")
@@ -292,9 +318,14 @@ def parse_visible_ports(
         logger.warning(f"[world_map_parser] OmniParser parse failed: {e}")
         return []
 
+    # Right bound: exclude the LIST PANEL if one is open (detected as a chromed column of
+    # stacked rows), else the map runs to near the frame edge (Explore tab has no panel —
+    # a fixed crop there discarded genuinely-on-map village labels).
+    panel_xmin = _detect_list_panel_xmin(elements, frame.width)
+    x_max = panel_xmin if panel_xmin is not None else frame.width - 55
     map_elements = [
         el for el in elements
-        if MAP_X_MIN <= el.cx <= MAP_X_MAX
+        if MAP_X_MIN <= el.cx <= x_max
         and MAP_Y_MIN <= el.cy <= MAP_Y_MAX
     ]
     text_like = [el for el in map_elements
@@ -318,6 +349,14 @@ def parse_visible_ports(
                 named = [fuzzy_key]
         if not named:
             continue
+
+        # Dedupe keys aliasing the SAME catalogue entry — village entries are dual-keyed
+        # ('melanesian' AND 'melanesian village'), and treating the two hits as TWO ports
+        # sent one label into the merged-label SPLIT path, producing bogus tap positions
+        # (live 2026-08-20: found the village, tapped the wrong place).
+        _seen_ids: set = set()
+        named = [k for k in named
+                 if id(ports[k]) not in _seen_ids and not _seen_ids.add(id(ports[k]))]
 
         if len(named) == 1:
             key = named[0]

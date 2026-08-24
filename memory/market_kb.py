@@ -39,6 +39,9 @@ class MarketGood:
     category: str = ""                   # e.g. "Food", "Textile", "Metal"
     available_qty: Optional[int] = None  # units in stock at market (purchase tab only; None if unknown)
     sold_out: bool = False               # True when restocking timer shown instead of price
+    profit_per_unit: Optional[int] = None  # sell tab: per-unit profit baked with distance (negative = loss)
+    is_loss: bool = False                # sell tab: selling here loses money (profit < 0)
+    owned_qty: Optional[int] = None      # sell tab: units of this good currently in cargo
     tap_x: Optional[int] = None         # tile centre x in full-frame pixels
     tap_y: Optional[int] = None         # tile centre y in full-frame pixels
 

@@ -22,12 +22,7 @@ import html
 import json
 from pathlib import Path
 
-from PIL import Image, ImageDraw
-
-_TYPE_COLORS = {
-    "button": (70, 200, 70), "text": (70, 150, 255), "icon": (255, 165, 40),
-    "commit": (255, 215, 0), "checkbox": (210, 70, 210), "image": (150, 150, 150),
-}
+from PIL import Image
 
 
 def _run_components(frame: Image.Image, qwen: bool) -> dict:
@@ -64,27 +59,11 @@ def _run_components(frame: Image.Image, qwen: bool) -> dict:
     return {"state": state, "detail": detail, "omni": omni, "ocr": ocr, "qwen": qres}
 
 
-def _render_omni(frame: Image.Image, omni: list, out: Path, tap=None) -> None:
-    """OmniParser boxes + (combined) the tap crosshair, on one image."""
-    img = frame.convert("RGB").copy()
-    d = ImageDraw.Draw(img)
-    for e in omni:
-        if "x1" not in e:
-            continue
-        col = _TYPE_COLORS.get(e.get("element_type", "?"), (185, 185, 185))
-        d.rectangle([e["x1"], e["y1"], e["x2"], e["y2"]], outline=col, width=3)
-        lbl = (e.get("label") or "")[:26]
-        if lbl:
-            d.text((e["x1"] + 3, max(0, e["y1"] - 14)), lbl, fill=col)
-    if tap and tap[0] >= 0:                     # the tap crosshair (was the Screen tab)
-        x, y, r = tap[0], tap[1], 34
-        d.ellipse([x - r, y - r, x + r, y + r], outline=(255, 0, 0), width=6)
-        d.line([x - r, y, x + r, y], fill=(255, 0, 0), width=3)
-        d.line([x, y - r, x, y + r], fill=(255, 0, 0), width=3)
-    img.save(out)
-
-
 def build(session: Path, qwen: bool, limit: int, rebuild: bool) -> list:
+    """Run OmniParser/OCR/classify per frame (cached to viewer_data/) and collect the
+    element data.  Bounding boxes are NOT drawn here — the browser overlays them from the
+    box coords in the payload (client-side, on-demand highlight), so cached rebuilds do no
+    image work at all (was: re-open + re-draw every frame)."""
     actions = [json.loads(l) for l in (session / "actions.jsonl").read_text().splitlines() if l.strip()]
     if limit:
         actions = actions[:limit]
@@ -95,25 +74,28 @@ def build(session: Path, qwen: bool, limit: int, rebuild: bool) -> list:
         fp = session / a["frame"]
         if not fp.exists():
             continue
+        # Prefer perception RECORDED LIVE by action_trace (frame_XXXX.json beside the png):
+        # OmniParser already ran during the bot's perceive on this frame, so reuse it —
+        # no re-run.  (Absent for traces recorded before this landed → fall through.)
+        sidecar = session / a["frame"].replace(".png", ".json")
+        if sidecar.exists() and not rebuild and not qwen:
+            data = json.loads(sidecar.read_text())
+            if not data.get("state") and data.get("detail"):
+                data["state"] = data["detail"].split(":")[0].split(" ")[0]
+            frames.append({**a, **data})
+            print(f"  [{i+1}/{len(actions)}] {a['frame']} (live perception)")
+            continue
         cache = cache_dir / f"{a['frame'].replace('.png', '')}.json"
-        need_qwen = qwen
-        omni_out = session / a["frame"].replace(".png", "_omni.png")
-        tap = (a.get("x", -1), a.get("y", -1))
         if cache.exists() and not rebuild:
             data = json.loads(cache.read_text())
             if not data.get("state") and data.get("detail"):      # backfill derived state
                 data["state"] = data["detail"].split(":")[0].split(" ")[0]
-            if not need_qwen or data.get("qwen") is not None:
-                # re-render the combined overlay (cheap draw — no OmniParser) so the
-                # tap crosshair is baked into the OmniParser image
-                _render_omni(Image.open(fp).convert("RGB"), data.get("omni", []), omni_out, tap=tap)
+            if not qwen or data.get("qwen") is not None:
                 frames.append({**a, **data})
                 print(f"  [{i+1}/{len(actions)}] {a['frame']} (cached)")
                 continue
         print(f"  [{i+1}/{len(actions)}] {a['frame']} — running components…")
-        frame = Image.open(fp).convert("RGB")
-        data = _run_components(frame, qwen=need_qwen)
-        _render_omni(frame, data["omni"], omni_out, tap=tap)
+        data = _run_components(Image.open(fp).convert("RGB"), qwen=qwen)
         cache.write_text(json.dumps(data))
         frames.append({**a, **data})
     return frames
@@ -141,6 +123,11 @@ _HTML = r"""<!doctype html><html><head><meta charset="utf-8"><title>__TITLE__</t
  .tab:hover{background:#3a3a3a}.tab.sel{background:#0a4a6e;color:#fff}
  #body{flex:1;overflow:auto;padding:10px}
  img{max-width:100%;border:1px solid #444}
+ .ovl{position:absolute;inset:0;pointer-events:none}
+ .obox{position:absolute;border:2px solid;box-sizing:border-box;pointer-events:auto;opacity:.55}
+ .obox.hl{border-width:4px;opacity:1;background:rgba(255,255,255,.18)}
+ .otap{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;border:3px solid #f00;border-radius:50%;box-shadow:0 0 0 2px rgba(255,0,0,.4);pointer-events:none}
+ tr.hl td{background:#0a4a6e}
  table{border-collapse:collapse;font-size:12px}td,th{border:1px solid #444;padding:2px 6px;text-align:left}
  th{background:#2b2b2b;position:sticky;top:0}
  .hd{padding:6px 10px;background:#2b2b2b;border-bottom:1px solid #444}
@@ -176,17 +163,35 @@ function buildTabs(){
   tabsEl.innerHTML=TABS.map((t,i)=>`<div class="tab${i==tab?' sel':''}" onclick="seltab(${i})">${i+1}. ${t}</div>`).join('');
 }
 function img(name){return `<img src="${name}">`;}
-function screenView(f){
-  const m=f.frame.replace('.png', f.kind==='back'?'.png':'_marked.png');
-  return img(m);
+const TYPECOL={button:'#46c846',text:'#4696ff',icon:'#ffa528',commit:'#ffd700',checkbox:'#d246d2',image:'#969696'};
+const NATW=2400,NATH=1080;   // capture resolution — omni box coords are in these pixels
+function hlbox(i,on){
+  for(const id of ['ob'+i,'or'+i]){const el=document.getElementById(id); if(el)el.classList.toggle('hl',!!on);}
 }
+// Boxes are drawn client-side (CSS) from the payload — no server-side render — so the
+// frame + all boxes appear instantly; hover a box OR its table row to isolate one.
 function omniView(f){
-  const om=f.frame.replace('.png','_omni.png');
-  let rows=(f.omni||[]).filter(e=>e.x1!=null).map(e=>`<tr><td>${esc(e.element_type)}</td><td>${esc(e.label||'')}</td>
-    <td>${e.cx},${e.cy}</td><td>${e.x2-e.x1}×${e.y2-e.y1}</td><td>${(e.confidence||0).toFixed?e.confidence.toFixed(2):e.confidence||''}</td></tr>`).join('');
-  return `<div style="display:flex;gap:12px;flex-wrap:wrap">
-    <div style="flex:1;min-width:420px">${img(om)}</div>
-    <div style="flex:1;min-width:340px"><b>${(f.omni||[]).length} elements</b>
+  const els=(f.omni||[]).filter(e=>e.x1!=null);
+  const boxes=els.map((e,i)=>{
+    const c=TYPECOL[e.element_type]||'#b9b9b9';
+    return `<div class="obox" id="ob${i}" onmouseenter="hlbox(${i},1)" onmouseleave="hlbox(${i},0)" title="${esc(e.label||'')}"
+      style="left:${100*e.x1/NATW}%;top:${100*e.y1/NATH}%;width:${100*(e.x2-e.x1)/NATW}%;height:${100*(e.y2-e.y1)/NATH}%;border-color:${c}"></div>`;
+  }).join('');
+  const tap=(f.x>=0)?`<div class="otap" style="left:${100*f.x/NATW}%;top:${100*f.y/NATH}%"></div>`:'';
+  const rows=els.map((e,i)=>`<tr id="or${i}" style="cursor:pointer" onmouseenter="hlbox(${i},1)" onmouseleave="hlbox(${i},0)">
+    <td style="color:${TYPECOL[e.element_type]||'#b9b9b9'}">${esc(e.element_type)}</td><td>${esc(e.label||'')}</td>
+    <td>${e.cx},${e.cy}</td><td>${e.x2-e.x1}×${e.y2-e.y1}</td>
+    <td>${(typeof e.confidence==='number')?e.confidence.toFixed(2):esc(e.confidence||'')}</td></tr>`).join('');
+  // align-items:flex-start — WITHOUT it the flex row STRETCHES the image box to the tall
+  // table's height, so the overlay (inset:0) maps boxes onto that stretched height and they
+  // scatter far below the frame.  The inner wrapper shrink-wraps the image so the overlay's
+  // coordinate space is EXACTLY the image.
+  return `<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start">
+    <div style="flex:1;min-width:420px">
+     <div style="position:relative;display:block;line-height:0">
+      <img src="${esc(f.frame)}" style="width:100%;display:block">
+      <div class="ovl">${boxes}${tap}</div></div></div>
+    <div style="flex:1;min-width:340px"><b>${els.length} elements</b>
     <table><tr><th>type</th><th>label</th><th>cx,cy</th><th>w×h</th><th>conf</th></tr>${rows}</table></div></div>`;
 }
 function ocrView(f){

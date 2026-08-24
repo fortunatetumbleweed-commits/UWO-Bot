@@ -1,0 +1,21 @@
+{
+  "purpose": "Kuki Yoshitaka is offering to negotiate a 21% price reduction on a purchase, showing a 76.7% success rate with remaining negotiation attempts available",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 194,523 → 144,432 (-21%). Negotiation Success Rate: Failed | 76.7% | Success. Kuki Yoshitaka: Hmm, we should be able to buy this for 21% less. Should I negotiate?",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "efb2e53fa1b44718",
+  "goal_intent": null,
+  "cached_at": "2026-08-08T16:22:55.354652+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Kuki Yoshitaka is offering to negotiate a 21% price reduction on a purchase, showing a 76.7% success rate with remaining negotiation attempts available",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 194,523 → 144,432 (-21%). Negotiation Success Rate: Failed | 76.7% | Success. Kuki Yoshitaka: Hmm, we should be able to buy this for 21% less. Should I negotiate?",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

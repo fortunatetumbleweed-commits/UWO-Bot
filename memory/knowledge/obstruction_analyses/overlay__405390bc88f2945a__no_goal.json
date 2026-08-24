@@ -1,0 +1,21 @@
+{
+  "purpose": "Confirmation dialog asking the player to spend 205,848 gold to recruit 953 crew members to fill the fleet's minimum crew requirement",
+  "full_text": "Notice — Recruit 953 Crew? Cost: 205,848 gold. Cancel / OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "overlay",
+  "structural_hash": "405390bc88f2945a",
+  "goal_intent": null,
+  "cached_at": "2026-08-07T23:39:43.248348+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Confirmation dialog asking the player to spend 205,848 gold to recruit 953 crew members to fill the fleet's minimum crew requirement",
+    "full_text": "Notice — Recruit 953 Crew? Cost: 205,848 gold. Cancel / OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

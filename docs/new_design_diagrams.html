@@ -1,0 +1,314 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>UWO Bot — New Design Diagrams</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;max-width:1120px;margin:24px auto;padding:0 22px;line-height:1.55;color:#1b1b1b}h1{border-bottom:2px solid #ddd;padding-bottom:6px}h2{margin-top:34px;border-bottom:1px solid #eee;padding-bottom:4px}h3{margin-top:22px;color:#333}pre.mermaid{background:#fafafd;border:1px solid #ececf2;border-radius:10px;padding:14px;text-align:center;overflow-x:auto}pre code{background:#f5f5f7;display:block;padding:10px 12px;border-radius:8px;overflow-x:auto;font-size:90%}code{background:#f0f0f3;padding:1px 5px;border-radius:4px;font-size:90%}hr{border:none;border-top:1px solid #eee;margin:30px 0}p{margin:8px 0}</style></head><body>
+<h1>New Design — Diagrams (system / state / sequence)</h1>
+
+<p>Visual companion to <code>docs/refactor_plan_perceive_flow_fsm.md</code> and</p>
+<p><code>docs/architecture_review_perceive_flows_2026-08.md</code>.  Diagrams are Mermaid</p>
+<p>(render on GitHub and most markdown viewers).</p>
+
+<p><strong>Notation.</strong> <code>base</code> = underlying screen state; <code>overlay</code> = orthogonal</p>
+<p>popup/dialog axis; a <strong>verified</strong> step = perceive → act → re-perceive → verify</p>
+<p>expected post-state.  Tiers: <strong>local</strong> (cheap, every tick) · <strong>VLM</strong> (rich</p>
+<p>screens, low-frequency) · <strong>RL</strong> (strategy, later).</p>
+
+<hr>
+
+<h2>1. System diagrams</h2>
+
+<h3>1.1 Tiered perception → verified action loop (end to end)</h3>
+<pre class="mermaid">flowchart TB
+    Phone["Android phone (game)"] --&gt;|"screencap (1 frame/tick)"| Cap["capture"]
+    Cap --&gt; Fuse
+
+    subgraph Perc["Perception — tiered, arbitrated"]
+      direction TB
+      Local["Local, every tick:&lt;br/&gt;family CNN · fingerprints ·&lt;br/&gt;layout-slot detector · detect_dialog"]
+      Vlm["VLM — rich screens only:&lt;br/&gt;Claude Vision · Qwen-VL · Moondream"]
+      Ocr["OCR on localized slots"]
+      Fuse["Fusion / arbitration&lt;br/&gt;(one confidence scale)"]
+      Local --&gt; Fuse
+      Vlm --&gt; Fuse
+      Ocr --&gt; Fuse
+    end
+
+    Fuse --&gt; PS["PerceivedState&lt;br/&gt;base + overlay + identity + confidence"]
+    PS --&gt; Loop
+
+    subgraph Loop["Verified action loop"]
+      direction TB
+      R1["resolve overlay if present"]
+      R2["assert precondition (base)"]
+      R3["act"]
+      R4["re-perceive + verify expected_post"]
+      R1 --&gt; R2 --&gt; R3 --&gt; R4
+    end
+
+    Loop --&gt; Dec
+    subgraph Dec["Decision tiers"]
+      direction LR
+      Mech["Mechanics&lt;br/&gt;deterministic contract"]
+      Und["Understanding&lt;br/&gt;VLM + goal prompt"]
+      Strat["Strategy&lt;br/&gt;RL / bandit (later)"]
+    end
+
+    Dec --&gt;|"tap / swipe"| ADB["actions/adb + orientation guard"]
+    ADB --&gt;|input| Phone
+    Loop -.-&gt;|"log (state,action,post,verified)"| KB[("Affordance / experience KB")]
+    KB -.-&gt;|priors| Dec</pre>
+
+<h3>1.2 Explore mode vs Play mode (feeding the affordance KB)</h3>
+<pre class="mermaid">flowchart LR
+    subgraph Ex["Explore mode — Claude, occasional/thorough"]
+      direction TB
+      E1["enumerate elements&lt;br/&gt;(layout detector + OmniParser)"]
+      E2["predict effect (VLM)"]
+      E3{"safe / reversible?"}
+      E4["probe (bounded)"]
+      E5["observe outcome"]
+      E6["record: known, not probed"]
+      E1 --&gt; E2 --&gt; E3
+      E3 --&gt;|yes| E4 --&gt; E5
+      E3 --&gt;|"no (irreversible / red-gem)"| E6
+    end
+    E5 --&gt; KB[("Affordance KB&lt;br/&gt;per building_type")]
+    E6 --&gt; KB
+    KB --&gt; Pl
+    subgraph Pl["Play mode — fast, goal-driven"]
+      direction TB
+      P1["per-building goal spec"]
+      P2["act via KB affordances&lt;br/&gt;+ fast local perception"]
+      P1 --&gt; P2
+    end
+    Pl -.-&gt;|"novelty / failure"| Ex</pre>
+
+<h3>1.3 Model tiers &amp; training (distillation)</h3>
+<pre class="mermaid">flowchart LR
+    Frames[("data/sessions frames")] --&gt; Teach
+    subgraph Teach["Offline teachers (expensive)"]
+      TC["Claude Vision (paid)"]
+      TM["Moondream (~5-7s)"]
+    end
+    Teach --&gt;|"auto-label"| Train["train students"]
+    Train --&gt; Slot["layout-slot detector (YOLO)"]
+    Train --&gt; Cap2["small captioner / classifier (LoRA)"]
+    Slot --&gt; Runtime["Runtime: fast, local, pixel-aware"]
+    Cap2 --&gt; Runtime
+    Runtime -.-&gt;|"novel / ambiguous only"| Teach</pre>
+
+<hr>
+
+<h2>2. State-machine diagrams</h2>
+
+<h3>2.1 Base navigation states (overlay is a separate, orthogonal axis)</h3>
+<pre class="mermaid">stateDiagram-v2
+    [*] --&gt; loading : app launch or login
+    loading --&gt; port_overworld : arrived at destination port
+    loading --&gt; village : arrived at destination village
+    loading --&gt; sea : still sailing, auto-route in progress
+    port_overworld --&gt; market
+    port_overworld --&gt; building
+    port_overworld --&gt; world_map : open world map
+    port_overworld --&gt; sea : depart
+    sea --&gt; world_map : open world map
+    world_map --&gt; sea : set sail auto-route, or close if opened at sea
+    world_map --&gt; port_overworld : close if opened at port
+    sea --&gt; port_overworld : arrive at port
+    sea --&gt; village : arrive at village
+    market --&gt; port_overworld : back
+    building --&gt; port_overworld : back
+    village --&gt; sea : depart
+
+    note right of market
+      OVERLAY axis is orthogonal to base:
+      none | dialog | confirm | negotiation | result
+      | news | reward | error | main_menu (game hub)
+      main_menu overlays sea OR port_overworld (open/close,
+      base unchanged) — just like a dialog.
+      An overlay does NOT change the base —
+      base is kept from last-confident tick.
+    end note</pre>
+
+<h3>2.2 The verified action loop (control state machine)</h3>
+<pre class="mermaid">stateDiagram-v2
+    [*] --&gt; Perceive
+    Perceive --&gt; HandleInterrupt : overlay present but UNEXPECTED
+    Perceive --&gt; AssertPre : ready to act
+    HandleInterrupt --&gt; Perceive : resolve generically, then resume
+    AssertPre --&gt; Act : precondition ok
+    AssertPre --&gt; Fail : precondition wrong
+    Act --&gt; Verify : re-perceive
+    Verify --&gt; Perceive : step ok, action has more steps
+    Verify --&gt; Done : action complete and verified
+    Verify --&gt; Fail : mismatch or stuck
+    Fail --&gt; Escalate : structured failure up
+    Escalate --&gt; [*]
+    Done --&gt; [*]
+
+    note right of Perceive
+      Overlay is EXPECTED vs UNEXPECTED w.r.t. the current
+      action's contract:
+      - EXPECTED (confirm / keypad / negotiation / result) =
+        a STEP of the action -&gt; act on it (tap OK, enter qty),
+        do NOT dismiss. It is just the next 'ready to act'.
+      - UNEXPECTED (news / event / error / reward / main_menu)
+        = an interrupt -&gt; resolve generically, then resume.
+      DialogModel.kind says HOW to handle an overlay;
+      expected-vs-unexpected says WHICH branch.
+    end note
+
+    note right of Escalate
+      bounded retry / replan / safe-abort.
+      NEVER inner-loop-retry forever.
+      headless: safe autonomous fallback, not a crash.
+    end note</pre>
+
+<h3>2.3 Overlay resolution sub-machine (dialog handling)</h3>
+<pre class="mermaid">stateDiagram-v2
+    [*] --&gt; Detect
+    Detect --&gt; None : no overlay
+    Detect --&gt; Classify : detect_dialog fires
+    Classify --&gt; Dismiss : informational / system / reward
+    Classify --&gt; ActInDialog : confirmation, part of my transaction
+    Classify --&gt; AskVLM : unknown or quest, must read
+    AskVLM --&gt; ActInDialog : VLM picks button for goal
+    Dismiss --&gt; Verify
+    ActInDialog --&gt; Verify
+    Verify --&gt; None : overlay gone
+    Verify --&gt; Detect : still present, retry bounded
+    None --&gt; [*]
+
+    note right of Dismiss
+      tap the DETECTED close/X or action —
+      wherever it is (fixes daily-news
+      X-outside-frame). Not a hardcoded coord.
+    end note</pre>
+
+<hr>
+
+<h2>3. Message sequence charts (key procedures)</h2>
+
+<h3>3.1 One verified action step (the core loop)</h3>
+<pre class="mermaid">sequenceDiagram
+    autonumber
+    participant L as Loop
+    participant P as Perception
+    participant D as Detectors and VLM
+    participant C as ActionContract
+    participant A as ADB
+    participant G as Game
+    L-&gt;&gt;P: perceive()
+    P-&gt;&gt;D: run tiered detectors
+    D--&gt;&gt;P: evidence (scored)
+    P--&gt;&gt;L: PerceivedState(base, overlay)
+    opt overlay present
+        L-&gt;&gt;A: resolve overlay (detected affordance)
+        A-&gt;&gt;G: tap close / ok
+        L-&gt;&gt;P: re-perceive
+    end
+    L-&gt;&gt;C: precondition ok? (base)
+    C--&gt;&gt;L: yes
+    L-&gt;&gt;A: act
+    A-&gt;&gt;G: tap / swipe
+    L-&gt;&gt;P: re-perceive
+    P--&gt;&gt;L: PerceivedState'
+    L-&gt;&gt;C: verify(post == expected_post)
+    alt verified
+        C--&gt;&gt;L: +progress (log tuple)
+    else mismatch / stuck
+        C--&gt;&gt;L: -fail (structured → escalate)
+    end</pre>
+
+<h3>3.2 Market buy — Play mode (goal-driven)</h3>
+<pre class="mermaid">sequenceDiagram
+    autonumber
+    participant M as Market mission
+    participant L as Loop
+    participant R as Market reader
+    participant K as KB
+    participant A as ADB
+    participant G as Game
+    M-&gt;&gt;L: goal = buy profitable goods within budget
+    L-&gt;&gt;L: assert base == market
+    L-&gt;&gt;R: read grid (goods, prices, demand)
+    R--&gt;&gt;L: structured goods[]
+    L-&gt;&gt;K: which is profitable at destination?
+    K--&gt;&gt;L: choose good X (+ qty)
+    L-&gt;&gt;A: tap detected tile X
+    A-&gt;&gt;G: tap
+    L-&gt;&gt;L: re-perceive + verify tile loaded
+    L-&gt;&gt;A: tap detected Purchase button
+    A-&gt;&gt;G: tap
+    L-&gt;&gt;L: overlay == confirm → tap OK (detected)
+    L-&gt;&gt;L: verify result dialog → +progress
+    Note over L,K: on read failure → escalate to VLM, not blind flow-coords</pre>
+
+<h3>3.3 Dialog / overlay handling (daily-news over the inn)</h3>
+<pre class="mermaid">sequenceDiagram
+    autonumber
+    participant G as Game
+    participant L as Loop
+    participant P as Perception
+    participant Dg as detect_dialog
+    participant A as ADB
+    Note over G: daily-news popup appears over the inn
+    L-&gt;&gt;P: perceive()
+    P-&gt;&gt;Dg: structural overlay check (every tick, ungated)
+    Dg--&gt;&gt;P: DialogModel(kind=informational, close=X@detected)
+    P--&gt;&gt;L: base = inn (last-confident), overlay = dialog
+    L-&gt;&gt;A: tap DETECTED close X (wherever it is)
+    A-&gt;&gt;G: tap X
+    L-&gt;&gt;P: re-perceive
+    P--&gt;&gt;L: base = inn, overlay = none
+    Note over L: resume the inn goal</pre>
+
+<h3>3.4 Explore mode — discover the Trade-Point chest affordance</h3>
+<pre class="mermaid">sequenceDiagram
+    autonumber
+    participant X as Explore Claude
+    participant Ly as Layout detector
+    participant V as VLM
+    participant A as ADB
+    participant G as Game
+    participant K as KB
+    X-&gt;&gt;Ly: enumerate elements (market)
+    Ly--&gt;&gt;X: slots incl. trade_point_chest (glowing = actionable)
+    X-&gt;&gt;V: predict — what does this element do?
+    V--&gt;&gt;X: claim reward when points full, cost none
+    X-&gt;&gt;X: safe / reversible? yes
+    X-&gt;&gt;A: tap chest
+    A-&gt;&gt;G: tap
+    X-&gt;&gt;V: observe outcome
+    V--&gt;&gt;X: reward claimed, plus blue gems
+    X-&gt;&gt;K: write affordance market.trade_point_chest, when=points_full, effect=reward, cost=none
+    Note over X,K: irreversible or red-gem elements are recorded as known, not probed</pre>
+
+<h3>3.5 Grow trade-round (orchestration, incl. failure escalation)</h3>
+<pre class="mermaid">sequenceDiagram
+    autonumber
+    participant S as self_grow
+    participant L as Loop
+    participant N as Nav sail_to
+    participant Mk as Market
+    participant R as Recovery
+    S-&gt;&gt;L: assert at home port
+    alt orientation wrong
+        L-&gt;&gt;R: guard fails → refuse / re-lock (no mis-tap)
+    end
+    S-&gt;&gt;S: pick destination
+    S-&gt;&gt;N: sail_to(destination)
+    N--&gt;&gt;S: ARRIVED (verified port @ high conf)
+    S-&gt;&gt;Mk: sell cargo → buy goods (goal-driven)
+    alt market read ok
+        Mk--&gt;&gt;S: transaction verified (+profit)
+    else read fails
+        Mk-&gt;&gt;R: structured failure (no blind coords)
+        R--&gt;&gt;S: safe-abort round (headless: no crash)
+    end
+    S-&gt;&gt;N: sail home, then repeat</pre>
+
+<hr>
+
+<h2>Cross-references</h2>
+<p>- Design + decisions: <code>docs/refactor_plan_perceive_flow_fsm.md</code></p>
+<p>- Findings behind the design: <code>docs/architecture_review_perceive_flows_2026-08.md</code></p>
+
+<script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';mermaid.initialize({startOnLoad:true,theme:'default',securityLevel:'loose',flowchart:{htmlLabels:true}});</script></body></html>

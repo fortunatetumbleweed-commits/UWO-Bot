@@ -1,0 +1,21 @@
+{
+  "purpose": "The Recruit Crew panel is open, showing the fleet's current crew deficit and allowing the player to hire up to 953 crew members (costing 205,848 Ming) to fill the ships' rosters from standby crew at port.",
+  "full_text": "Standby Crew: 1403 Ming. Recruit Crew — Fleet Crew Size: 0 (+953) / 2,275, Min Crew 953. Recruit amount: 953 / 2,275. Options: Min | Max Waiting Time | Max. Emergency Recruit: 0. Normal Recruit: 205,848. Cost: 205,848 — Recruit.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "77a95ede34cc01c1",
+  "goal_intent": null,
+  "cached_at": "2026-08-07T21:25:02.756471+00:00",
+  "visit_count": 22,
+  "raw_api_response": {
+    "purpose": "The Recruit Crew panel is open, showing the fleet's current crew deficit and allowing the player to hire up to 953 crew members (costing 205,848 Ming) to fill the ships' rosters from standby crew at port.",
+    "full_text": "Standby Crew: 1403 Ming. Recruit Crew — Fleet Crew Size: 0 (+953) / 2,275, Min Crew 953. Recruit amount: 953 / 2,275. Options: Min | Max Waiting Time | Max. Emergency Recruit: 0. Normal Recruit: 205,848. Cost: 205,848 — Recruit.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

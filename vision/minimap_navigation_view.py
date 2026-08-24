@@ -123,6 +123,22 @@ SPRITE_NEAR_SHIP_PX2 = 64                       # squared distance for "this is 
 # disrupting perception without false-flagging far-bearing markers.
 VILLAGE_OVERLAP_RADIUS_PX = 40
 
+# Kill-switch for the `village_overlap` detector, OFF since 2026-06-07.
+#
+# It was firing on 800/800 ticks of the Nile descent: port markers persistently
+# sit 15-17 px from the ship — inside the 40-px overlap radius but outside the
+# 8-px ship-sprite filter — so the detector saw a permanent overlap and
+# suppressed the tangent every tick.  It was disabled to measure its real
+# contribution, and every navigation milestone since (the 2026-07-31 bankline
+# round trip included) was achieved with it off, so OFF is the de-facto correct
+# behaviour rather than a pending revert.
+#
+# The geometry below is still exercised by tests/test_minimap_village_overlap.py,
+# which flips this flag — so whoever re-enables it inherits working coverage.
+# Before flipping it back on, fix the false-positive first: the radius needs to
+# discriminate "marker near the ship" from "marker overlaying the ship".
+VILLAGE_OVERLAP_ENABLED = False
+
 
 # ── Low-level helpers ─────────────────────────────────────────────────────
 
@@ -852,15 +868,8 @@ class MinimapNavigationView:
         — perception is already in fallback) or when no targets are
         in the minimap.
         """
-        # === TEMPORARY EXPERIMENT 2026-06-07 ===========================
-        # village_overlap was firing on 800/800 ticks of the Nile descent
-        # because port markers persistently sit 15-17 px from the ship
-        # (inside the 40-px overlap radius, outside the 8-px ship-sprite
-        # filter).  Disabling unconditionally to measure how much that
-        # detector was contributing vs. blocking real navigation.
-        # Revert by deleting these two lines and re-enabling the loop.
-        return False
-        # === END EXPERIMENT ============================================
+        if not VILLAGE_OVERLAP_ENABLED:
+            return False
         if self._reading.ship_xy is None:
             return False
         if not self._reading.targets or self._reading.target_pos is None:

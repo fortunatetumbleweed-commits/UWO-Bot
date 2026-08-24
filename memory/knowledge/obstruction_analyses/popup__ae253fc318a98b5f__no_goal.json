@@ -1,0 +1,21 @@
+{
+  "purpose": "Sailing condition panel showing current weather (Clear), wind speed/lux readings, and available sea activities such as Sea Exploration, Explore Land, and Fishing with their remaining counts near Port Royal in the Atlantic Ocean",
+  "full_text": "Clear. 0.0 lux. 2.4. 2↑. Sea Exploration ×780. Explore Land ×1,535. Fishing ×968. Port Royal. Sailing Condition. There are no nearby Sea Exploration spots.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "ae253fc318a98b5f",
+  "goal_intent": null,
+  "cached_at": "2026-08-13T18:10:22.289077+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Sailing condition panel showing current weather (Clear), wind speed/lux readings, and available sea activities such as Sea Exploration, Explore Land, and Fishing with their remaining counts near Port Royal in the Atlantic Ocean",
+    "full_text": "Clear. 0.0 lux. 2.4. 2↑. Sea Exploration ×780. Explore Land ×1,535. Fishing ×968. Port Royal. Sailing Condition. There are no nearby Sea Exploration spots.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

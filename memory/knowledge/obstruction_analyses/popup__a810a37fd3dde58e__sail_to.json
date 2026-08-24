@@ -1,0 +1,21 @@
+{
+  "purpose": "A player encounter overlay showing 'Season 1 Admiral of Myth' rank player TaylorFP sailing nearby in the Atlantic Ocean, displaying their title and flag on the open sea.",
+  "full_text": "Season 1 Admiral of Myth — 淡墨桜 TaylorFP — TW 27.5 | Dry Season Apr Night",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "a810a37fd3dde58e",
+  "goal_intent": "sail_to",
+  "cached_at": "2026-08-14T03:49:52.994650+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A player encounter overlay showing 'Season 1 Admiral of Myth' rank player TaylorFP sailing nearby in the Atlantic Ocean, displaying their title and flag on the open sea.",
+    "full_text": "Season 1 Admiral of Myth — 淡墨桜 TaylorFP — TW 27.5 | Dry Season Apr Night",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,31 @@
+name: "London to Amsterdam — 1 Round Trip"
+description: "London to Amsterdam (direct, short hop across the Channel) — short trade run"
+
+start_port: London
+rounds: 1
+
+loop:
+  # ── Forward leg: London → Amsterdam ──
+  - action: sell_all
+    port: London
+    note: "Sell current cargo at London"
+  - action: buy_all
+    port: London
+    note: "Buy recommended goods at London"
+  - action: sail_to
+    destination: Amsterdam
+
+  # ── Return leg: Amsterdam → London ──
+  - action: sell_all
+    port: Amsterdam
+    note: "Sell cargo at Amsterdam"
+  - action: buy_all
+    port: Amsterdam
+    note: "Buy recommended goods at Amsterdam"
+  - action: sail_to
+    destination: London
+
+report:
+  - profit_loss
+  - per_round
+  - unrecognized_scenes

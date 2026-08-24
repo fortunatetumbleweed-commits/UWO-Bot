@@ -1,0 +1,21 @@
+{
+  "purpose": "Transaction receipt confirming a bulk cargo purchase, showing purchase cost, tax, discount applied, total amount paid, and remaining gold balance",
+  "full_text": "Result — Purchase Cost: 162,309 | Tax: 42,126 | Discount: -64,251 | Total Amount: 140,184 | Balance: 55,436,054,554 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "935700e4635d18dc",
+  "goal_intent": null,
+  "cached_at": "2026-08-08T17:19:35.686815+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Transaction receipt confirming a bulk cargo purchase, showing purchase cost, tax, discount applied, total amount paid, and remaining gold balance",
+    "full_text": "Result — Purchase Cost: 162,309 | Tax: 42,126 | Discount: -64,251 | Total Amount: 140,184 | Balance: 55,436,054,554 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

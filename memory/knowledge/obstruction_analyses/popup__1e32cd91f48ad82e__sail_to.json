@@ -1,0 +1,21 @@
+{
+  "purpose": "A nearby-players or fleet encounter overlay is showing another captain (TaylorFP) and their activity stats (Sea Exploration, Explore Land, Fishing, Cannot Salvage), alongside a port distance list anchored near London — this is the player-info/encounter popup triggered by proximity to another ship in the Atlantic Ocean near London",
+  "full_text": "Season 1 Admiral of Myth | TaylorFP | Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140 | Nearby ports: London (nearby), Dover (~133.9km), Antwerp (~198.4km), Calais (~201km)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "1e32cd91f48ad82e",
+  "goal_intent": "sail_to",
+  "cached_at": "2026-08-14T03:36:13.791450+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A nearby-players or fleet encounter overlay is showing another captain (TaylorFP) and their activity stats (Sea Exploration, Explore Land, Fishing, Cannot Salvage), alongside a port distance list anchored near London — this is the player-info/encounter popup triggered by proximity to another ship in the Atlantic Ocean near London",
+    "full_text": "Season 1 Admiral of Myth | TaylorFP | Sea Exploration x780 | Explore Land x1,535 | Fishing x968 | Cannot Salvage x140 | Nearby ports: London (nearby), Dover (~133.9km), Antwerp (~198.4km), Calais (~201km)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

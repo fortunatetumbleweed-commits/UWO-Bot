@@ -1,5 +1,6 @@
 """Unexpected-dialog handler — promo classify + safe dismiss (X or Back, never buy)."""
 import unittest
+from unittest import mock
 
 import brain.unexpected_dialog as ud
 from brain.unexpected_dialog import looks_like_promo, classify, find_close_x, handle
@@ -11,8 +12,15 @@ class _E:
         self.x1, self.y1, self.x2, self.y2 = cx - w // 2, cy - h // 2, cx + w // 2, cy + h // 2
 
 
-class _Frame:
-    width, height = 2400, 1080
+def _Frame():
+    """A real PIL frame, not a width/height stub.
+
+    `clear_blockers` now pixel-inspects the frame (`np.asarray(frame.convert("RGB"))`)
+    to decide whether a dismissal changed anything, so a duck-typed stub with only
+    width/height no longer satisfies it.
+    """
+    from PIL import Image
+    return Image.new("RGB", (2400, 1080), (0, 0, 0))
 
 
 class PromoDetectTests(unittest.TestCase):
@@ -132,13 +140,73 @@ class ClearBlockersTests(unittest.TestCase):
         self.assertFalse(ud.looks_like_announcement("Purchase | Cargo 18/4,108 | Whisky"))
 
     def test_clear_announcement_via_back(self):
-        ud._ocr_text = lambda f: "Perk | Season | Event | Product | Competition"
+        """Back dismisses the announcement, and the re-read confirms it went away.
+
+        `clear_blockers` no longer trusts the dismissal — it re-captures and re-OCRs,
+        reporting cleared only if the popup is actually gone. So the stub has to model
+        the popup disappearing; an _ocr_text that always returns the announcement text
+        describes a dismissal that did NOT work.
+        """
+        reads = ["Perk | Season | Event | Product | Competition",
+                 "Purchase | Cargo 18/4,108 | Whisky | Steel"]
+        calls_ocr = []
+
+        def _ocr(_f):
+            text = reads[min(len(calls_ocr), len(reads) - 1)]
+            calls_ocr.append(1)
+            return text
+
+        ud._ocr_text = _ocr
         calls = []
-        r = ud.clear_blockers(frame=_Frame(), wake_fn=lambda: None, swipe_fn=lambda *a: None,
-                              tap_fn=lambda x, y: calls.append("tap"),
-                              back_fn=lambda: calls.append("back"))
+        # Back is the FALLBACK — only taken when no close-X is found. Pin that here,
+        # or the detector's answer on the stub frame decides which branch runs.
+        with mock.patch.object(ud, "find_announcement_close_x", return_value=None):
+            r = ud.clear_blockers(frame=_Frame(), wake_fn=lambda: None, swipe_fn=lambda *a: None,
+                                  tap_fn=lambda x, y: calls.append("tap"),
+                                  back_fn=lambda: calls.append("back"),
+                                  capture_fn=_Frame)
         self.assertTrue(r["cleared"]) ; self.assertEqual(r["kind"], "announcement")
         self.assertIn("back", calls)
+        self.assertNotIn("tap", calls)
+
+    def test_clear_announcement_prefers_close_x_over_back(self):
+        """When the popup's own close-X is found, tap it — never fall back to Back.
+
+        Back is unreliable on this popup, and on an overworld the screen-corner is the
+        ☰ hamburger, so the X is the safe dismissal.
+        """
+        reads = ["Perk | Season | Event | Product | Competition",
+                 "Purchase | Cargo 18/4,108 | Whisky | Steel"]
+        calls_ocr = []
+
+        def _ocr(_f):
+            text = reads[min(len(calls_ocr), len(reads) - 1)]
+            calls_ocr.append(1)
+            return text
+
+        ud._ocr_text = _ocr
+        calls = []
+        with mock.patch.object(ud, "find_announcement_close_x", return_value=(1900, 150)):
+            r = ud.clear_blockers(frame=_Frame(), wake_fn=lambda: None, swipe_fn=lambda *a: None,
+                                  tap_fn=lambda x, y: calls.append(("tap", x, y)),
+                                  back_fn=lambda: calls.append("back"),
+                                  capture_fn=_Frame)
+        self.assertTrue(r["cleared"])
+        self.assertIn(("tap", 1900, 150), calls)
+        self.assertNotIn("back", calls)
+
+    def test_announcement_that_survives_dismissal_reports_not_cleared(self):
+        """If the popup is still there after both attempts, say so rather than lying.
+
+        This is the case the old test accidentally described — worth asserting on
+        purpose, since a false "cleared" sends the caller on to tap into a popup.
+        """
+        ud._ocr_text = lambda f: "Perk | Season | Event | Product | Competition"
+        with mock.patch.object(ud, "find_announcement_close_x", return_value=None):
+            r = ud.clear_blockers(frame=_Frame(), wake_fn=lambda: None, swipe_fn=lambda *a: None,
+                                  tap_fn=lambda x, y: None, back_fn=lambda: None,
+                                  capture_fn=_Frame)
+        self.assertFalse(r["cleared"]) ; self.assertEqual(r["kind"], "announcement")
 
 
 if __name__ == "__main__":

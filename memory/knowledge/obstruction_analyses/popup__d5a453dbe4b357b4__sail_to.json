@@ -1,0 +1,21 @@
+{
+  "purpose": "A 'Season 1 Admiral of Myth' rank/achievement popup has appeared for player TaylorFP, likely triggered by encountering or being near a high-ranked player on the open sea",
+  "full_text": "Season 1 Admiral of Myth — 淡墨桜 — TaylorFP",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "d5a453dbe4b357b4",
+  "goal_intent": "sail_to",
+  "cached_at": "2026-08-13T02:26:13.304030+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A 'Season 1 Admiral of Myth' rank/achievement popup has appeared for player TaylorFP, likely triggered by encountering or being near a high-ranked player on the open sea",
+    "full_text": "Season 1 Admiral of Myth — 淡墨桜 — TaylorFP",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

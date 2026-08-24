@@ -1,0 +1,168 @@
+{
+  "box_of_nutmeg": {
+    "good": "Box of Nutmeg",
+    "season": "7",
+    "inputs": [
+      {
+        "material": "Ebony",
+        "ratio": 168,
+        "source_ports": [
+          "Ambon",
+          "Brunei",
+          "Jakarta"
+        ]
+      },
+      {
+        "material": "Coral",
+        "ratio": 228,
+        "source_ports": [
+          "Male",
+          "Atuona",
+          "Guam",
+          "Las Palmas",
+          "Samarai",
+          "Santo Domingo",
+          "Sofala",
+          "Whanganui"
+        ]
+      },
+      {
+        "material": "Textiles",
+        "ratio": 252,
+        "source_ports": [
+          "Kolkata",
+          "Masulipatnam"
+        ]
+      }
+    ],
+    "village_inputs": {
+      "melanesian_village": [
+        {
+          "material": "Ebony",
+          "ratio": 168,
+          "source_ports": [
+            "Ambon",
+            "Brunei",
+            "Jakarta"
+          ]
+        },
+        {
+          "material": "Coral",
+          "ratio": 228,
+          "source_ports": [
+            "Male",
+            "Atuona",
+            "Guam",
+            "Las Palmas",
+            "Samarai",
+            "Santo Domingo",
+            "Sofala",
+            "Whanganui"
+          ]
+        },
+        {
+          "material": "Textiles",
+          "ratio": 252,
+          "source_ports": [
+            "Kolkata",
+            "Masulipatnam"
+          ]
+        }
+      ]
+    },
+    "villages": [
+      "Melanesian Village",
+      "Malay Village",
+      "Khmer Village"
+    ],
+    "output_per_round": {
+      "Neutral": 591,
+      "Friendly": 679,
+      "Trusting": 476
+    },
+    "preconditions": {
+      "amity_min": null,
+      "trade_level_min": null,
+      "negotiation_expertise_min": null,
+      "guild": null,
+      "event": null
+    },
+    "notes": "Season 7 (2026-08-10 to 2026-12-09). Melanesian & Khmer: Ebony+Coral+Textiles; Malay: Ebony+Coral+Dhaka Muslin (Dhaka Muslin needs a Monopolizing Guild in Masulipatnam/Kolkata/Pegu/Pondicherry). Khmer requires Negotiation Expertise LV24. Ratios + per-round output UNKNOWN here — read live from the village barter panel. [Melanesian ratios read live 2026-08-15: 136 Ebony + 204 Coral + 180 Textiles -> 591 Box of Nutmeg/round @ Neutral.]"
+  },
+  "camas": {
+    "good": "Camas",
+    "season": "",
+    "inputs": [
+      {
+        "material": "Avocado",
+        "ratio": 150,
+        "source_ports": [
+          "Bahia",
+          "Buenos Aires",
+          "Cartagena",
+          "Lima",
+          "Pernambuco",
+          "Rio de Janeiro"
+        ]
+      }
+    ],
+    "villages": [
+      "Apache Village"
+    ],
+    "output_per_round": {
+      "Friendly": 559
+    },
+    "preconditions": {
+      "amity_min": null,
+      "trade_level_min": null,
+      "negotiation_expertise_min": null,
+      "guild": null,
+      "event": null
+    },
+    "notes": ""
+  },
+  "pink_diamond": {
+    "good": "Pink Diamond",
+    "season": "",
+    "inputs": [
+      {
+        "material": "Goldware",
+        "ratio": 26,
+        "source_ports": []
+      },
+      {
+        "material": "Mercury",
+        "ratio": 34,
+        "source_ports": []
+      }
+    ],
+    "village_inputs": {
+      "melanesian_village": [
+        {
+          "material": "Goldware",
+          "ratio": 26,
+          "source_ports": []
+        },
+        {
+          "material": "Mercury",
+          "ratio": 34,
+          "source_ports": []
+        }
+      ]
+    },
+    "villages": [
+      "Melanesian Village"
+    ],
+    "output_per_round": {
+      "Friendly": 199
+    },
+    "preconditions": {
+      "amity_min": null,
+      "trade_level_min": null,
+      "negotiation_expertise_min": null,
+      "guild": null,
+      "event": null
+    },
+    "notes": ""
+  }
+}

@@ -256,6 +256,70 @@ def _same_button(a: tuple, b: tuple) -> bool:
     )
 
 
+# In this game a POSITIVE button is identified by its YELLOW BACKGROUND; the wording on it
+# is secondary (user 2026-08-22). Measured on the dialog's gold OK button and the controls
+# the text search wrongly picked:
+#
+#     Ok                     yellow 0.64   <- the real commit
+#     Cancel                 yellow 0.00
+#     Trade Info             yellow 0.00   <- tapped 2026-08-22 via the "trade" substring
+#     Requested Trade Goods  yellow 0.00   <- tapped 2026-08-22, same cause
+#     Trade Points           yellow 0.00
+#
+# so the two populations are not close and a modest threshold separates them.
+_POSITIVE_YELLOW_HUE = (35.0, 60.0)     # degrees; the game's gold
+# 0.45 was calibrated on the DIALOG OK button (64-91% gold) and clipped paler commit buttons.
+# The village barter panel's Exchange is a pale gold gradient — median saturation 0.39 — so it
+# scored 0.067 and was rejected as "not a commit button" while being plainly live on screen
+# (2026-08-23). It passed one frame and failed the next, because it sat right on the boundary.
+#
+# Measured on that panel, the populations are nowhere near each other at 0.30:
+#
+#     Exchange                 0.654      <- the real commit button
+#     Negotiate                0.000
+#     Check Village Influence  0.000
+#     (Trade Info / Trade Points / Requested Trade Goods, 2026-08-22: 0.000)
+#
+# So 0.30 keeps every false positive this gate exists to stop, and stops clipping real
+# buttons. The hue band is doing the discriminating; the saturation floor only has to exclude
+# near-grey.
+_POSITIVE_YELLOW_MIN_SAT = 0.30
+_POSITIVE_YELLOW_MIN_VAL = 0.50
+_POSITIVE_YELLOW_MIN_FRAC = 0.25
+
+
+def has_positive_background(frame, el, min_frac: float = _POSITIVE_YELLOW_MIN_FRAC) -> bool:
+    """True when `el` is drawn on the game's positive (gold) background.
+
+    Text alone is not enough to call a control "positive": POSITIVE_LABELS contains the
+    word "trade", which matches Trade Info, Trade Goods, Trade Points and Requested Trade
+    Goods — none of which commit anything. The colour is what actually distinguishes a
+    commit button, so it is required.
+
+    Returns False when the element carries no bbox or the frame cannot be read — this gates
+    an action, so "cannot tell" must not mean "go ahead".
+    """
+    try:
+        import colorsys
+        import numpy as _np
+        x1, y1 = int(getattr(el, "x1")), int(getattr(el, "y1"))
+        x2, y2 = int(getattr(el, "x2")), int(getattr(el, "y2"))
+        a = _np.asarray(frame.convert("RGB")).astype(float)[y1:y2, x1:x2]
+        if a.size == 0:
+            return False
+        px = a.reshape(-1, 3) / 255.0
+        hsv = _np.array([colorsys.rgb_to_hsv(*p) for p in px])
+        h, sat, val = hsv[:, 0] * 360.0, hsv[:, 1], hsv[:, 2]
+        lo, hi = _POSITIVE_YELLOW_HUE
+        frac = float(((h >= lo) & (h <= hi)
+                      & (sat >= _POSITIVE_YELLOW_MIN_SAT)
+                      & (val >= _POSITIVE_YELLOW_MIN_VAL)).mean())
+        return frac >= min_frac
+    except Exception as exc:
+        logger.debug(f"[commit] positive-background check skipped: {exc}")
+        return False
+
+
 def _yellow_commit_button(elements, frame, goal_keywords: Optional[Iterable[str]]):
     """Prefer the game's signature yellow COMMIT button (a `<cost> <VERB>` pill)
     over a plain text-verb match.
@@ -371,6 +435,37 @@ def commit_via_positive_taps(
                 btn = find_positive_button(
                     elements, frame_w=frame.width, frame_h=frame.height,
                 )
+            # The text search matches on words, and "trade" is a word that appears on
+            # several controls that commit nothing. Require the game's yellow background
+            # before treating a text match as a positive button.
+            if btn is not None and not has_positive_background(frame, btn):
+                # A DIMMING OVERLAY IS NOT A DISABLED BUTTON. The colour test needs a minimum
+                # brightness, and a popup darkens everything behind it — so a perfectly live
+                # gold button reads as "not positive" while a dialog sits on top.
+                #
+                # Live 2026-08-23: after the first barter round an overlay remained, Exchange
+                # was still gold and still tappable (user), but this gate rejected it twice
+                # and the mission gave up with a second round funded and unspent.
+                #
+                # Clear what is in the way, then judge — the same order used everywhere else
+                # (brain/unexpected.py, sail_to._handle_unknown, _at_a_village).
+                cleared = False
+                try:
+                    from brain.unexpected_dialog import clear_blockers
+                    cleared = bool(clear_blockers(frame).get("cleared"))
+                except Exception as exc:
+                    logger.debug(f"[commit] blocker check failed: {exc}")
+                if cleared:
+                    # The loop re-captures and re-parses at the top of every iteration, so
+                    # `continue` IS the re-perceive.
+                    logger.info(f"[commit] iter {iteration}: a blocker was dimming the "
+                                "screen — cleared it, re-perceiving before judging")
+                    continue
+                logger.info(
+                    f"[commit] iter {iteration}: {getattr(btn, 'label', '?')!r} matched by "
+                    "text but has no positive (yellow) background — not a commit button"
+                )
+                btn = None
         if btn is None:
             logger.info(
                 f"[commit] iter {iteration}: no positive button found — "

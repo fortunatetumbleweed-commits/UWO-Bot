@@ -1199,6 +1199,10 @@ def _slug(s: str) -> str:
     return "".join(c if c.isalnum() else "_" for c in s)[:48]
 
 
+class _SkipPositiveFallback(Exception):
+    """Internal: the positive-button fallback does not apply here (no goal to finish)."""
+
+
 def escalate(
     context: str,
     perceive_result: "brain.perceive.PerceiveResult",
@@ -1276,11 +1280,26 @@ def escalate(
     # it once before opening the teaching loop.
     try:
         from brain.commit_actions import commit_via_positive_taps
+
+        # A positive-button drain is only legitimate when something unexpected interrupted
+        # a goal the bot was PURSUING — i.e. it has a goal and has already committed an
+        # action, so there is a transaction to finish (user 2026-08-22). With no goal there
+        # is nothing to finish, and the search degrades to "tap whatever looks positive":
+        # on 2026-08-22 that tapped `Trade Info` and then the `Requested Trade Goods` panel
+        # title on the Market landing page, where no transaction existed at all.
+        goal_keywords = _extract_goal_keywords(goal) if goal else None
+        if not goal_keywords:
+            logger.info(
+                "  [escalate] No goal in context — skipping the positive-button fallback "
+                "(nothing to commit) and falling through to teaching"
+            )
+            raise _SkipPositiveFallback
+
         logger.info(
-            "  [escalate] Pre-teaching fallback: trying commit_via_positive_taps "
-            "(tap visible positive button, up to 3 cycles)"
+            f"  [escalate] Pre-teaching fallback: trying commit_via_positive_taps "
+            f"(goal_keywords={goal_keywords}, up to 3 cycles)"
         )
-        tapped = commit_via_positive_taps(max_taps=3)
+        tapped = commit_via_positive_taps(max_taps=3, goal_keywords=goal_keywords)
         if tapped:
             result = reclassify_with_claude(capture_screen(), perceive())
             if result.state != state:

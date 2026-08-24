@@ -1,0 +1,21 @@
+{
+  "purpose": "A side-panel showing the ship's current navigation context (nearby ports Den Helder and Amsterdam, coordinates, season/time), repel support inventory, and nearby salvage/fishing activity — this is a persistent HUD panel, not a blocking popup",
+  "full_text": "C/HW | Den Helder | Amsterdam | 0.0 | 7.4 | ~52.75,5.26 | 1▼ | Spring | Mar | Night | Use Repel | Repel Support Owned: 181 | Repel Support Used: 5 | No nearby companies. | Cannot Salvage ×140",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "f1926deaa80dd7f6",
+  "goal_intent": "sail_to",
+  "cached_at": "2026-08-13T02:25:42.839759+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A side-panel showing the ship's current navigation context (nearby ports Den Helder and Amsterdam, coordinates, season/time), repel support inventory, and nearby salvage/fishing activity — this is a persistent HUD panel, not a blocking popup",
+    "full_text": "C/HW | Den Helder | Amsterdam | 0.0 | 7.4 | ~52.75,5.26 | 1▼ | Spring | Mar | Night | Use Repel | Repel Support Owned: 181 | Repel Support Used: 5 | No nearby companies. | Cannot Salvage ×140",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

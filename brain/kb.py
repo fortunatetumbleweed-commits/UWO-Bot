@@ -108,6 +108,17 @@ class ControlKB:
         variants = self._ui.get("building_name_variants", {})
         return variants.get(building.lower(), [building.lower()])
 
+    def always_present_buildings(self) -> set[str]:
+        """Buildings that exist at EVERY port (user 2026-08-15): Harbor, Market, Inn,
+        Bureau, Shipyard. So 'target not found in the current building-list view'
+        means it's SCROLLED OFF or mis-parsed — NOT absent. Callers should reparse /
+        scroll / open the port map rather than give up on these."""
+        return set(self._ui.get("always_present_buildings",
+                                ["harbor", "market", "inn", "bureau", "shipyard"]))
+
+    def is_always_present(self, building: str) -> bool:
+        return (building or "").lower() in self.always_present_buildings()
+
     def detail_mentions_building(self, detail: str, building: str) -> bool:
         """
         True if `detail` (case-insensitively) contains any known label

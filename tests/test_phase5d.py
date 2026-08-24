@@ -29,7 +29,7 @@ def _text_el(text, cx, cy):
     )
 
 
-# Real port names from memory/knowledge/config/port_positions.json
+# Real game port names (from the port catalogue)
 _KNOWN_PORTS = [
     "london", "dover", "amsterdam", "lisbon", "seville",
     "plymouth", "santiago_de_cuba",

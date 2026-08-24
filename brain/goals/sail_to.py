@@ -28,6 +28,13 @@ from typing import Optional
 from loguru import logger
 
 
+# Stall detection: only re-navigate when the ship is CONFIRMED not moving — speed reads 0 AND the
+# lat/lon hasn't advanced over a tick.  `_STALL_POS_EPS` is the min |Δlat|+|Δlon| (degrees) over a
+# ~20s tick that counts as "moving"; below it (with speed 0) the ship is treated as stopped.
+_STALL_POS_EPS = 0.02
+_STALL_TICKS = 2
+
+
 # ── Phase enum ───────────────────────────────────────────────────────────────
 
 class SailPhase(Enum):
@@ -80,10 +87,15 @@ class SailToGoal:
 
     _fleet_checked:       bool = field(default=False, init=False)
     _destination_selected: bool = field(default=False, init=False)
+    # Picking the destination FROM PORT makes the game run to the harbour, supply and
+    # sail in one operation. Tried once per goal; on failure we fall back to the older
+    # harbour → fleet-check → depart path rather than looping on it.
+    _port_departure_tried: bool = field(default=False, init=False)
     _fail_reason:          str  = field(default="", init=False)
     _tick_count:           int  = field(default=0, init=False)
     _max_ticks:            int  = field(default=300, init=False)  # ~25-50 min
     _zero_speed_count:     int  = field(default=0, init=False)
+    _last_pos: Optional[tuple] = field(default=None, init=False)  # last (lat,lon) — stall confirm
 
     # Failure tracking: consecutive failures in the same phase → give up
     _consecutive_failures: int = field(default=0, init=False)
@@ -349,9 +361,34 @@ class SailToGoal:
             return TickResult("wait_loading", self.phase, delay=3.0)
         if loc == "main_menu":
             return self._handle_main_menu()
+        if loc == "sub_menu":
+            # A sub_menu is a KNOWN state (inside a menu, e.g. the market's purchase
+            # sub-menu). Exit it with ONE Back per tick — tick-level perceive→act→
+            # perceive, NOT the blocking recover_to_port_overworld subloop. See
+            # feedback_subloops_only_known_states / docs/action_verification_and_
+            # recovery_design.md. (Upstream, the gather step now exits the market so we
+            # rarely reach here — this is the defensive tick-level path.)
+            return self._action_back_out_of_submenu(state)
 
-        # Unknown — attempt recovery
+        # Truly UNKNOWN state (novel / unrecognised) — recovery is the last resort.
         return self._handle_unknown(state)
+
+    def _action_back_out_of_submenu(self, state) -> TickResult:
+        from actions.adb_actions import tap, press_back
+        from vision.chrome_detector import get_chrome_detector
+        from capture.adb_capture import capture_screen
+        logger.info(f"[sail_to] state=sub_menu ({state.detail!r}) — backing out one level")
+        try:
+            chrome = get_chrome_detector().detect(capture_screen())
+        except Exception:
+            chrome = None
+        if chrome is not None and chrome.has_back_arrow:
+            tap(110, 40)                                   # in-game back arrow (top-left)
+        elif chrome is not None and chrome.has_home and not chrome.has_hamburger:
+            tap(2300, 45)                                  # Home — only on chromed screens
+        else:
+            press_back()
+        return TickResult("back_out_submenu", self.phase, delay=2.0)
 
     # ── State handlers ───────────────────────────────────────────────────
 
@@ -384,10 +421,34 @@ class SailToGoal:
         return self._action_exit_building()
 
     def _handle_overworld(self, state) -> TickResult:
+        """From a PORT, pick the destination on the world map and let the game depart.
+
+        Selecting Move to City / Move to Village from inside a port makes the game run to
+        the harbour, SUPPLY the fleet, and set sail — one operation instead of harbour →
+        fleet check → depart → then pan the map at sea, which costs a second harbour trip
+        and burns supply while the bot navigates (user 2026-08-21). The world-map work is
+        identical; only the consequence differs.
+
+        `depart_from_port_via_world_map` owns the two ways this misbehaves — staying
+        ashore, and reaching the sea with speed 0 — and falls back to the harbour flow
+        below if it cannot get the fleet under way at all."""
         if not self.from_port and state.port:
             self.from_port = state.port
-        self.phase = SailPhase.GO_TO_HARBOR
         self._reset_failures()
+
+        if not self._port_departure_tried:
+            self._port_departure_tried = True
+            from actions.sail_actions import depart_from_port_via_world_map
+            res = depart_from_port_via_world_map(self.destination)
+            if res.get("ok"):
+                self._destination_selected = True
+                self.phase = SailPhase.SAILING
+                return TickResult(f"departed:{res.get('departed_via')}", SailPhase.SAILING,
+                                  note=res.get("reason"), delay=3.0)
+            logger.warning(f"[sail_to] port departure did not get under way "
+                           f"({res.get('reason')}) — falling back to the harbour flow")
+
+        self.phase = SailPhase.GO_TO_HARBOR
         return self._action_navigate_to_harbor()
 
     def _handle_sea(self, state) -> TickResult:
@@ -480,6 +541,30 @@ class SailToGoal:
             )
             return TickResult("re_dispatch", self.phase, delay=2.0)
 
+        # IS SOMETHING JUST IN THE WAY? An unreadable state is not evidence that the fleet is
+        # in the wrong place — it is often evidence that a popup is covering the evidence.
+        # Clear it and re-perceive BEFORE planning any navigation.
+        #
+        # Live 2026-08-23: an announcement popup covered the screen as the fleet ARRIVED at
+        # Melanesian Village. The state read 'unknown', this branch planned "back to
+        # overworld", and from a village that means sailing away — the position the mission
+        # had just spent a voyage on. The popup never blocked the GAME (the fleet arrived
+        # fine); it only blocked the bot's reading, and the bot navigated on the blindness.
+        #
+        # The popup is orthogonal to the state, never a state of its own: it can sit over a
+        # village, a market or the sea, and collapsing all of those into 'unknown' is what
+        # destroys the information the recovery needed. See docs/one_loop_task_drives_state.md
+        # and brain/unexpected.py.
+        try:
+            from brain.unexpected_dialog import clear_blockers
+            from capture.adb_capture import capture_screen
+            if clear_blockers(capture_screen()).get("cleared"):
+                logger.info("[sail_to] a blocker was covering the screen — cleared it; "
+                            "re-perceiving instead of planning a recovery")
+                return TickResult("blocker_cleared", self.phase, delay=1.5)
+        except Exception as exc:
+            logger.debug(f"[sail_to] blocker check failed: {exc}")
+
         from brain.planner import get_planner
 
         logger.warning(
@@ -521,7 +606,10 @@ class SailToGoal:
 
         frame = capture_screen()
         chrome = get_chrome_detector().detect(frame)
-        if chrome.has_home:
+        # Home (2300,45) exits to overworld ONLY on chromed screens; on the overworlds
+        # that slot is the ☰ hamburger and OPENS Company Overview (never tap it there).
+        # has_hamburger flags an overworld. See project_home_button_is_chromed_only_escape.
+        if chrome.has_home and not chrome.has_hamburger:
             tap(2300, 45)
             logger.info("[sail_to] Tapping Home button (2300, 45) to exit building")
         elif chrome.has_back_arrow:
@@ -678,38 +766,126 @@ class SailToGoal:
 
         # Sea cinematic — wake from idle view
         if loc == "sea_cinematic":
-            tap(1200, 540)
+            from actions import ui as _ui
+            _ui.tap_centre(why="wake the sea cinematic")
             return TickResult("wake_cinematic", SailPhase.SAILING, delay=3.0)
 
         # Normal sea — anti-idle tap
         tap(1200, 540)
 
-        # Stall detection: speed=0 for consecutive ticks → re-navigate
+        # STALL DETECTION — re-navigate ONLY when the ship is CONFIRMED not moving: speed reads 0
+        # AND the lat/lon position has not advanced since the last tick.  A speed read alone is NOT
+        # enough — a single OCR misread of a MOVING ship's speed as 0 used to discard the committed
+        # route and re-open the world map mid-voyage (the hamburger loop, 2026-08-19).  If the
+        # position can't be read we do NOT stall (can't confirm it's stopped).
         try:
             from actions.sail_actions import _read_sea_speed
+            from vision.sea_hud import read_latlon
             from capture.adb_capture import capture_screen
 
-            speed = _read_sea_speed(capture_screen())
-            if speed is not None:
-                if speed == 0.0:
-                    self._zero_speed_count += 1
-                    logger.info(
-                        f"[sail_to] Speed=0.0 "
-                        f"({self._zero_speed_count}/2 before re-navigate)"
-                    )
-                    if self._zero_speed_count >= 2:
-                        logger.warning(
-                            "[sail_to] Ship stalled at waypoint — re-navigating"
-                        )
-                        self._zero_speed_count = 0
-                        self._destination_selected = False
-                        self.phase = SailPhase.SEA_NAVIGATE
-                        return TickResult(
-                            "stall_renavigate", SailPhase.SAILING,
-                        )
-                else:
+            frame = capture_screen()
+            speed = _read_sea_speed(frame)
+            pos = read_latlon(frame, prev_latlon=self._last_pos)
+            advanced = (pos is not None and self._last_pos is not None
+                        and abs(pos[0] - self._last_pos[0])
+                          + abs(pos[1] - self._last_pos[1]) > _STALL_POS_EPS)
+
+            if advanced or (speed is not None and speed > 0.0):
+                self._zero_speed_count = 0             # moving → not stalled
+            elif (speed == 0.0 and pos is not None
+                    and self._last_pos is not None and not advanced):
+                self._zero_speed_count += 1            # speed 0 AND position held
+                logger.info(f"[sail_to] Not moving (speed=0, pos held @ {pos}) "
+                            f"{self._zero_speed_count}/{_STALL_TICKS} before re-navigate")
+                if self._zero_speed_count >= _STALL_TICKS:
+                    logger.warning("[sail_to] Ship CONFIRMED stalled (speed=0 + position held) "
+                                   "— re-navigating")
                     self._zero_speed_count = 0
+                    self._destination_selected = False
+                    self.phase = SailPhase.SEA_NAVIGATE
+                    self._last_pos = pos
+                    return TickResult("stall_renavigate", SailPhase.SAILING)
+            if pos is not None:
+                self._last_pos = pos
         except Exception:
-            pass  # speed read failed — not critical
+            pass  # speed/pos read failed — not critical; do NOT stall on uncertainty
 
         return TickResult("sailing", SailPhase.SAILING, delay=20.0)
+
+
+def drive_sail_to(destination: str, from_port=None, min_supply_days=None) -> dict:
+    """Drive a SailToGoal to completion — the ONE sail path for BOTH ports and
+    villages. SailToGoal's WORLD_MAP phase dispatches Explore-tab village vs port
+    selection (_navigate_world_map_to_destination), and its arrival check accepts the
+    'village' state as well as 'port_overworld' — so sailing to a village is identical
+    to a port except the arrival place. Returns {ok, reason}.
+
+    Used by the mission sub-task executors (brain/barter_mission_live) so gather /
+    sail_to_village / sail_to_sell all share the validated sail (harbour Back-handling
+    fix included), not the older monolithic sail_to_port. The task runner's run_sail_to
+    drives the same goal; supply mid-voyage watch lives there (each barter leg departs
+    via Supply Departure, so legs start topped up)."""
+    import random
+    import time as _time
+    from loguru import logger as _logger
+
+    # Already at the destination? Skip the pointless round-trip. (The Malé bug: the
+    # scheduler picked the CURRENT port, but where_am_i's port read None, so SailToGoal
+    # tried to sail to where it already was.) OmniParser is non-deterministic and a
+    # port_overworld ALWAYS has a name (invariant — feedback_never_act_blind_know_
+    # location_and_state), so RE-READ a few times before concluding.
+    from actions.sail_actions import where_am_i
+    from capture.adb_capture import capture_screen
+    dest5 = (destination or "").lower()[:5]
+    for attempt in range(3):
+        loc = where_am_i(capture_screen())
+        if loc.get("location") != "port_overworld":
+            break                                    # at sea/building → proceed to sail
+        port = loc.get("port")
+        if port and dest5 and dest5 in port.lower():
+            _logger.info(f"[drive_sail_to] already at {destination!r} (read {port!r}) — skipping sail")
+            return {"ok": True, "reason": f"already at {destination}"}
+        if port:
+            break                                    # a DIFFERENT port → proceed to sail
+        _logger.warning(f"[drive_sail_to] port_overworld but port name unreadable "
+                        f"(try {attempt + 1}/3) — re-reading (a port always has a name)")
+        _time.sleep(0.6)
+
+    # Mid-voyage supply watch (parity with the task runner's run_sail_to): a long or
+    # stuck voyage must divert to resupply instead of sailing until supply hits 0 and
+    # the game force-returns the fleet (the gather run died this way 2026-08-17).
+    try:
+        from actions.task_runner import _ensure_supply, _next_supply_check_s
+    except Exception:
+        _ensure_supply, _next_supply_check_s = None, (lambda _d: 120.0)
+
+    def _supply_check() -> float:
+        """Read supply, divert if short, and return how long to wait before looking
+        again — about one game day before the tank would run dry (user 2026-08-20)."""
+        if _ensure_supply is None:
+            return 120.0
+        try:
+            days = _ensure_supply(destination, min_days=min_supply_days)
+        except Exception as exc:
+            _logger.debug(f"[drive_sail_to] supply check skipped: {exc}")
+            return 120.0
+        wait = _next_supply_check_s(days)
+        _logger.debug(f"[drive_sail_to] supply {days}d → next check in {wait / 60:.1f} min")
+        return wait
+
+    goal = SailToGoal(destination=destination, from_port=from_port)
+    # Look once as soon as we are under way (tops up if we started at sea under-supplied),
+    # then re-look on a cadence derived from what the HUD actually showed.
+    next_supply = _time.monotonic() + _supply_check()
+    while not goal.is_complete and not goal.is_failed:
+        result = goal.tick()
+        if _time.monotonic() >= next_supply:
+            next_supply = _time.monotonic() + _supply_check()
+        delay = result.delay if getattr(result, "delay", 0) and result.delay > 0 else random.uniform(1.5, 2.5)
+        _time.sleep(delay)
+
+    if goal.is_complete:
+        return {"ok": True, "reason": f"arrived at {destination}"}
+    reason = getattr(goal, "_fail_reason", "") or f"sail to {destination!r} did not complete"
+    _logger.warning(f"[drive_sail_to] {destination!r} failed: {reason}")
+    return {"ok": False, "reason": reason}

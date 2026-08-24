@@ -83,6 +83,13 @@ class ChromeState:
     # Match scores for each element (0–1), useful for debugging
     scores: dict[str, float] = field(default_factory=dict)
 
+    # Where each matched element actually IS, as frame coordinates of its centre.
+    # Callers must tap THIS rather than a remembered slot: the game re-bakes its
+    # camera-cutout offset per screen, so the chrome row slides between screens. On
+    # Jakarta's Market (2026-08-21) the Home icon sat at centre x≈2219 while
+    # actions/screen_exit.py tapped a fixed (2300, 45) — 81px away, on nothing.
+    positions: dict[str, tuple[int, int]] = field(default_factory=dict)
+
     def classify(self, ocr_title: str) -> str:
         """
         Apply the decision tree to determine scene type.
@@ -210,6 +217,7 @@ class ChromeDetector:
         """
         frame_bgr = cv2.cvtColor(np.array(frame), cv2.COLOR_RGB2BGR)
         scores: dict[str, float] = {}
+        positions: dict[str, tuple[int, int]] = {}
 
         def _match(name: str) -> bool:
             tmpl = self._templates.get(name)
@@ -222,9 +230,16 @@ class ChromeDetector:
                 scores[name] = 0.0
                 return False
             result = cv2.matchTemplate(region, tmpl, cv2.TM_CCOEFF_NORMED)
-            score = float(result.max())
+            _mn, score, _mnl, max_loc = cv2.minMaxLoc(result)
+            score = float(score)
             scores[name] = score
-            return score >= self.threshold
+            if score >= self.threshold:
+                # Record the CENTRE of the match in frame coords, so callers tap where the
+                # element is rather than where it used to be.
+                positions[name] = (int(l + max_loc[0] + tmpl.shape[1] / 2),
+                                   int(t + max_loc[1] + tmpl.shape[0] / 2))
+                return True
+            return False
 
         state = ChromeState(
             has_hamburger     = _match("hamburger"),
@@ -233,6 +248,7 @@ class ChromeDetector:
             has_world_map_btn = _match("world_map_btn"),
             has_right_panel   = _match("right_panel"),
             scores            = scores,
+            positions         = positions,
         )
 
         logger.debug(
@@ -267,6 +283,7 @@ class ChromeDetector:
         # parse_fast: home and hamburger share the top-right region.
         frame_bgr = cv2.cvtColor(np.array(frame), cv2.COLOR_RGB2BGR)
         scores: dict[str, float] = {}
+        positions: dict[str, tuple[int, int]] = {}
 
         def _match(name: str) -> bool:
             tmpl = self._templates.get(name)
@@ -279,9 +296,16 @@ class ChromeDetector:
                 scores[name] = 0.0
                 return False
             result = cv2.matchTemplate(region, tmpl, cv2.TM_CCOEFF_NORMED)
-            score = float(result.max())
+            _mn, score, _mnl, max_loc = cv2.minMaxLoc(result)
+            score = float(score)
             scores[name] = score
-            return score >= self.threshold
+            if score >= self.threshold:
+                # Record the CENTRE of the match in frame coords, so callers tap where the
+                # element is rather than where it used to be.
+                positions[name] = (int(l + max_loc[0] + tmpl.shape[1] / 2),
+                                   int(t + max_loc[1] + tmpl.shape[0] / 2))
+                return True
+            return False
 
         template_state = ChromeState(
             has_hamburger = _match("hamburger"),

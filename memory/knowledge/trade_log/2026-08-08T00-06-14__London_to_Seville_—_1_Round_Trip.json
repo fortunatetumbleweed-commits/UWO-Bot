@@ -1,0 +1,59 @@
+{
+  "task_name": "London to Seville — 1 Round Trip",
+  "started_at": "2026-08-08T00:06:14.009928+00:00",
+  "ended_at": "2026-08-08T00:06:14.010601+00:00",
+  "elapsed_seconds": 0.000673,
+  "rounds_completed": 1,
+  "total_profit": 0,
+  "ducats_per_hour": 0.0,
+  "steps": [
+    {
+      "action": "sell_all",
+      "port": "London",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 2.5791930966079235e-05,
+      "notes": "dry-run"
+    },
+    {
+      "action": "buy_all",
+      "port": "London",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 2.645794302225113e-05,
+      "notes": "dry-run"
+    },
+    {
+      "action": "sail_to",
+      "port": "Seville",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 2.4084001779556274e-05,
+      "notes": "dry-run"
+    },
+    {
+      "action": "sell_all",
+      "port": "London",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 2.274999860674143e-05,
+      "notes": "dry-run"
+    },
+    {
+      "action": "buy_all",
+      "port": "London",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 2.3333937861025333e-05,
+      "notes": "dry-run"
+    },
+    {
+      "action": "sail_to",
+      "port": "London",
+      "ok": true,
+      "profit": 0,
+      "duration_s": 2.2999942302703857e-05,
+      "notes": "dry-run"
+    }
+  ]
+}
