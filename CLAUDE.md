@@ -844,8 +844,8 @@ Two fixes that had only ever been checked against recorded frames ran live and w
 
 STILL OPEN, and none of it was needed for this run: `EXIT_BUILDING` is not retried at a
 village (`823547b`, deliberate — a stray second Back loses the village, but on a sail leg
-leaving IS the goal); the sea wake-timer sets its next sleep from a frame captured BEFORE
-that sleep; `_answer_it_anyway` taps a computed point rather than the button it located;
+leaving IS the goal); `_answer_it_anyway` taps a computed point rather than the button it
+located;
 and `run_barter.py` / `run_task.py` index different task sets, the latter still on the
 deprecated recovery path.
 

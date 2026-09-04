@@ -343,8 +343,11 @@ class Dispatcher:
             logger.debug(f"[dispatch] could not tell whether the port is drawn: {exc}")
             return True
 
-    def _wait_out_the_wake_timer(self) -> None:
+    def _wait_out_the_wake_timer(self) -> bool:
         """Sleep until the activity asked to be looked at again. Waiting only.
+
+        RETURNS WHETHER IT ACTUALLY SLEPT, because a sleep spends the look that preceded it
+        — see `step`, which drops `_fresh` when this returns True.
 
         THE ACTIVITY STATES A WAKE TIME AND HANDS BACK; IT NEVER SLEEPS (user, 2026-08-31).
         That keeps it passive — it reports `checkback_s` in its observation and the dispatcher
@@ -361,17 +364,19 @@ class Dispatcher:
         its next look is driven by its own action rather than by a clock.
         """
         if not self._wake_at:
-            return
+            return False
         remaining = self._wake_at - _time.monotonic()
         self._wake_at = 0.0
-        if remaining > 0:
-            # Imported here, not at module scope: `run_goal` imports this module, so a
-            # top-level import would be a cycle. The jitter matters — a fixed cadence is
-            # what the game's anti-cheat looks for.
-            from brain.run_goal import _sleep_jittered
-            logger.info(f"[dispatch] {self._wake_why} — waiting "
-                        f"{remaining / 60:.1f} min before the next look")
-            _sleep_jittered(remaining)
+        if remaining <= 0:
+            return False
+        # Imported here, not at module scope: `run_goal` imports this module, so a top-level
+        # import would be a cycle. The jitter matters — a fixed cadence is what the game's
+        # anti-cheat looks for.
+        from brain.run_goal import _sleep_jittered
+        logger.info(f"[dispatch] {self._wake_why} — waiting "
+                    f"{remaining / 60:.1f} min before the next look")
+        _sleep_jittered(remaining)
+        return True
 
     def _afforded_here(self, intent, where, state):
         """`intent` if this world can start it — otherwise ask the task for other work.
@@ -519,7 +524,24 @@ class Dispatcher:
         return a `TickResult` and are driven at 0.15-0.40 s by their own control loop. Those
         really are ticks. This is not one.
         """
-        self._wait_out_the_wake_timer()
+        # A SLEEP SPENDS THE LOOK THAT PRECEDED IT, exactly as an intent does. `_fresh` is
+        # captured at the END of the previous step — BEFORE this wait — so reusing it here
+        # decides a 9-minute-old world, and then sets the NEXT sleep from it too.
+        #
+        # Live 2026-09-04 sailing to San Village, four readings:
+        #     18:28:50  eta=11d -> 0.5 min      18:29:59  eta=6d -> 9.0 min
+        #     18:29:31  eta=7d  -> 0.3 min      18:38:17  eta=6d -> 9.0 min
+        # The ETA did not move across 8.3 minutes of sailing, because the fourth reading WAS
+        # the third: the frame behind it was captured at 18:30:00. The fleet is always one
+        # whole sleep behind, so it notices arrival a sleep late and re-books the same wait
+        # from an ETA that can never fall.
+        #
+        # At sea this never self-corrected: `_fresh` is only dropped after an INTENT is
+        # dispatched, and a sea tick dispatches none. The rule is the architecture's own —
+        # never act on a reading the world has already contradicted — and nine minutes of
+        # sailing contradicts one.
+        if self._wait_out_the_wake_timer():
+            self._fresh = None
 
         # EVERY STEP TAKES A FRESH LOOK. The dispatcher regaining control IS the caller that
         # expects the world to have changed (user, 2026-08-31) — and that is every step, not
