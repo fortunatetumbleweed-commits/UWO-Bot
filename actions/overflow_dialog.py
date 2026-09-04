@@ -26,7 +26,9 @@ save a few units of space. Dumping mid-session could be made to pay, but it is m
 complicated, so it is deliberately not attempted — the rule is the last round or nothing.
 
   * NOT the last round -> materials are protected exactly like the output good.
-  * The last round     -> ALL of them go, first, ahead of spare supply.
+  * The last round     -> ALL of them go, first, ahead of spare supply — every unit, even
+    when the overflow is smaller, because the space freed beyond it is what the fleet
+    resupplies into. See `plan_for_overflow`.
 
 `last_round_reason` names the three ways a round is known to be the last. Any one of them
 is enough, and each is read from this dialog plus the round count:
@@ -379,15 +381,20 @@ def plan_for_overflow(state: OverflowState, found: list, *, output_good: str,
                       last_round: Optional[bool] = None, rounds_done: Optional[int] = None):
     """(dump_plan, shortfall) for this dialog, via the canonical jettison policy.
 
-    On the last round the materials are dumped WHOLE — every unit of every one — and only
-    the remainder is taken from spare supply (user, 2026-09-04: "in these cases dump all the
-    materials"). Two reasons beyond the policy itself: the Discard dialog already defaults to
-    the full stack, so a whole-stack dump is one tap and never touches the keypad, and the
-    leftovers cannot be bartered again on this trip anyway.
+    On the last round the materials are dumped WHOLE — every unit of every one, even when
+    the overflow is smaller than they are — and only the remainder is taken from spare
+    supply (user, 2026-09-04: "in these cases dump all the materials").
 
-    The cost is real and worth stating: when the overflow is SMALLER than the materials, the
-    surplus dumped is material that could have been sold instead. It is small against the
-    product it sits beside — barter output ran ~300x its inputs at Hutu — but it is not zero.
+    THE SURPLUS IS NOT WASTE, IT IS SUPPLY HEADROOM. An overflow means the hold is at 100%,
+    and a hold at 100% cannot take supply aboard. Villages cannot resupply at all
+    (VILLAGE_LEG_RESERVE_DAYS is 7.0 for exactly that reason — the fleet must already be
+    carrying the round trip), and the fleet arrives at the next port still full, so it cannot
+    top up there either. Dumping only what the overflow needs leaves the hold full and the
+    fleet sailing on whatever supply it happened to have. Dumping the lot converts dead
+    material into room the auto-resupply can actually fill.
+
+    It is also the cheaper action mechanically: the Discard dialog defaults to the full
+    stack, so a whole-stack dump is one tap and never opens the keypad.
     """
     from brain.jettison_planner import DumpAction, plan_jettison
     if last_round is None:

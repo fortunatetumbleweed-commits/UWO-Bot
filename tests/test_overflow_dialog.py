@@ -385,13 +385,31 @@ class TheLastRoundDumpsEveryMaterial(unittest.TestCase):
         self.assertEqual(shortfall, 0)
 
     def test_a_material_is_dumped_WHOLE_even_when_less_would_do(self):
-        """The overflow is 20 and 400 units of material go overboard. Deliberate: whole
-        stacks are one tap each, and the surplus cannot be bartered again this trip."""
+        """The overflow is 20 and all 400 units of material go overboard.
+
+        THE SURPLUS IS SUPPLY HEADROOM, NOT WASTE (user, 2026-09-04). An overflow means the
+        hold is at 100%, and a full hold cannot take supply aboard. A village cannot resupply
+        at all — VILLAGE_LEG_RESERVE_DAYS is 7.0 because the fleet must already be carrying
+        the round trip — and it reaches the next port still full, so it cannot top up there
+        either. Dumping only the 20 the overflow needs leaves the fleet sailing on whatever
+        supply it happened to have; dumping all 400 leaves 380 units of room to resupply
+        into."""
         found = [{"name": "Avocado", "qty": 200}, {"name": "Cassava", "qty": 200},
                  {"name": "Camas", "qty": 3613}]
         plan, shortfall = self._plan(found, pending=20, rounds_done=7)
         self.assertEqual({d.name: d.qty for d in plan}, {"Avocado": 200, "Cassava": 200})
         self.assertEqual(shortfall, 0)
+        freed = sum(d.qty for d in plan) - 20
+        self.assertEqual(freed, 380, "the headroom the resupply needs was left unclaimed")
+
+    def test_dumping_only_the_overflow_would_leave_the_hold_full(self):
+        """The counterfactual, stated so the rule is not 'simplified' back later. Trimming
+        each material to the overflow clears the dialog just as well and leaves ZERO room
+        for supply — the failure this dump-all rule exists to prevent."""
+        found = [{"name": "Avocado", "qty": 200}, {"name": "Cassava", "qty": 200},
+                 {"name": "Camas", "qty": 3613}]
+        plan, _ = self._plan(found, pending=20, rounds_done=7)
+        self.assertGreater(sum(d.qty for d in plan), 20)
 
     def test_supply_is_still_trimmed_to_what_is_needed(self):
         """Dump-all is a rule about MATERIALS. Supply is the fleet's safety margin and is
