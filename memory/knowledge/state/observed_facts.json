@@ -1,24 +1,24 @@
 {
   "fleet_capacity": {
-    "at": 1788550913.64255,
+    "at": 1788563330.3966029,
     "value": 4952
   },
   "mission_progress": {
-    "at": 1788550921.364396,
+    "at": 1788563338.178538,
     "value": {
       "good": "Bambara Groundnut",
       "phase": "bartering",
       "recipe": {
         "good": "Bambara Groundnut",
         "materials": {
-          "Pig": 249,
-          "Raisin": 249
+          "Pig": 219,
+          "Raisin": 219
         },
-        "obtain": 1036
+        "obtain": 1122
       },
-      "rounds": 3,
+      "rounds": 5,
       "rounds_remaining": 7,
-      "village": "Hutu Village"
+      "village": "San Village"
     }
   },
   "settlement": {

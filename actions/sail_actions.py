@@ -3231,7 +3231,13 @@ def _find_destination_button(
             (nxt_cx, nxt_cy, nxt_text, nxt_conf)
             for nxt_text, nxt_conf, nxt_cx, nxt_cy in tokens
             if nxt_cy >= min_y
-            and any(n in nxt_text.lower() for n in _DESTINATION_BUTTON_NOUNS)
+            # FUZZY, like the verb above. These were asymmetric — the verb tolerant of OCR
+            # and the noun an exact substring — so a single dropped character in the noun
+            # sank the whole match while the verb beside it read perfectly. Live 2026-09-04
+            # the San Village departure failed on 'Move to' + 'Villags': the button was
+            # mid-render, the 'e' was lost, and 'village' in 'villags' is False. The pair is
+            # one button and one OCR risk; both halves need the same tolerance.
+            and any(fuzzy_contains(nxt_text, n) for n in _DESTINATION_BUTTON_NOUNS)
             and abs(nxt_cy - cy) <= _ROW_TOLERANCE_PX
         ]
         if not same_row:
