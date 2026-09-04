@@ -125,3 +125,4 @@
 {"type": "round", "ports": ["Malé", "Goa"], "profit": 0, "elapsed_s": 773.1, "ducats_per_hour": 0.0, "recorded_at": "2026-08-16T05:34:41.939262+00:00"}
 {"type": "leg", "from": "Goa", "to": "Goa", "departed_at": "2026-08-16T05:42:09.566044+00:00", "arrived_at": "2026-08-16T05:42:40.020447+00:00", "sailing_time_s": 30.5, "ok": true}
 {"type": "round", "ports": ["Malé", "Goa"], "profit": 0, "elapsed_s": 333.8, "ducats_per_hour": 0.0, "recorded_at": "2026-08-16T05:48:11.623952+00:00"}
+{"type": "round", "ports": ["Lisboa"], "profit": 35857696, "elapsed_s": 119.4, "ducats_per_hour": 1080751012.0, "recorded_at": "2026-08-30T22:25:32.637479+00:00"}

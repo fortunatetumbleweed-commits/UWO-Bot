@@ -200,6 +200,13 @@ def _find_yellow_button(
 _WORD_RE_CACHE: dict[str, "re.Pattern"] = {}
 
 
+# NOTE: there is a SECOND matcher in this module, `_map_label_matches` — fuzzy, returns a
+# float, for map labels sitting under a discovery icon. It was called `_label_matches` too,
+# and being defined later it SHADOWED this one at import time, so `_find_button` below — the
+# bot's core button finder — was silently running fuzzy map semantics with its two arguments
+# REVERSED (this one takes (target, candidate); that one takes (label, target)). Two test
+# files each tested a different function under the one name; the map file passed because it
+# was testing the shadow. Keep the names distinct.
 def _label_matches(target: str, candidate: str) -> bool:
     """True if every whole-word in *target* appears as a whole word in *candidate*.
 
@@ -283,21 +290,47 @@ def _find_button(
     return None
 
 
+# Both transition screens are built the same way (frames labelled 2026-05-24 / 2026-04-16):
+#
+#   ARRIVAL      big "City"    top-left, subtitle "Entering..."
+#   DEPARTURE    big "Sailing" top-left, subtitle "Preparing for Voyage..."
+#
+# with an info card on the right, a tip line along the bottom and a progress percentage in the
+# bottom-right corner. The game is inconsistent about which one it shows — sometimes both
+# appear before a voyage — but either one means the same thing: the OVERWORLD IS IN
+# TRANSITION, so nothing on screen is actionable and the bot must wait and re-perceive
+# afterwards (user, 2026-08-25).
+# ONLY THE SUBTITLE WORDS. The big title ("City", "Sailing") is NOT usable: the sea HUD
+# prints "14 Days of Sailing Left" in this same corner, so matching "sailing" made the bot
+# read open sea as a transition screen — it stopped knowing where it was, re-selected the
+# port it had just reached, and looped on departure (live 2026-08-25, my own regression).
+# "Entering" / "Preparing for Voyage" / "Loading" appear on nothing else.
+_LOADING_TITLE_WORDS = ("entering", "preparing", "loading")
+# The title block occupies the top-left corner; nothing else is looked at.
+_LOADING_TITLE_FRAC_X = 0.34
+_LOADING_TITLE_FRAC_Y = 0.20
+
+
 def _is_loading_screen(frame: Image.Image) -> bool:
-    """
-    True when a loading screen is active (city or sailing).
+    """True when a transition screen is up (arriving at a port, or leaving for sea).
 
-    Keyword rationale:
-      "entering"  — "Entering London" transition screen
-      "preparing" — "Preparing for Voyage" transition screen (also covers "Preparing...")
-      "loading"   — explicit "Loading..." text on transition screens
-
-    "voyage" was removed: it triggered false positives when NPC speech bubbles
-    on the port overworld say "Bon voyage!" or "Safe voyage!".
-    "preparing" already catches all sailing-departure loading screens.
+    Read from the TOP-LEFT TITLE BLOCK, not from text anywhere on screen. The whole-frame
+    keyword version had already misfired once — "voyage" had to be removed because NPC speech
+    bubbles say "Bon voyage!" — and speech bubbles carry arbitrary sentences, so any of these
+    words could appear in one and halt the bot on a screen that is not loading. The title is
+    what identifies these screens, exactly as it identifies every other chromed screen.
     """
-    from brain.kb import control
-    return _screen_contains(frame, *control().loading_keywords())
+    w, h = frame.width, frame.height
+    corner = int(w * _LOADING_TITLE_FRAC_X), int(h * _LOADING_TITLE_FRAC_Y)
+    words = [t.lower() for t, _c, x, y in _ocr_frame(frame)
+             if x <= corner[0] and y <= corner[1]]
+    hit = [word for word in words
+           if any(fuzzy_contains(word, kw) for kw in _LOADING_TITLE_WORDS)]
+    if hit:
+        logger.info(f"  Loading screen: title block reads {hit} — the overworld is in "
+                    "transition")
+        return True
+    return False
 
 
 def _is_idle_cinematic(frame: Image.Image) -> bool:
@@ -339,12 +372,72 @@ _SEA_HUD_TOKENS = _SeaHudTokensProxy()
 
 # Crop regions for sea HUD elements (2400×1080 landscape)
 # Supply + day-at-sea counter: top-left, below ship icon row
+# THE SUPPLY LINE, AND NOTHING ABOVE IT. This started at y=140, which reaches into the row
+# of badges over it — measured on a live sea frame the crop caught the shield's '20' at
+# y=156, directly before the supply digits, giving OCR '20 15 days of sailing left'.
+#
+# `read_sea_hud` matches (\d+) immediately before "days", so any stray number that merges
+# with the real one is swallowed whole: live 2026-08-29 the same fleet reported 15, 115, 415
+# and 415 days on one voyage. 15 was always the right answer — the HUD says "15 Days of
+# Sailing Left" — and the extra leading digit came from above the line.
+#
+# Tightening the crop was the wrong instrument — it clips the glyph tops and OCR fragments
+# the line ('15 Days of =' / 'Sailing "' / 'Left'). The tokens carry POSITIONS, and the badge
+# is on a different ROW, so the fix is to read row by row instead of joining the whole crop
+# into one string. See `_hud_rows`.
 _HUD_SUPPLY_CROP = (0,   140, 600,  320)
 # Destination + ETA: bottom-centre strip
 _HUD_ETA_CROP    = (700, 920, 1700, 1080)
 
 
-def read_sea_hud(frame=None) -> dict:
+# HUD TEXT IS LAID OUT IN ROWS, and a row is the unit of meaning. Joining a whole crop into
+# one string puts a badge from the line above directly in front of the number below it —
+# live 2026-08-29 that produced '20 15 days of sailing left', and a greedy (\d+) before
+# "days" swallowed both. Reading row by row keeps each line's numbers to itself.
+_HUD_ROW_TOL = 24
+
+
+def _search_elements(elements, pattern):
+    """First match of `pattern` in any ONE OmniParser label.
+
+    Per element, never across two: an element is a rendered line, so a number in one cannot
+    run into the words of another. That is the whole reason to prefer this over a crop.
+    """
+    import re
+    for e in elements or []:
+        label = (getattr(e, "label", "") or "").strip().lower()
+        if not label:
+            continue
+        m = re.search(pattern, label)
+        if m:
+            return m
+    return None
+
+
+def _hud_rows(tokens) -> list:
+    """OCR tokens grouped into rows, each row ordered left to right."""
+    rows: list = []
+    for text, _conf, cx, cy in sorted(tokens, key=lambda t: (t[3], t[2])):
+        for row in rows:
+            if abs(row[0] - cy) <= _HUD_ROW_TOL:
+                row[1].append((cx, text))
+                break
+        else:
+            rows.append((cy, [(cx, text)]))
+    return [" ".join(t for _x, t in sorted(items)).lower() for _cy, items in rows]
+
+
+def _search_rows(rows, pattern):
+    """First match of `pattern` in any row — never across two of them."""
+    import re
+    for row in rows:
+        m = re.search(pattern, row)
+        if m:
+            return m
+    return None
+
+
+def read_sea_hud(frame=None, *, elements=None) -> dict:
     """
     Read key values from the sailing HUD.
 
@@ -370,15 +463,35 @@ def read_sea_hud(frame=None) -> dict:
     }
 
     # ── Supply + day-at-sea (top-left) ───────────────────────────────────────
-    supply_crop = frame.crop(_HUD_SUPPLY_CROP)
-    supply_tokens = _ocr_frame(supply_crop, min_conf=0.25)
-    supply_text = " ".join(t.lower() for t, _, _, _ in supply_tokens)
+    #
+    # TWO READS, COMBINED — because they fail on different things.
+    #
+    # OmniParser returns the supply line as ONE element, with the badge above it as another:
+    #     x=212 y=156 '20'   ·   x=216 y=206 '15 Days of Sailing Left'
+    # so the badge can never join the number. It also drops the small digit in 'Day 1',
+    # returning a bare 'Day'. The crop OCR is the opposite: it reads 'day 1' fine, and it is
+    # what fused '20' onto '15' to report 415 and 115 days on one voyage (live 2026-08-29).
+    #
+    # So OmniParser is authoritative for supply and the crop fills in the day — the same
+    # split the Village Info trade list needed, where the whole frame lost a '44' the crop
+    # caught. `parse_fast_cached` means the element read is usually already paid for: the
+    # classifier parses this frame anyway, and the sea is the hottest loop in the bot.
+    supply_rows = _hud_rows(_ocr_frame(frame.crop(_HUD_SUPPLY_CROP), min_conf=0.25))
 
-    m = re.search(r'(\d+)\s*days?\s*of\s*sailing', supply_text)
+    if elements is None:
+        try:
+            from vision.omniparser import parse_fast_cached
+            elements = list(parse_fast_cached(frame))
+        except Exception as exc:
+            logger.debug(f"[sea-hud] OmniParser unavailable, crop only: {exc}")
+            elements = []
+    m = _search_elements(elements, r'(\d+)\s*days?\s*of\s*sailing')
+    if m is None:
+        m = _search_rows(supply_rows, r'(\d+)\s*days?\s*of\s*sailing')
     if m:
         result["supply_days"] = int(m.group(1))
 
-    m = re.search(r'day\s*(\d+)', supply_text)
+    m = _search_rows(supply_rows, r'day\s*(\d+)')
     if m:
         result["day_at_sea"] = int(m.group(1))
 
@@ -666,60 +779,92 @@ def _advance_mandatory_flow(
     return advance_mandatory_flow(frame, prefer_complete=prefer_complete)
 
 
+def tap_exit_to_overworld(frame=None) -> dict:
+    """ONE tap toward the port overworld, using the GAME's own controls. Returns immediately.
+
+    The in-game HOME button leaves any building in a single tap, and the chromed title's BACK
+    ARROW goes up exactly one level. Both are drawn by the game, so neither can leave the app
+    — which the Android back key can, and did: `exit_to_overworld` pressed back in a loop and
+    carried a whole mechanism to notice and dismiss the "exit game?" dialog it caused, then
+    escalated into `recover_to_port_overworld` when that got stuck. All of that existed to
+    survive a control the game never intended us to use.
+
+    Returns {tapped, control, position}. `tapped` means a control was pressed, NOT that the
+    world changed — the caller perceives and decides, per the task-runner contract.
+    """
+    from vision.chrome_detector import get_chrome_detector
+
+    frame = frame if frame is not None else capture_screen()
+    state = get_chrome_detector().detect(frame)
+    positions = getattr(state, "positions", {}) or {}
+
+    # HOME FIRST: one tap out of any depth. The title arrow is for stepping up a single level
+    # when the caller wants to stay inside the building.
+    for control in ("home", "back_arrow"):
+        pos = positions.get(control)
+        if pos:
+            logger.info(f"[exit] tapping the game's {control} @ {pos}")
+            tap(*pos)
+            return {"tapped": True, "control": control, "position": pos}
+
+    logger.info("[exit] no game exit control on screen — nothing tapped")
+    return {"tapped": False, "control": None, "position": None}
+
+
 def exit_to_overworld(timeout: float = 90.0) -> bool:
-    """Press back until port overworld is confirmed.
+    """Tap the game's Home button until the port overworld is confirmed.
 
-    Uses chrome detection (fast, ~0.1s) as the primary loop signal.
-    OCR is only invoked once per iteration when has_home=False, to rule out
-    the "exit game?" dialog that appears if back is pressed on the overworld.
+    Still a loop, and still blocking, because twenty-odd callers depend on that today. What
+    it waits on is its OWN effect — "did Home get me out?" — which is the only question a
+    primitive's loop may ask.
 
-    When back presses stop making progress (building state persists after 2
-    consecutive backs), tries to dismiss any blocking dialog (e.g. the
-    negotiation dialog left open after a buy_all crash) before retrying.
+    What it no longer does is escalate into `brain.recovery.recover_to_port_overworld` when
+    no exit control appears. That call is not a bigger version of this one: its sea branch
+    SAILS THE FLEET to a home port. Reached from here it meant that failing to close a market
+    panel could put to sea — and the two functions could each re-enter the other with no
+    shared budget. Leaving a panel and repositioning the fleet are different sizes of decision
+    and only the task knows whether the second one is wanted.
+
+    So when there is no exit control, the screen is covered by something. Clearing what covers
+    it IS this function's business (it needs that control); deciding where the bot should be
+    is not. After two looks it reports and returns.
     """
     logger.info("Exiting to port overworld…")
     deadline = time.time() + timeout
-    stuck_count = 0   # consecutive back presses that left us in building state
+    unchanged = 0
+    clears = 0
+    MAX_CLEARS = 2      # bounded: a clear that keeps "succeeding" is not making progress
 
     while time.time() < deadline:
         frame = capture_screen()
 
         if _is_on_overworld(frame):
-            if _screen_contains(frame, "exit game", "leave game", "quit game",
-                                 "exit the game", "do you want to exit"):
-                logger.info("Exit dialog visible — on overworld, dismissing")
-                cancel = _find_button(frame, "cancel", "no", "stay")
-                if cancel:
-                    tap(*cancel)
-                else:
-                    press_back()
-                time.sleep(1.0)
-            else:
-                logger.info("Port overworld confirmed")
+            logger.info("Port overworld confirmed")
             return True
 
-        # Still inside a building.  After 2 stuck backs, delegate to the
-        # general recovery module which identifies the exact state and
-        # completes any mandatory dialog flow before retrying.
-        if stuck_count >= 2:
-            logger.info(
-                f"  Still in building after {stuck_count} backs — "
-                "delegating to recover_to_port_overworld()"
-            )
-            from brain.recovery import recover_to_port_overworld
-            r = recover_to_port_overworld(timeout=30.0)
-            if r.state == "port_overworld":
-                logger.info("Port overworld confirmed (via recovery)")
-                return True
-            stuck_count = 0
-            continue
+        if tap_exit_to_overworld(frame)["tapped"]:
+            unchanged = 0
+        else:
+            unchanged += 1
+            if clears < MAX_CLEARS:
+                # A promo, the daily news or the idle lock is sitting on top of the control.
+                clears += 1
+                try:
+                    from brain.unexpected_dialog import clear_blockers
+                    if clear_blockers(frame).get("cleared"):
+                        logger.info("  Cleared a blocker covering the exit control")
+                        unchanged = 0          # the next look gets a fair try at the control
+                        time.sleep(1.0)
+                        continue
+                except Exception as exc:
+                    logger.debug(f"  clear_blockers failed: {exc}")
+            if unchanged >= 2:
+                logger.warning("  No exit control for two looks and nothing to clear — "
+                               "reporting instead of recovering")
+                return False
+        time.sleep(1.2)
 
-        logger.info("Not on overworld — pressing back")
-        press_back()
-        time.sleep(2.0)
-        stuck_count += 1
-
-    logger.warning("Could not reach port overworld")
+    logger.warning(f"Could not reach the port overworld within {timeout:.0f}s")
     return False
 
 
@@ -798,7 +943,170 @@ def _tab_strip_candidates(frame) -> list:
     if hits:
         logger.info("  Tab-strip candidates: "
                     + ", ".join(f"{e.label!r}@({e.cx},{e.cy})" for e in hits))
+    hits = _row_only(hits)
     return [(e.cx, e.cy) for e in hits]
+
+
+# A TAB STRIP IS A ROW, NOT ANY ICON IN THE BAND.
+# Live 2026-08-24 at Bordeaux an event popup covered the right panel, and its own close-X at
+# (1917,165) sat inside the tab band and was offered as a "tab". Tapping popup furniture
+# cannot select the Buildings tab, so the search failed and the caller went on to match the
+# word "market" inside a quest line. Real tabs come as three or more similar icons at the
+# same height, evenly spaced (~100px apart, measured); two icons 300px apart are not a strip.
+_TAB_MIN_ROW = 3
+_TAB_SPACING_TOL = 0.45
+_TAB_SAME_ROW_PX = 25
+
+
+def _row_only(hits) -> list:
+    """Keep the hits that actually form an evenly spaced row; [] if none do."""
+    if len(hits) < _TAB_MIN_ROW:
+        if hits:
+            logger.info(f"  Only {len(hits)} icon(s) in the tab band — not a tab strip "
+                        "(a strip is a row of similar icons); ignoring")
+        return []
+    ys = sorted(e.cy for e in hits)
+    mid_y = ys[len(ys) // 2]
+    row = [e for e in hits if abs(e.cy - mid_y) <= _TAB_SAME_ROW_PX]
+    if len(row) < _TAB_MIN_ROW:
+        logger.info("  Tab-band icons are not at a common height — not a tab strip")
+        return []
+    gaps = [b.cx - a.cx for a, b in zip(row, row[1:])]
+    med = sorted(gaps)[len(gaps) // 2] if gaps else 0
+    if med <= 0 or any(abs(g - med) > _TAB_SPACING_TOL * med for g in gaps):
+        logger.info(f"  Tab-band icons are unevenly spaced (gaps={gaps}) — not a tab strip")
+        return []
+    return row
+
+
+# TWO ICONS CAN BE LIT AT ONCE, AND ONLY ONE GROUP IS A TAB SET.
+# In port the strip is: Tasks | Buildings | Players | location-pin. The FIRST THREE are
+# mutually exclusive — exactly one is selected — while the LOCATION PIN is INDEPENDENT: it
+# toggles the in-port minimap and is lit warm whenever that toggle is on (user, 2026-08-24).
+# Measured on a live port frame, the pin was the warmest thing in the strip:
+#     scroll/Tasks 17.7 | house/Buildings 46.5 (SELECTED) | person/Players 22.0 | pin 49.4
+# So "the warmest icon is the selected tab" picks the toggle and is wrong. Reading the
+# mutually exclusive group ALONE makes the highlight decisive again: within it, exactly one
+# is lit, and that one is the selected tab.
+_TAB_WARM_MIN = 30.0
+# A strip whose selected tab is a light panel instead of a gold one: the lit tab must be
+# this many times the median of its neighbours AND this far above it. Measured on the
+# world map, 2026-08-27: 193.3 against a 56.1 median.
+_TAB_BRIGHT_RATIO = 1.8
+_TAB_BRIGHT_GAP = 50.0
+
+# The trailing independent toggle is not part of the mutually exclusive tab group.
+_TAB_TRAILING_TOGGLES = 1
+# A tab tap goes unheard while the world map is still settling — measured live 2026-08-25,
+# the same coordinate failed right after the map opened and worked once it had been up a
+# while. Retries wait progressively longer rather than moving the tap.
+_TAB_TAP_ATTEMPTS = 3
+_TAB_SETTLE_S = 1.6
+
+
+def _brightest_tab(frame, tabs) -> Optional[int]:
+    """Index of the one tab far brighter than its neighbours, or None if none stands out.
+
+    For strips whose selected tab is a LIGHT panel rather than a gold one. Relative by
+    construction — the comparison is against the median of the other tabs in the same strip
+    on the same frame — so it needs no calibrated threshold and rides dimming.
+    """
+    import statistics
+
+    import numpy as np
+    try:
+        lums = []
+        for (cx, cy) in tabs:
+            cell = np.asarray(frame.crop((cx - 35, cy - 28, cx + 35, cy + 28))
+                              .convert("L")).astype(float)
+            lums.append(float(cell.mean()))
+    except Exception as exc:
+        logger.debug(f"  tab brightness read failed: {exc}")
+        return None
+    if len(lums) < 2:
+        return None
+    top = max(range(len(lums)), key=lambda i: lums[i])
+    others = [l for i, l in enumerate(lums) if i != top]
+    ref = statistics.median(others)
+    if lums[top] >= ref * _TAB_BRIGHT_RATIO and (lums[top] - ref) >= _TAB_BRIGHT_GAP:
+        return top
+    return None
+
+
+def selected_tab_index(frame, tabs, *, trailing_toggles: int = None) -> Optional[int]:
+    """Index of the currently SELECTED tab in `tabs`, or None if it cannot be told.
+
+    Lets the bot know which tab it is on instead of inferring it from what the list happens
+    to contain — a Tasks tab full of quest text reads as a perfectly healthy list.
+    """
+    if not tabs:
+        return None
+    # Only the mutually exclusive group can answer "which tab is selected".
+    # The PORT strip ends with an independent location-pin toggle that is not part of the
+    # mutually exclusive group; the WORLD MAP strip has no such trailing toggle, so callers
+    # there pass 0 rather than losing a real tab from the comparison.
+    drop = _TAB_TRAILING_TOGGLES if trailing_toggles is None else trailing_toggles
+    n_group = len(tabs) - drop if drop and len(tabs) > drop else len(tabs)
+    group_tabs = tabs[:n_group]
+
+    # LUMINANCE FIRST (user, 2026-09-02: warmth is not the right measure in this game).
+    #
+    # A selected tab is a LIGHTER panel; an unselected one is a dark translucent panel with
+    # the world showing THROUGH it. So brightness measures the highlight, and warmth (R-B)
+    # measures whatever happens to lie behind the tabs that are NOT selected.
+    #
+    # Live 2026-09-02 the route tail died on that. The Route tab was selected — opaque white,
+    # which blocks the map — and scored the LOWEST warmth of the four, because white has
+    # R=G=B. Warm terrain under Explore scored 49.9, so warmth named Explore, confidently,
+    # three times, and the mission failed with the cargo aboard:
+    #
+    #     warmth [19.8, 49.9, 7.7, 13.2]  -> Explore   WRONG
+    #     luma   [70.6, 64.4, 186.2, 49.0] -> Route    right, by 2.6x
+    #
+    # Warmth was already known to be the wrong style here — "this strip lights white, not
+    # gold" — and the brightness fallback existed. It just ran only when warmth said "cannot
+    # tell", and a fallback for UNCERTAINTY cannot save you from a confident wrong answer.
+    # Asking the better signal first is the whole fix.
+    bright = _brightest_tab(frame, group_tabs)
+    if bright is not None:
+        logger.info(f"  Selected tab is #{bright + 1}/{len(tabs)} by LUMINANCE "
+                    "(the selected tab is a lighter panel; the others show the world through)")
+        return bright
+
+    # WARMTH, only where luminance declined. The PORT strip lights its tab GOLD — bright, but
+    # measured 1.18x its neighbours against the 1.8x that `_brightest_tab` requires, where the
+    # map's white tab is 2.89x. So brightness cannot separate that strip and warmth still can
+    # (gold 56.3 vs 22.0 / 21.9). It is a HINT there and never an authority: `_ensure_tab`
+    # only re-orders which tab it tries first, so a wrong answer costs one tap.
+    try:
+        import numpy as np
+        warmth = []
+        for (cx, cy) in tabs:
+            cell = np.asarray(frame.crop((cx - 35, cy - 28, cx + 35, cy + 28))
+                              .convert("RGB")).astype(float)
+            warmth.append(float(cell[..., 0].mean() - cell[..., 2].mean()))
+    except Exception as exc:
+        logger.debug(f"  tab highlight read failed: {exc}")
+        return None
+    shown = [round(w, 1) for w in warmth]
+    group = warmth[:n_group]
+    lit = [i for i, w in enumerate(group) if w >= _TAB_WARM_MIN]
+    if len(lit) != 1:
+        # WARMTH IS ONE HIGHLIGHT STYLE, NOT THE ONLY ONE. The PORT strip lights its tab
+        # GOLD, which is what R−B measures. The WORLD MAP strip lights its tab near-WHITE,
+        # and white is not warm — so on a Port-tab world map this scored the lit tab LOWEST
+        # (warmth: port 0.6 vs route 17.8) and answered "cannot tell", live 2026-08-27.
+        # Luminance separates that strip outright: port 193.3 against 48.8 / 60.8 / 56.1.
+        #
+        # Compared WITHIN the strip on the same frame, so no absolute threshold is involved:
+        # one tab must be far brighter than the median of its neighbours.
+        logger.info(f"  Cannot tell which tab is selected — luminance declined and "
+                    f"{len(lit)} of the {len(group)} mutually exclusive tabs are warm "
+                    f"(warmth={shown})")
+        return None
+    logger.info(f"  Selected tab is #{lit[0] + 1}/{len(tabs)} (warmth={shown}; the trailing "
+                "location pin is an independent toggle and is ignored)")
+    return lit[0]
 
 
 # Screens whose title says the fleet is ALREADY UNDER WAY. Reaching a building is
@@ -820,667 +1128,340 @@ def _screen_says_under_way(location: str, title: str) -> bool:
     return any(m in t for m in _UNDER_WAY_TITLE_MARKERS)
 
 
-def navigate_to_building(building_name: str, timeout: float = 60.0) -> bool:
+# How much longer than the building's own name a label may be and still count as a
+# substring match — enough for 'the Market' or a trailing glyph, not a sentence.
+_NAME_SLACK = 6
+
+
+# ── The building-entry primitive ──────────────────────────────────────────────
+#
+# ONE attempt to tap a building's entry, and a report of what happened. It does three things
+# that are its OWN effect and nothing else:
+#   • selects the Buildings tab, verified by re-reading the list
+#   • scrolls the list, to bring a row into view
+#   • taps the row (or the port-map icon, or a visible nameplate)
+#
+# What it must never do is decide the bot is in the wrong PLACE and fix that. The old
+# `navigate_to_building` did: it pressed Back on a sub-menu, on a wrong building, on the world
+# map, and Home-escaped when Back stopped working. Live 2026-08-22 the fleet was already
+# sailing to Melanesian Village; this function read "not the harbour", pressed Back, and
+# cancelled a departure that had SUCCEEDED — four times, 18.5 minutes, to undo what the first
+# attempt achieved in 65 seconds.
+#
+# Being in the wrong place is the TASK's problem, because only the task knows what the bot is
+# trying to achieve and whether getting there is still worth it.
+
+
+def _building_row(buildings, target: str):
+    """The row that IS this building, or None.
+
+    A BUILDING LABEL IS A NAME, NOT A SENTENCE CONTAINING ONE. `target in lbl` matched the
+    quest objective "move to market in ..." when the right panel was showing the Tasks tab
+    (live 2026-08-24 at Bordeaux): tapping it handed the fleet to a quest voyage to Jakarta.
+    So a substring hit is trusted only when the label is about as long as the name itself
+    ("Market", "the Market"), never when the name is buried in running text. `token_sim`
+    still catches OCR mangling of the real label.
     """
-    Enter a named building from anywhere in a port, driven by where_am_i().
+    def _is_it(lbl: str) -> bool:
+        low = lbl.lower().strip()
+        if token_sim(lbl, target) >= 0.75:
+            return True
+        return target in low and len(low) <= len(target) + _NAME_SLACK
 
-    State machine:
-      Any state → where_am_i() → act on result → loop
+    return next(((x, y) for lbl, x, y in buildings if _is_it(lbl)), None)
 
-      "building"        → success (we're inside a building)
-      "loading"         → wait (transition in progress)
-      "port_overworld"  → find building in list → tap (with retry cooldown)
-      "sea"/"world_map" → press_back to recover to overworld
-      "sea_cinematic"   → likely popup overlay; wait and re-poll
-      "unknown"         → wait and re-poll
 
-    Navigation order when on port_overworld:
-      1. Building list (right panel) — direct entry, fast
-      2. One scroll if building not immediately visible
-      3. Port map — fallback; character walks, where_am_i() handles entry
+def _list_signature(buildings) -> tuple:
+    """Where the building list is scrolled to — now `actions.ui.lists.signature`.
 
-    Args:
-      building_name: name to search for (fuzzy-matched against list labels)
-      timeout: total seconds before giving up
+    Kept as a name because callers and tests use it, but the logic moved: three copies of
+    "has this list moved?" existed (here, `explore_actions`, and nowhere at all in the live
+    world-map path), so they now all ask one function. See actions/ui/lists.py.
+    """
+    from actions.ui.lists import signature
+    return signature(buildings)
+
+
+def _scroll_list_for(target: str, frame, *, max_scrolls: int = 4, reset_swipes: int = 4):
+    """Rewind the list to the top, then page down, looking for *target*. Returns a tap coord.
+
+    NOW THE SHARED PAGER (actions.ui.lists.find_in_list). The paging, the movement test and
+    the rewind all moved there so every list in the game uses one implementation; what stays
+    here is what is specific to THIS list — how to read its rows (`read_building_menu`) and
+    what counts as a match (`_building_row`, which knows a label is a name and not a sentence
+    containing one).
+
+    The lesson that made the column matter is now enforced inside the pager: it swipes down
+    the median entry x, because a region-centre swipe can miss the list entirely — the rewind
+    then never scrolls, the signature stays unchanged, "at top" is assumed, and a clipped top
+    building never comes back (live 2026-08-19, Jakarta).
     """
     from vision.ocr import read_building_menu
     from actions.adb_actions import swipe_fast
+    from actions.ui.lists import find_in_list
     from config.settings import BUILDING_MENU_REGION
 
+    rows_now = read_building_menu(frame)
+    my = (rows_now[len(rows_now) // 2][2] if rows_now
+          else (BUILDING_MENU_REGION[1] + BUILDING_MENU_REGION[3]) // 2)
+    fallback_x = (BUILDING_MENU_REGION[0] + BUILDING_MENU_REGION[2]) // 2
+
+    return find_in_list(
+        target,
+        match=_building_row,
+        read_rows=read_building_menu,
+        capture=capture_screen,
+        swipe=lambda x1, y1, x2, y2: swipe_fast(x1, y1, x2, y2,
+                                                duration_ms=300, settle_ms=600),
+        fallback_x=fallback_x, y=my,
+        max_pages=max_scrolls, rewind_pages=reset_swipes,
+        label="building list")
+
+
+def select_buildings_tab(frame) -> dict:
+    """Put the right panel on the Buildings tab. Returns {ok, frame, reason}.
+
+    The tab bar above the minimap toggles Tasks / Buildings / Players, and on arrival the
+    Tasks tab can be auto-selected (live 2026-08-19 at Jakarta → empty list → 60s timeout).
+    Which index is Buildings varies with how many tabs a port shows, and a wrong guess does
+    not fail quietly — it SELECTS another tab. So each candidate is tried and VERIFIED by
+    re-reading the list.
+    """
+    from vision.ocr import read_building_menu
+
+    if _on_buildings_tab(read_building_menu(frame)):
+        return {"ok": True, "frame": frame, "reason": "already there"}
+
+    candidates = _tab_strip_candidates(frame)
+    if not candidates:
+        logger.warning("  Building list not on screen and no tab icons detected")
+        return {"ok": False, "frame": frame, "reason": "no tab icons"}
+
+    # Try the tabs we are NOT already on first. The highlight read is a hint, not an authority
+    # (the location toggle lights up warm too), so it may only RE-ORDER the attempts.
+    already = selected_tab_index(frame, candidates)
+    order = ([i for i in range(len(candidates)) if i != already]
+             + ([already] if already is not None else []))
+    for i in order:
+        bx, by = candidates[i]
+        logger.info(f"  Trying tab {i + 1}/{len(candidates)} @ ({bx},{by})")
+        tap(bx, by)
+        time.sleep(1.5)
+        frame = capture_screen()
+        if _on_buildings_tab(read_building_menu(frame)):
+            logger.info(f"  Buildings tab selected @ ({bx},{by})")
+            return {"ok": True, "frame": frame, "reason": "selected"}
+
+    # KNOWING IT IS THE WRONG LIST AND TAPPING ANYWAY IS THE WORST OUTCOME.
+    return {"ok": False, "frame": frame, "reason": f"none of {len(candidates)} tabs listed buildings"}
+
+
+def _nameplate_for(target: str, frame):
+    """The floating nameplate above a building entrance, if it names *target*.
+
+    It appears once the character has walked to the door, and TAPPING IT ENTERS — far more
+    reliable than waiting for auto-entry, which an ambient popup can block.
+    """
+    from vision.screen_perception import parse_screen
+    from vision.element_postprocess import ROLE_BUILDING_NAMEPLATE
+    from brain.states.port_map import _canonical_name
+
+    inv = parse_screen(frame, nav_state="port_overworld")
+    for t in inv.tagged:
+        if t.role != ROLE_BUILDING_NAMEPLATE:
+            continue
+        lbl = (t.label or "").lower().strip()
+        if not lbl:
+            continue
+        if (target in lbl or (_canonical_name(lbl) or "") == target
+                or token_sim(lbl, target) >= 0.7):
+            return t
+    return None
+
+
+def _port_map_entry(target: str):
+    """Fallback: open the port map and tap the building icon. Returns a tap coord or None."""
+    from brain.states.port_map import open_port_map, read_port_map_buildings, close_port_map
+
+    logger.info(f"  {target!r} not in the list — trying the port map")
+    if not open_port_map():
+        logger.error("  Could not open the port map")
+        return None
+    time.sleep(0.8)
+    hit = next(((name, x, y) for name, x, y in read_port_map_buildings(capture_screen())
+                if target in name.lower() or token_sim(name, target) >= 0.75), None)
+    if hit is None:
+        close_port_map()
+        logger.error(f"  {target!r} is not on the port map either")
+        return None
+    return hit[1], hit[2]
+
+
+def tap_building_entry(building_name: str, frame=None) -> dict:
+    """Tap the way into *building_name*, ONCE. Returns {tapped, via, position, reason}.
+
+    `tapped` means a control was pressed — NOT that the bot is inside. Entering takes a walk
+    across the port and there is no local signal separating "walking" from "the tap missed",
+    so the caller perceives on its next tick and decides. Per the task-runner contract.
+    """
     target = building_name.lower()
+    frame = frame if frame is not None else capture_screen()
 
-    def _find_in_list(frame=None) -> Optional[Tuple[int, int]]:
-        """Scan building list; return tap coord or None."""
-        buildings = read_building_menu(frame or capture_screen())
-        logger.info(f"  Building list: {[lbl for lbl, *_ in buildings]}")
-        return next(
-            ((x, y) for lbl, x, y in buildings
-             if target in lbl.lower() or token_sim(lbl, target) >= 0.75),
-            None
-        )
+    plate = _nameplate_for(target, frame)
+    if plate is not None:
+        logger.info(f"  Nameplate {plate.label!r} @ ({plate.cx},{plate.cy}) — tapping to enter")
+        tap(plate.cx, plate.cy)
+        return {"tapped": True, "via": "nameplate", "position": (plate.cx, plate.cy), "reason": ""}
 
-    def _list_signature(buildings):
-        """Build a stable scroll-position signature.
+    tab = select_buildings_tab(frame)
+    if not tab["ok"]:
+        # Refusing to tap is the correct outcome. Falling through here used to run the fuzzy
+        # match over whatever the panel was showing — at Bordeaux that was the Tasks tab, and
+        # the match hit the word "market" inside a quest objective.
+        logger.error(f"  Not the building list ({tab['reason']}) — refusing to tap {building_name!r}")
+        return {"tapped": False, "via": None, "position": None, "reason": tab["reason"]}
+    frame = tab["frame"]
 
-        Uses the FIRST visible row's cy (rounded to a 30 px bucket) AS
-        WELL AS the building-name tokens.  Catches "list shifted by
-        20 px" as a real change while ignoring the second-by-second
-        clock tick in the header row (which `read_building_menu`
-        already filters via `_is_building_list_noise`, but we belt-
-        and-brace the signature in case OCR variance sneaks one in).
+    from vision.ocr import read_building_menu
+    rows = read_building_menu(frame)
+    logger.info(f"  Building list: {[lbl for lbl, *_ in rows]}")
+    pos = _building_row(rows, target) or _scroll_list_for(target, frame)
+    via = "list"
+    if pos is None:
+        pos, via = _port_map_entry(target), "port_map"
+    if pos is None:
+        return {"tapped": False, "via": None, "position": None, "reason": "not found"}
 
-        Buildings list is `[(label, cx, cy), ...]` sorted by cy.
-        """
-        if not buildings:
-            return ()
-        first_cy_bucket = buildings[0][2] // 30
-        labels = tuple(lbl for lbl, *_ in buildings)
-        return (first_cy_bucket, labels)
+    logger.info(f"  Tapping {building_name!r} ({via}) @ {pos}")
+    tap(*pos)
+    return {"tapped": True, "via": via, "position": pos, "reason": ""}
 
-    def _tap_from_list(frame=None, max_scrolls: int = 4,
-                        reset_swipes: int = 4) -> bool:
-        """Try building list, scrolling up to *max_scrolls* times until the
-        target is visible.  Stops scrolling early when the list signature
-        stops changing (we're at the bottom).
 
-        Before searching, scrolls UP up to *reset_swipes* times so the
-        panel starts from the top of the list — earlier navigate_to_building
-        calls may have left the panel scrolled past the target.  London's
-        Harbor sits at the top of the list, and if we exited from a
-        building further down (Union, Bank, ...), the panel is pre-scrolled
-        and Harbor is no longer visible.  Scrolling down further would
-        never find it.
+def inside_building(target: str, title: str) -> bool:
+    """Does this building's on-screen title name *target*?
 
-        London and other large ports have ~12 buildings that overflow the
-        visible panel; one scroll isn't enough to reach the bottom items
-        (palace, bureau, fortune teller).  Scrolling repeatedly until
-        found avoids unnecessary port-map fallback, which has its own
-        in-transit retap risks.
-        """
-        # ── Step 0: make sure the right panel is on the BUILDINGS tab ────
-        # The port-overworld tab bar (above the minimap) toggles Tasks / Buildings / Players; the
-        # building list only renders on the Buildings tab.  On arrival the Tasks tab can be auto-
-        # selected (live 2026-08-19: Jakarta → empty list → 60s timeout).  If the read doesn't look
-        # like the building list, tap the Buildings tab (house icon) and re-read.  Bounded: one tap.
-        frame = frame or capture_screen()
-        if not _on_buildings_tab(read_building_menu(frame)):
-            # Try the detected tabs in turn and VERIFY by re-reading the list, rather than
-            # trusting one computed position. Which index is Buildings varies with how many
-            # tabs a port shows, and a wrong guess does not fail quietly — it SELECTS another
-            # tab, which is how the bot put itself on the Players tab at Jakarta.
-            candidates = _tab_strip_candidates(frame)
-            if not candidates:
-                logger.warning("  Building list not on screen and no tab icons detected — "
-                               "proceeding with the current view")
-            for i, (bx, by) in enumerate(candidates):
-                logger.info(f"  Building list not on screen — trying tab {i + 1}/"
-                            f"{len(candidates)} @ ({bx},{by})")
-                tap(bx, by)
-                time.sleep(1.5)
-                frame = capture_screen()
-                if _on_buildings_tab(read_building_menu(frame)):
-                    logger.info(f"  Buildings tab selected @ ({bx},{by})")
-                    break
-            else:
-                if candidates:
-                    logger.warning(f"  None of the {len(candidates)} detected tabs showed a "
-                                   "building list")
-
-        # ── Step 1: try current view (cheap, often hits) ─────────────────
-        pos = _find_in_list(frame)
-        if pos is not None:
-            logger.info(f"  Tapping '{building_name}' in building list @ {pos}")
-            tap(*pos)
-            return True
-
-        # Scroll within the ACTUAL list column, not the region centre.  The list sits at the right
-        # edge (x≈0.91·W ≈ 2184); a region-centre swipe (x≈2125) can miss it entirely, so the rewind
-        # never scrolls, the signature stays unchanged → "at top" is assumed, and clipped top
-        # buildings (Harbor/Market on 10-building ports) never come back (live 2026-08-19, Jakarta).
-        _bl = read_building_menu(frame if frame is not None else capture_screen())
-        if _bl:
-            xs = sorted(x for _, x, _ in _bl)
-            mx = xs[len(xs) // 2]                    # median entry x = the real list column
-        else:
-            mx = (BUILDING_MENU_REGION[0] + BUILDING_MENU_REGION[2]) // 2
-        my = (BUILDING_MENU_REGION[1] + BUILDING_MENU_REGION[3]) // 2
-
-        # ── Step 2: reset to top of list with up-swipes ─────────────────
-        # Swipe DOWN (finger moves down) → content scrolls UP → list rewinds
-        # toward the top.  Stop early when signature stops changing.
-        prev_signature: Optional[tuple] = None
-        for i in range(1, reset_swipes + 1):
-            logger.info(
-                f"  Rewinding building list to top (up-swipe {i}/{reset_swipes})"
-            )
-            swipe_fast(mx, my - 150, mx, my + 150,
-                        duration_ms=300, settle_ms=600)
-            frame_after = capture_screen()
-            buildings = read_building_menu(frame_after)
-            signature = _list_signature(buildings)
-            logger.info(f"  Building list: {[lbl for lbl, *_ in buildings]}")
-
-            pos = next(
-                ((x, y) for lbl, x, y in buildings
-                 if target in lbl.lower() or token_sim(lbl, target) >= 0.75),
-                None,
-            )
-            if pos:
-                logger.info(
-                    f"  Tapping '{building_name}' in building list @ {pos}"
-                )
-                tap(*pos)
-                return True
-            if signature == prev_signature:
-                logger.info("  List signature unchanged — at top of scroll")
-                break
-            prev_signature = signature
-
-        # ── Step 3: scroll down looking for the target ──────────────────
-        prev_signature = None
-        for attempt in range(1, max_scrolls + 1):
-            logger.info(
-                f"  '{building_name}' not visible — scrolling building list "
-                f"(attempt {attempt}/{max_scrolls})"
-            )
-            swipe_fast(mx, my + 150, mx, my - 150,
-                        duration_ms=300, settle_ms=600)
-            frame_after = capture_screen()
-            buildings = read_building_menu(frame_after)
-            signature = _list_signature(buildings)
-            logger.info(f"  Building list: {[lbl for lbl, *_ in buildings]}")
-
-            if signature == prev_signature:
-                logger.info(
-                    "  List signature unchanged — reached end of scroll"
-                )
-                break
-            prev_signature = signature
-
-            pos = next(
-                ((x, y) for lbl, x, y in buildings
-                 if target in lbl.lower() or token_sim(lbl, target) >= 0.75),
-                None,
-            )
-            if pos:
-                logger.info(
-                    f"  Tapping '{building_name}' in building list @ {pos}"
-                )
-                tap(*pos)
-                return True
-
-        return False
-
-    def _tap_from_port_map() -> bool:
-        """Fallback: open port map, tap the building icon."""
-        from brain.states.port_map import open_port_map, read_port_map_buildings, close_port_map
-        logger.info(f"  '{building_name}' not in list — trying port map")
-        if not open_port_map():
-            logger.error("  Could not open port map")
-            return False
-        time.sleep(0.8)
-        pm_buildings = read_port_map_buildings(capture_screen())
-        result = next(
-            ((name, x, y) for name, x, y in pm_buildings
-             if target in name.lower() or token_sim(name, target) >= 0.75),
-            None
-        )
-        if result is None:
-            close_port_map()
-            logger.error(f"  '{building_name}' not found on port map")
-            return False
-        name, tx, ty = result
-        logger.info(f"  Tapping '{name}' on port map @ ({tx},{ty})")
-        tap(tx, ty)
-        return True
-
-    def _tap_nameplate_if_visible(frame=None) -> bool:
-        """When the bot's character has walked to a building, a floating
-        nameplate appears above the entrance (small) or expands (large)
-        when right in front.  The nameplate IS tappable — tapping it
-        enters the building.  This is far more reliable than waiting
-        for auto-entry after a port-map tap, which can be blocked by
-        ambient popups (Happy 2026 / NPC tooltip / location info).
-
-        Returns True if a matching nameplate was found and tapped.
-        """
-        from vision.screen_perception import parse_screen
-        from vision.element_postprocess import ROLE_BUILDING_NAMEPLATE
-        from brain.states.port_map import _canonical_name
-
-        if frame is None:
-            frame = capture_screen()
-        inv = parse_screen(frame, nav_state="port_overworld")
-        for t in inv.tagged:
-            if t.role != ROLE_BUILDING_NAMEPLATE:
-                continue
-            lbl = (t.label or "").lower().strip()
-            if not lbl:
-                continue
-            # Direct substring OR canonical-name match (handles
-            # 'Fortune Teller' ↔ 'fortune_teller' and similar drift)
-            canonical = _canonical_name(lbl) or ""
-            if (
-                target in lbl
-                or canonical == target
-                or token_sim(lbl, target) >= 0.7
-            ):
-                logger.info(
-                    f"  Building nameplate visible: {t.label!r} @ ({t.cx},{t.cy}) "
-                    f"— tapping to enter"
-                )
-                tap(t.cx, t.cy)
-                return True
-        return False
-
-    # Keywords that indicate the harbor panel is open in the right panel.
-    # The harbor does NOT open a new screen — it replaces the building list
-    # content in the port overworld right panel.  where_am_i() stays
-    # 'port_overworld' the whole time, so we detect it by OCR content instead.
-
+    Optimistic when the title is unreadable — the alternative is walking back out of a
+    building the bot is very probably standing in. KB variants cover the cases where the
+    interior title differs from the canonical name (item_shop reads "Shop"; harbor "Harbour").
+    """
     from brain.kb import control as _ckb
-    _HARBOR_PANEL_KWS    = _ckb().harbor_panel_keywords()
-    _HARBOR_TARGET_NAMES = {v.lower() for v in _ckb().building_name_variants("harbor")}
 
-    def _harbor_panel_open(frame) -> bool:
-        """True if the right-panel building list shows harbor content."""
-        if target.lower() not in _HARBOR_TARGET_NAMES:
-            return False
-        labels = {lbl.lower() for lbl, *_ in read_building_menu(frame)}
-        return bool(labels & _HARBOR_PANEL_KWS)
+    title = (title or "").strip().lower().split(" — ", 1)[0].strip()
+    if not title or "unreadable" in title:
+        return True
+    variants = {target} | {v.lower() for v in _ckb().building_name_variants(target)}
+    return (target in title
+            or title in variants
+            or any(v in title for v in variants if len(v) >= 3)
+            or token_sim(title, target) >= 0.65)
 
-    # Canonical building names + variants for signature filtering.  The
-    # building-menu OCR region overlaps NPC speech bubbles, which produce
-    # alpha-looking fragments ("you", "lution", "perharb"...) on every
-    # frame.  Restricting the signature to known building types eliminates
-    # this NPC-driven churn so a constant-NPC scene still produces a
-    # stable signature.
-    from brain.kb import control as _ckb_for_sig
-    _CANONICAL_BUILDINGS: set[str] = set()
-    for _btype, _bdata in _ckb_for_sig().known_building_types().items():
-        _CANONICAL_BUILDINGS.add(_btype.lower())
-        for _v in _bdata.get("all_names", []):
-            _CANONICAL_BUILDINGS.add(_v.lower())
 
-    def _overworld_signature(frame) -> tuple[str, ...]:
-        """
-        Stable signature of the port_overworld for change detection.
-        Restricted to canonical building names from the KB so NPC speech
-        bubbles (which the building-menu OCR region picks up alongside
-        real labels) don't perturb the signature on every frame.
-        Identical signature ⇒ tap likely didn't register;
-        different signature ⇒ something is changing — keep waiting.
-        """
-        return tuple(sorted({
-            lbl.lower().strip()
-            for lbl, *_ in read_building_menu(frame)
-            if lbl.lower().strip() in _CANONICAL_BUILDINGS
-        }))
+def harbor_panel_open(target: str, frame) -> bool:
+    """The harbour does NOT open a new screen — it replaces the right-panel list content, so
+    `where_am_i` stays 'port_overworld' throughout and only the panel content gives it away."""
+    from brain.kb import control as _ckb
+    from vision.ocr import read_building_menu
 
-    def _reparse_for_always_present() -> None:
-        """A basic building the list scan + port map both missed this pass, but it
-        MUST exist (Harbor/Market/Inn/Bureau/Shipyard).  Don't give up — log it as
-        a perception miss and pace the loop so the next iteration re-captures and
-        re-scans (fresh frame + port-map retry), bounded by the outer deadline."""
-        import random
-        logger.warning(
-            f"  '{building_name}' not found this pass but it ALWAYS exists at every "
-            "port — reparsing (perception miss / scrolled off), not giving up"
-        )
-        time.sleep(random.uniform(0.6, 1.1))
+    if target not in {v.lower() for v in _ckb().building_name_variants("harbor")}:
+        return False
+    labels = {lbl.lower() for lbl, *_ in read_building_menu(frame)}
+    return bool(labels & _ckb().harbor_panel_keywords())
 
-    logger.info(f"Navigating to '{building_name}'…")
 
-    deadline           = time.time() + timeout
-    last_tap_time      = 0.0    # 0 → first overworld tap has no waiting period
-    first_tap_time     = 0.0    # time of the most recent tap that has not yet
-                                # produced a state change — used to cap total
-                                # post-tap wait when signature flicker would
-                                # otherwise extend patience indefinitely
-    last_tap_signature: Optional[tuple[str, ...]] = None
-    # Patience after a tap before retrying.  Long because a character may have
-    # to walk across the port to the building before the scene transitions —
-    # there is no local signal that distinguishes "walking" from "tap didn't
-    # register".  Signature comparison handles partial OCR flicker (NPC bubbles,
-    # weather effects) by extending patience when the canonical-building
-    # signature changes, while MAX_WAIT_AFTER_TAP guarantees retap eventually
-    # even if the signature keeps flickering.
-    # 60s covers character walking time across most ports plus perception
-    # overhead.  Retap before this would re-issue the tap while the character
-    # is still in transit — the queued tap can land inside the destination
-    # building once the scene loads (e.g. on an NPC mate inside the inn).
-    TAP_RETRY_COOLDOWN  = 60.0
-    MAX_WAIT_AFTER_TAP  = 120.0
+def navigate_to_building(building_name: str, timeout: float = 60.0) -> bool:
+    """Enter a named building from within a port. True once the bot is inside it.
 
-    # Basic buildings (Harbor, Market, Inn, Bureau, Shipyard) exist at EVERY
-    # port and the right-panel list is scrollable — so "not found in this parse"
-    # is a perception miss (scrolled off / icon-prefix mis-OCR), never absence.
-    # For these, don't give up on a single failed scan: reparse until the
-    # deadline (the port-map fallback + a fresh capture next iteration).  See
-    # brain.kb always_present_buildings / memory project_basic_buildings_always_present.
-    from brain.kb import control as _kb_control
-    _always_present = _kb_control().is_always_present(building_name)
+    Interim shape: still a blocking loop, because thirteen callers depend on that today. What
+    it no longer does is RECOVER. Every branch that moved the bot somewhere else is gone —
+    Back on a sub-menu, Back out of a wrong building, Back off the world map, the Home-escape
+    when Back stopped working, and the learned-recovery plan. Those existed because this
+    function was the only scope available when something looked wrong, and each was locally
+    reasonable and globally wrong.
 
-    # Cross-iteration no-progress tracker for the `building` handler.  A wrong
-    # building → Back normally returns to port_overworld, which the loop already
-    # drives to the target — so Back is a single action that hands control back to
-    # the perceive loop (NOT an inline perceive-and-branch).  Only when we keep
-    # landing in the SAME wrong building (Back changing nothing — a modal eating
-    # Back) do we escalate to a bounded Home-escape.  See
-    # docs/navigate_to_building_review.md.
-    _wrong_building_sig    = None
-    _wrong_building_streak = 0
+    Now: if the bot is not at this port's overworld and not inside the target, this reports
+    what it saw and RETURNS. The caller knows what the bot is trying to achieve; it can
+    re-plan, sail, or give up. See docs/one_loop_task_drives_state.md.
+    """
+    from brain.perceive import perceive as _perceive
+
+    target = building_name.lower()
+    logger.info(f"Navigating to {building_name!r}…")
+
+    deadline = time.time() + timeout
+    tapped_at = 0.0
+    # Patience after a tap: the character may have to walk across the port, and a retap issued
+    # mid-walk can land INSIDE the destination once the scene loads (on an NPC in the inn, say).
+    TAP_RETRY_COOLDOWN = 60.0
 
     while time.time() < deadline:
-        # Capture once per loop — share the frame with all sub-calls to avoid
-        # redundant ADB screencaps (~5s each).
         frame = capture_screen()
 
-        # Clear unexpected NON-GAME blockers that freeze navigation — the idle
-        # lock/screensaver and the game's promo/store popups (perceive's interruptor
-        # layer doesn't cover these graphical promos / the lock state). Dismiss +
-        # re-capture. See brain/unexpected_dialog.clear_blockers.
+        # Non-game blockers freeze navigation: the idle lock/screensaver and the graphical
+        # promos the interruptor layer does not cover.
         try:
             from brain.unexpected_dialog import clear_blockers
             if clear_blockers(frame).get("cleared"):
                 time.sleep(1.0)
                 frame = capture_screen()
-        except Exception as _exc:
-            logger.debug(f"  [{building_name}] clear_blockers failed: {_exc}")
+        except Exception as exc:
+            logger.debug(f"  [{building_name}] clear_blockers failed: {exc}")
 
-        # Special case: harbor is a right-panel overlay, not a new screen.
-        # Detect it by its unique panel content before checking where_am_i().
-        if _harbor_panel_open(frame):
-            logger.info(f"  Harbor panel is open — confirmed by panel content")
+        if harbor_panel_open(target, frame):
+            logger.info("  Harbour panel is open — confirmed by panel content")
             return True
 
-        # Use perceive() so interruptors are dismissed before state detection.
-        from brain.perceive import perceive as _perceive
-        _pr  = _perceive(frame)
-        loc  = _pr.to_location_dict()
-        logger.info(f"  [{building_name}] state={loc['location']!r} — {loc['detail']}")
+        loc = _perceive(frame).to_location_dict()
+        where, detail = loc["location"], loc.get("detail", "")
+        logger.info(f"  [{building_name}] state={where!r} — {detail}")
 
-        # State 'sub_menu' (Phase 5e L1): bot is one level deeper than a
-        # building (e.g. inside Recruit Crew under Harbor).  If the
-        # sub-menu name is a known sub-menu of the target building, press
-        # Back once to reach the building's main pane and re-check.
-        # Without this, navigate_to_building polls for state='building'
-        # forever and the 60s timeout fires while the bot is sitting at a
-        # legitimate sub-menu inside the target.
-        if loc["location"] == "sub_menu":
-            sm_title = (loc.get("detail", "")
-                        .replace("sub_menu:", "")
-                        .strip().lower()
-                        .split(" — ", 1)[0].strip())
-            from brain.kb import control as _ckb
-            target_kb   = _ckb().known_building_types().get(target.lower(), {})
-            sub_menus_kb = [
-                s.get("id", "").lower().replace("_", " ") if isinstance(s, dict) else s.lower()
-                for s in target_kb.get("sub_menus", [])
-            ]
-            sub_screens  = [s.lower() for s in target_kb.get("sub_screens", [])]
-            known_subs   = set(sub_menus_kb) | set(sub_screens)
-            if sm_title in known_subs or any(sm_title in s or s in sm_title for s in known_subs if s):
-                logger.info(
-                    f"  At sub_menu {sm_title!r} which is a known sub-menu of "
-                    f"{target!r} — pressing Back to reach building's main pane"
-                )
-                press_back()
-                time.sleep(2.0)
+        if where == "building":
+            title = detail.replace("building:", "").strip()
+            if inside_building(target, title):
+                logger.info(f"Inside {building_name!r} — confirmed (screen: {title!r})")
+                return True
+            if _screen_says_under_way(where, title.lower()):
+                # Not a wrong building at all — the fleet is at sea. Naming it precisely is
+                # what lets the caller tell "we sailed already" from "we walked in the wrong
+                # door", and those want opposite responses.
+                logger.info(f"  Screen says {title!r} — the fleet is under way, so "
+                            f"{building_name!r} is moot. Leaving the screen alone.")
+            else:
+                logger.warning(f"  In {title!r}, not {building_name!r} — reporting, not pressing Back")
+            return False
+
+        if where == "port_overworld":
+            if tapped_at and time.time() - tapped_at < TAP_RETRY_COOLDOWN:
+                time.sleep(2.0)                      # still walking — do not retap
                 continue
-            # Unknown sub_menu — press Back to back out one level and
-            # let the main loop re-evaluate (we may end up in a building
-            # we still need to navigate out of).
-            logger.info(
-                f"  At sub_menu {sm_title!r} (not a known sub-menu of "
-                f"{target!r}) — pressing Back to back out one level"
-            )
-            press_back()
+            res = tap_building_entry(building_name, frame)
+            if not res["tapped"]:
+                # Harbor/Market/Inn/Bureau/Shipyard exist at EVERY port, so "not in this
+                # parse" is a perception miss, never absence. Pace and re-read — that is this
+                # function waiting on its own read to improve, not on the world to change.
+                from brain.kb import control as _kb_control
+                if res["reason"] == "not found" and _kb_control().is_always_present(building_name):
+                    logger.warning(f"  {building_name!r} not found this pass but it exists at "
+                                   "every port — re-reading rather than giving up")
+                    time.sleep(random.uniform(0.6, 1.1))
+                    continue
+                logger.error(f"  Cannot reach {building_name!r} here ({res['reason']})")
+                return False
+            tapped_at = time.time()
+            deadline = max(deadline, tapped_at + timeout)   # the attempt gets its full budget
             time.sleep(2.0)
             continue
 
-        if loc["location"] == "building":
-            # Verify we are in the RIGHT building, not just any building.
-            # detail format: "building: <title>" or "building (title unreadable)"
-            # When Qwen appends a description, format becomes
-            # "building: <ocr_title> — <qwen_description>".  Split on " — " to
-            # get the OCR title alone — Qwen's description can hallucinate
-            # (e.g. labels the inn as "harbor") and must not feed KB lookups.
-            detail          = loc.get("detail", "")
-            bld_title       = detail.replace("building:", "").strip().lower()
-            bld_title_short = bld_title.split(" — ", 1)[0].strip()
-            # Building-name variants from KB — handles cases where the
-            # in-game title bar differs from the building canonical name
-            # (e.g. item_shop's interior reads as "Shop"; harbor's reads
-            # as "Harbour" in some locales).
-            from brain.kb import control as _ckb_for_variants
-            _target_variants = {target} | {
-                v.lower() for v in _ckb_for_variants().building_name_variants(target)
-            }
-            title_ok        = (
-                not bld_title                                # unreadable — optimistically accept
-                or "unreadable" in bld_title_short           # unreadable — optimistically accept
-                or target in bld_title_short                 # e.g. "harbor" in "harbour"
-                or bld_title_short in _target_variants       # KB variants (e.g. "shop" → item_shop)
-                or any(v in bld_title_short for v in _target_variants if len(v) >= 3)
-                or token_sim(bld_title_short, target) >= 0.65
-            )
-            if title_ok:
-                logger.info(f"Inside '{building_name}' — confirmed (screen: {bld_title_short!r})")
-                return True
+        if where == "loading":
+            time.sleep(1.5)                          # a transition is in progress
+            continue
 
-            # Title doesn't match — check KB whether it's a known sub-screen of
-            # the target building (e.g. "interview" is inside the inn).  If so,
-            # press Back to reach the main menu and trust the destination —
-            # don't re-validate against the post-Back title (Qwen often
-            # hallucinates it; OCR may read it as garbled).
-            from brain.kb import control as _ckb
-            target_kb   = _ckb().known_building_types().get(target.lower(), {})
-            sub_screens = [s.lower() for s in target_kb.get("sub_screens", [])]
-            if bld_title_short in sub_screens:
-                logger.info(
-                    f"  {bld_title_short!r} is a known sub-screen of {target!r} — "
-                    "pressing Back to reach main menu"
-                )
-                press_back()
-                time.sleep(2.0)
-                frame_back = capture_screen()
-                loc_back   = _perceive(frame_back).to_location_dict()
-                if loc_back["location"] == "building":
-                    logger.info(
-                        f"  Back from {bld_title_short!r} → still in building — "
-                        f"trusting it's {target!r}"
-                    )
-                    return True
-                logger.warning(
-                    f"  Back from {bld_title_short!r} left building "
-                    f"(now {loc_back['location']!r}) — re-evaluating from main loop"
-                )
-                continue
+        # Anywhere else — a sub-menu, the world map, the sea, the main menu. The bot is not
+        # where this call assumed, and moving it is the task's decision, not this one's.
+        logger.warning(f"  {building_name!r} needs a port overworld; the screen says {where!r} "
+                       f"({detail}) — handing back")
+        return False
 
-            # Not a known sub-screen.  Before trying a blind Back, look up a
-            # learned recovery for the CURRENT screen — keywords from the live
-            # screen are far more reliable than the post-Back hallucinated title.
-            from brain.human_escalation import _match_learned_recovery
-            lr_text_pre = f"building {bld_title} navigate to {target}"
-            plan = _match_learned_recovery("building", lr_text_pre)
-            if plan:
-                from brain.human_escalation import _execute_plan
-                logger.info(
-                    f"  Applying learned recovery (matched on current screen): "
-                    f"{plan.scenario_id!r}"
-                )
-                _execute_plan(plan)
-                time.sleep(2.0)
-                continue
-
-            # No KB match and this is the WRONG building.  The single correct
-            # action is Back: a wrong building → Back normally returns to
-            # port_overworld, which the loop's port_overworld handler already
-            # drives to the target (tap from list / port map).  Do NOT inline-
-            # perceive-and-branch here — press Back and hand control back to the
-            # loop top (perceive → dispatch).  Track no-progress so a Back that
-            # changes nothing (a modal eating Back) escalates to a bounded
-            # Home-escape rather than looping until the deadline.
-            _sig = (loc["location"], bld_title_short)
-            if _sig == _wrong_building_sig:
-                _wrong_building_streak += 1
-            else:
-                _wrong_building_sig    = _sig
-                _wrong_building_streak = 0
-
-            if _wrong_building_streak >= 2:
-                logger.warning(
-                    f"  Still in {bld_title_short!r} after {_wrong_building_streak + 1} "
-                    "Back attempts (Back not changing the screen) — Home-escape"
-                )
-                # Route through the canonical exit helper rather than tapping the Home slot
-                # blind. It checks the chrome first: that slot is the HAMBURGER on an
-                # overworld, so a blind tap there opens the main menu instead of leaving
-                # (memory: project_home_button_is_chromed_only_escape). It also prefers an
-                # on-screen close target over system Back.
-                from actions.screen_exit import exit_current_screen
-                res = exit_current_screen()
-                logger.info(f"  exit_current_screen → {getattr(res, 'method', res)}")
-                time.sleep(2.0)
-                last_tap_time          = time.time() - TAP_RETRY_COOLDOWN
-                first_tap_time         = 0.0
-                last_tap_signature     = None
-                _wrong_building_sig    = None
-                _wrong_building_streak = 0
-                continue
-
-            # BEFORE forcing anything: does the screen contradict the premise of this call?
-            # Live 2026-08-22 the departure had ALREADY succeeded and the screen read
-            # "sailing to Melanesian Village". This branch pressed Back, cancelled the
-            # voyage, and the mission re-ran the whole village search — four times, 18.5
-            # minutes, to achieve what the first attempt had done in 65 seconds.
-            #
-            # A stale caller does not get to overwrite what the bot can see. Hand the
-            # perceived state back and let the caller update itself.
-            if _screen_says_under_way(loc["location"], bld_title_short):
-                logger.info(
-                    f"  Screen says {bld_title_short!r} — the fleet is already under way, so "
-                    f"{building_name!r} is moot. Leaving the screen ALONE and reporting the "
-                    "real state instead of pressing Back."
-                )
-                return False
-
-            logger.info(
-                f"  Title {bld_title_short!r} doesn't match {building_name!r} — "
-                "pressing Back, then re-perceiving from the loop top"
-            )
-            press_back()
-            time.sleep(2.0)
-
-        elif loc["location"] == "loading":
-            pass  # transition in progress — wait for next poll
-
-        elif loc["location"] == "port_overworld":
-            # First: if the target's building NAMEPLATE is visible in the
-            # current frame, tap it directly.  This handles the case where
-            # the character has walked to the entrance (after a port-map
-            # tap or a previous list tap) but auto-entry was blocked by an
-            # ambient overlay or the entrance just doesn't auto-trigger.
-            # Tapping the nameplate is the same as tapping the door —
-            # bypasses the wait-for-state-change cycle entirely.
-            if _tap_nameplate_if_visible(frame):
-                last_tap_time      = time.time()
-                if not first_tap_time:
-                    first_tap_time = last_tap_time
-                last_tap_signature = _overworld_signature(frame)
-                deadline           = time.time() + timeout
-                time.sleep(2.0)
-                continue
-
-            elapsed_cooldown = time.time() - last_tap_time
-            elapsed_total    = time.time() - first_tap_time if first_tap_time else 0.0
-            force_retap      = (first_tap_time and elapsed_total >= MAX_WAIT_AFTER_TAP)
-
-            if last_tap_signature is not None and elapsed_cooldown < TAP_RETRY_COOLDOWN:
-                # Inside the post-tap patience window — wait, don't retap.
-                pass
-            elif force_retap:
-                logger.warning(
-                    f"  No state change in {elapsed_total:.0f}s since first tap "
-                    "— forcing retap"
-                )
-                if _tap_from_list(frame) or _tap_from_port_map():
-                    last_tap_time      = time.time()
-                    first_tap_time     = last_tap_time  # reset the total wait clock
-                    last_tap_signature = _overworld_signature(capture_screen())
-                    deadline           = time.time() + timeout
-                elif _always_present:
-                    _reparse_for_always_present()
-                    first_tap_time     = 0.0
-                    last_tap_signature = None
-                else:
-                    logger.error(f"  Cannot find '{building_name}' anywhere — giving up")
-                    return False
-            else:
-                # Eligible for retap.  Compare overworld signature against the
-                # snapshot taken right after the last tap.  If it changed,
-                # something is happening (overlay dismissed, transit starting)
-                # — extend patience instead of issuing another tap.
-                current_sig = _overworld_signature(frame)
-                if (last_tap_signature is not None
-                        and current_sig != last_tap_signature):
-                    logger.info(
-                        f"  Overworld signature changed since last tap "
-                        f"(now {len(current_sig)} labels) — extending patience"
-                    )
-                    last_tap_signature = current_sig
-                    last_tap_time      = time.time()
-                else:
-                    # Reuse the already-captured frame for the building list scan.
-                    if _tap_from_list(frame) or _tap_from_port_map():
-                        last_tap_time      = time.time()
-                        if not first_tap_time:
-                            first_tap_time = last_tap_time
-                        # Snapshot AFTER the tap — if a popup was on screen,
-                        # it may have been dismissed by this tap, so the
-                        # signature for change-detection is the post-tap one.
-                        last_tap_signature = _overworld_signature(capture_screen())
-                        # Reset deadline so the new attempt gets its full time budget.
-                        # Without this, a tap issued near the deadline has no time to confirm.
-                        deadline = time.time() + timeout
-                    elif _always_present:
-                        _reparse_for_always_present()
-                        first_tap_time     = 0.0
-                        last_tap_signature = None
-                    else:
-                        logger.error(f"  Cannot find '{building_name}' anywhere — giving up")
-                        return False
-
-        elif loc["location"] == "world_map":
-            # Back on the WORLD MAP safely returns to the overworld (this is NOT the Exit-Game
-            # trap — that's Back on the overworld / main_menu).
-            logger.info("  On world map — pressing Back to return to overworld")
-            press_back()
-            time.sleep(1.5)
-
-        elif loc["location"] in ("sea", "sea_cinematic", "main_menu"):
-            # DON'T blind-Back here.  Back is context-dependent: on the overworld / main_menu it
-            # opens the "Exit Game?" prompt (a shutdown near-miss, live 2026-08-19), and Back at sea
-            # is unhelpful.  Right after arrival the port is still SETTLING (arrival cinematic /
-            # stale sea overlays), so WAIT and RE-PERCEIVE until it settles into a stable
-            # port_overworld with the building list — never act on an assumed state.  If an Exit-
-            # Game / Notice dialog is already up, dismiss it (Back on a DIALOG = Cancel, which is
-            # safe; never tap OK).  We do NOT reset the deadline, so the outer timeout fires if it
-            # never settles and the caller can re-plan instead of looping forever.
-            if _screen_contains(frame, "exit game", "leave game", "quit game",
-                                "do you want to exit"):
-                logger.info("  Exit-Game dialog up — dismissing via Cancel (Back-on-dialog)")
-                press_back()
-                time.sleep(1.5)
-            else:
-                logger.info(f"  Unsettled {loc['location']!r} (port not ready) — waiting to "
-                            "re-perceive, NOT blind-Backing")
-                time.sleep(2.0)
-
-        # "unknown" — likely a transient overlay; wait and re-poll
-
-    logger.error(f"Could not enter '{building_name}' after {timeout:.0f}s")
+    logger.error(f"Could not enter {building_name!r} within {timeout:.0f}s")
     return False
 
 
@@ -1680,119 +1661,109 @@ def _ensure_harbor_top_level() -> "Image.Image":
     return frame
 
 
-def _ensure_fleet_ready() -> bool:
-    """
-    Pre-departure readiness check: scan harbour panel for blocking conditions
-    and resolve them BEFORE attempting departure.
+def read_fleet_readiness(frame=None) -> dict:
+    """Can the fleet depart? A READ of the harbour Departure panel.
 
-    Detection: OCR text matched against KB blocking_signals, PLUS a visual
-    check for enabled (yellow) departure buttons.  If OCR misses the blocker
-    text but no yellow button is visible, the fleet still can't depart.
+    Returns {ready, blocker, on_departure_panel, detail}. Two signals, because either alone
+    is wrong: the KB's blocking_signals catch a named blocker in the OCR, and the yellow
+    departure button catches an UNNAMED one — if OCR misses the text but no yellow button is
+    drawn, the fleet still cannot leave.
 
-    Resolution chain (first match wins):
-      1. KB blocking_signals with action="resolve" → predefined resolution steps
-      2. Learned recoveries (learned_recoveries.json) → replay what worked before
-      3. Claude Vision → reason about the screen and prescribe an action
-      4. Human operator → describe what to do; saved to KB for next time
+    `on_departure_panel` tells apart the two ways this can say "no": the fleet is blocked, or
+    the bot is not looking at the departure panel at all. Those want opposite responses —
+    resolve the blocker, versus go back to the harbour — and collapsing them is why the old
+    version re-navigated after every single resolution attempt.
 
-    Re-navigates to harbour after each resolution so the next check reads fresh state.
-    Retries up to 3 times (covers multi-blocker scenarios: no crew AND low supply).
-
-    Returns True when fleet is ready to depart, False on unrecoverable failure.
+    Pass a `frame` for a read that touches nothing. Without one it calls
+    `_ensure_harbor_top_level`, which steps up out of a harbour sub-menu — that is reaching
+    the panel it was asked to read, not navigating.
     """
     from brain.fsm_registry import get_fsm_registry
 
+    frame = _ensure_harbor_top_level() if frame is None else frame
+    tokens = _ocr_frame(frame, min_conf=0.3)
+    text = " ".join(t.lower() for t, _, _, _ in tokens)
+
     dep_flow = get_fsm_registry().flows.get("harbor_departure")
-    blocking_signals = dep_flow._raw.get("blocking_signals", []) if dep_flow else []
+    signals = dep_flow._raw.get("blocking_signals", []) if dep_flow else []
+    blocker = next((s for s in signals if fuzzy_contains(text, s["text"])), None)
+    yellow = _find_yellow_button(frame, x_min=1600)
+    on_panel = any(fuzzy_contains(text, t) for t in _DEPART_PANEL_TOKENS)
 
-    MAX_ATTEMPTS = 3
-    for attempt in range(MAX_ATTEMPTS):
-        # Ensure we're on the Departure tab before checking.
-        # Other sub-menus (Supply, Recruit Crew) have their own yellow buttons
-        # that would cause false "all clear".
-        frame = _ensure_harbor_top_level()
-        tokens = _ocr_frame(frame, min_conf=0.3)
-        text = " ".join(t.lower() for t, _, _, _ in tokens)
+    if blocker is None and yellow is not None:
+        return {"ready": True, "blocker": None, "on_departure_panel": True,
+                "detail": "all clear", "text": text, "frame": frame}
+    if blocker:
+        detail = f"{blocker['text']!r} — {blocker.get('description', '')}"
+    else:
+        detail = f"no yellow departure button (unknown blocker). OCR: {text[:120]!r}"
+    return {"ready": False, "blocker": blocker, "on_departure_panel": on_panel,
+            "detail": detail, "text": text, "frame": frame}
 
-        # ── Check 1: Known blocker text (fuzzy OCR match) ────────────────
-        blocker = next(
-            (sig for sig in blocking_signals if fuzzy_contains(text, sig["text"])),
-            None,
-        )
 
-        # ── Check 2: No yellow departure button → fleet can't depart ────
-        yellow = _find_yellow_button(frame, x_min=1600)
-        if blocker is None and yellow is not None:
-            logger.info("  Fleet readiness check: all clear")
-            return True
+def resolve_fleet_blocker(reading: dict) -> dict:
+    """Climb ONE rung of the resolution ladder for whatever is blocking departure.
 
-        if blocker:
-            logger.warning(
-                f"  Fleet not ready (attempt {attempt + 1}/{MAX_ATTEMPTS}): "
-                f"{blocker['text']!r} — {blocker.get('description', '')}"
-            )
-        else:
-            logger.warning(
-                f"  Fleet not ready (attempt {attempt + 1}/{MAX_ATTEMPTS}): "
-                f"no yellow departure button visible (unknown blocker). "
-                f"OCR: {text[:120]!r}"
-            )
+    KB resolution → learned recovery → Claude Vision → the human operator, first match wins.
+    Returns {attempted, via, resolved}.
 
-        # ── Resolution chain ─────────────────────────────────────────────
+    What it no longer does is re-enter the harbour after each rung and loop three times.
+    That loop was a second copy of the one `SailToGoal` already runs: the goal tracks three
+    consecutive FLEET_CHECK failures and owns the phase machine that walks back to the
+    harbour. Two nested budgets meant nine attempts where the goal thought it had allowed
+    three, and the inner one re-navigated on the goal's behalf without being asked.
+    """
+    from brain.perceive import perceive
 
-        # Step 1: Try KB predefined resolution (flows.json blocking_signals)
-        if blocker and blocker.get("action") == "resolve":
-            from brain.recovery import execute_resolution
-            try:
-                ok = execute_resolution(blocker, context="pre_departure_readiness")
-            except Exception as e:
-                logger.error(f"  execute_resolution raised: {e}")
-                ok = False
-            if ok:
-                if not _navigate_to_harbour():
-                    logger.warning("  Could not re-enter harbour after resolution")
-                    return False
-                continue  # re-check
+    blocker, frame, text = reading["blocker"], reading["frame"], reading["text"]
 
-        # Step 2: Try learned recoveries (what worked before)
-        from brain.human_escalation import _match_learned_recovery, _execute_plan
-        state_text = f"building building: harbor {text}"
-        plan = _match_learned_recovery("building", state_text)
-        if plan:
-            logger.info(f"  Trying learned recovery: {plan.scenario_id!r}")
-            _execute_plan(plan)
-            time.sleep(2.0)
-            # Re-check: navigate back to harbour to verify
-            if not _navigate_to_harbour():
-                logger.warning("  Could not re-enter harbour after learned recovery")
-                return False
-            continue  # re-check
+    if blocker and blocker.get("action") == "resolve":
+        from brain.recovery import execute_resolution
+        try:
+            if execute_resolution(blocker, context="pre_departure_readiness"):
+                return {"attempted": True, "via": "kb", "resolved": True}
+        except Exception as exc:
+            logger.error(f"  execute_resolution raised: {exc}")
 
-        # Step 3: Ask Claude Vision to reason about the screen
-        logger.info("  No predefined or learned resolution — asking Claude Vision")
-        from brain.perceive import perceive, PerceiveResult
-        pr = perceive(frame)
-        resolved = _resolve_blocker_with_reasoning(frame, pr, text)
-        if resolved:
-            if not _navigate_to_harbour():
-                logger.warning("  Could not re-enter harbour after Claude resolution")
-                return False
-            continue  # re-check
+    from brain.human_escalation import _match_learned_recovery, _execute_plan
+    plan = _match_learned_recovery("building", f"building building: harbor {text}")
+    if plan:
+        logger.info(f"  Trying learned recovery: {plan.scenario_id!r}")
+        _execute_plan(plan)
+        time.sleep(2.0)
+        return {"attempted": True, "via": f"learned:{plan.scenario_id}", "resolved": True}
 
-        # Step 4: Escalate to human
-        logger.warning("  Claude could not resolve — escalating to human operator")
-        from brain.human_escalation import escalate
-        pr = perceive(frame)
-        result = escalate(context="fleet cannot depart", perceive_result=pr)
-        if result.state == "building":
-            # Human resolved something — re-check
-            if not _navigate_to_harbour():
-                return False
-            continue
-        # Human couldn't help or no tty
+    logger.info("  No predefined or learned resolution — asking Claude Vision")
+    if _resolve_blocker_with_reasoning(frame, perceive(frame), text):
+        return {"attempted": True, "via": "claude", "resolved": True}
+
+    logger.warning("  Claude could not resolve — escalating to the human operator")
+    from brain.human_escalation import escalate
+    result = escalate(context="fleet cannot depart", perceive_result=perceive(frame))
+    return {"attempted": True, "via": "human", "resolved": result.state == "building"}
+
+
+def _ensure_fleet_ready() -> bool:
+    """True when the harbour panel says the fleet can depart.
+
+    One read, and at most one resolution attempt. On a False the caller re-checks on its next
+    tick — `SailToGoal` already counts three consecutive FLEET_CHECK failures and owns the
+    phase that walks back to the harbour, so the retrying belongs there and only there.
+    """
+    reading = read_fleet_readiness()
+    if reading["ready"]:
+        logger.info("  Fleet readiness: all clear")
+        return True
+
+    logger.warning(f"  Fleet not ready: {reading['detail']}")
+    if not reading["on_departure_panel"]:
+        # Nothing to resolve — this is not the departure panel. Resolving a blocker that is
+        # not on screen means acting on a screen the bot has not identified.
+        logger.warning("  …and this is not the departure panel — reporting, not resolving")
         return False
 
-    logger.warning("  Fleet readiness check exhausted retries")
+    res = resolve_fleet_blocker(reading)
+    logger.info(f"  Resolution attempt via {res['via']}: resolved={res['resolved']}")
     return False
 
 
@@ -2262,6 +2233,37 @@ Return ONLY valid JSON:
     return revised
 
 
+def tap_supply_departure(frame=None) -> dict:
+    """ONE tap on the harbour's departure button. Returns immediately.
+
+    The action, separated from everything `_depart_from_harbour` wrapped around it: waiting
+    out the loading screens, re-navigating when the button is absent, and escalating into
+    `recover_to_port_overworld` when a blocker appears. Those are decisions, and decisions
+    belong to whoever perceives between them.
+
+    Returns {tapped, blocked, reason}:
+      tapped=True   the button was pressed. NOT that the fleet left — the caller perceives.
+      blocked=<sig> a blocking signal sits over the harbour panel; nothing was tapped.
+      tapped=False  no departure button on this screen (probably not the harbour).
+    """
+    frame = frame if frame is not None else capture_screen()
+    result = _tap_depart_button(frame)
+
+    if isinstance(result, dict):
+        # A blocker over the panel. Report it — do NOT escalate into recovery from here:
+        # recovery crosses worlds, and a world change is never a primitive's decision.
+        logger.warning(f"[depart] departure blocked ({result.get('text')!r})")
+        return {"tapped": False, "blocked": result,
+                "reason": f"blocked by {result.get('text')!r}"}
+
+    if result == "not_found":
+        logger.info("[depart] no departure button on this screen")
+        return {"tapped": False, "blocked": None, "reason": "no departure button here"}
+
+    logger.info("[depart] departure button tapped — handing back")
+    return {"tapped": True, "blocked": None, "reason": "departure tapped"}
+
+
 def _depart_from_harbour() -> bool:
     """
     Tap the departure button and wait until the sea view is confirmed.
@@ -2280,29 +2282,24 @@ def _depart_from_harbour() -> bool:
         _mfc.invalidate("set_sail")
     except Exception as e:
         logger.debug(f"[depart] moondream cache invalidate failed: {e}")
-    frame = capture_screen()
-    result = _tap_depart_button(frame)
-    if isinstance(result, dict):
-        # Blocking signal detected despite pre-check — escalate immediately
-        sig = result
-        logger.warning(
-            f"  Departure blocked ({sig['text']!r}) despite fleet readiness check — escalating"
-        )
-        from brain.recovery import recover_to_port_overworld
-        recover_to_port_overworld()
+    tap_res = tap_supply_departure()
+    if tap_res["blocked"]:
+        # REPORT, DO NOT RECOVER. This used to call recover_to_port_overworld() from inside
+        # the departure, which crosses worlds — a decision the caller must make, and one half
+        # of the exit_to_overworld <-> recover_to_port_overworld cycle. The caller perceives a
+        # harbour with a blocker over it and decides what that means.
+        logger.warning("  Departure blocked despite the fleet readiness check — reporting")
         return False
+    result = "not_found" if not tap_res["tapped"] else None
     if result == "not_found":
         # Not in harbour — try to navigate there first
         logger.warning("  Depart button not found on first try — re-navigating to harbour")
         if not _navigate_to_harbour():
             logger.error("  Could not navigate to harbour")
             return False
-        frame = capture_screen()
-        result = _tap_depart_button(frame)
-        if isinstance(result, dict):
-            logger.warning(f"  Departure still blocked after re-navigating ({result['text']!r}) — escalating")
-            from brain.recovery import recover_to_port_overworld
-            recover_to_port_overworld()
+        again = tap_supply_departure()
+        if again["blocked"]:
+            logger.warning("  Departure still blocked after re-navigating — reporting")
             return False
     time.sleep(2.0)
 
@@ -2400,22 +2397,77 @@ def _handle_post_departure_sea(frame: Image.Image) -> Image.Image:
 
 # ── Steps 5-7: open world map, find destination, tap Go to City ───────────────
 
-def _is_on_world_map(frame: Image.Image) -> bool:
+def _world_map_button(tokens) -> Optional[tuple]:
+    """(x, y) of the port map's "World Map" globe, from the two words beside each other.
+
+    EasyOCR returns them separately — `World` at (204,1013) and `Map` at (279,1015) — with
+    unrelated labels between them in the joined text, so no phrase match finds it. What marks
+    the button is the two words sitting side by side on one line.
     """
-    True when the world map is open.
-    Requires BOTH:
-      - No sea-HUD keywords ("days of sailing", "day 1/2/3")
-      - At least one port-label keyword
-    The sea view right panel also shows nearby port names, so port keywords alone
-    are not sufficient — we must also confirm the sailing HUD is gone.
+    words = [(t.lower(), x, y) for t, _c, x, y in tokens]
+    for t1, x1, y1 in words:
+        if t1 != "world":
+            continue
+        for t2, x2, y2 in words:
+            if t2 == "map" and abs(y2 - y1) <= 20 and 0 < (x2 - x1) <= 160:
+                return ((x1 + x2) // 2, y1)
+    return None
+
+
+def _is_on_port_map(frame: Image.Image, *, tokens=None) -> bool:
+    """True when the PORT MAP is open — the city plan, not the world map.
+
+    Identified by the one thing it has and the world map has not: its own globe button
+    labelled "World Map", at the bottom left, which is the way out to the real world map.
+
+    THE CLASSIFIER CANNOT ANSWER THIS ONE. The family CNN's classes are sea / port_overworld /
+    world_map / chromed / transient — `port_map` is not among them, and it reads a port map as
+    a port_overworld at confidence 1.00, short-circuiting before any fingerprint gets to
+    disagree. So this is the exception to "ask the classifier": it is asked whether this is the
+    WORLD map, which it answers well (0.99 live), and the globe button settles the rest.
+
+    What was here before compared the title against "world map" through `title_text`, which
+    returns a SINGLE element. On the world map that element was 'Port' — the first mode tab,
+    reachable because the title crop ran to 0.40 of the frame — so this said "port map" about
+    the world map on 2026-08-26 and the fleet re-perceived an open map instead of sailing.
+    """
+    if tokens is None:
+        tokens = _ocr_frame(frame, min_conf=0.3)
+    if _world_map_button(tokens) is None:
+        return False
+    return not _is_on_world_map(frame)
+
+
+def _is_on_world_map(frame: Image.Image) -> bool:
+    """True when the world map is open.
+
+    ASK THE CLASSIFIER — DO NOT RE-DERIVE IT. `brain.perceive.classify_nav_state` already
+    answers this, with the family CNN plus the registered fingerprints behind it, and it is
+    the canonical home for "which screen is this" (CLAUDE.md: one canonical implementation
+    per concern). This function used to run its own title OCR instead, and the two disagreed.
+
+    Live 2026-08-26, on the world map with the fleet bound for Lisboa:
+
+        [classify] → world_map (family-classifier conf=0.99) — short-circuit
+        World map check: has_sea_hud=False title_says_world_map=False port_map=True
+
+    The classifier was right. The local check read the title through `title_text`, which
+    returns ONE element and returned 'Port' — the first mode tab — while the actual title sat
+    beside it as the separate tokens 'World' and 'Map', both at ≥0.97. That same 'Port' then
+    made `_is_on_port_map` say yes, so `open_world_map` sat re-perceiving a map that was open
+    in front of it, and the voyage never started.
+
+    The sea HUD still disqualifies: the sea view can carry a stale world-map title while the
+    fleet is under way, and that is a genuinely different question from "which screen".
     """
     tokens = _ocr_frame(frame, min_conf=0.3)
     full = " ".join(t.lower() for t, _, _, _ in tokens)
-    has_sea_hud         = any(kw in full for kw in _SEA_HUD_TOKENS)
-    has_world_map_title = fuzzy_contains(full, "world map")
-    logger.info(f"  World map check: has_sea_hud={has_sea_hud} "
-                f"has_world_map_title={has_world_map_title} text={full[:100]!r}")
-    return has_world_map_title and not has_sea_hud
+    has_sea_hud = any(kw in full for kw in _SEA_HUD_TOKENS)
+
+    from brain.perceive import _classify_nav_state
+    verdict = (_classify_nav_state(frame) or {}).get("location")
+    logger.info(f"  World map check: classifier={verdict!r} has_sea_hud={has_sea_hud}")
+    return verdict == "world_map" and not has_sea_hud
 
 
 def _clear_sea_popups(frame: Image.Image) -> Image.Image:
@@ -2733,7 +2785,26 @@ def open_world_map(context: Optional[str] = None) -> bool:
     Verifies with _is_on_world_map(); retries a few times (waking an idle cinematic first).
     `context` may be pre-supplied ('sea'/'sea_cinematic'/'port_overworld'); otherwise where_am_i()
     derives it each attempt.  This replaces _open_world_map_from_sea and the duplicate port opens."""
-    logger.info("[open_world_map] opening world map…")
+    # DEPRECATED, AND LOUD ABOUT IT. This does FIVE jobs in one ten-attempt loop — waking an
+    # OS lock, exiting a building, refusing a village, tapping, and verifying — and four of
+    # them have owners now: the bootstrap, the dispatcher's routing, and the next perceive.
+    # Live 2026-08-28 it was handed a lock screen, a daily-news popup and an Investment
+    # Season banner, and its three available responses were all wrong: it waited for a
+    # TransientActivity it reached ZERO times, read "Season" out of the banner, accepted it
+    # as a port name, and reported "Overworld confirmed".
+    #
+    # The replacement is the OPEN_WORLD_MAP intent plus WorldMapActivity. Three live callers
+    # remain (village_check, route_execution, nav_step) and four dormant ones; this line
+    # names whichever fires so they are retired on evidence rather than guesswork, the way
+    # `recover_to_port_overworld` was.
+    import inspect as _inspect
+    _caller = "unknown"
+    for _fr in _inspect.stack()[1:]:
+        if _fr.filename != __file__:
+            _caller = f"{_fr.filename.rsplit('/', 1)[-1]}:{_fr.lineno} in {_fr.function}()"
+            break
+    logger.warning(f"[open_world_map] DEPRECATED — called from {_caller}. Use the "
+                   "OPEN_WORLD_MAP intent + WorldMapActivity; report this caller.")
     waited_out = 0
     for attempt in range(10):
         frame = capture_screen()
@@ -2897,14 +2968,28 @@ def _world_map_port_labels_visible(frame: Image.Image) -> bool:
         "alexandria", "aden", "pasay", "kozhikode", "pegu", "lopburi",
         "oman", "basra", "mombasa", "zanzibar", "mogadishu",
     )
-    found = []
+    # SEVERAL DISTINCT PORTS, NOT ONE LABEL. One port name in the left area is not the world
+    # map — the PORT MAP's own title is a port name, sitting exactly there, so opening the
+    # port map at Lisbon or Venice would be read as "world map opened". This check is ORed
+    # with `_is_on_world_map`, so a single match here re-introduces the very confusion the
+    # title check exists to prevent. The world map scatters MANY port labels across the map;
+    # a chromed screen names one place.
+    found, distinct = [], set()
     for _, text, conf in raw:
-        if conf >= 0.25 and any(p in text.lower() for p in known_ports):
-            found.append(f"{text!r}({conf:.2f})")
+        if conf < 0.25:
+            continue
+        for port in known_ports:
+            if port in text.lower():
+                found.append(f"{text!r}({conf:.2f})")
+                distinct.add(port)
 
-    if found:
+    if len(distinct) >= 2 and not _is_on_port_map(frame):
         logger.info(f"  World map port labels in left area: {', '.join(found)}")
         return True
+    if found:
+        logger.info(f"  Only {len(distinct)} distinct port label(s) in the left area "
+                    f"({', '.join(found)}) — not enough to call this the world map")
+        return False
 
     # Also log everything OCR read in that area for diagnosis
     all_text = [(text, conf) for _, text, conf in raw if conf >= 0.25]
@@ -3013,6 +3098,82 @@ _DESTINATION_BUTTON_NOUNS = ("city", "village")
 # 2026-05-21 origin: bot read "Move to Village" inside the info panel
 # at (2084, 596), tapped there, and the panel stayed up.
 _DESTINATION_BUTTON_MIN_Y = 850
+
+
+# A ROUTE'S COMMIT BUTTON IS A BARE 'Move' — no noun (live 2026-09-03, the Hutu mission).
+# The saved-route panel's button says only `Move`, so the verb+noun rule below cannot see it,
+# `_commit_control_showing` answered False, the world map classified the screen as ROUTE_LIST,
+# and the activity re-tapped the route row it had already selected until the stall guard ended
+# a mission with 4,597 units aboard and the route drawn on the map.
+#
+# THE NOUN IS NOT DECORATION, though — a bare `Move` is ALSO the sea-waypoint marker the game
+# raises when a tap misses a port and lands on open water, and `_find_destination_button` is
+# what tells those apart (see `_has_destination_button_text` and its caller around line 4537).
+# So the word alone must never be enough. What makes it unambiguous is the ROUTE TAB: a saved
+# route is selected and its panel is showing, which is not a state a waypoint marker occurs
+# in. Callers that know that pass `allow_bare_move=True`; nobody else's behaviour changes.
+#
+# Why this and not a looser word list: the same action bar carries `My Location` and `Invest`
+# on the very frame this was found on. Widening the verbs would match those.
+_BARE_MOVE_MIN_W = 120           # the route panel's button measured 227px; a map label is small
+
+
+def _bare_move_control(elements, min_y: int = None):
+    """(cx, cy) of a route panel's bare `Move` button, or None.
+
+    Deliberately strict: an OmniParser BUTTON (not loose map text), labelled exactly `move`,
+    in the bottom action bar, and wide enough to be a real action control.
+    """
+    if min_y is None:
+        min_y = _DESTINATION_BUTTON_MIN_Y
+    for e in elements or []:
+        if (getattr(e, "element_type", "") or "").lower() != "button":
+            continue
+        if (getattr(e, "label", "") or "").strip().lower() != "move":
+            continue
+        cy = getattr(e, "cy", 0) or 0
+        if cy < min_y:
+            continue
+        if ((getattr(e, "x2", 0) or 0) - (getattr(e, "x1", 0) or 0)) < _BARE_MOVE_MIN_W:
+            continue
+        cx = getattr(e, "cx", 0) or 0
+        logger.info(f"  [panel-commit] bare 'Move' button @ ({cx},{cy}) — a saved route's "
+                    "commit control")
+        return (cx, cy)
+    return None
+
+
+def destination_commit_control(frame=None, *, elements=None, tokens=None,
+                               allow_bare_move: bool = False):
+    """WHERE the commit control is on an OPEN destination panel — or None.
+
+    ONE TAP'S WORTH. `commit_departure` opens the map and navigates to a destination; this is
+    only the last step of it, for a caller already standing on the panel with the place
+    selected. Calling the whole flow from there re-opens the map and re-navigates.
+
+    The rule is `_find_destination_button`'s and stays there: the button lives in the bottom
+    action bar (`y >= _DESTINATION_BUTTON_MIN_Y`) and is a verb+noun pair, merged or split.
+    This wrapper only lets an OmniParser caller ask the same question — the classifier holds
+    elements, not OCR tokens, and a second implementation of "where is the Move button" is
+    how the positional rule got lost the first time.
+    """
+    if tokens is None:
+        if elements is None:
+            if frame is None:
+                return None
+            from vision.omniparser import parse_fast_cached
+            elements = list(parse_fast_cached(frame))
+        tokens = [((getattr(e, "label", "") or "").strip(), 1.0,
+                   getattr(e, "cx", 0) or 0, getattr(e, "cy", 0) or 0)
+                  for e in elements or []]
+        tokens = [t for t in tokens if t[0]]
+    pos = _find_destination_button(tokens, label="panel-commit")
+    if pos is None and allow_bare_move:
+        if elements is None and frame is not None:
+            from vision.omniparser import parse_fast_cached
+            elements = list(parse_fast_cached(frame))
+        pos = _bare_move_control(elements)
+    return pos
 
 
 def _find_destination_button(
@@ -3246,58 +3407,355 @@ def _calibrate_scale_on_port_tab() -> bool:
     return True
 
 
+# The band the tab row lives in, and how like a tab name a label must read before the row is
+# allowed to call it one. 0.72 sits above 'Explosives' (0.71 against 'explore') and below the
+# worst real reading seen ('Exp1oregh', 0.75) — set by what actually collides, not by taste.
+_TAB_BAND_Y = 200
+_TAB_MIN_SCORE = 0.72
+
+# THE BLEED IS SEPARABLE BY BRIGHTNESS (user, 2026-09-01). The bar is translucent, so the map
+# shows through it — but the game draws the tab labels in a flat UI grey, measured at exactly
+# 149 on Explore, Route and Trade alike, while whatever shows through is DIMMED by the overlay
+# before it reaches the eye: Plymouth's strokes measured 89, indistinguishable from the bar's
+# own background at 92. Erasing everything below this level deletes the bleed and leaves the
+# labels untouched. 145 sits in a gap ~50 wide, so it is not a tuned number.
+_TAB_TEXT_LUMA = 145
+_TAB_BAND_CACHE: dict = {}
+
+
+def _tab_band_without_bleed(frame):
+    """The tab band with the map's own text erased — see `_TAB_TEXT_LUMA`.
+
+    Parsing THIS instead of the whole frame is what makes the tab names exact, and it fixes a
+    failure that no amount of scoring could. Live 2026-08-31 the shared whole-frame parse
+    returned Explore, Weymouth and Route as ONE element reading 'Explo eymoutRoute'; that
+    token contains 'route', so it scored 0.95 by containment and consumed Explore's element
+    along with it. The row came back ['port', 'route', 'trade'], `select_world_map_tab`
+    refused to read another tab's rail, and the mission failed at sail_to_village. A tab name
+    that is not a separate token cannot be recovered downstream — the merge has to be
+    prevented, and dimmed pixels are how the game itself distinguishes the two layers.
+
+    Cached against the SOURCE frame and holding a reference to it: `id()` is reused the
+    moment a frame is freed, which is the collision `parse_fast_cached` documents at length.
+    """
+    import numpy as np
+    from PIL import Image as _Image
+
+    cached = _TAB_BAND_CACHE.get(id(frame))
+    if cached is not None and cached[0] is frame:
+        return cached[1]
+
+    band = np.asarray(frame.crop((0, 0, frame.width, _TAB_BAND_Y)).convert("RGB"))
+    lum = 0.299 * band[..., 0] + 0.587 * band[..., 1] + 0.114 * band[..., 2]
+    clean = _Image.fromarray(
+        np.where((lum >= _TAB_TEXT_LUMA)[..., None], band, 0).astype(np.uint8))
+
+    _TAB_BAND_CACHE.clear()          # one frame at a time; the id above is only unique alive
+    _TAB_BAND_CACHE[id(frame)] = (frame, clean)
+    return clean
+
+
+def _world_map_tab_strip(frame) -> list:
+    """[(name, cx, cy, y2)] for the world map's tab row, left to right.
+
+    BBOX AND FUZZY WORD, TOGETHER — neither is enough alone (user, 2026-08-29).
+
+    THE TAB BAR IS TRANSLUCENT, so map text underneath bleeds into the label and the
+    corruption changes with whatever the map is showing. The same Explore tab read
+    'Exploregh' in one capture and 'Explorgh' in the next — Edinbur-GH showing through — and
+    'NarExplore' was the same thing from the other side. An exact match, a containment test
+    and a prefix each fail on some frame or other, because the damage is not in the OCR: it
+    is on the screen.
+
+    THE BLEED IS NOW ERASED BEFORE THE PARSE — `_tab_band_without_bleed` drops it by
+    brightness, and on the frames that used to read 'Explo eymoutRoute' the labels come back
+    exactly 'Port', 'Explore', 'Route', 'Trade'. What follows is therefore no longer the
+    thing standing between us and a wrong answer; it is the residual guard for whatever the
+    mask does not catch, and it is kept because a merged token is unrecoverable downstream
+    and a cheap second line is worth having.
+
+    A FUZZY word score identifies them all — 0.80, 0.88 and 0.82 against 'explore'. It cannot
+    stand alone either: 'Explosives' scores 0.71, close enough to a badly bled tab to be taken
+    for one.
+
+    THE BBOX SETTLES IT. Tabs live in a band at the top of the screen and appear in a FIXED
+    ORDER, so the reading must be a left-to-right assignment: whatever is chosen for Explore
+    sits right of Port and left of Route. An unrelated word cannot take a slot without
+    displacing a better-scoring neighbour or breaking the order. This picks the ordered
+    assignment with the best total score — the structure constrains what the words are
+    allowed to mean.
+    """
+    from vision.omniparser import get_omniparser
+    parser = get_omniparser()
+    if not parser.yolo_available():
+        return []
+
+    # The BAND, with the map's bleed erased — not the shared whole-frame parse. The crop
+    # starts at the origin, so cx/cy/y2 are already frame coordinates.
+    els = sorted((e for e in parser.parse_fast(_tab_band_without_bleed(frame))
+                  if (e.label or "").strip()),
+                 key=lambda e: e.cx)
+    if not els:
+        return []
+
+    tabs = _WORLD_MAP_TABS
+    scores = [[_tab_score(e.label, t) for t in tabs] for e in els]
+
+    # The best assignment of tabs to elements that keeps BOTH in left-to-right order.
+    # best[i][j] = best total using elements[i:] for tabs[j:] — small enough to be exact.
+    #
+    # THREE MOVES, NOT TWO: take this element as this tab, skip the ELEMENT (it is something
+    # else on the bar), or skip the TAB (this row does not show it). Leaving out the third
+    # made a row that is genuinely missing a tab stall on it and drop every tab after —
+    # ['port','route','trade'] came back as ['port'].
+    n, m = len(els), len(tabs)
+    best = [[0.0] * (m + 1) for _ in range(n + 1)]
+    move = [[""] * (m + 1) for _ in range(n + 1)]
+    for i in range(n - 1, -1, -1):
+        for j in range(m - 1, -1, -1):
+            options = [(best[i + 1][j], "skip-element"), (best[i][j + 1], "skip-tab")]
+            if scores[i][j] >= _TAB_MIN_SCORE:
+                options.append((scores[i][j] + best[i + 1][j + 1], "take"))
+            best[i][j], move[i][j] = max(options)
+
+    out, i, j = [], 0, 0
+    while i < n and j < m:
+        if move[i][j] == "take":
+            e, score = els[i], scores[i][j]
+            if score < 0.999:
+                logger.info(f"[world-map-tab] {e.label!r} @{e.cx} read as {tabs[j]!r} "
+                            f"(score {score:.2f}, and it sits where {tabs[j]!r} must) — "
+                            f"the tab bar is translucent")
+            out.append((tabs[j], e.cx, e.cy, e.y2))
+            i, j = i + 1, j + 1
+        elif move[i][j] == "skip-element":
+            i += 1
+        else:
+            j += 1
+    return _recover_missing_tabs(frame, out)
+
+
+def _recover_missing_tabs(frame, found: list) -> list:
+    """Read any tab the band-wide parse lost, in ITS OWN BOX. Returns the row, left to right.
+
+    THE SELECTED TAB IS THE ONE THIS LOSES, and it loses it two different ways at once.
+    `_tab_band_without_bleed` keeps pixels BRIGHTER than the cut, which is right for the
+    unselected tabs — light labels on dark, with the dim map bleed dropped. The SELECTED tab
+    is the other way round: a white slab with DARK text, so the mask keeps the slab and erases
+    the label. And unmasked, a map pin drawn under the strip merges with it.
+
+    Live 2026-09-03 at Casablanca, both together:
+
+        band OCR   'CasahlanPort'  conf=0.64      the pin's name fused with the tab's
+        masked     (nothing)                      the dark label erased with the bleed
+        row        ['explore', 'route', 'trade']
+        -> 'port' is not in the row -> the tab cannot be selected -> the course cannot be set
+        -> FAILED at step mission: gather:Faro
+
+    Reading the tab's OWN box recovers it: that crop reads 'anPort' — the label plus the tail
+    of 'Casablanca' — which `_tab_score` identifies by containment. The box comes from the
+    SPACING of the tabs that WERE read, since they are evenly spaced in a fixed order, so
+    nothing here is a remembered coordinate.
+
+    AND IT IS A READ, NOT A GUESS. The position is computed, but the name still has to come
+    off the screen and score: a slot whose crop does not name the tab is left out, and the
+    caller gets a short row and refuses, exactly as before. That distinction is the whole
+    lesson of `MARKET_COORDS["sell"]` — a fallback that guesses is worse than one that
+    refuses.
+    """
+    from vision.ocr import read_text
+
+    tabs = list(_WORLD_MAP_TABS)
+    if len(found) >= len(tabs) or len(found) < 2:
+        return found                      # nothing missing, or too little to place anything
+
+    by_name = {n: (n, cx, cy, y2) for n, cx, cy, y2 in found}
+    xs = [(tabs.index(n), cx) for n, cx, _, _ in found]
+    gaps = [(xs[i + 1][1] - xs[i][1]) / max(xs[i + 1][0] - xs[i][0], 1)
+            for i in range(len(xs) - 1)]
+    if not gaps:
+        return found
+    pitch = sorted(gaps)[len(gaps) // 2]
+    if pitch <= 0:
+        return found
+    anchor_idx, anchor_cx = xs[0]
+    _, _, cy, y2 = found[0]
+
+    for j, name in enumerate(tabs):
+        if name in by_name:
+            continue
+        cx = int(anchor_cx + (j - anchor_idx) * pitch)
+        half = int(pitch * 0.37)
+        if cx - half < 0 or cx + half > frame.width:
+            continue
+        text = read_text(frame.crop((cx - half, max(cy - 30, 0), cx + half, cy + 30)))
+        score = _tab_score(text, name)
+        if score >= _TAB_MIN_SCORE:
+            logger.info(f"[world-map-tab] {name!r} was missing from the row; its own box "
+                        f"reads {text!r} (score {score:.2f}) @{cx} — recovered")
+            by_name[name] = (name, cx, cy, y2)
+        else:
+            logger.info(f"[world-map-tab] {name!r} is missing and its box reads {text!r}, "
+                        f"which does not name it (score {score:.2f}) — leaving it out")
+    return [by_name[n] for n in tabs if n in by_name]
+
+
+def _tab_score(label: str, name: str) -> float:
+    """How well an OCR'd label names this tab. 1.0 exact, 0.0 nothing like it.
+
+    A bled label carries the whole tab name plus a neighbour's fragment, so containment is
+    worth more than the raw ratio it would score: 'NarExplore' is 0.82 by similarity and
+    certain by inspection.
+    """
+    import difflib
+
+    lab = (label or "").strip().lower()
+    if not lab:
+        return 0.0
+    if lab == name:
+        return 1.0
+    if name in lab:
+        return 0.95
+    return difflib.SequenceMatcher(None, lab, name).ratio()
+
+
+def active_world_map_tab(frame=None) -> Optional[str]:
+    """WHICH world-map tab is lit right now — 'port' / 'explore' / 'route' / 'trade', or
+    None when the tab row is not on screen or the highlight cannot be read.
+
+    THE OBSERVATION, exposed. Before this the codebase could COMMAND the tab
+    (`select_world_map_tab`) but not ASK it: the reader lived inside that function as a means
+    to its own end, so every other world-map operation proceeded on an assumption instead.
+
+    That gap produced the same bug twice, in opposite directions:
+      * 2026-08-25 — a village list hunted on the PORT tab, which opened the trade-goods
+        filter instead;
+      * 2026-08-27 — `_try_port_search` typing "Barc" into the EXPLORE tab's rail, getting
+        back `carved horn`, and persisting the VILLAGE icon as `port_list_icon`.
+
+    Each was fixed where it was found. Neither could have happened if the tab were checked,
+    which is the fix at the level of the rule rather than the instance (user, 2026-08-27).
+
+    The left rail IS the lit tab's list, so anything that reads or taps that rail must know
+    this first. And the map reopens on 'port' after a close, which is why the answer must be
+    read and never remembered.
+    """
+    if frame is None:
+        from capture.adb_capture import capture_screen as _capture
+        frame = _capture()
+    tabs = _world_map_tab_strip(frame)
+    if not tabs:
+        return None
+    lit = selected_tab_index(frame, [(t[1], t[2]) for t in tabs], trailing_toggles=0)
+    if lit is None:
+        return None
+    return tabs[lit][0]
+
+
+def require_world_map_tab(tab: str, why: str, frame=None) -> bool:
+    """The LEFT RAIL IS THE LIT TAB'S LIST — so read the tab before reading the rail.
+
+    Returns True when `tab` is already lit, otherwise selects it and confirms. False means
+    the caller must NOT touch the rail: on the wrong tab its icons belong to another list,
+    and the usual acceptance test ("did a panel open?") is satisfied by every one of them,
+    because every list has a search box.
+
+    This is the check whose absence produced the same bug twice — a village list hunted on
+    the Port tab (2026-08-25) and a port typed into the Explore rail (2026-08-27). Both were
+    fixed at the call site that failed; neither fix reached the other. Checking the tab is
+    the fix at the level of the rule.
+    """
+    seen = active_world_map_tab(frame)
+    if seen == tab:
+        return True
+    logger.info(f"[world-map-tab] rail belongs to {seen!r}, need {tab!r} — switching ({why})")
+    return select_world_map_tab(tab)
+
+
 def select_world_map_tab(tab_name: str) -> bool:
-    """Switch the world map to the named tab.
+    """Switch the world map to the named tab. True only when the tab is SELECTED afterwards.
 
-    Idempotent in the game: tapping an already-active tab is a no-op.
-    We still emit the tap so callers can use this without tracking
-    current tab state — re-running the function never breaks anything.
+    It used to tap and report success, on the reasoning that tapping an already-active tab is
+    a harmless no-op. But a tap that never lands reads the same way, and the tab strip sits at
+    the very top of the screen where taps can be swallowed: live 2026-08-25 the tap landed
+    inside the Explore tab at (1047,55), the tab stayed on PORT, and the caller then hunted
+    the Port tab's icons for a village list — opening the trade-goods filter instead, giving
+    up, and falling back to panning the map to find a village that was in plain view.
 
-    Returns True if a tab was tapped, False if the tab couldn't be
-    located in the top toolbar (OmniParser miss, or wrong screen).
+    So the switch is confirmed by EFFECT: the requested tab must be the lit one afterwards.
+    A tap that does not take is simply REPEATED, at the same place, after a longer settle —
+    the trace shows the identical coordinate (1046,51) failing moments after the map opened
+    and working later, so the point was never wrong, the map was not ready. Tapping somewhere
+    else would have been a guess dressed as a fix.
     """
     tab_lc = tab_name.lower().strip()
     if tab_lc not in _WORLD_MAP_TABS:
-        logger.warning(
-            f"[world-map-tab] unknown tab {tab_name!r}; expected one of "
-            f"{_WORLD_MAP_TABS}"
-        )
+        logger.warning(f"[world-map-tab] unknown tab {tab_name!r}; expected one of "
+                       f"{_WORLD_MAP_TABS}")
         return False
 
     from vision.omniparser import get_omniparser
     from actions.adb_actions import tap as _tap
     from capture.adb_capture import capture_screen as _capture
+    import time as _t
 
-    frame = _capture()
     parser = get_omniparser()
     if not parser.yolo_available():
         logger.warning("[world-map-tab] OmniParser unavailable — cannot locate tab")
         return False
 
-    # Tabs sit in the top toolbar (y < ~150 on 1080-tall screen).
-    elements = parser.parse_fast(frame)
-    candidates = [
-        el for el in elements
-        if el.cy < 200
-        and (el.label or "").strip().lower() == tab_lc
-    ]
-    if not candidates:
-        logger.warning(
-            f"[world-map-tab] could not find {tab_name!r} tab "
-            f"in top toolbar of current frame"
-        )
-        return False
+    _strip = _world_map_tab_strip
 
-    # If multiple matches, pick the one closest to the typical tab row
-    # centre (y ≈ 50) — guards against a "Port" or "Trade" tooltip text
-    # picked up elsewhere on the map.
-    target = min(candidates, key=lambda el: abs(el.cy - 50))
-    logger.info(
-        f"[world-map-tab] tapping {tab_lc!r} tab @ ({target.cx},{target.cy})"
-    )
-    _tap(target.cx, target.cy)
-    time.sleep(1.5)
-    return True
+    for attempt in range(_TAB_TAP_ATTEMPTS):
+        frame = _capture()
+        tabs = _strip(frame)
+        if not tabs:
+            logger.warning(f"[world-map-tab] could not find the tab row on this screen")
+            return False
+
+        names = [t[0] for t in tabs]
+        if active_world_map_tab(frame) == tab_lc:
+            logger.info(f"[world-map-tab] already on {tab_name!r}")
+            return True
+        if tab_lc not in names:
+            # A PARTIAL ROW IS A NOT-READY ROW, and this loop already exists for exactly that.
+            # Live 2026-08-30, mid-mission at Hutu Village: the strip read back as
+            # ['port', 'route', 'trade'] — three of the four — and the missing one was the
+            # 'explore' the village list lives on. The tab had been selected successfully
+            # ninety seconds earlier, so it was plainly there; the READ dropped it. Bailing
+            # out on the first look ended the whole mission over one flaky glance.
+            #
+            # A row that is SHORT is incomplete, so wait and look again on the next attempt.
+            # A row that is COMPLETE and still lacks the tab is a different screen, and no
+            # amount of waiting changes that — say so and stop.
+            if len(names) < len(_WORLD_MAP_TABS) and attempt < _TAB_TAP_ATTEMPTS - 1:
+                logger.warning(f"[world-map-tab] {tab_name!r} is not in the row {names} — "
+                               f"only {len(names)} of {len(_WORLD_MAP_TABS)} tabs read, so "
+                               f"the row is incomplete; looking again")
+                _t.sleep(_TAB_SETTLE_S * (attempt + 1))
+                continue
+            logger.warning(f"[world-map-tab] {tab_name!r} is not in the row {names}")
+            return False
+
+        _name, cx, cy, _y2 = tabs[names.index(tab_lc)]
+        # THE MAP HAS TO BE READY, not the tap moved. Same coordinate every time; each retry
+        # simply waits longer for the world map to finish settling before looking again.
+        logger.info(f"[world-map-tab] tapping {tab_name!r} @ ({cx},{cy})"
+                    + ("" if attempt == 0 else f" (retry {attempt})"))
+        _tap(cx, cy)
+        _t.sleep(_TAB_SETTLE_S * (attempt + 1))
+
+        after = _capture()
+        tabs2 = _strip(after)
+        lit2 = selected_tab_index(after, [(t[1], t[2]) for t in tabs2], trailing_toggles=0)
+        if lit2 is not None and [t[0] for t in tabs2][lit2] == tab_lc:
+            logger.info(f"[world-map-tab] {tab_name!r} is now selected")
+            return True
+        logger.warning(f"[world-map-tab] {tab_name!r} did not take — the tap was swallowed")
+
+    logger.error(f"[world-map-tab] could not select {tab_name!r} after "
+                 f"{_TAB_TAP_ATTEMPTS} attempts")
+    return False
 
 
 def _find_port_on_world_map(
@@ -3337,6 +3795,28 @@ def _find_port_on_world_map(
     logger.debug(f"  Searching for {destination!r} using names: {search_names}")
 
     best_pos, best_conf = None, 0.0
+    # NEVER MATCH OUR OWN TYPING. The search box holds the prefix the bot just typed, so it
+    # matches the destination at 1.00 EVERY TIME and outscores the real row. Live 2026-09-03
+    # hunting Faro with the list filtered to exactly one entry:
+    #
+    #     'faro'(1.00) @ (303,144)   the SEARCH BOX — what this returned
+    #     'Faro'(0.62) @ (209,200)   the list row — what was wanted
+    #
+    # `_on_list` refuses to tap the box, so nothing was found at all, and it swiped the map
+    # looking for a port sitting in plain view (user). The rule is already written down —
+    # "the search box always matches the query, so it is a guaranteed false positive" — and
+    # this path did not apply it. Narrowing to the rail does not help: the box IS in the rail.
+    _box = None
+    try:
+        _box = search_box_element(frame)
+    except Exception as exc:                      # noqa: BLE001 — no box is not an error
+        logger.debug(f"  could not locate the search box: {exc}")
+
+    def _is_our_own_query(cx: int, cy: int) -> bool:
+        if _box is None:
+            return False
+        return (_box.x1 <= cx <= _box.x2) and (_box.y1 <= cy <= _box.y2)
+
     for bbox, text, conf in raw:
         if conf < 0.25:
             continue
@@ -3361,6 +3841,12 @@ def _find_port_on_world_map(
         cy = int((min(ys) + max(ys)) / 2) + 40
         if x_max is not None and cx > x_max:
             logger.debug(f"  Skipping {text!r} @ ({cx},{cy}) — beyond x_max={x_max} (likely panel text)")
+            continue
+        # `cx`/`cy` are already FRAME coordinates — the +40 undoes the crop off the top —
+        # and the box is read from the frame, so they are compared in the same space.
+        if _is_our_own_query(cx, cy):
+            logger.info(f"  Skipping {text!r} @ ({cx},{cy}) — that is the SEARCH BOX holding "
+                        "our own query, not a row in the list")
             continue
         if conf > best_conf:
             best_conf, best_pos = conf, (cx, cy)
@@ -3507,6 +3993,21 @@ def _try_port_search(destination: str) -> Optional[Tuple[int, int]]:
     """
     Open the world map port-list panel, search for *destination*, tap the result.
 
+    THE TAB COMES FIRST. Ports and villages live on DIFFERENT world-map tabs — Port and
+    Explore — and the left rail is that tab's list, so the icons cannot be mixed (user,
+    2026-08-27). Searching without selecting the tab searches whatever list happens to be
+    showing.
+
+    Live 2026-08-27, sailing back for Matchlock Gun: the map had been left on EXPLORE by the
+    village navigation, so typing "Barc" into the rail returned `carved horn` (a trade good)
+    and a scatter of island names, never Barcelona. `_save_icon_pos` then wrote (70,290) to
+    `world_map_ui.json` as the port-list icon — the very position `_try_village_search` uses
+    for the VILLAGE list — poisoning the next run's candidate ranking.
+
+    `select_world_map_tab`'s own docstring records this same confusion in the opposite
+    direction (a village list hunted on the Port tab, opening the trade-goods filter). It was
+    fixed there and not here.
+
     The world map has two stacked icons in the top-left corner just below the
     back arrow:
       Top icon    — port list / search  ← we tap this
@@ -3570,7 +4071,30 @@ def _try_port_search(destination: str) -> Optional[Tuple[int, int]]:
                 return True
         return False
 
-    # ── Learned icon position (saved on first successful tap) ────────────────
+    # SELECT THE PORT TAB BEFORE LOOKING FOR ANYTHING. `select_world_map_tab` confirms by
+    # EFFECT — the requested tab must be the lit one afterwards — so this is an observation,
+    # not a tap-and-hope. Without it the icon sweep below ranks candidates from another tab's
+    # rail and the acceptance test ("did a panel open?") is satisfied by the wrong list.
+    if not require_world_map_tab("port", why="the port list lives on the Port tab"):
+        logger.warning("[port-search] not on the Port tab — refusing to search another "
+                       "tab's rail, which is how the village icon was learned as the port "
+                       "icon and 'Barc' matched a trade good")
+        return None
+
+    # NO LEARNED ICON POSITION IS PERSISTED. World-map state — which tab is lit, what the
+    # rail lists, where its icons sit — is PANEL-owned: it dies when the map closes (CLAUDE.md,
+    # "Data has an OWNER, and dies with it"). Writing it to memory/knowledge/config/ stored it
+    # at COMPANY lifetime, so it outlived not just the panel but the whole session.
+    #
+    # And it CANNOT be right across a close: the map reopens on the PORT tab (user,
+    # 2026-08-27), so a position learned while another tab was lit describes a rail that is no
+    # longer there. Live 2026-08-27 that persisted the VILLAGE icon (70,290) as
+    # `port_list_icon`, and because the saved value RANKS the candidate sweep, a wrong memory
+    # pulled the next attempt back toward the same wrong icon.
+    #
+    # Nothing is lost by dropping it: the sweep detects the icons on the frame in front of it,
+    # which is the reading that was always authoritative.
+    # ── (historical: learned icon position, removed 2026-08-27) ──────────────
     # Once the bot finds the port-list icon, save its position so future runs
     # can go straight to the right spot without probing.
     _UI_POS_FILE = _Path("memory/knowledge/config/world_map_ui.json")
@@ -3596,7 +4120,7 @@ def _try_port_search(destination: str) -> Optional[Tuple[int, int]]:
         except Exception as exc:
             logger.warning(f"  Could not save icon position: {exc}")
 
-    saved_pos = _load_icon_pos()
+    saved_pos = None          # PANEL-owned: never carried across a map close
     parser = get_omniparser()
 
     def _omniparser_icon_candidates(fr) -> list[Tuple[int, int]]:
@@ -3640,7 +4164,7 @@ def _try_port_search(destination: str) -> Optional[Tuple[int, int]]:
             if _panel_is_open(fr2):
                 logger.info(f"  Panel opened @ ({ix},{iy}) (detect attempt {omni_attempt + 1})")
                 icon_tapped = True
-                _save_icon_pos(ix, iy)
+                # not persisted — see the ownership note above
                 time.sleep(1.5)
                 frame_after_icon = capture_screen()
                 break
@@ -4101,12 +4625,21 @@ def _navigate_world_map_to_port(destination: str, from_port: Optional[str] = Non
         # "could not select 'Male' on the map", then a fallback to the harbour flow.
         # Confirming has to happen HERE, between the tap and the verdict.
         confirm_departure_notice(destination)
-        loc = _wait_for_state_change(
-            expected=("sea", "sea_cinematic", "loading", "port_overworld"),
-            max_wait=8.0,
-        )
+        # `transient` belongs in this set, and its absence cost a voyage on 2026-08-26.
+        #
+        # A successful departure plays a CINEMATIC, and a cinematic is a full-screen notice —
+        # which perception now names `transient` rather than putting through the legacy
+        # cascade. This list had never seen that string, so the tap that WORKED was read as
+        # "unexpected location — aborting", the goal concluded the departure had failed, and
+        # it re-opened the world map mid-voyage, re-targeted the port it had just left, and
+        # sailed back to it. Eleven seconds later the same perception said `sea`.
+        #
+        # It sits beside `loading` and `sea_cinematic` for the same reason all three are here:
+        # the world being mid-change is what success LOOKS like from inside the tap.
+        in_flux = ("sea", "sea_cinematic", "loading", "port_overworld", "transient")
+        loc = _wait_for_state_change(expected=in_flux, max_wait=8.0)
         logger.info(f"  State after 'Go to City' tap: {loc['location']!r}")
-        if loc["location"] in ("sea", "sea_cinematic", "loading", "port_overworld"):
+        if loc["location"] in in_flux:
             logger.info("  World map closed — sailing started")
             return True
 
@@ -4153,6 +4686,440 @@ def _navigate_world_map_to_port(destination: str, from_port: Optional[str] = Non
 
 # ── Village navigation ──────────────────────────────────────────────────────
 
+# ── Village search (Explore tab) ─────────────────────────────────────────────
+#
+# Villages DO have a searchable list — it just lives on a different tab from the ports'
+# (user, 2026-08-24). World map → **Explore** → the left icon bar CHANGES, and its SECOND
+# icon (a house) opens a village list with the same Search box the port list has.
+#
+# This replaces panning as the first choice. Panning needs an anchor port near the village,
+# a scale estimate and up to 8 stride pans; the search needs a name. Panning stays as the
+# fallback for a village the list does not carry.
+_VILLAGE_LIST_ICON_INDEX = 1          # 0-based: the house is the second icon
+
+
+# THE RAIL IS FIXED CHROME, AND ON A BARE MAP IT CANNOT BE DETECTED AT ALL.
+#
+# Measured 2026-09-01 across three frames: OmniParser reports the rail's icons only when a
+# LIST IS ALREADY OPEN behind them — that dark panel is what gives the small glyphs contrast.
+# Over the bare map the strip is translucent, and the parse returns NOTHING at their x; not a
+# misread, an absence. So on the one screen where the list must be opened, there is nothing to
+# look up, and `_explore_left_icons` correctly returns [] rather than offering a port pin.
+#
+# These are the positions the rail actually occupies, and they are chrome, not content:
+#   the port-list icon   frame_0014 (70,184); the tap that opened it live (68,176)
+#   the village-list one frame_0014 (70,301)
+#
+# CLAUDE.md's exception applies squarely — "`ui.tap_at(x, y, why=…)` is the loud, logged
+# exception for genuinely calibrated HUD controls" — and the tap is JUDGED: the next tick asks
+# whether a list opened, exactly as it does for a detected icon. That is what separates this
+# from the calibrated Sell coordinate deleted earlier today, where a working lookup existed
+# and the constant was its stale shadow.
+_RAIL_FALLBACK_POINTS = ((69, 180), (70, 300))
+_VILLAGE_SEARCH_PREFIX = 3            # type a prefix — OCR of the full name is not needed
+# The village list occupies the left edge; the Village Info panel is on the right.
+_VILLAGE_LIST_MAX_X = 700
+# An occluded label must still carry this many characters before it can name a village — a
+# shorter fragment is not evidence, it is a coincidence waiting to mis-tap.
+_LABEL_MIN_FRAGMENT = 4
+_LABEL_FUZZY_MIN = 0.78
+# Scrolling the list is keyboard-free; the rows are ~53px apart on a ~10-row panel.
+_VILLAGE_LIST_SCROLL_X, _VILLAGE_LIST_SCROLL_Y = 300, 700
+_VILLAGE_LIST_SCROLL_DY = -260
+_VILLAGE_LIST_SCROLLS = 10
+
+
+# The rail's search box: a single line at the top of the panel, well right of the icon strip
+# and well above the rows. Positional, because its TEXT is exactly what cannot be relied on.
+_SEARCH_BOX_X = (200, 700)
+_SEARCH_BOX_Y = (110, 180)
+
+
+# The rail's search box is a WIDE field: measured 384-392px across, whether it is empty
+# ("Search") or holding a query ("svea"). The port pins that were mistaken for it top out
+# at 95. Anything between separates them with room to spare.
+_SEARCH_BOX_MIN_W = 200
+
+
+def search_box_present(frame, elements=None) -> bool:
+    """True when the rail's search box is on screen — WHATEVER it says.
+
+    AN EMPTY BOX READS 'Search'; A FILLED ONE READS WHAT YOU TYPED. Every test for an open
+    list looked for the word, so typing into the box destroyed the evidence that the list was
+    open: the screen fell back to `map_open` and the bot went on looking at the map while
+    standing in the list (live 2026-08-29, 'Svea' left in the field from an earlier run).
+
+    So the box is identified by WHERE IT SITS, not by what it holds. That is the one thing
+    about it that a query cannot change.
+
+    BUT WHERE ALONE IS NOT WHAT (live 2026-09-01). This accepted ANY element inside the
+    window, of any kind, so on a bare map with no list at all a couple of port PINS landed in
+    it and the screen classified as `destination_list`. The activity then tapped the search
+    box that was not there and typed 'Barc' into the map — twice, exhausting its typing
+    budget — and fell through to scrolling a list it had never opened. Six scrolls later the
+    leg failed: "'Barcelona' is not in the port list — looked, typed and scrolled".
+
+    The same file says the rule two functions down: `_village_list_open` is "identified by
+    WHAT IS THERE ... not by where anything sits". So ask BOTH. The box is WIDE — measured
+    384-392px across, empty or holding 'svea' — while the map pins that fooled it are 95px at
+    the widest. A margin of nearly three hundred pixels is not a tuned number.
+    """
+    return search_box_element(frame, elements) is not None
+
+
+def search_box_element(frame, elements=None):
+    """The rail's search box element, or None. Where it sits AND being a box — see above."""
+    if elements is None:
+        from vision.omniparser import parse_fast_cached
+        elements = list(parse_fast_cached(frame))
+    for e in elements:
+        if not (_SEARCH_BOX_X[0] < e.cx < _SEARCH_BOX_X[1]
+                and _SEARCH_BOX_Y[0] < e.cy < _SEARCH_BOX_Y[1]):
+            continue
+        # NEVER AN ICON. The port pins that classified a bare map as an open list were icons,
+        # and a search field is not one.
+        if (getattr(e, "element_type", "") or "") == "icon":
+            continue
+        # THE PARSE RETURNS EITHER THE BOX OR THE WORD IN IT, and both are the box (live
+        # 2026-09-01): 'Search' came back as a 393x99 BUTTON on one frame and as a 96x32 TEXT
+        # on another. Requiring the width alone rejected the second, so a list that WAS open
+        # read as closed — and the caller then re-tapped the rail, which toggles an open list
+        # SHUT. It reopened and re-closed it on every tick.
+        if (e.x2 - e.x1) >= _SEARCH_BOX_MIN_W:
+            return e
+        if (getattr(e, "label", "") or "").strip().lower() == "search":
+            return e
+    return None
+
+
+def search_box_holds(prefix: str, frame, elements=None) -> bool:
+    """Did what we typed actually reach the box?
+
+    THE BOX SHOWS THE QUERY, which is the only way to tell a typing that LANDED from one that
+    was sent. Live 2026-09-01 the map was mistaken for an open list, two prefixes were typed
+    into it, and the budget for typing was spent before the real list ever opened — after
+    which the search could only scroll.
+
+    Not to be confused with `never-match-your-own-typing`: reading the box to find the PORT
+    is a guaranteed false positive, because the box always contains the query. Reading it to
+    confirm the QUERY is the one question it can honestly answer.
+    """
+    el = search_box_element(frame, elements)
+    if el is None:
+        return False
+    from actions.world_map_nav import fold_name
+    return fold_name((prefix or "").lower()) in fold_name((getattr(el, "label", "") or "").lower())
+
+
+def _village_list_open(frame, elements=None) -> bool:
+    """True when the Explore tab's village list is on screen.
+
+    Identified by WHAT IS THERE — a Search box above several '<name> Village' rows — not by
+    where anything sits (see docs/ui_anatomy.md, "Identify by association").
+    """
+    if elements is None:
+        from vision.omniparser import parse_fast_cached
+        elements = list(parse_fast_cached(frame))
+    left = [(getattr(e, "label", "") or "").strip().lower()
+            for e in elements if e.cx < 700]
+    # A FILTERED LIST IS STILL AN OPEN LIST. Requiring several village rows made a search
+    # that had narrowed to ONE result read as "no list", so the caller went hunting for the
+    # icon again and toggled the panel shut (measured 2026-08-24).
+    # The box is found by POSITION, not by the word 'search' — a box holding a query no
+    # longer says 'Search', and requiring the word made a list that had been typed into
+    # read as no list at all.
+    return search_box_present(frame, elements) and any("village" in l for l in left)
+
+
+def _port_list_open(frame, elements=None) -> bool:
+    """True when the Port tab's port list is on screen.
+
+    THE SAME QUESTION THE VILLAGE LIST WAS ALREADY ASKED (user, 2026-09-01). `_on_list` checked
+    which list it was reading for a VILLAGE goal and took the classifier's word for a PORT one,
+    so a screen wrongly called `destination_list` sent it straight to reading and typing into a
+    list that was not there. Live 2026-09-01 the bare map was classified that way and the
+    prefix went into the MAP, twice, at frames 100 and 103.
+
+    A list is open when the search box is (the same anchor the village test uses, and for the
+    same reason: a box holding a query no longer says 'Search'). It is the PORT list when it is
+    not the village one — the two rails differ by their rows, and the tab decides which is
+    shown. Asking "is it not the other one" rather than listing port names keeps this from
+    needing to know every port in the world.
+    """
+    if elements is None:
+        from vision.omniparser import parse_fast_cached
+        elements = list(parse_fast_cached(frame))
+    return search_box_present(frame, elements) and not _village_list_open(frame, elements)
+
+
+# How far apart two rail icons' centres may sit horizontally and still be one column.
+# Measured: a real rail reads cx = 70, 70, 71 — a spread of ONE pixel, because the game draws
+# them at one x. The map pins mistaken for it spread 124 and 177, and even the three nearest
+# the edge sit 12 apart. The rail is drawn, not scattered.
+#
+# A rail icon is also drawn WHOLLY ON SCREEN: the real ones start at x1 = 39, 37, 36, while
+# the two pins that were tapped start at x1 = 0 — clipped by the frame edge, which is what a
+# port half-off the left of the map looks like and what a UI control never does.
+_RAIL_COLUMN_TOL_PX = 12
+# A control is not clipped by the frame; a port pin at the map's edge is.
+_RAIL_NOT_CLIPPED_PX = 2
+
+
+def _explore_left_icons(frame, elements=None) -> list:
+    """The Explore tab's left icon strip, top to bottom. Empty when there is no strip.
+
+    A COLUMN of similar icons at the frame's left edge — the same structural test the port
+    tab strip uses, turned on its side.
+
+    THAT SENTENCE WAS THE DOCSTRING AND NOT THE CODE. It filtered `element_type == "icon"`
+    inside a box and returned whatever was there, with nothing asking whether the results
+    formed a column at all. On a map panned so Iberia sits at the left edge, PORT PINS
+    qualify: live 2026-09-01 this returned [(13,222), (25,275), (190,341), (40,530)] with no
+    rail on screen, `_open_list` tapped the first, and it was FARO's flag — half off the
+    frame, its label beside it. The City Info panel that opened was Faro's, the commit went in
+    on it, and the fleet was asked to sail somewhere nobody had chosen.
+
+    The rail's icons carry no label — OmniParser returns bare 'icon's — so position is the
+    only identity available, and "a column" is the whole of it. One icon that happens to be
+    at the left edge is not a rail, and neither are four at scattered x.
+
+    Returning [] is the useful answer when there is no rail: `_open_list` says "no icon rail
+    detected — not tapping a remembered point" and taps nothing, which is what should have
+    happened here.
+    """
+    if elements is None:
+        from vision.omniparser import parse_fast_cached
+        elements = list(parse_fast_cached(frame))
+    icons = [e for e in elements
+             if getattr(e, "element_type", "") == "icon"
+             and e.cx < 200 and 100 < e.cy < 700
+             and e.x1 > _RAIL_NOT_CLIPPED_PX]
+    if len(icons) < 2:
+        return []                       # one icon at the edge is not a strip
+
+    # THE BIGGEST COLUMN WINS. Each candidate proposes the column centred on its own x; the
+    # rail is the one that gathers the most members, because a rail HAS several and stray map
+    # pins do not line up with each other.
+    best: list = []
+    for anchor in icons:
+        column = [e for e in icons if abs(e.cx - anchor.cx) <= _RAIL_COLUMN_TOL_PX]
+        if len(column) > len(best):
+            best = column
+    if len(best) < 2:
+        return []
+    best.sort(key=lambda e: e.cy)
+    return [(e.cx, e.cy) for e in best]
+
+
+def _map_label_matches(label: str, target: str) -> float:
+    """How well an OCR'd label names `target`. 0.0 = no, 1.0 = exact.
+
+    A map label is often PARTIALLY BLOCKED — Svear Village sits under a discovery icon
+    (user, 2026-08-24/25), so OCR returns a fragment like 'vear' or 'Svea'. An equality or
+    prefix test misses every one of those, which is why a village in plain view was hunted
+    for by panning instead of tapped.
+
+    Kept deliberately tight: a fragment must be at least `_LABEL_MIN_FRAGMENT` characters, so
+    'S' cannot match Svear and drag a tap onto the wrong place.
+    """
+    import difflib
+    import re as _re
+
+    lab = (label or "").strip().lower()
+    tgt = (target or "").replace("Village", "").strip().lower()
+    if not lab or not tgt:
+        return 0.0
+    # A TRUNCATED NAME ENDS IN AN ELLIPSIS. The fleet list cuts long names — "Imai Sokun
+    # Merc...", OCR'd as "Imai Sokun Merc__." — and those trailing marks defeat a prefix test
+    # that would otherwise match perfectly. Strip them before comparing; they carry no
+    # information beyond "there was more".
+    lab = _re.sub(r"[.\u2026_\-\s]+$", "", lab)
+    lab_short = lab.replace("village", "").strip()
+    # THE WORD "VILLAGE" IS ITSELF EVIDENCE: it narrows the candidates to a handful, so a
+    # shorter fragment beside it is still safe. 'ear Village' is Svear with its head behind
+    # an icon; 'ear' alone would not be enough to act on.
+    min_fragment = 3 if "village" in lab else _LABEL_MIN_FRAGMENT
+    if lab_short == tgt:
+        return 1.0
+    if lab_short.startswith(tgt) or tgt.startswith(lab_short):
+        # A prefix either way: the label is cut short, or it carries a suffix.
+        if len(lab_short) >= min_fragment:
+            return 0.95
+    if len(lab_short) >= min_fragment and lab_short in tgt:
+        return 0.9                      # a middle fragment: the head is behind the icon
+    ratio = difflib.SequenceMatcher(None, lab_short, tgt).ratio()
+    return ratio if ratio >= _LABEL_FUZZY_MIN else 0.0
+
+
+def _visible_row(elements, name: str, *, x_max: int = None):
+    """The on-screen element naming `name`, or None — the BEST match, not the first.
+
+    Villages and ports are frequently ALREADY VISIBLE — in an open list, or as a label on the
+    map itself (user, 2026-08-24): Hutu Village sat in the unfiltered village list, and Gijon
+    was in view from Bordeaux. Both were searched for anyway, which costs a panel, a keyboard
+    and several seconds each time. Look before you hunt.
+    """
+    # THE LIST IS ON THE LEFT by default. Scanning the whole frame matched the village's own
+    # name in the right-hand Village Info PANEL and tapped that instead of a list row (live
+    # 2026-08-24, Svear at x=1961) — which left the list unopened, the trade list already
+    # scrolled, and the read returned the wrong good entirely. Callers looking at the MAP
+    # rather than a list pass a wider `x_max`.
+    limit = _VILLAGE_LIST_MAX_X if x_max is None else x_max
+    best, best_score = None, 0.0
+    for e in elements or []:
+        if getattr(e, "cx", 0) > limit:
+            continue
+        score = _map_label_matches(getattr(e, "label", ""), name)
+        if score > best_score:
+            best, best_score = e, score
+    return best
+
+
+def _try_village_search(village: str, capture_fn=None) -> bool:
+    """Find `village` through the Explore tab's village list. True when its row was tapped.
+
+    THE TAB IS CHECKED, NOT ASSUMED. The name says Explore, and until 2026-08-27 nothing
+    verified it — this worked only while the map happened to be on that tab. It is the exact
+    mirror of the port-side bug (`_try_port_search` typing into whichever rail was up), and
+    `select_world_map_tab`'s docstring records this side failing first: a village list hunted
+    on the PORT tab, which opened the trade-goods filter.
+
+    Returns False (never raises) so the caller can fall back to panning.
+    """
+    import time as _t
+    from actions import ui
+    from actions.adb_actions import tap as _tap, input_text as _input_text
+    from vision.omniparser import parse_fast_cached
+    from vision.text_correction import correct_port_name    # folds accents/OCR slips
+
+    if not require_world_map_tab("explore", why="the village list lives on the Explore tab"):
+        logger.warning("[village-search] not on the Explore tab — refusing to search "
+                       "another tab's rail")
+        return False
+
+    frame = capture_screen()
+    els = list(parse_fast_cached(frame))
+
+    # 0. ALREADY ON SCREEN? Then tap it — no tab, no panel, no typing.
+    hit = _visible_row(els, village)
+    if hit is not None:
+        logger.info(f"[village-search] {village!r} is already visible @ "
+                    f"({hit.cx},{hit.cy}) — tapping it directly")
+        _tap(hit.cx, hit.cy)
+        _t.sleep(2.0)
+        return True
+
+    # 1. the Explore tab (by its NAME, so the tab bar may move)
+    if not _village_list_open(frame, els):
+        tab = _find_button(frame, "explore", y_max=200)
+        if tab is None:
+            logger.info("[village-search] no Explore tab on the world map")
+            return False
+        _tap(*tab)
+        _t.sleep(1.5)
+        frame = capture_screen()
+        els = list(parse_fast_cached(frame))
+
+    # 2. the village-list icon. The house is second, but VERIFY BY EFFECT rather than
+    #    trusting the order — the strip's contents differ per tab and per progress.
+    if not _village_list_open(frame, els):
+        icons = _explore_left_icons(frame, els)
+        if not icons:
+            logger.info("[village-search] no icon strip on the Explore tab")
+            return False
+        order = ([icons[_VILLAGE_LIST_ICON_INDEX]] if len(icons) > _VILLAGE_LIST_ICON_INDEX
+                 else []) + icons
+        for (ix, iy) in order:
+            _tap(ix, iy)
+            _t.sleep(1.5)
+            frame = capture_screen()
+            els = list(parse_fast_cached(frame))
+            if _village_list_open(frame, els):
+                logger.info(f"[village-search] village list opened via the icon @ ({ix},{iy})")
+                break
+        else:
+            logger.info("[village-search] none of the Explore icons opened a village list")
+            return False
+
+    # 2b. the list is open — the row may be right there in it
+    hit = _visible_row(els, village)
+    if hit is not None:
+        logger.info(f"[village-search] {village!r} is in the open list @ "
+                    f"({hit.cx},{hit.cy}) — tapping without searching")
+        _tap(hit.cx, hit.cy)
+        _t.sleep(2.0)
+        return True
+
+    # 2c. SCROLL THE LIST — no keyboard needed.
+    # Typing is the fragile path: tapping the search box raises the soft keyboard, and while
+    # it is up the characters sit in the IME's composing buffer ("che | Che | check") instead
+    # of reaching the field, so the list never filters and the village reads as absent
+    # (measured 2026-08-24, Cheyenne). Scrolling touches no text field at all.
+    for _ in range(_VILLAGE_LIST_SCROLLS):
+        ui.scroll(_VILLAGE_LIST_SCROLL_X, _VILLAGE_LIST_SCROLL_Y, _VILLAGE_LIST_SCROLL_DY,
+                  why="village list — looking for the row")
+        _t.sleep(0.8)
+        els = list(parse_fast_cached(capture_fn() if capture_fn else capture_screen()))
+        hit = _visible_row(els, village)
+        if hit is not None:
+            logger.info(f"[village-search] {village!r} found by scrolling @ "
+                        f"({hit.cx},{hit.cy}) — tapping")
+            _tap(hit.cx, hit.cy)
+            _t.sleep(2.0)
+            return True
+
+    # 3. still not visible — search box, then a PREFIX of the name
+    box = next((e for e in els
+                if "search" in (getattr(e, "label", "") or "").strip().lower()), None)
+    if box is None:
+        logger.info("[village-search] the village list has no search box")
+        return False
+    short = (village or "").replace("Village", "").strip()
+    _tap(box.cx, box.cy)
+    _t.sleep(1.0)
+    # CLEAR FIRST. The box keeps the PREVIOUS query: after searching 'Sve' for Svear, typing
+    # 'Che' for Cheyenne produced 'SveChe' and matched nothing, and the village was reported
+    # as not in the list (measured 2026-08-24).
+    # BATCH INPUT, NOT PER-CHARACTER KEYEVENTS.
+    # Tapping the box raises the soft keyboard — which is the NORMAL state on this device
+    # (user, 2026-08-24). With an IME up, per-character keyevents COMPOSE: the letters sit in
+    # the suggestion bar ("che | Che | check") and never reach the field, so the list stays
+    # unfiltered and the village reads as absent while it is simply further down. `input
+    # text` commits straight to the focused field regardless of the IME — measured: it
+    # filtered the list to Cheyenne/Comanche/Apache first try.
+    # (`actions.adb_actions.input_text` types per-character for UNITY text fields, which is
+    # right there and wrong here; this box takes the batch form.)
+    import subprocess as _sp
+    query = short[:_VILLAGE_SEARCH_PREFIX]
+    try:
+        _sp.run(["adb", "shell", "input", "text", query], check=False, timeout=15)
+    except Exception as exc:
+        logger.debug(f"[village-search] batch input failed ({exc}) — falling back")
+        _input_text(query)
+    logger.info(f"[village-search] typed {short[:_VILLAGE_SEARCH_PREFIX]!r} "
+                f"(prefix of {village!r})")
+    _t.sleep(2.0)
+
+    # 4. the matching row
+    frame = capture_screen()
+    rows = [e for e in parse_fast_cached(frame)
+            if e.cx < 700 and (getattr(e, "label", "") or "").strip()]
+    want = short.lower()
+    hit = None
+    for e in rows:
+        lab = (e.label or "").strip().lower()
+        if lab.startswith(want) or want in lab:
+            hit = e
+            break
+    if hit is None:
+        logger.info(f"[village-search] {village!r} is not in the filtered list")
+        return False
+    logger.info(f"[village-search] found {village!r} @ ({hit.cx},{hit.cy}) — tapping")
+    _tap(hit.cx, hit.cy)
+    _t.sleep(2.0)
+    return True
+
+
 def _navigate_world_map_to_village(
     destination: str, from_port: Optional[str] = None,
 ) -> bool:
@@ -4161,8 +5128,9 @@ def _navigate_world_map_to_village(
     Returns True iff sailing started (world map closed and bot is on
     sea / loading), False otherwise.
 
-    Simpler than the port flow: no list-scroll fallback (villages don't
-    appear in the toolbar search panel).  Reuses the generalised
+    Villages DO have a searchable list, on the Explore tab (user, 2026-08-24): the second
+    icon in that tab's left bar opens it, with the same Search box the port list has. That is
+    tried first; panning to a neighbouring port is the fallback. Reuses the generalised
     _find_destination_button to locate the "Move to Village" action.
     """
     logger.info(f"Finding village {destination!r} on world map…")
@@ -4178,9 +5146,23 @@ def _navigate_world_map_to_village(
         )
         return False
 
-    # Pan: switches to Explore tab + uses village catalogue + same
-    # scale/odometry machinery as port pan.
-    pos = pan_to_village(destination, from_port=from_port)
+    # SEARCH FIRST, PAN AS THE FALLBACK. The Explore tab carries a village list with the
+    # same Search box the ports have (user, 2026-08-24) — this function's docstring used to
+    # say villages "don't appear in the toolbar search panel", which is why every village was
+    # reached by panning to a neighbouring port and hunting. A name beats an anchor port, a
+    # scale estimate and up to 8 stride pans.
+    if _try_village_search(destination):
+        btn = _find_destination_button(_ocr_frame(capture_screen()), label="village")
+        if btn is not None:
+            logger.info(f"  {destination!r} selected from the village list")
+            pos = btn
+        else:
+            logger.info("  village list tapped but no 'Move to Village' button — panning")
+            pos = pan_to_village(destination, from_port=from_port)
+    else:
+        # Pan: switches to Explore tab + uses village catalogue + same
+        # scale/odometry machinery as port pan.
+        pos = pan_to_village(destination, from_port=from_port)
     if pos is None:
         logger.warning(
             f"  pan_to_village could not locate village {destination!r}"
@@ -4249,30 +5231,31 @@ def _navigate_world_map_to_village(
         )
         return False
 
-    # Commit: tap Move to Village, then poll for the world-map close.
-    # Polled wait exits as soon as the game transitions (1-3 s on the
-    # happy path) instead of blocking the full worst-case 8 s.
+    # COMMIT AND HAND BACK. Tapping "Move to Village" is the world change; whether the map
+    # then closed, and what the fleet is doing afterwards, is read by the next perceive.
+    # This used to poll `_wait_for_state_change` for up to 8s expecting sea / loading /
+    # port_overworld and call anything else an abort — a primitive waiting out a transition
+    # and judging it, which is the dispatcher's job.
     logger.info(f"  Tapping 'Move to Village' @ {btn}")
     tap(*btn)
-    loc_after = _wait_for_state_change(
-        expected=("sea", "sea_cinematic", "loading", "port_overworld"),
-        max_wait=8.0,
-    )
-    if loc_after["location"] in ("sea", "sea_cinematic", "loading", "port_overworld"):
-        logger.info(
-            f"  World map closed (now {loc_after['location']!r}) "
-            f"— sailing to {destination!r} started"
-        )
-        return True
 
-    logger.warning(
-        f"  After 'Move to Village' tap, unexpected location "
-        f"{loc_after['location']!r} — aborting"
-    )
-    return False
+    # THE VILLAGE FLOW MUST ANSWER THE SAME NOTICE THE PORT FLOW DOES.
+    # Committing a destination raises "Moving to <X> after Auto Supply. Continue?" and
+    # NOTHING happens until it is answered — the port flow calls this straight after
+    # selecting its destination. The village flow did not, so the wait below looked for
+    # sea/loading/port_overworld while the notice sat on screen classifying as 'unknown',
+    # gave up, and the mission aborted (live 2026-08-24, San Village: perception named the
+    # dialog eight times — "San Village notice with Continue option", dismissal 'tap_ok' —
+    # and nothing ever tapped it). Answering a dialog raised BY our own tap is activity work,
+    # not a transition, so it stays here.
+    notice = confirm_departure_notice(destination)
+    if notice["seen"] and not notice["confirmed"]:
+        logger.warning(f"  Could not confirm the departure notice for {destination!r}: "
+                       f"{notice['reason']}")
+        return False
 
-
-# ── Smart destination dispatch ───────────────────────────────────────────────
+    logger.info(f"  'Move to Village' committed for {destination!r} — handing back")
+    return True
 
 def _classify_destination(name: str) -> Optional[str]:
     """Return "port" if *name* matches a port (or alias), "village" if
@@ -4689,20 +5672,58 @@ def sail_to_port(
 _DEPART_NOTICE_MARKERS = ("auto supply", "continue")
 
 
-def _looks_like_departure_notice(text: str, destination: str) -> bool:
-    """True when this frame's text is the 'Moving to X after Auto Supply. Continue?' notice.
+def location_panel_is_for(frame, destination: str) -> Optional[bool]:
+    """Is the open City/Location Info panel the one for `destination`? None if unreadable.
+
+    CHECK BEFORE ACTING (Guiding Principle #6). The panel's gold commit button is found by
+    its own label — "Go to City" — which says what it DOES and nothing about WHERE. Live
+    2026-09-01 the world map could not find Barcelona, taps meant for the port list opened
+    FARO's panel instead, and the commit was pressed on it: the button was detected correctly,
+    on the wrong city.
+
+    THE PANEL, NOT THE FRAME. The map behind it is covered in port names — that same frame
+    showed Porto, Azores, Madeira, Valencia and Tunis — so a whole-frame search for the
+    destination answers yes almost anywhere. The panel region is the only place the question
+    means anything.
+    """
+    try:
+        from actions.world_map_gather import (_PANEL_BOTTOM, _PANEL_LEFT, _PANEL_RIGHT,
+                                              _PANEL_TOP)
+        crop = frame.crop((_PANEL_LEFT, _PANEL_TOP, _PANEL_RIGHT, _PANEL_BOTTOM))
+        text = " ".join((t or "") for t, _c, _x, _y in _ocr_frame(crop, min_conf=0.3))
+    except Exception as exc:                       # noqa: BLE001 — unreadable is not "no"
+        logger.debug(f"[world-map] could not read the location panel: {exc}")
+        return None
+    if not text.strip():
+        return None
+    from actions.world_map_nav import fold_name
+    return fold_name((destination or "").split()[0]) in fold_name(text.lower())
+
+
+def _is_departure_notice(text: str) -> bool:
+    """True when this frame's text is a 'Moving to X after Auto Supply. Continue?' notice.
 
     Matched on the Auto-Supply wording rather than on the word 'Notice' alone, because
     'Notice' titles several unrelated popups and tapping OK on the wrong one is exactly
     the class of mistake that closed the game once already.
+
+    SAYS NOTHING ABOUT WHERE. That is a separate question, and conflating the two is what
+    let a notice for the wrong port read as no notice at all — see `confirm_departure_notice`.
     """
     t = (text or "").lower()
-    if not all(m in t for m in _DEPART_NOTICE_MARKERS):
-        return False
-    # The destination should be named in the dialog. Fold the accent so 'Malé' matches a
-    # 'Male' request (and vice versa) — the same folding the port lookup uses.
+    return all(m in t for m in _DEPART_NOTICE_MARKERS)
+
+
+def _notice_names(text: str, destination: str) -> bool:
+    """Does the notice name the place we asked for? Accents folded, as the port lookup folds
+    them, so a 'Malé' dialog answers a 'Male' request."""
     from actions.world_map_nav import fold_name
-    return fold_name(destination.split()[0]) in fold_name(t)
+    return fold_name((destination or "").split()[0]) in fold_name((text or "").lower())
+
+
+def _looks_like_departure_notice(text: str, destination: str) -> bool:
+    """The two questions together. Kept for callers that want the old single answer."""
+    return _is_departure_notice(text) and _notice_names(text, destination)
 
 
 def confirm_departure_notice(destination: str, *, attempts: int = 3) -> dict:
@@ -4722,11 +5743,29 @@ def confirm_departure_notice(destination: str, *, attempts: int = 3) -> dict:
     for i in range(attempts):
         frame = capture_screen()
         text = " ".join((t or "") for t, _c, _x, _y in _ocr_frame(frame, min_conf=0.3))
-        if not _looks_like_departure_notice(text, destination):
+        if not _is_departure_notice(text):
             if i == 0:
                 logger.info("[depart] no auto-supply notice on screen — nothing to confirm")
                 return {"seen": False, "confirmed": False, "reason": "no notice"}
             return {"seen": True, "confirmed": True, "reason": "notice cleared"}
+
+        # A NOTICE FOR SOMEWHERE ELSE IS NOT "NO NOTICE" (live 2026-09-01).
+        #
+        # These were one test, so a dialog reading "Moving to Faro after Auto Supply" while
+        # we had asked for Barcelona failed it and took the branch above — "no notice on
+        # screen — nothing to confirm" — which `_commit_departure` reads as SUCCESS, because
+        # nothing needed confirming. The mission was told its course was set for Barcelona,
+        # walked to the harbour, tapped Supply Departure, and sailed with no destination at
+        # all. It reached the sea and spent the next twenty minutes asking to enter a market.
+        #
+        # The fleet is being asked to sail somewhere nobody chose, so this is a hard failure
+        # and emphatically not an OK to tap: the caller must go back and set the course it
+        # actually wants.
+        if not _notice_names(text, destination):
+            logger.error(f"[depart] the auto-supply notice does NOT name {destination!r} — "
+                         f"refusing to confirm a departure we did not ask for")
+            return {"seen": True, "confirmed": False,
+                    "reason": f"the notice is for somewhere other than {destination!r}"}
 
         logger.info(f"[depart] auto-supply notice for {destination!r} — confirming (OK)")
         from actions import ui
@@ -4738,125 +5777,37 @@ def confirm_departure_notice(destination: str, *, attempts: int = 3) -> dict:
     return {"seen": True, "confirmed": False, "reason": f"notice still up after {attempts} taps"}
 
 
-def depart_from_port_via_world_map(destination: str, *, settle_s: float = 8.0,
-                                   motion_wait_s: float = 45.0,
-                                   max_retries: int = 2) -> dict:
-    """Set sail from a PORT by choosing the destination on the world map.
+def commit_departure(destination: str) -> dict:
+    """Select `destination` on the world map and COMMIT it. Returns the moment it is tapped.
 
-    This is the short path, and the safe one for supply. Selecting Move to City / Move to
-    Village from inside a port makes the game do the whole departure itself: the player
-    runs to the harbour, the fleet is SUPPLIED automatically, and it sets sail. Picking the
-    destination at sea instead costs a separate harbour trip and leaves the fleet burning
-    supply while the bot pans the map (user 2026-08-21). The world-map operation is
-    identical either way — only the consequence differs.
+    ONE ACTION, THEN HAND BACK. This is the primitive the task runner drives: open the map,
+    pick the destination, confirm any notice, tap — and return. It does not wait for the sea,
+    does not judge whether the fleet moved, and does not fall back to the harbour. Those are
+    decisions, and decisions belong to the loop that perceives between them.
 
-    Two things go wrong in practice, and neither announces itself, so both are checked:
+    `depart_from_port_via_world_map` did all of that internally, and the cost was measured on
+    2026-08-25: the goal called it ONCE at 16:34 and did not regain control until 16:41. In
+    those six minutes the primitive decided the departure had failed, walked to the harbour,
+    hunted a Depart button, tapped Supply Departure and re-selected the destination three
+    times — while perception was correctly reporting `port_overworld / Amsterdam` to nobody
+    who could act on it. The fleet had ALREADY ARRIVED; the task runner would have seen that
+    on its next tick and moved to the gather step.
 
-      1. **The fleet does not leave.** The destination is accepted but the player stays in
-         port. The fix is to walk to the harbour and tap Supply Departure by hand.
-      2. **It leaves but never moves** — a game bug where the fleet is at sea with speed 0
-         and the ETA never falls. The fix is to select the destination AGAIN, which kicks
-         it into motion.
+    Returns {ok, reason}. `ok` means the destination was committed, NOT that the fleet moved.
+    """
+    if not open_world_map():
+        return {"ok": False, "reason": "could not open the world map"}
 
-    Returns {ok, reason, departed_via, retries}."""
-    from actions.route_execution import is_moving
-    from actions.world_map_nav import fold_name
+    if not _navigate_world_map_to_destination(destination):
+        return {"ok": False, "reason": f"could not select {destination!r} on the map"}
 
-    for attempt in range(max_retries + 1):
-        here = where_am_i()
-        loc = here.get("location")
+    notice = confirm_departure_notice(destination)
+    if notice["seen"] and not notice["confirmed"]:
+        return {"ok": False, "reason": "a departure notice appeared and was not confirmed"}
 
-        # ALREADY THERE. Selecting the port you are standing in is a no-op: the world map
-        # closes straight back to the same overworld, `_wait_until_at_sea` sees "still in
-        # port", and the failure-1 path fires a manual Supply Departure — which puts the
-        # fleet to sea WITH NO DESTINATION. That is how the 2026-08-21 run left the fleet
-        # drifting off Malé at speed 0 having bought nothing: the mission's first gather
-        # node was `gather:Male` and the fleet was already docked at Malé.
-        # Departing is not the goal — BEING at the destination is, and we are.
-        # Folded compare because the mission carries 'Male' while the port reads 'Malé'.
-        here_port = here.get("port")
-        if loc in ("building", "sub_menu") and not here_port:
-            # Inside a building the port name is not on screen, but the bot still KNOWS
-            # where it is — `last_known_settlement` is carried across ticks and persisted
-            # to disk for exactly this. Without it, "am I already there?" answers "no"
-            # from inside a Market and the mission sails to the port it is standing in.
-            # Live 2026-08-21: gather:Jakarta ran while the fleet sat in Jakarta's Market
-            # Purchase screen — the one place it needed to be — and instead of buying, it
-            # tried to exit, open the world map and sail to Jakarta, failed to get out of
-            # the building, escalated to the teaching loop and aborted after 600s.
-            try:
-                from brain import observation as _obs
-                cur = _obs.current()
-                here_port = (cur.last_known_settlement if cur else None) \
-                    or _obs._ensure_persisted_loaded()
-            except Exception as exc:
-                logger.debug(f"[depart] could not resolve the settlement from inside a "
-                             f"building ({type(exc).__name__}: {exc})")
-
-        if loc in ("port_overworld", "building", "sub_menu"):
-            if here_port and fold_name(here_port) == fold_name(destination):
-                logger.info(f"[depart] already at {here_port!r} (state={loc!r}) — "
-                            "no sailing needed")
-                return {"ok": True, "reason": "already at the destination",
-                        "departed_via": "no departure needed", "retries": attempt}
-
-        if loc in ("sea", "sea_cinematic"):
-            # Already at sea (a retry, or we were never in port) — go straight to the
-            # motion check rather than re-running the harbour flow.
-            moved, hud = _confirm_making_way(motion_wait_s, is_moving)
-            if moved and not _bound_elsewhere(hud, destination):
-                return {"ok": True, "reason": "under way", "departed_via": "already at sea",
-                        "retries": attempt}
-        else:
-            if not open_world_map():
-                return {"ok": False, "reason": "could not open the world map",
-                        "departed_via": None, "retries": attempt}
-            if not _navigate_world_map_to_destination(destination):
-                return {"ok": False, "reason": f"could not select {destination!r} on the map",
-                        "departed_via": None, "retries": attempt}
-            # The game asks to confirm before it runs to the harbour: "Moving to X after
-            # Auto Supply. Continue?". Nothing happens until this is answered.
-            notice = confirm_departure_notice(destination)
-            if notice["seen"] and not notice["confirmed"]:
-                return {"ok": False,
-                        "reason": f"could not confirm the departure notice: {notice['reason']}",
-                        "departed_via": None, "retries": attempt}
-
-            logger.info(f"[depart] {destination!r} selected — the game should now run to "
-                        "the harbour, supply, and sail")
-            time.sleep(settle_s)
-
-            # FAILURE 1: still ashore. The auto-departure did not happen.
-            if not _wait_until_at_sea(settle_s):
-                logger.warning("[depart] still in port after selecting the destination — "
-                               "departing by hand via Supply Departure")
-                if _depart_from_harbour():
-                    # A hand-fired Supply Departure leaves the port but does NOT carry a
-                    # destination with it, so "moving" is not enough — check WHERE it is
-                    # headed (user 2026-08-21). A mismatch falls through to the retry,
-                    # which re-selects the destination from the map.
-                    moved, hud = _confirm_making_way(motion_wait_s, is_moving)
-                    if moved and not _bound_elsewhere(hud, destination):
-                        return {"ok": True, "reason": "under way after a manual departure",
-                                "departed_via": "supply_departure", "retries": attempt}
-                    logger.warning("[depart] departed by hand but the fleet is not making "
-                                   f"way toward {destination!r}")
-                else:
-                    logger.warning("[depart] manual Supply Departure did not work either")
-                continue
-
-            # FAILURE 2: at sea, but going nowhere — or going somewhere else.
-            moved, hud = _confirm_making_way(motion_wait_s, is_moving)
-            if moved and not _bound_elsewhere(hud, destination):
-                return {"ok": True, "reason": "under way", "departed_via": "auto",
-                        "retries": attempt}
-            logger.warning(f"[depart] at sea but not making way toward {destination!r} — "
-                           f"re-selecting it to set the fleet going "
-                           f"(attempt {attempt + 1}/{max_retries + 1})")
-
-    return {"ok": False, "reason": f"{destination!r} selected but the fleet never got "
-                                   f"under way after {max_retries + 1} attempts",
-            "departed_via": None, "retries": max_retries + 1}
+    logger.info(f"[depart] {destination!r} committed — handing back to the task runner, "
+                "which will perceive and decide what happens next")
+    return {"ok": True, "reason": f"{destination!r} committed"}
 
 
 def _bound_elsewhere(hud: dict, destination: str) -> bool:
@@ -4882,21 +5833,6 @@ def _bound_elsewhere(hud: dict, destination: str) -> bool:
     return True
 
 
-def _wait_until_at_sea(settle_s: float) -> bool:
-    """True once perceive reports the fleet at sea. The auto-departure includes a walk to
-    the harbour and a loading screen, so this waits rather than judging on one frame."""
-    deadline = time.time() + max(20.0, settle_s * 3)
-    while time.time() < deadline:
-        loc = where_am_i().get("location")
-        if loc in ("sea", "sea_cinematic"):
-            return True
-        if loc == "loading":
-            time.sleep(3.0)
-            continue
-        time.sleep(random.uniform(2.0, 3.5))
-    return False
-
-
 def _confirm_making_way(motion_wait_s: float, is_moving_fn):
     """(moving, hud_after) — whether the fleet is genuinely MOVING, not merely at sea.
 
@@ -4907,17 +5843,186 @@ def _confirm_making_way(motion_wait_s: float, is_moving_fn):
     re-open the world map and set it again. So movement is the decisive test here and the
     destination readout is not; see `_bound_elsewhere` for the narrow thing it IS good for.
 
+    SPEED IS THE DIRECT ANSWER and is tried first. The game prints the fleet's speed in
+    knots in the tile-strip left of the mini-map, so "are we moving?" does not have to be
+    inferred from two readings separated by a game-day: >0 is under way, 0.0 is not. That
+    makes departure confirmation immediate in the common case instead of a 45s wait, and it
+    fixes the case the ETA test cannot answer at all — a SHORT hop, where a 1-day ETA has no
+    finer granularity to be seen falling (live 2026-08-24: the fleet reached Bremen while
+    this check was still calling `eta=None→1` the speed-0 bug).
+
+    `read_sea_hud` has never carried a `speed` key, so the old `before.get("speed")` here
+    was always None and only ever printed as if it were evidence. The reader lives in
+    `vision.sea_hud.read_speed`; `locate=True` finds the tile from the mini-map's real
+    position, because the fixed crop is derived from a `MINIMAP_CROP` constant that the UI
+    has drifted ~120px away from.
+
+    Speed is a signal, not a gate: an unreadable speed (None) falls through to the ETA test
+    rather than failing, and a 0.0 immediately after the tap does NOT decide anything on its
+    own — the ship may still be accelerating, so it is re-checked after the wait.
+
     Returns the post-wait HUD too, so callers can inspect the destination without paying
     for another OCR pass."""
-    before = read_sea_hud()
-    speed = before.get("speed")
+    from capture.adb_capture import capture_screen
+    from vision.sea_hud import read_speed
+
+    def _speed(frame):
+        try:
+            return read_speed(frame, locate=True)
+        except Exception as exc:
+            logger.debug(f"[depart] speed read failed: {exc}")
+            return None
+
+    frame = capture_screen()
+    before = dict(read_sea_hud(frame))
+    speed_before = _speed(frame)
+    # Attach the measured speed to the HUD AS SOON AS IT IS READ, on every path. Setting it
+    # only on the failure branch made `hud["speed"]` exist or not depending on WHY the call
+    # returned, which is not a contract a caller can use.
+    before["speed"] = speed_before
+    if speed_before is not None and speed_before > 0:
+        logger.info(f"[depart] confirmed under way — speed {speed_before} kt")
+        return True, before
+
     time.sleep(max(20.0, motion_wait_s))
-    after = read_sea_hud()
+    frame = capture_screen()
+    after = dict(read_sea_hud(frame))
+    speed_after = _speed(frame)
+    after["speed"] = speed_after
+    if speed_after is not None and speed_after > 0:
+        logger.info(f"[depart] confirmed under way — speed {speed_after} kt")
+        return True, after
+
     if is_moving_fn(before, after):
         logger.info(f"[depart] confirmed under way (eta {before.get('eta_days')}→"
                     f"{after.get('eta_days')}d)")
         return True, after
-    logger.info(f"[depart] no progress in {motion_wait_s:.0f}s "
-                f"(speed={speed}→{after.get('speed')}, eta={before.get('eta_days')}→"
-                f"{after.get('eta_days')})")
+
+    # The measured speed rides out on the HUD (attached above) so a caller that allows for
+    # "cannot tell" — the short-hop case, where a 1-day ETA cannot be seen to fall — can
+    # tell a MISSING reading from a definite 0.0. Otherwise its allowance would mask the
+    # very bug this function exists to catch.
+    if speed_before == 0.0 and speed_after == 0.0:
+        logger.warning(f"[depart] speed is 0.0 kt after {motion_wait_s:.0f}s — the fleet is "
+                       "NOT moving (the speed-0 bug); the destination must be set again")
+    else:
+        logger.info(f"[depart] no progress in {motion_wait_s:.0f}s "
+                    f"(speed={speed_before}→{speed_after}, eta={before.get('eta_days')}→"
+                    f"{after.get('eta_days')})")
     return False, after
+
+
+# ── world-map pieces the WorldMapActivity uses ───────────────────────────────
+#
+# Extracted from `_try_port_search` so the activity can call the ACTIONS without the loop
+# around them. Each does ONE thing and reports; none verifies its own success — the next
+# perceive does that (CLAUDE.md: a primitive that acts does not report whether it worked).
+
+def _destination_list_icon(frame) -> Optional[Tuple[int, int]]:
+    """The left-rail list icon, DETECTED on this frame.
+
+    Never a remembered position: one was learned and persisted as `port_list_icon` after it
+    opened the VILLAGE list, and because the saved value ranked the candidate sweep it pulled
+    later attempts back toward the same wrong icon (2026-08-27). The tab is what decides
+    WHICH list this opens, and `require_world_map_tab` settles that before we get here.
+    """
+    from vision.omniparser import get_omniparser
+    parser = get_omniparser()
+    if not parser.yolo_available():
+        return None
+    left = [e for e in parser.parse_fast(frame) if e.cx < 200 and e.cy > 60]
+    if not left:
+        return None
+    left.sort(key=lambda e: e.cy)
+    return (left[0].cx, left[0].cy)
+
+
+def _map_search_box(frame) -> Tuple[int, int]:
+    """Where the rail's search box is. Detected, with the observed position as a fallback."""
+    from vision.omniparser import parse_fast_cached
+    for el in parse_fast_cached(frame):
+        lab = (el.label or "").strip().lower()
+        if el.cx < 700 and any(k in lab for k in ("search", "edit", "input", "field")):
+            return (el.cx, el.cy)
+    return (420, 141)
+
+
+def _type_search_prefix(search_xy: Tuple[int, int], prefix: str) -> None:
+    """Tap the box and type a PREFIX at a human interval.
+
+    A prefix, not the whole name: four characters filter the list enough, and typing the lot
+    is both slower and more anti-cheat-visible (user, 2026-08-18). `clear_first` wipes a
+    leftover query so a re-search does not append onto the previous one.
+    """
+    from actions.adb_actions import input_text as _input_text, tap as _tap
+    _tap(*search_xy)
+    time.sleep(1.0)
+    _input_text(prefix, max_chars=len(prefix), clear_first=True)
+    time.sleep(1.5)
+
+
+def tap_world_map_control(frame=None) -> dict:
+    """Tap the control that opens the world map. ONE tap, and nothing else.
+
+    The globe at a port, the minimap centre at sea. That is all — no waking a lock, no
+    exiting a building, no refusing a village, no verifying. `open_world_map`'s ten-attempt
+    loop did all five at once, and when it met an OS lock screen, a daily-news popup and an
+    Investment Season banner on 2026-08-28 its three available responses — wait, guess, give
+    up — were all wrong: it read "Season" out of the banner, called it a port name, and
+    reported "Overworld confirmed".
+
+    Those four other jobs have owners now: waking and popups are the bootstrap and the
+    clearing activities, leaving a building is the dispatcher's routing, and verifying is the
+    next perceive, which happens after every action anyway.
+
+    Returns {tapped, reason} — it does NOT report whether the map opened, because it cannot
+    know (CLAUDE.md: a primitive that acts does not report whether it worked).
+    """
+    # `where_am_i` is defined in THIS module (line ~565), not in brain.perceive. Importing
+    # it from there raised ImportError on every call — and this is what `dispatch()` calls for
+    # an OPEN_WORLD_MAP intent, so the map could not be opened at all. The tests for this
+    # function `inspect.getsource` it and never run it, which is why they stayed green.
+    frame = frame if frame is not None else capture_screen()
+    loc = (where_am_i(frame) or {}).get("location")
+
+    if loc in ("sea", "sea_cinematic"):
+        tx, ty = _sea_minimap_center()
+        if tx is None:
+            return {"tapped": False, "reason": "the sea minimap region could not be located"}
+        logger.info(f"[world-map-tap] SEA — minimap centre @ ({tx},{ty})")
+        tap(tx, ty)
+        return {"tapped": True, "via": "minimap"}
+
+    if loc == "port_overworld":
+        # CORROBORATE A CALIBRATED POINT. A village's left menu is not a port's, and the
+        # globe coordinate would land on something else there.
+        if _looks_like_a_village(frame):
+            return {"tapped": False,
+                    "reason": "the left menu is a VILLAGE's — not tapping the port globe"}
+        tx, ty = _PORT_WORLD_MAP_GLOBE
+        logger.info(f"[world-map-tap] PORT — globe @ ({tx},{ty})")
+        tap(tx, ty)
+        return {"tapped": True, "via": "globe"}
+
+    if loc == "port_map":
+        # THE THIRD PLACE THE GLOBE LIVES (user, 2026-08-29): the sea minimap, the port
+        # globe, and the port map overlay's own 'World Map' button — bottom-left, beside the
+        # back arrow. `state_fingerprints_data` calls that button "unique to port_map", which
+        # is exactly why it can be found by its LABEL rather than a calibrated point: the
+        # control says what it is, and it is the one thing this screen is identified by.
+        #
+        # Without this branch the routing and the primitive disagreed. `to_intent` answers
+        # OPEN_WORLD_MAP from port_map — correctly, it is not "inside" anything — and the tap
+        # refused with "no world-map control on 'port_map'", which is the same wedge that
+        # stopped a run in the market's Sell submenu: dispatch, refuse, repeat, stall.
+        pos = _find_button(frame, "world map", "world", allow_title=False)
+        if pos is None:
+            return {"tapped": False,
+                    "reason": "port_map is showing but its 'World Map' button was not found"}
+        logger.info(f"[world-map-tap] PORT MAP — 'World Map' button @ {pos}")
+        tap(*pos)
+        return {"tapped": True, "via": "port_map button"}
+
+    # Anywhere else is not this primitive's problem. It reports, and the dispatcher routes —
+    # which is the whole difference from the loop this replaces.
+    return {"tapped": False, "reason": f"no world-map control on {loc!r}"}

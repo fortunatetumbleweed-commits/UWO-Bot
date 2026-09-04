@@ -22,6 +22,7 @@ from unittest.mock import patch
 from PIL import Image
 
 from brain import barter_mission_live as bml
+import actions.barter_panel as bp
 
 # A frame with real dimensions: the left-menu bound is a FRACTION of the width, so a bare
 # object() stub cannot exercise it.
@@ -45,7 +46,7 @@ class OpensTheBarterPanel(unittest.TestCase):
              patch("actions.ui.tap_element",
                    side_effect=lambda el, **k: taps.append(k.get("why")) or True), \
              patch("capture.adb_capture.capture_screen", return_value=_FRAME):
-            return bml._open_barter_panel(), taps
+            return bp._open_barter_panel(), taps
 
     def test_it_taps_barter_from_the_village_interior(self):
         ok, taps = self._run(already_on=False, after_tap=[True])
@@ -70,7 +71,7 @@ class OpensTheBarterPanel(unittest.TestCase):
     def test_a_perceive_failure_is_not_a_success(self):
         with patch("actions.ui.on_submenu", side_effect=RuntimeError("boom")), \
              patch("capture.adb_capture.capture_screen", return_value=_FRAME):
-            self.assertFalse(bml._open_barter_panel())
+            self.assertFalse(bp._open_barter_panel())
 
 
 if __name__ == "__main__":
@@ -95,7 +96,7 @@ class RefusesToCommitFromAnUnknownScreen(unittest.TestCase):
                    **({"side_effect": where} if raises
                       else {"return_value": {"location": "village", "detail": detail}})), \
              patch("actions.ui.active_submenu", return_value=submenu):
-            return bml._no_panel_failure()
+            return bp._no_panel_failure()
 
     def test_it_is_not_ok(self):
         self.assertFalse(self._failure(detail="Village interior")["ok"])
@@ -153,7 +154,7 @@ class TheMenuItemNotTheProse(unittest.TestCase):
              patch("actions.ui.tap_element",
                    side_effect=lambda el, **k: taps.append((el["cx"], el["cy"])) or True), \
              patch("capture.adb_capture.capture_screen", return_value=_FRAME):
-            ok = bml._open_barter_panel()
+            ok = bp._open_barter_panel()
         return ok, taps
 
     def test_it_taps_the_menu_item_position(self):

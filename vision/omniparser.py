@@ -297,6 +297,45 @@ class OmniParser:
                     ))
         return elements
 
+    # ── Diagnostics ────────────────────────────────────────────────────────────
+
+    def detect_raw(self, frame: Image.Image, *, yolo_conf: float = 0.01) -> List["DetectedElement"]:
+        """EVERY box the detectors proposed, before any of this module's thresholds.
+
+        DIAGNOSTIC ONLY — never use in the bot loop; it is slower and deliberately noisy.
+        parse_fast() drops YOLO boxes under 0.30 and OCR text under 0.40 or 2 characters, so
+        a row can be absent from a parse for two very different reasons: the detector never
+        proposed it, or it proposed it and a threshold ate it. Those need different fixes and
+        the filtered output cannot tell them apart — Cheyenne's Corn row has no thumbnail box
+        in the parse, and only this can say whether one was ever offered.
+
+        `yolo_conf` also lowers YOLO's OWN cutoff (ultralytics defaults to 0.25), which would
+        otherwise keep hiding the low-confidence boxes this exists to reveal.
+        """
+        out: List[DetectedElement] = []
+        if self._load_yolo():
+            for r in self._yolo(frame, verbose=False, conf=yolo_conf):
+                if r.boxes is None:
+                    continue
+                for box in r.boxes:
+                    x1, y1, x2, y2 = [int(v) for v in box.xyxy[0].tolist()]
+                    out.append(DetectedElement(
+                        label="icon", element_type="icon",
+                        x1=x1, y1=y1, x2=x2, y2=y2, confidence=float(box.conf[0])))
+        try:
+            import numpy as np
+            from vision.ocr import _get_reader
+            for bbox, text, conf in _get_reader().readtext(np.array(frame), detail=1):
+                xs = [pt[0] for pt in bbox]
+                ys = [pt[1] for pt in bbox]
+                out.append(DetectedElement(
+                    label=text.strip(), element_type="text",
+                    x1=int(min(xs)), y1=int(min(ys)),
+                    x2=int(max(xs)), y2=int(max(ys)), confidence=float(conf)))
+        except Exception as exc:
+            logger.debug(f"raw OCR failed: {exc}")
+        return out
+
     # ── Icon detection (YOLO + Florence-2 captions) ────────────────────────────
 
     def _detect_icons_with_caption(self, frame: Image.Image) -> List[DetectedElement]:
@@ -549,6 +588,11 @@ def get_omniparser() -> OmniParser:
 
 _FRAME_CACHE: dict[int, List[DetectedElement]] = {}
 MAX_CACHE_ENTRIES: int = 4
+
+
+def parse_raw(frame: Image.Image, *, yolo_conf: float = 0.01) -> List[DetectedElement]:
+    """Unfiltered detector output — diagnostics only. See OmniParser.detect_raw."""
+    return get_omniparser().detect_raw(frame, yolo_conf=yolo_conf)
 
 
 def parse_fast_cached(frame: Image.Image) -> List[DetectedElement]:

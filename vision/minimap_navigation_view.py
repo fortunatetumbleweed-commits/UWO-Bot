@@ -82,6 +82,86 @@ MINIMAP_CROP = (1984, 205, 2379, 395)           # 395×190 on a 2400×1080 frame
 # left, right, and top to keep the lat/lon HUD's last "5" inside the
 # crop and capture the full minimap circle.  Downstream code that
 # hardcodes 381×184 may need to be updated.
+
+# ── THE one live mini-map crop ────────────────────────────────────────────
+#
+# `MINIMAP_CROP` above is the DEFAULT. The real one moves: the UI drifts with game updates
+# and with orientation/camera-cutout changes, and the live value is calibrated from a frame
+# (see `calibrate_minimap_crop`). Measured 2026-08-24, the mini-map's true left edge was
+# x≈1862 against this default's 1984 — a ~120px error, which is enough to put a derived crop
+# (the speed tile, the lat/lon text) on entirely the wrong pixels.
+#
+# This module is the single home for that value. It used to be MIRRORED in
+# `brain/ai_nav/vision_input.py`, and the two had to be reassigned together by hand — which
+# `tools/run_ai_nav_live.py` duly did, in two adjacent lines. Two globals that must never
+# disagree are one global with extra steps, and the failure mode is silent: calibrate one,
+# and half of perception reads the stale box.
+#
+# READ IT THROUGH `get_minimap_crop()` and change it ONLY through `set_minimap_crop()`.
+#
+# Deliberately NOT unified with two other crops that look like this one but are not:
+#   * `tools/train_minimap_detector.py` / `tools/label_minimap.py` (2055, 140, 2400, 360) —
+#     the region the DETECTOR MODEL was trained on. It is written into the checkpoint
+#     (`ckpt["minimap_crop"]`) and read back at inference, so it is a model contract, not a
+#     screen position. Changing it to match the UI would silently mismatch the trained model.
+#   * `sim/nile_sim.py` — where the simulator PASTES its rendered mini-map; it follows this
+#     value so the sim stays faithful, but it is a drawing position, not a perception one.
+
+# OmniParser's mini-map bbox runs slightly larger than the actual disc — ~5px of overworld
+# sliver each side and a few icon-strip pixels on top. Those sliver pixels get classified as
+# water by the V11 mask (full-height contamination seen on t13/t374/t375), hence the insets.
+_MM_LEFT_INSET = 5
+_MM_RIGHT_INSET = -5
+_MM_TOP_INSET = 3
+_MM_BOTTOM_INSET = 0
+
+
+def get_minimap_crop() -> tuple:
+    """The live mini-map crop. Always read through this — the value moves."""
+    return MINIMAP_CROP
+
+
+def set_minimap_crop(box) -> tuple:
+    """Point every consumer at a newly calibrated crop. Returns what was set."""
+    global MINIMAP_CROP
+    MINIMAP_CROP = tuple(int(v) for v in box)
+    return MINIMAP_CROP
+
+
+def detect_minimap_bbox(elements) -> Optional[tuple]:
+    """The mini-map compound from OmniParser elements, or None.
+
+    It is the tall button in the top-right quadrant. None means "not on this screen" — in
+    port there is no mini-map at all, and a guess there would read somebody else's pixels.
+    """
+    best = None
+    for e in elements or []:
+        if getattr(e, "element_type", "") != "button":
+            continue
+        h = getattr(e, "y2", 0) - getattr(e, "y1", 0)
+        if getattr(e, "cx", 0) < 1600 or getattr(e, "cy", 0) > 500 or h < 180:
+            continue
+        if best is None or h > (best.y2 - best.y1):
+            best = e
+    return (int(best.x1), int(best.y1), int(best.x2), int(best.y2)) if best is not None else None
+
+
+def calibrate_minimap_crop(elements) -> Optional[tuple]:
+    """Detect the mini-map and adopt it as the live crop. Returns it, or None if not found.
+
+    Only the X bounds come from the detection; Y is kept from the current crop, which is how
+    the manual-navigation runner has always done it.
+    """
+    bbox = detect_minimap_bbox(elements)
+    if bbox is None:
+        return None
+    y0, y1 = MINIMAP_CROP[1], MINIMAP_CROP[3]
+    new = (bbox[0] + _MM_LEFT_INSET, y0 + _MM_TOP_INSET,
+           bbox[2] + _MM_RIGHT_INSET, y1 + _MM_BOTTOM_INSET)
+    logger.info(f"[calibrate] MINIMAP_CROP {MINIMAP_CROP} -> {new} "
+                f"(OmniParser + disc-rim insets L+{_MM_LEFT_INSET} R{_MM_RIGHT_INSET} "
+                f"T+{_MM_TOP_INSET} B+{_MM_BOTTOM_INSET})")
+    return set_minimap_crop(new)
 NAV_AREA = (0, 0, 400, 190)                     # Full crop is navigable.
 
 # Translucent radar disc around the ship icon — its overlay washes
@@ -1032,7 +1112,12 @@ def _compute_sectors(
     nav: np.ndarray,
     heading_deg: Optional[float],
 ) -> tuple[SectorReading, ...]:
-    """Bin the land mask into 8 ship-relative sectors.
+    """Bin the land mask into SECTOR_COUNT ship-relative sectors (16, at 22.5 degrees).
+
+    Said "8" until 2026-08-31, from when the view used 45-degree sectors. The constant has
+    been 16 for some time and `brain/goals/hug_shore.py` indexes 12 and 14 accordingly; the
+    stale wording made a healthy feature look broken when its test fixtures — which HAD kept
+    the 8-sector shape — started raising IndexError.
 
     Bearings are computed as compass first (0=N=image-up) then rotated
     into ship-relative coords by subtracting `heading_deg`.  If heading

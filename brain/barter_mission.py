@@ -17,6 +17,17 @@ from dataclasses import dataclass, field
 from typing import Callable, Optional
 
 
+# DEAD as of 2026-08-27 — no importers. Kept for one commit so the diff shows what the
+# context model replaced; delete on the next pass.
+#
+# This is the flow sub-loop: `for _ in range(target)`, committing round after round without
+# ever handing back. Nothing tells this bot that the world moved (CLAUDE.md Guiding Principle
+# #0), so a loop that does not return cannot be told it is wrong — and when the game closed
+# the barter submenu under it, it kept tapping Exchange, concluded "the panel must be stale",
+# and crashed the run. `max_rounds: int = 20` is the tell: an invented bound sitting on top
+# of the real one (the day's rounds), carried because the loop could not see the true limit.
+#
+# Replaced by brain/activities/village.py: one handler per context state, one action each.
 def run_barter_phase(
     play,
     *,

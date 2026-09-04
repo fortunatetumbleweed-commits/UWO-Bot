@@ -85,6 +85,12 @@ LOG_OUTPUT = Path("data/models/minimap_detector_log.txt")
 
 # Top-right radar region on a 2400×1080 frame.  See
 # memory/project_minimap_as_navigation_radar.md.
+# DO NOT point this at the live navigation crop. This is the region the DETECTOR MODEL is
+# trained and labelled on: it is written into the checkpoint as `ckpt["minimap_crop"]` and
+# read back at inference by `vision/minimap_reader.py`, so it is a contract with the trained
+# weights, not a description of where the mini-map currently sits on screen. Changing it to
+# follow UI drift would silently feed the model a region it was never trained on.
+# The live UI crop is `vision.minimap_navigation_view.get_minimap_crop()`.
 MINIMAP_CROP = (2055, 140, 2400, 360)   # (left, top, right, bottom)
 
 

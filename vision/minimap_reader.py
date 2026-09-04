@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Optional
 
 from loguru import logger
+from vision.frame_cache import FrameCache
 
 
 _MODEL_PATH = Path("data/models/minimap_detector.pt")
@@ -104,8 +105,7 @@ def _ensure_loaded() -> bool:
         return False
 
 
-_RESULT_CACHE: "OrderedDict[int, MinimapVerdict]" = OrderedDict()
-_RESULT_CACHE_MAX = 8
+_RESULT_CACHE = FrameCache("minimap_reader", max_entries=8)
 
 
 def _reset_for_test() -> None:
@@ -152,16 +152,13 @@ def read_minimap(frame, threshold: float = _DEFAULT_THRESHOLD) -> MinimapVerdict
     """
     if not _ensure_loaded():
         return MinimapVerdict(tags=frozenset(), probs={})
-    key = (id(frame), threshold)
-    cached = _RESULT_CACHE.get(key)
-    if cached is not None:
-        _RESULT_CACHE.move_to_end(key)
-        return cached
-    verdict = _run_inference(frame, threshold)
-    _RESULT_CACHE[key] = verdict
-    if len(_RESULT_CACHE) > _RESULT_CACHE_MAX:
-        _RESULT_CACHE.popitem(last=False)
-    return verdict
+    # Keyed on the frame via `vision.frame_cache`, NOT on `id(frame)` alone: an id is unique
+    # only while the object lives, and a recycled one hands this frame a previous frame's
+    # verdict. Found in omniparser 2026-08-21 (197 collisions in 200 images) and again in
+    # family_classifier 2026-08-26 (109 in 120) — the same defect, silent both times, because
+    # every wrong answer is a plausible one.
+    return _RESULT_CACHE.memoize(frame, lambda: _run_inference(frame, threshold),
+                                 extra=threshold)
 
 
 def _run_inference(frame, threshold: float) -> MinimapVerdict:

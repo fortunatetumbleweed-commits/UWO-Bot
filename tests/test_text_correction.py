@@ -175,3 +175,24 @@ class SlugFilterTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_a_trade_good_is_not_a_port():
+    """THE CORRECTOR FIXES CORRUPTION; IT DOES NOT NAME THE NEAREST PORT TO ANY STRING.
+
+    Every label on screen gets offered to it and most are not ports, so a weak match is
+    evidence the read was never a port name — not evidence about which port it is.
+
+    Live 2026-08-29: 'Herring' (a trade good, on a screen covered in them) became 'Peking' at
+    0.62. The fleet was in Amsterdam, which sources the Iron the mission had just asked for,
+    and it left without buying.
+    """
+    from vision.text_correction import correct_port_name
+
+    assert correct_port_name("Herring")[0] is None
+    assert correct_port_name("tac")[0] is None          # the 2026-08-26 'Tacoma' fragment
+
+    # genuine corruption still corrects — this is the read the cutoff must not cost us
+    assert correct_port_name("Amsterdamads!")[0] == "Amsterdam"
+    assert correct_port_name("Amsterdam")[0] == "Amsterdam"
+    assert correct_port_name("Tripol")[0] == "Tripoli"

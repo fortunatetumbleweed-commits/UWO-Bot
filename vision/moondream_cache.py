@@ -28,13 +28,13 @@ complexity of asking three yes/no questions in one Moondream prompt.
 from __future__ import annotations
 
 from typing import Any, Callable, Optional
+from vision.frame_cache import FrameCache
 
 # Cache keyed by (id(frame), question_key).  Bounded to a small number
 # of distinct frames so id() reuse after GC cannot leak across long
 # pauses; frames within one perceive() share id stability so the cache
 # is reliable for the dominant case (multiple callers, one frame).
-_CACHE: dict[tuple[int, str], Any] = {}
-_MAX_DISTINCT_FRAMES = 4
+_CACHE = FrameCache("moondream", max_entries=8)
 
 
 def ask_cached(
@@ -46,20 +46,12 @@ def ask_cached(
     cost; subsequent callers get a cached hit.  Different questions on
     the same frame each cache independently.
     """
-    key = (id(frame), question_key)
-    if key in _CACHE:
-        return _CACHE[key]
-
-    distinct_frames = {fid for fid, _ in _CACHE}
-    if (
-        len(distinct_frames) >= _MAX_DISTINCT_FRAMES
-        and id(frame) not in distinct_frames
-    ):
-        _CACHE.clear()
-
-    answer = ask_fn()
-    _CACHE[key] = answer
-    return answer
+    # Keyed on the frame via `vision.frame_cache`, NOT on `id(frame)` alone: an id is unique
+    # only while the object lives, and a recycled one hands this frame a previous frame's
+    # verdict. Found in omniparser 2026-08-21 (197 collisions in 200 images) and again in
+    # family_classifier 2026-08-26 (109 in 120) — the same defect, silent both times, because
+    # every wrong answer is a plausible one.
+    return _CACHE.memoize(frame, ask_fn, extra=question_key)
 
 
 def clear_cache() -> None:

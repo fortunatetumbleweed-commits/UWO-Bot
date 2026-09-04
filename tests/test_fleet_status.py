@@ -218,14 +218,15 @@ class VillageLegFloorTests(unittest.TestCase):
         from brain.supply_planner import VILLAGE_LEG_RESERVE_DAYS
         seen = {}
 
-        def _drive(dest, from_port=None, min_supply_days=None):
-            seen.update(dest=dest, floor=min_supply_days)
+        def _drive(dest, *, kind="port", resupply=True, min_supply_days=None, **kw):
+            seen.update(dest=dest, floor=min_supply_days, kind=kind)
             return {"ok": True}
 
         task = types.SimpleNamespace(params={"village": "Melanesian Village"})
-        with mock.patch("brain.goals.sail_to.drive_sail_to", side_effect=_drive):
+        with mock.patch("brain.barter_mission_live._sail_to", side_effect=_drive):
             make_live_executors(object())["sail_to_village"](task)
         self.assertEqual(seen["floor"], VILLAGE_LEG_RESERVE_DAYS)
+        self.assertEqual(seen["kind"], "village", "villages are on the Explore tab")
 
     def test_the_floor_overrides_a_short_one_way_eta(self):
         from actions.task_runner import _ensure_supply

@@ -445,3 +445,32 @@ class DismissalDispatcherChainAwarenessTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_the_world_map_keeps_its_overlays():
+    """A DIALOG ON THE WORLD MAP IS A CONTEXT, NOT AN INTERRUPTION.
+
+    On the sea or at a port a confident `transient` reading outranks an overworld verdict —
+    a modal there arrived unasked, and acting as if at the port is the hazard the gate
+    exists for. The world map is the other case: City Info, Village Info, the destination
+    panel and the Trade Event Schedule ALL open over it, and each is a screen
+    WorldMapActivity exists to read. Demoting them to 'unknown' leaves no activity to claim
+    the frame, so the dispatcher calls itself lost and re-perceives the same screen forever.
+
+    Live 2026-08-29 with the Trade Event Schedule left open: CNN transient@0.86, cascade
+    world_map on three signal groups, and the bot looped a Qwen call per tick.
+    """
+    import pathlib as _p
+
+    frame_path = _p.Path("data/reference/world_map/event_schedule_dialog.png")
+    if not frame_path.exists():
+        pytest.skip("reference frame not present")
+    from PIL import Image
+
+    from brain.perceive import _classify_nav_state
+    from vision.family_classifier import classify_family
+
+    frame = Image.open(frame_path).convert("RGB")
+    fam = classify_family(frame)
+    assert fam.family == "transient", "the CNN is right — there IS an overlay"
+    assert _classify_nav_state(frame).get("location") == "world_map"

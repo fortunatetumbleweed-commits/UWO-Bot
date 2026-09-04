@@ -29,8 +29,20 @@ from actions.adb_actions import tap, swipe, press_back
 
 DEFAULT_LONGEST_LEG_DAYS = 6      # route auto-resupplies at waypoints → size to longest leg
 FREE_SAIL_BUFFER_DAYS = 2         # free-sail cushion over ETA (matches task_runner)
-# Auto-sail time compression: observed ~2 real-min per game-day (12-day route ≈ 25 min).
-SEC_PER_GAME_DAY = 130
+# Auto-sail time compression. The original 130 (~2 real-min per game-day) makes the bot sleep
+# PAST the arrival, which wastes real time on every voyage. Two independent measurements on
+# 2026-08-23, both below it:
+#
+#   sea HUD while actively sailing   23:12:19 "13 days left" -> 23:19:13 "9 days left"
+#                                    414s / 4 days = 103 s/day
+#   a whole route                    started 20:56:54 with eta_days=36, arrived within 57 min
+#                                    <= 3396s / 36 days <= 94 s/day
+#
+# 90 keeps a margin below both. Firing EARLY is the safe direction: the caller re-reads the
+# ETA and sleeps again (see monitor_route_arrival), so an early wake costs one perceive, while
+# a late one costs the whole overshoot. Only count days while the fleet is MOVING — the
+# counter does not advance in port, and a pair straddling a stop reads ~529 s/day.
+SEC_PER_GAME_DAY = 90
 MOTION_CHECK_INTERVAL_S = 150     # long enough for ~1 game-day to elapse while moving
 
 _NUM_RE = re.compile(r"(\d+)")
@@ -82,14 +94,23 @@ def match_route_row(tokens, name: str, list_x_max: Optional[int] = None,
     return best if best_ratio >= min_ratio else None
 
 
-def find_text_button(tokens, keyword: str, min_ratio: float = 0.7):
+def find_text_button(tokens, keyword: str, min_ratio: float = 0.7,
+                    y_max: Optional[int] = None):
     """(cx, cy) of the token whose text contains / closely matches `keyword`
-    (case-insensitive). Used for the Route tab and the Move button."""
+    (case-insensitive). Used for the Route tab and the Move button.
+
+    `y_max` bounds the search to a band — needed because a CONTAINS match is happy to hit a
+    row that merely includes the word: a saved route named "Sailing Route 2" matches "route"
+    exactly as well as the Route TAB does (measured 2026-08-24), and tapping the row instead
+    of the tab leaves the panel showing something else.
+    """
     kw = keyword.lower()
     best, best_ratio = None, 0.0
     for text, _c, cx, cy in tokens:
         t = _norm(text)
         if not t or cx is None:
+            continue
+        if y_max is not None and cy is not None and cy > y_max:
             continue
         ratio = 1.0 if kw in t else difflib.SequenceMatcher(None, kw, t).ratio()
         if ratio > best_ratio:
@@ -181,21 +202,80 @@ def open_world_map() -> bool:
     return _open_world_map(context="port_overworld")
 
 
+# THE TAB BAR IDENTIFIES ITSELF — OmniParser labels every tab and gives it a box, so there is
+# no need to say "near the top" in pixels (user, 2026-08-24). The world map's tabs are
+# Port | Explore | Route | Trade, and they sit in a ROW at one height; a saved-route row
+# called "Sailing Route 2" does not.
+_WORLD_MAP_TABS = ("port", "explore", "route", "trade")
+_TAB_ROW_TOL_PX = 30
+
+# Fallback only, for when OmniParser is unavailable: the bar is at the very top and the
+# saved-route rows start well below it.
+_TAB_BAR_MAX_Y = 110
+
+
+def world_map_tab(frame, name: str):
+    """(cx, cy) of a world-map tab, found by ASSOCIATION: the labelled tab that sits in the
+    row of world-map tabs. None when the bar is not on screen.
+    """
+    try:
+        from vision.omniparser import parse_fast_cached
+        els = list(parse_fast_cached(frame))
+    except Exception as exc:
+        logger.debug(f"[route] OmniParser unavailable for the tab bar: {exc}")
+        return None
+    tabs = [e for e in els
+            if (getattr(e, "label", "") or "").strip().lower() in _WORLD_MAP_TABS]
+    if len(tabs) < 2:
+        return None                      # one word alone is not a tab bar
+    ys = sorted(e.cy for e in tabs)
+    mid = ys[len(ys) // 2]
+    row = [e for e in tabs if abs(e.cy - mid) <= _TAB_ROW_TOL_PX]
+    if len(row) < 2:
+        return None
+    hit = next((e for e in row
+                if (getattr(e, "label", "") or "").strip().lower() == name.lower()), None)
+    if hit is None:
+        return None
+    logger.info(f"[route] {name!r} tab @ ({hit.cx},{hit.cy}) "
+                f"(tab row: {[(e.label or '').strip() for e in sorted(row, key=lambda e: e.cx)]})")
+    return (int(hit.cx), int(hit.cy))
+# A freshly opened list needs a moment before its rows are readable.
+_ROUTE_LIST_LOOKS = 3
+
+
 def select_route_and_move(route_name: str) -> bool:
     """On the world map: Route tab → select `route_name` → Move. Returns True if the
     Move tap was issued (i.e. the route was found and selected)."""
-    # Route tab
-    tab = find_text_button(_ocr(_cap()), "route")
+    # THE ROUTE TAB IS IN THE TAB BAR — a saved route named "Sailing Route 2" also contains
+    # the word "route", and an unbounded substring match happily taps THAT (measured on the
+    # live list, 2026-08-24). Tapping a row instead of the tab leaves the panel showing
+    # something else entirely, and the row scan below then finds nothing. Same trap as
+    # "market" matching inside the quest line "move to market in ...".
+    frame = _cap()
+    tab = world_map_tab(frame, "route") or find_text_button(_ocr(frame), "route",
+                                                            y_max=_TAB_BAR_MAX_Y)
     if not tab:
-        logger.error("[route] Route tab not found")
+        logger.error("[route] Route tab not found in the tab bar")
         return False
     tap(*tab)
     time.sleep(1.5)
 
-    # Select the named route
-    row = match_route_row(_ocr(_cap()), route_name)
+    # THE LIST TAKES A MOMENT TO RENDER. One look 1.5s after the tap reported "not found"
+    # against a list that does carry the route (live 2026-08-24: 'san to london' was the
+    # second row, and the matcher finds it fine on a settled frame).
+    row = None
+    for attempt in range(_ROUTE_LIST_LOOKS):
+        row = match_route_row(_ocr(_cap()), route_name)
+        if row:
+            break
+        if attempt < _ROUTE_LIST_LOOKS - 1:
+            logger.info(f"[route] {route_name!r} not on the list yet — looking again "
+                        f"({attempt + 2}/{_ROUTE_LIST_LOOKS})")
+            time.sleep(1.5)
     if not row:
-        logger.error(f"[route] route {route_name!r} not found in list")
+        logger.error(f"[route] route {route_name!r} not found in list after "
+                     f"{_ROUTE_LIST_LOOKS} looks")
         return False
     tap(*row)
     time.sleep(1.5)

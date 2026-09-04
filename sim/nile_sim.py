@@ -51,7 +51,13 @@ BOUNCE_TURN_DEG_MAX = 270.0
 # Screen geometry — where the mini-map lives on the 2400×1080 full frame,
 # so the sim's rendered frame passes through the pipeline as-if from ADB.
 # Must match brain/ai_nav/vision_input.MINIMAP_CROP.
-_MINIMAP_CROP = (1984, 202, 2389, 395)
+# Where the simulator PASTES its rendered mini-map. This is a drawing position, not a
+# perception one, but it must agree with where perception looks or the sim is not faithful —
+# so it follows the canonical crop rather than keeping its own literal (which had drifted to
+# (1984, 202, 2389, 395), 3px up and 10px wider than what the nav code actually crops).
+from vision.minimap_navigation_view import get_minimap_crop as _get_minimap_crop
+
+_MINIMAP_CROP = _get_minimap_crop()
 
 _WATER_RGB = np.array([50, 90, 130], dtype=np.uint8)
 _LAND_RGB  = np.array([160, 145, 125], dtype=np.uint8)

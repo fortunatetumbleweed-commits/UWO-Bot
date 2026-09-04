@@ -84,6 +84,12 @@ be generalized into NL + monitors) and `llm_parser` (to extend to multi-step).
 
 ## Layer 2 — Reasoning / Mission Layer (consolidate)
 
+> **When this layer runs is as load-bearing as what it owns** — see
+> `the_plan_is_a_checklist.md` (2026-09-01). Its output must be recomputed from the CURRENT
+> state on every consultation, and an item is done when the world says so, not when an action
+> reported success. Today `build_barter_graph` computes the plan once and `leg.done` is set
+> from a runner's self-report; that pair sailed a fleet to nowhere for twenty minutes.
+
 **Owns:** *where am I in the game world*, and *how do I get from here to the
 goal* — including operating the UI and recovering from surprises. This is the
 layer the user described sitting below the task layer.

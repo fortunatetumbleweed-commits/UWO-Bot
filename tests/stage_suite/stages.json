@@ -1,0 +1,121 @@
+{
+ "barter_panel_birch_tree_selected": {
+  "frame": "frames/barter_panel_birch_tree_selected.png",
+  "state": "village",
+  "port": null,
+  "expect": "Svear barter panel with Birch Tree selected and its three materials read",
+  "from": "data/sessions/trace_barter_cmd_2026-08-26T09-57-03/frame_0003.png"
+ },
+ "barter_panel_wrong_good_selected": {
+  "frame": "frames/barter_panel_wrong_good_selected.png",
+  "state": "village",
+  "port": null,
+  "expect": "Svear barter panel with the WRONG good selected: Naverslojd, not the wanted Birch Tree. Material Wares 0/3 short, so Exchange is GREY. Tiles 3 and 4 carry red lock banners.",
+  "from": "data/sessions/trace_barter_cmd_2026-08-26T09-21-24/frame_0003.png"
+ },
+ "idle_lock_looks_like_a_notice": {
+  "frame": "frames/idle_lock_looks_like_a_notice.png",
+  "state": "idle_lock",
+  "port": null,
+  "expect": "the idle standby lock at Barcelona: full-screen, no chrome, no action verbs — it passes every test for a notice, and its exit is a SWIPE not a tap. The family CNN called it transient at 0.80.",
+  "from": "/tmp/idle_lock_barcelona.png"
+ },
+ "market_goods_info_dialog": {
+  "frame": "frames/market_goods_info_dialog.png",
+  "state": "sub_menu:purchase",
+  "port": null,
+  "expect": "a Trade Goods Info dialog is open over the Purchase grid: Load commits, Cancel backs out",
+  "from": "data/sessions/trace_barter_cmd_2026-08-26T00-06-32/frame_0060.png"
+ },
+ "market_restock_blue_gem": {
+  "frame": "frames/market_restock_blue_gem.png",
+  "state": "sub_menu:purchase",
+  "port": null,
+  "expect": "the Purchase grid with the restock control live: timer 00:28:26, cost 29 BLUE gems — refreshing here is allowed, a red-gem cost never is",
+  "from": "data/sessions/trace_gather_textiles_2026-08-18T22-08-23/frame_0002.png"
+ },
+ "port_overworld_amsterdam": {
+  "frame": "frames/port_overworld_amsterdam.png",
+  "state": "port_overworld",
+  "port": "Amsterdam",
+  "expect": "standing in a port; entering a building is a transition the dispatcher performs",
+  "from": "data/sessions/trace_barter_cmd_2026-08-26T00-06-32/frame_0000.png"
+ },
+ "sell_grid_iron_2099": {
+  "frame": "frames/sell_grid_iron_2099.png",
+  "state": "sub_menu:sell",
+  "port": null,
+  "expect": "Barcelona Sell grid page 1 after the overbuy: Iron owned=2099 reads correctly at full frame, and Lemon Oil reads None (recovered as 1 only at x2). The ledger's authoritative read.",
+  "from": "/tmp/sell_page1.png"
+ },
+ "sell_grid_page2_neroli": {
+  "frame": "frames/sell_grid_page2_neroli.png",
+  "state": "sub_menu:sell",
+  "port": null,
+  "expect": "Barcelona Sell grid page 2: Candle owned=148 (a material, only reachable by scrolling), and Neroli owned=2 — which the full frame reads correctly and an x2 read gets WRONG as 8.",
+  "from": "/tmp/sell_page2.png"
+ },
+ "sell_grid_page_one": {
+  "frame": "frames/sell_grid_page_one.png",
+  "state": "sub_menu:sell",
+  "port": null,
+  "expect": "the Sell page with a basket loaded and the yellow commit reading '9,461 | Sell' — one visible 3x3 page; the rest of the hold is below the fold and never scrolled to",
+  "from": "data/sessions/trace_barter_cmd_2026-08-26T21-55-12/frame_0011.png"
+ },
+ "sell_result_dialog_with_owned_counts": {
+  "frame": "frames/sell_result_dialog_with_owned_counts.png",
+  "state": "sub_menu:sell",
+  "port": null,
+  "expect": "the Result dialog after a sell (Total Amount 9,461) over the Sell grid — and the grid shows OWNED counts per tile: Iron 1,451, while buy_to_goal was reporting 0/470. Cargo 3,979/4,952 in the right panel.",
+  "from": "data/sessions/trace_barter_cmd_2026-08-26T21-55-12/frame_0014.png"
+ },
+ "transient_mate_promotion": {
+  "frame": "frames/transient_mate_promotion.png",
+  "state": "transient",
+  "port": null,
+  "expect": "a mate finished promotion: full-screen 'Effect Unlocked' notice, no close-X and no OK, dismissed by tapping. 'Other Mates (1)' means another is queued behind it.",
+  "from": "/tmp/mate_promotion_notice.png"
+ },
+ "village_trade_list_missing_quantity": {
+  "frame": "frames/village_trade_list_missing_quantity.png",
+  "state": "world_map",
+  "port": null,
+  "expect": "Svear Village Info trade list. The full-frame parse reads 358/102/102 and NEVER proposes the 44 on Matchlock Gun's thumbnail as text; a x2 region read recovers it. The frame the region-read merge was built from.",
+  "from": "/tmp/village_trade_list.png"
+ },
+ "world_map_village_list": {
+  "frame": "frames/world_map_village_list.png",
+  "state": "world_map",
+  "port": null,
+  "expect": "the world map on the Explore tab with the village list open — a village is chosen from here",
+  "from": "data/sessions/trace_barter_cmd_2026-08-26T00-06-32/frame_0110.png"
+ },
+ "sell_grid_candle_wax_misread": {
+  "frame": "frames/sell_grid_candle_wax_misread.png",
+  "state": "sub_menu:sell",
+  "port": "Barcelona",
+  "expect": "Barcelona sell grid, Iron 2,099 and Candle 148, Cargo 3,040/4,952. The badge specialist reads Candle as 2148 at conf 0.6519 (the melted wax left of the digits thresholds into a leading '2') while full-frame OCR reads 148 at 0.9987. The per-good bound does NOT catch it — 2,148 < 3,040 held. Only the sum does: 2,099 + 2,148 = 4,247. With supplies, 2,099 + 148 + 793 = 3,040 exactly.",
+  "from": "data/sessions/trace_barter_cmd_2026-08-27T11-18-32/frame_0010.png"
+ },
+ "goods_info_dialog_over_sell_grid": {
+  "frame": "frames/goods_info_dialog_over_sell_grid.png",
+  "state": "sub_menu:sell",
+  "port": "Barcelona",
+  "expect": "Trade Goods Info dialog open over the sell grid. The 50% scrim caps the left gutter's white chrome at 128 while a panel would leave it 255. 'Put In Bulk' is still perfectly legible THROUGH the scrim at (364,988)-(563,1030), so presence is not reachability — tapping it dismisses the dialog. The quantity field reads '/148' (OmniParser drops the leading 1), and on a sell dialog that denominator IS the holding.",
+  "from": "data/sessions/trace_barter_cmd_2026-08-27T11-18-32/frame_0011.png"
+ },
+ "village_trade_list_badge_lost": {
+  "frame": "frames/village_trade_list_badge_lost.png",
+  "state": "world_map",
+  "port": null,
+  "expect": "Svear Village Trade List: Birch Tree 689 <- Iron 88, Matchlock Gun 44, Candle 88. The whole-frame parse reads 689/88/88 but NEVER PROPOSES Matchlock Gun's 44 as text — its tile comes back a bare 'icon'. The row parser drops a material with no quantity, so the recipe read as two of three and certified itself complete. Cropping that one tile at x4 reads 44 at confidence 1.00. Naverslojd is cut off at the panel edge and must stay incomplete rather than be guessed.",
+  "from": "data/sessions/trace_barter_cmd_2026-08-27T17-10-56/frame_0006.png"
+ },
+ "world_map_port_tab_lit_white": {
+  "frame": "frames/world_map_port_tab_lit_white.png",
+  "state": "world_map",
+  "port": null,
+  "expect": "World map on the PORT tab. Two readings fail here and both had to be fixed: OmniParser merges the Explore label with its neighbour ('NarExplore'), so an EQUALITY match drops it and the strip reads ['port','route','trade']; and the lit tab is near-WHITE, not gold, so the warmth test scores it LOWEST (port 0.6 vs route 17.8) and answers 'cannot tell'. Luminance separates it outright: 193.3 against 48.8 / 60.8 / 56.1.",
+  "from": "live capture 2026-08-27T20:05, fleet at Barcelona"
+ }
+}

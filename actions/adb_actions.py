@@ -10,7 +10,9 @@
 
 from __future__ import annotations
 
+import math
 import random
+import shlex
 import subprocess
 import time
 
@@ -22,7 +24,38 @@ PRESS_DURATION_MIN_MS: int = 80
 PRESS_DURATION_MAX_MS: int = 220
 
 # Maximum finger drift during a tap (pixels). Finger is never perfectly still.
-TAP_DRIFT_MAX: int = 4
+#
+# This is a RADIUS, not a per-axis range, and that distinction is the whole point.
+# Drifting each axis independently in [-4,4] lets both draw their maximum at once —
+# a 5.66px displacement — and an app that calls anything past ~5px a DRAG rather
+# than a click then never fires the control. Four of the 81 combinations (the
+# corners) do that: 4.9%.
+#
+# Measured live 2026-09-02: 3 of 62 taps in one mission produced ZERO pixel change
+# — 4.8%. Two were the world map's search box (so the keyboard never opened and
+# 'Trip' never reached it), one was a market tile (so the cart stayed empty, the
+# Purchase button stayed greyed, and a gather leg ended two rounds short).
+# Nothing distinguished them from the 59 that worked except the draw.
+#
+# A real finger drifts 1-3px during a 150ms press, so bounding the radius is MORE
+# faithful than the lattice it replaces, and it keeps every property the anti-
+# detection note above is actually about: a press with duration, motion and lift.
+TAP_DRIFT_MAX: float = 3.0
+
+
+def _drift_offset() -> tuple[int, int]:
+    """How far the finger slides between touch-down and lift, as (dx, dy).
+
+    A bounded RADIUS in a random direction — never a per-axis draw. Drawing each
+    axis independently lets both take their maximum at once, and that corner is
+    what the game reads as a drag instead of a click (see TAP_DRIFT_MAX).
+
+    Its own function so the invariant can be tested: `tap` itself is replaced by a
+    recorder in the unit suite, which is deliberate — no test may reach the phone.
+    """
+    drift = random.uniform(0.0, TAP_DRIFT_MAX)
+    angle = random.uniform(0.0, 2.0 * math.pi)
+    return int(round(drift * math.cos(angle))), int(round(drift * math.sin(angle)))
 
 
 def _adb(args: list[str]) -> None:
@@ -36,9 +69,53 @@ def _adb(args: list[str]) -> None:
         raise RuntimeError(f"ADB error: {result.stderr.decode().strip()}")
 
 
+def shell_out(args: list[str]) -> str:
+    """Run an ADB command and RETURN its stdout. `_adb` discards output; some questions
+    (is the soft keyboard up?) are answered by the OS, and the answer is what we need."""
+    cmd = ["adb"]
+    if ADB_DEVICE_ID:
+        cmd += ["-s", ADB_DEVICE_ID]
+    cmd += args
+    result = subprocess.run(cmd, capture_output=True, timeout=ADB_TIMEOUT)
+    if result.returncode != 0:
+        raise RuntimeError(f"ADB error: {result.stderr.decode().strip()}")
+    return result.stdout.decode(errors="replace")
+
+
 def _human_delay() -> None:
     """Wait a human-scale delay between actions (5–10 s by default)."""
     time.sleep(random.uniform(TAP_DELAY_MIN, TAP_DELAY_MAX))
+
+
+
+# ── the world moved because WE moved it ───────────────────────────────────────
+# Every action here changes the screen, so whatever was last observed is superseded.
+# Observers register to be told; nobody has to remember to say so at the call site, which
+# is the whole point — 215 capture sites grew because that discipline was voluntary.
+#
+# A LIST, not a single slot: a tracer and the perceive repository both want to know, and a
+# one-slot hook would have them fight over it.
+_action_sinks: list = []
+
+
+def add_action_sink(fn) -> None:
+    """Register `fn(kind, settle_s)`, called after every action primitive."""
+    if fn not in _action_sinks:
+        _action_sinks.append(fn)
+
+
+def remove_action_sink(fn) -> None:
+    if fn in _action_sinks:
+        _action_sinks.remove(fn)
+
+
+def _acted(kind: str, settle_s: float = 0.0) -> None:
+    """Tell the observers the screen has just been changed by us. Never raises."""
+    for fn in list(_action_sinks):
+        try:
+            fn(kind, settle_s)
+        except Exception:
+            pass          # telling someone must never cost us the action itself
 
 
 def tap(x: int, y: int) -> None:
@@ -62,15 +139,15 @@ def tap(x: int, y: int) -> None:
     x += random.randint(-2, 2)
     y += random.randint(-2, 2)
 
-    # Finger drifts slightly during press
-    x2 = x + random.randint(-TAP_DRIFT_MAX, TAP_DRIFT_MAX)
-    y2 = y + random.randint(-TAP_DRIFT_MAX, TAP_DRIFT_MAX)
+    # Finger drifts slightly during press.
+    dx, dy = _drift_offset()
+    x2, y2 = x + dx, y + dy
 
     duration_ms = random.randint(PRESS_DURATION_MIN_MS, PRESS_DURATION_MAX_MS)
     _adb(["shell", "input", "swipe",
           str(x), str(y), str(x2), str(y2), str(duration_ms)])
     _human_delay()
-
+    _acted('tap', 0.8)
 
 def long_press(x: int, y: int, duration_ms: int = 800) -> None:
     """
@@ -92,7 +169,7 @@ def long_press(x: int, y: int, duration_ms: int = 800) -> None:
     _adb(["shell", "input", "swipe",
           str(x), str(y), str(x), str(y), str(duration_ms)])
     time.sleep(0.3)
-
+    _acted('long_press', 1.0)
 
 def tap_fast(x: int, y: int, delay_ms: int = 150) -> None:
     """
@@ -114,7 +191,7 @@ def tap_fast(x: int, y: int, delay_ms: int = 150) -> None:
     _adb(["shell", "input", "tap", str(x), str(y)])
     actual_ms = int(delay_ms * random.uniform(0.85, 1.15))
     time.sleep(actual_ms / 1000)
-
+    _acted('tap_fast', 0.4)
 
 def swipe(x1: int, y1: int, x2: int, y2: int, duration_ms: int = 300) -> None:
     """Swipe from (x1, y1) to (x2, y2) over *duration_ms* milliseconds.
@@ -136,7 +213,7 @@ def swipe(x1: int, y1: int, x2: int, y2: int, duration_ms: int = 300) -> None:
     _adb(["shell", "input", "swipe",
           str(x1), str(y1), str(x2), str(y2), str(actual_ms)])
     _human_delay()
-
+    _acted('swipe', 0.8)
 
 def swipe_fast(x1: int, y1: int, x2: int, y2: int,
                duration_ms: int = 300, settle_ms: int = 500) -> None:
@@ -163,7 +240,7 @@ def swipe_fast(x1: int, y1: int, x2: int, y2: int,
     _adb(["shell", "input", "swipe",
           str(x1), str(y1), str(x2), str(y2), str(actual_dur)])
     time.sleep(actual_set / 1000)
-
+    _acted('swipe_fast', 0.5)
 
 def press_back() -> None:
     """Send the Android BACK key."""
@@ -175,7 +252,7 @@ def press_back() -> None:
         pass
     _adb(["shell", "input", "keyevent", "4"])
     _human_delay()
-
+    _acted('press_back', 1.2)
 
 def wake() -> None:
     """Wake the screen (KEYCODE_WAKEUP) — used before dismissing the lock/
@@ -191,7 +268,7 @@ def wake() -> None:
         pass
     _adb(["shell", "input", "keyevent", "224"])   # KEYCODE_WAKEUP
     _human_delay()
-
+    _acted('wake', 1.5)
 
 def pinch_zoom(
     center_x: int,
@@ -272,6 +349,7 @@ def pinch_zoom(
     time.sleep(0.3)
     if result.returncode != 0:
         raise RuntimeError(f"pinch_zoom sendevent error: {result.stderr.decode().strip()}")
+    _acted("pinch_zoom", 1.0)
 
 
 def input_text(text: str, max_chars: int | None = None, clear_first: bool = False) -> None:
@@ -328,7 +406,22 @@ def input_text(text: str, max_chars: int | None = None, clear_first: bool = Fals
             _adb(["shell", "input", "keyevent", str(code)])
         else:
             # Fallback for unmapped characters (digits, accented letters, etc.)
-            escaped = char.replace(" ", "%s")
+            #
+            # QUOTED, BECAUSE `adb shell` RUNS A SHELL ON THE DEVICE. The argument list here
+            # avoids the LOCAL shell, which is easy to mistake for safety — but adb hands the
+            # command to a shell on the phone, and that one expands globs against ITS cwd,
+            # which is `/`.
+            #
+            # Live 2026-09-04: a recovery sailed to an unresolved home port named '?'. `?` is
+            # not in _KEYCODE, so it came here, and `input text ?` matched the single-character
+            # entries of `/` — where Android keeps the `/d` symlink. The search box received
+            # the letter **d** and the port list filtered to `Diu`. A wrong destination typed
+            # from a wildcard, with nothing in the log to explain it (user spotted the stray
+            # 'd' in the box).
+            #
+            # `?`, `*` and `[` are the ones that expand; quoting covers all of them at once.
+            escaped = shlex.quote(char.replace(" ", "%s"))
             _adb(["shell", "input", "text", escaped])
         time.sleep(random.uniform(0.12, 0.35))   # jittered human interval (anti-cheat)
     time.sleep(random.uniform(0.3, 0.6))
+    _acted('input_text', 0.8)

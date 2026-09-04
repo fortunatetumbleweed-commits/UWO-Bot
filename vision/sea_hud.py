@@ -50,7 +50,8 @@ def _get_rapid_ocr():
 # absolute crops silently break OCR and dead-reckoning after the shift.
 #
 # Reference calibration (2026-06-25 / 2026-06-23) against the default
-# MINIMAP_CROP = (1979, 202, 2384, 395):
+# (a historical MINIMAP_CROP value, (1979, 202, 2384, 395); the live one now
+#  comes from vision.minimap_navigation_view.get_minimap_crop()):
 #   SPEED_CROP  = (1910, 240, 1970, 280)   →  60×40 strip
 #     LEFT of mini-map, in the C/TW column, at offsets from mm_x0/mm_y0:
 #     x ∈ [-69, -9]  y ∈ [+38, +78]
@@ -102,24 +103,98 @@ _LATLON_RE = re.compile(r"^\s*(-?\d{1,3}\.\d{1,2})\s*,\s*(-?\d{1,3}\.\d{1,2})\s*
 _SPEED_RE = re.compile(r"^\s*(\d{1,2}\.\d{1,2})\s*$")
 
 
-def read_speed(img) -> Optional[float]:
+# ── Locating the speed tile instead of assuming where it is ──────────────────
+#
+# The speed number sits in a strip of three stacked tiles immediately LEFT of the mini-map:
+# ship icon → speed (a DECIMAL, e.g. "27.5"), windsock → wind strength (an integer), water →
+# current strength (an integer).
+#
+# `_current_speed_crop` derives its box as an OFFSET from `MINIMAP_CROP`, which is a module
+# constant — and the UI drifts. Measured 2026-08-24 on auto-sail frames: the mini-map's real
+# left edge is x≈1862 while `MINIMAP_CROP` says 1984, a ~120px error that put the crop INSIDE
+# the mini-map disc. `read_speed` then returned None on every at-sea frame, and the departure
+# check fell back to comparing ETAs. (The manual-navigation tool recalibrates `MINIMAP_CROP`
+# at startup, `tools/run_ai_nav_live.py`, which is why the same reader works there — a second
+# copy of this detection lives inline in that file and the two should be consolidated.)
+#
+# So: FIND the mini-map, then read a generous band beside it. The band does not need to be
+# tight, because the SPEED IS THE ONLY DECIMAL in the strip — wind and current are integers,
+# and `_SPEED_RE` already demands `\d{1,2}\.\d{1,2}`. That makes the read self-disambiguating
+# and tolerant of the drift that broke the fixed crop.
+
+_BAND_LEFT_OF_MINIMAP = 230
+_BAND_RIGHT_INSET = 5
+_BAND_TOP_INSET = 10
+_BAND_HEIGHT = 180
+
+
+def locate_minimap_bbox(elements) -> Optional[tuple]:
+    """The mini-map compound from OmniParser elements, or None.
+
+    Thin alias for the canonical detector in `vision.minimap_navigation_view`, which is where
+    the mini-map's geometry lives; kept here so speed-tile callers read naturally.
+    """
+    from vision.minimap_navigation_view import detect_minimap_bbox
+    return detect_minimap_bbox(elements)
+
+
+def locate_speed_band(img, elements=None) -> Optional[tuple]:
+    """A generous crop box around the speed tile, located from the mini-map. None if unknown.
+
+    Returns None rather than a guess when the mini-map cannot be found — a wrong box reads
+    somebody else's pixels, and "unknown" is the honest answer a caller can fall back on.
+    """
+    if elements is None:
+        try:
+            from vision.omniparser import parse_fast_cached
+            elements = list(parse_fast_cached(img))
+        except Exception:
+            return None
+    mm = locate_minimap_bbox(elements)
+    if mm is None:
+        return None
+    mx0, my0 = mm[0], mm[1]
+    return (max(0, mx0 - _BAND_LEFT_OF_MINIMAP), max(0, my0 + _BAND_TOP_INSET),
+            max(1, mx0 - _BAND_RIGHT_INSET), my0 + _BAND_TOP_INSET + _BAND_HEIGHT)
+
+
+def read_speed(img, *, elements=None, locate: bool = False) -> Optional[float]:
     """Extract current sailing speed (knots) from a tight crop just
     left of the mini-map.
 
     Returns None if no plausible reading is found.  Typical valid
     range is 0–30 (top speed ~27 for fast ships, ~11 for slow).
+    **0.0 is a real reading, not a failure** — it is the whole point of
+    the speed-0 check, so callers must distinguish it from None.
+
+    `locate=True` (or passing `elements`) finds the tile from the
+    mini-map's ACTUAL position first and only falls back to the fixed
+    crop — use it wherever the UI may have drifted.  It is opt-in
+    because locating costs an OmniParser parse (~2-3s), which the
+    manual-navigation loop cannot afford at its sub-1s cadence; that
+    path calibrates `MINIMAP_CROP` once at startup instead.
     """
     try:
         import numpy as np
         from actions.water_tap import _get_reader
     except Exception:
         return None
-    crop = img.crop(_current_speed_crop())
-    arr = np.asarray(crop)
-    try:
-        raw = _get_reader().readtext(arr, detail=1)
-    except Exception:
-        return None
+    boxes = []
+    if locate or elements is not None:
+        band = locate_speed_band(img, elements)
+        if band is not None:
+            boxes.append(band)
+    boxes.append(_current_speed_crop())
+
+    raw = []
+    for box in boxes:
+        try:
+            raw = _get_reader().readtext(np.asarray(img.crop(box)), detail=1)
+        except Exception:
+            continue
+        if any(_SPEED_RE.match((t or "").strip().replace(",", ".").replace(" ", ""))
+               for _b, t, _c in raw):
+            break
     # EasyOCR returns [(bbox, text, conf), …].  Speed crop is single
     # line; iterate over all tokens, pick the highest-confidence
     # decimal that parses cleanly.

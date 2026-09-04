@@ -17,6 +17,8 @@ import types
 import unittest
 from unittest.mock import patch
 
+import actions.barter_panel as bp
+
 from brain import barter_command
 
 
@@ -40,15 +42,16 @@ class KeepBarteringWhileFundable(unittest.TestCase):
                      "sail_to_sell": lambda t: called.append("sail_to_sell") or {"ok": True},
                      "sell": lambda t: called.append("sell") or {"ok": True},
                      "sail_to_village": lambda t: called.append("sail") or {"ok": True}}
-        region = types.SimpleNamespace(labels=lambda: ["Barter", "Gifting", "Explore"],
-                                       items=[], find=lambda l: None)
-        from PIL import Image
+        # WHERE WE ARE COMES FROM THE BOOTSTRAP NOW. `_at_a_village` stopped capturing a
+        # screen and reading the left menu itself — it reads the position the dispatcher
+        # established — so stubbing `where_am_i` and `detect_left_menu` no longer reaches it.
+        # conftest stands `establish_position` down to 'port_overworld' for the whole suite so
+        # that nothing perceives, which means a test that needs to BE somewhere has to say so;
+        # without this the resume path added a `sail` leg to a village it was standing in.
         with patch("brain.barter_mission_live.make_live_executors", return_value=executors), \
-             patch("actions.sail_actions.where_am_i", return_value={"location": "village"}), \
-             patch("capture.adb_capture.capture_screen",
-                   return_value=Image.new("RGB", (2400, 1080))), \
-             patch("vision.omniparser.parse_fast_cached", return_value=[]), \
-             patch("vision.region_detectors.left_menu.detect_left_menu", return_value=region), \
+             patch("brain.activities.bootstrap.establish_position",
+                   return_value={"ok": True, "state": "village", "port": None,
+                                 "sub_menu": None, "scene_type": "village"}), \
              patch("brain.unexpected_dialog.clear_blockers", return_value={"cleared": False}), \
              patch.object(barter_command, "_depart_village_to_sea", return_value=True), \
              patch("brain.mission_progress.finish"):
@@ -93,11 +96,11 @@ class TheGameDecidesWhetherMoreIsPossible(unittest.TestCase):
     def _more(self, *, live, computed):
         from brain import barter_mission_live as bml
         state = types.SimpleNamespace(rounds_remaining=computed)
-        with patch.object(bml, "_read_panel_state", return_value=state), \
-             patch.object(bml, "_exchange_still_live", return_value=live):
-            after = bml._read_panel_state()
+        with patch.object(bp, "_read_panel_state", return_value=state), \
+             patch.object(bp, "_exchange_still_live", return_value=live):
+            after = bp._read_panel_state()
             more = int(getattr(after, "rounds_remaining", 0) or 0) if after else 0
-            if bml._exchange_still_live():
+            if bp._exchange_still_live():
                 more = max(more, 1)
         return more
 
@@ -117,7 +120,7 @@ class ExchangeLivenessIsSafeWhenUnreadable(unittest.TestCase):
         """Unknown must not mean "keep bartering" — that would spin at the village."""
         from brain import barter_mission_live as bml
         with patch("capture.adb_capture.capture_screen", side_effect=RuntimeError("no frame")):
-            self.assertFalse(bml._exchange_still_live())
+            self.assertFalse(bp._exchange_still_live())
 
 
 class ExhaustionIsCompletionNotFailure(unittest.TestCase):
@@ -138,12 +141,12 @@ class ExhaustionIsCompletionNotFailure(unittest.TestCase):
     def _finish(self, *, committed, exchange_live):
         from brain import barter_mission_live as bml
         res = {"ok": False, "committed": committed, "reason": "stalled"}
-        with patch.object(bml, "_exchange_still_live", return_value=exchange_live), \
-             patch.object(bml, "_read_panel_state",
+        with patch.object(bp, "_exchange_still_live", return_value=exchange_live), \
+             patch.object(bp, "_read_panel_state",
                           return_value=types.SimpleNamespace(rounds_remaining=0,
                                                              shortfall={"Coral": 1})):
             if (not res.get("ok") and int(res.get("committed") or 0) >= 1
-                    and not bml._exchange_still_live()):
+                    and not bp._exchange_still_live()):
                 res = {**res, "ok": True, "exhausted": True}
         return res
 

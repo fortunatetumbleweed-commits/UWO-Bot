@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Any, Optional
 
 from loguru import logger
 
@@ -69,6 +69,21 @@ class PerceiveResult:
     scene_type:   Optional[str] = None # Qwen's domain-aware scene tag (village/harbor/market/…); None when Qwen not consulted or unsure
     task_complete: Optional[bool] = None  # Qwen's task-completion verdict when GoalContext was active; None otherwise. Goal layer uses as a SECONDARY arrival signal, not the sole one.
     perceived:    "Optional[PerceivedState]" = None  # A2 structured view (base/overlay/mode/context); `state` above is derived from it via legacy_state(). Additive — not yet authoritative.
+
+    # THE FRAME THIS WAS DECIDED FROM. Carried so that whoever acts on the verdict acts on
+    # the SAME pixels it was read from.
+    #
+    # It was missing, and `_refined_state` has always done `frame=getattr(res, "frame", None)`
+    # — which read None every time. So every activity that needed pixels captured its own, a
+    # second capture milliseconds after this one: the dispatcher classified frame A, routed on
+    # A, and handed the activity a state derived from A, which then acted on frame B. The
+    # screen that was routed on and the screen that was acted on were not the same screen.
+    # That is the failure the centralize-the-observation rule exists to prevent (Guiding
+    # Principle #1), and it was structural rather than accidental.
+    #
+    # `compare=False, repr=False`: a PIL image is not part of what makes two readings equal,
+    # and printing one in a log line helps nobody.
+    frame: Any = field(default=None, compare=False, repr=False)
 
     def to_location_dict(self) -> dict:
         """Backward-compatible format matching the old where_am_i() return value."""
@@ -195,6 +210,50 @@ _MAIN_MENU_TILE_WORDS = ("auction", "friend", "guild", "rank", "manage fleet", "
 _DAILY_NEWS_MIN_AREA_PCT = 6.0     # true 7.5+, false <= 5.0
 _DAILY_NEWS_MAX_MARGIN_DIM = 40.0  # true <= 27.5, false >= 59.9
 
+# A MODAL IS CENTRED. Size and dimming alone are not enough: a VILLAGE screen has a bigger
+# panel than any real daily-news popup (12.0% against the calibrated "true 7.5+") and, at
+# night over water, a darker margin than the ceiling. Both conjuncts pass and the detector
+# fires on a legitimate screen — three times in one run on 2026-08-30, tapping the '?' on the
+# title (which opened learning mode), a top-right icon, and the Ducat icon.
+#
+# The popup is centred; the village's panel is off to one side. Measured:
+#     real daily_news   box (515,267)-(1717,669)    dx  3.5%  dy  6.7%
+#     village panel     box (1451,121)-(2230,511)   dx 26.7%  dy 20.7%
+#
+# VERTICAL ONLY. Horizontal was tried and dropped: the user doubted it (orientation and the
+# camera cutout move it), and two real popups measured dx 3.5% and dx 20.8% — as spread as
+# the village's 26.7%. Vertical separates cleanly, real 6.7%/8.3% against village 17-21%.
+_DAILY_NEWS_MAX_DY_PCT = 12.0
+
+# AND THE CLOSE-X CANNOT BE IN THE TOP BAR (user, 2026-08-30). The popup keeps a margin from
+# the top of the screen, so its close-X is well down the frame — measured at y=223 of 1080,
+# 20.6%. Every icon this misfired on sat at y≈50, in the status bar: the '?' on a title, a
+# top-right icon, the Ducat. None of them can belong to a centred modal.
+_DAILY_NEWS_CLOSE_X_MIN_Y_PCT = 10.0
+# A CORNER-PROXIMITY RULE WAS CONSIDERED AND REJECTED (user, 2026-08-30). The real close-X
+# sits just outside its popup's top-right corner — measured (-22, -44) — and the Ducat icon
+# sits just outside the VILLAGE panel's top-left by (+51, -72). Nearly the same relative
+# geometry, so "an X near a corner of the big box" admits both. Only WHICH corner separates
+# them, and that is a thin thing to rest on when the panel's own box moves with the layout.
+# Centring is the measured, load-bearing test; this note exists so the idea is not re-proposed.
+
+# The round close-X, as a shape rather than a coordinate: a small roughly-square button near
+# the popup's top edge. Measured 2026-08-26 the real one was 46x48 at (1695,223).
+_CLOSE_X_MIN_PX = 24
+_CLOSE_X_MAX_PX = 90
+_CLOSE_X_MAX_Y_FRACTION = 0.45
+
+# Where the close-X was last SEEN, so the dismissal taps what perception found rather than a
+# remembered coordinate. The KB's close_position was [1794, 240]; the real one at Stockholm
+# was (1695, 223), and on the main menu that stale coordinate is the Manage Fleet tile.
+_DAILY_NEWS_CLOSE_SEEN: list = [None]
+
+# Words that mean "this panel is asking you to decide". Daily news offers only its close-X.
+_DIALOG_ACTION_WORDS = frozenset({
+    "ok", "cancel", "confirm", "yes", "no", "exchange", "purchase", "sell", "continue",
+    "accept", "decline", "retry", "quit",
+})
+
 
 def _large_dimmed_popup(frame) -> tuple:
     """(is_large_dimmed_popup, largest_element_pct, margin_brightness).
@@ -215,11 +274,63 @@ def _large_dimmed_popup(frame) -> tuple:
         band = _np.concatenate([a[:60, :].ravel(), a[-60:, :].ravel(),
                                 a[:, :80].ravel(), a[:, -80:].ravel()])
         dim = float(band.mean())
-        ok = area_pct >= _DAILY_NEWS_MIN_AREA_PCT and dim < _DAILY_NEWS_MAX_MARGIN_DIM
+        box = max(els, key=lambda e: (e.x2 - e.x1) * (e.y2 - e.y1), default=None)
+        dy_pct = dx_pct = 100.0
+        if box is not None:
+            dy_pct = abs((box.y1 + box.y2) / 2 - frame.height / 2) / frame.height * 100.0
+            dx_pct = abs((box.x1 + box.x2) / 2 - frame.width / 2) / frame.width * 100.0
+        centred = dy_pct <= _DAILY_NEWS_MAX_DY_PCT
+        ok = (area_pct >= _DAILY_NEWS_MIN_AREA_PCT and dim < _DAILY_NEWS_MAX_MARGIN_DIM
+              and centred)
+        if not centred:
+            logger.info(f"[perceive] the big element is not vertically centred "
+                        f"(dy {dy_pct:.1f}%, dx {dx_pct:.1f}%) — not a modal")
         return ok, area_pct, dim
     except Exception as exc:
         logger.debug(f"[perceive] large-popup check failed: {exc}")
         return False, 0.0, 255.0      # fail closed: no evidence => do not fire
+
+
+def _round_close_x(frame, elements=None):
+    """The popup's own round close-X, found by LOOKING for it. Returns the element or None.
+
+    A round X close button is a dark disc carrying a bright glyph, so the pixel test that
+    identifies one is sound — it was only ever applied to the WRONG PLACE. It used to run on
+    a fixed 50x50 crop at (1770,215)-(1820,265); measured 2026-08-26 at Stockholm the actual
+    close-X sat at (1672,199)-(1718,247), 52px to the left, and the crop was 2500 pixels of
+    empty background — all dark, none bright — so the signature could never fire and the
+    detector never reached its remaining stages.
+
+    CLAUDE.md says it plainly: if you are about to write a number that means where on the
+    screen, find the element instead. OmniParser had that icon at (1695,223) without
+    difficulty.
+    """
+    if elements is None:
+        try:
+            from vision.omniparser import parse_fast_cached
+            elements = parse_fast_cached(frame)
+        except Exception as exc:
+            logger.debug(f"[perceive] close-X search skipped: {exc}")
+            return None
+    import numpy as np
+
+    best = None
+    for e in elements or ():
+        w, h = e.x2 - e.x1, e.y2 - e.y1
+        if not (_CLOSE_X_MIN_PX <= w <= _CLOSE_X_MAX_PX and _CLOSE_X_MIN_PX <= h <= _CLOSE_X_MAX_PX):
+            continue
+        if abs(w - h) > max(w, h) * 0.35:        # a round button is roughly square
+            continue
+        if e.cy > frame.height * _CLOSE_X_MAX_Y_FRACTION:
+            continue                              # it sits at the popup's top edge
+        arr = np.array(frame.crop((e.x1, e.y1, e.x2, e.y2)).convert("L"))
+        if arr.size == 0:
+            continue
+        # The same discriminator as before: a dark disc with a bright glyph on it.
+        if (arr < 50).sum() > 100 and (arr > 200).sum() > 50:
+            if best is None or e.cx > best.cx:    # the rightmost such button is the popup's
+                best = e
+    return best
 
 
 def _has_daily_news_close_x(frame) -> bool:
@@ -239,9 +350,12 @@ def _has_daily_news_close_x(frame) -> bool:
     on a non-daily-news screen because pixel match alone reported a
     false positive.
 
-    Stage 2 — Context guards.  The user-confirmed invariant: daily_news ONLY shows on
-    overworld screens (sea or port_overworld), never inside a building, sub-menu, port
-    map, dialog, or on the MAIN MENU.  Chrome detection catches "inside something"
+    Stage 2 — Context guards.  The invariant, CORRECTED 2026-08-26: daily_news shows on
+    overworld screens (sea or port_overworld) AND over the IDLE LOCK — it was found covering
+    the lock at Stockholm, which is a state that did not exist when the original rule was
+    written (user).  What still holds is the negative: never inside a building, sub-menu,
+    port map, dialog, or on the MAIN MENU.  A whitelist of where a popup may appear ages
+    badly; the guards below are phrased as exclusions for that reason.  Chrome detection catches "inside something"
     (has_home / has_back_arrow), and a positive main-menu test catches the case chrome
     cannot see — the main menu has neither of those, so absence of chrome was being read
     as "must be an overworld".
@@ -259,23 +373,51 @@ def _has_daily_news_close_x(frame) -> bool:
     article view with no title text at all) and 'Uncharted Waters Origin'
     only appears in some article bodies, not on the list page.
     """
-    import numpy as np
-    crop = frame.crop((1770, 215, 1820, 265))
-    arr  = np.array(crop.convert("L"))
-    pixel_match = (arr < 50).sum() > 100 and (arr > 200).sum() > 50
-    if not pixel_match:
-        return False
-
-    # The signature is a PRE-FILTER, never the verdict: it has perfect recall (4/4) but
-    # fires on 7/147 non-daily-news frames. Require the popup's large-scale properties too.
+    # SIZE AND DIMMING FIRST — it is pure numpy, needs no detection pass, and carries the
+    # specificity (0/147 false positives with the signature; 7/147 without).
     big, area_pct, dim = _large_dimmed_popup(frame)
     if not big:
         logger.info(
-            f"[perceive] daily_news pixel signature fired but the screen has no large "
-            f"dimmed popup (largest element {area_pct:.1f}%, margin brightness {dim:.0f}) "
-            f"— rejecting"
+            f"[perceive] no large dimmed popup (largest element {area_pct:.1f}%, margin "
+            f"brightness {dim:.0f}) — rejecting"
         )
         return False
+
+    # ...THEN LOOK FOR THE CLOSE-X, rather than assuming where it is.
+    close = _round_close_x(frame)
+    if close is None:
+        logger.info("[perceive] large dimmed popup but no round close-X found — rejecting")
+        return False
+
+    # NOT IN THE STATUS BAR. The popup keeps a margin from the top of the screen, so its own
+    # close-X is well down the frame (measured y=223 of 1080). Every misfire on 2026-08-30
+    # tapped an icon at y~50 — the '?' beside a title, a top-right icon, the Ducat — and none
+    # of those can belong to a centred modal (user).
+    if (getattr(close, "cy", 0) or 0) < frame.height * _DAILY_NEWS_CLOSE_X_MIN_Y_PCT / 100.0:
+        logger.info(f"[perceive] the round X at ({close.cx},{close.cy}) is in the top bar — "
+                    "not this popup's close button")
+        return False
+
+    # A POPUP OFFERING ACTIONS IS A DECISION, NOT NOISE (CLAUDE.md). Daily news offers exactly
+    # one way out — its close-X. A dimmed panel with Cancel and OK is somebody's transaction,
+    # and dismissing it by tapping a disc is how a half-finished purchase gets abandoned.
+    #
+    # Found by testing: relaxing the fixed crop alone made this fire on the barter Exchange
+    # confirmation — large, dimmed, and carrying a disc-like glyph. The area and dimming gates
+    # cannot separate those two; the buttons can.
+    try:
+        from actions.sail_actions import _ocr_frame as _ocr
+        words = {(t or "").strip().lower() for t, _c, _x, _y in _ocr(frame, min_conf=0.4)}
+        actions = words & _DIALOG_ACTION_WORDS
+        if actions:
+            logger.info(f"[perceive] large dimmed popup with action buttons {sorted(actions)} "
+                        "— that is a decision, not the daily news; rejecting")
+            return False
+    except Exception as exc:
+        logger.debug(f"[perceive] daily_news action-button guard skipped: {exc}")
+
+    _DAILY_NEWS_CLOSE_SEEN[0] = (close.cx, close.cy)
+    logger.info(f"[perceive] daily_news close-X detected @ ({close.cx},{close.cy})")
 
     # Stage 2: context guard — daily_news cannot fire inside a building
     # or sub-menu.  Use chrome detection (template match, ~100ms) to
@@ -1027,6 +1169,19 @@ def _dismiss_close_button(frame, iid: str, position) -> None:
 
     from brain.dismissal_telemetry import record as _telem
 
+    # WHAT WAS SEEN BEATS WHAT WAS WRITTEN DOWN. The KB's close_position for daily_news is
+    # [1794, 240]; measured 2026-08-26 at Stockholm the button was at (1695, 223), and on the
+    # MAIN MENU that stale coordinate is the Manage Fleet tile — which the bot once tapped,
+    # navigating into a screen it then could not read the fleet from.
+    seen = _DAILY_NEWS_CLOSE_SEEN[0] if iid == "daily_news" else None
+    if seen:
+        logger.info(f"[perceive] Dismissing {iid!r} via the close-X perception found "
+                    f"@ {seen} (KB says {position})")
+        tap(int(seen[0]), int(seen[1]))
+        _telem("dismiss_close_button", "detected")
+        time.sleep(1.0)
+        return
+
     if position and len(position) == 2:
         x, y = int(position[0]), int(position[1])
         logger.info(f"[perceive] Dismissing {iid!r} via KB close_position ({x}, {y})")
@@ -1122,7 +1277,10 @@ def _detect_dialog_on_frame(frame):
         from vision.region_detectors.dialog import detect_dialog
         parser = get_omniparser()
         elements = parser.parse_fast(frame)
-        return detect_dialog(elements, frame.width, frame.height)
+        # HAND IT THE PIXELS. With the frame, DialogModel segments the dialog's own card off
+        # the brown title bar instead of inferring its extent from element positions — which
+        # is what makes a dialog stacked on a dialog detectable at all (user, 2026-09-03).
+        return detect_dialog(elements, frame.width, frame.height, frame=frame)
     except Exception as e:
         logger.debug(f"[perceive] _detect_dialog_on_frame failed: {e}")
         return None
@@ -2221,6 +2379,9 @@ IMPORTANT flow rules:
             state      = data.get("state", hint.state),
             port       = hint.port,
             detail     = detail,
+            # The frame Claude was shown — a corrected verdict is still a verdict about THIS
+            # screen, and whoever acts on it must act on the same pixels.
+            frame      = frame,
             flow       = flow,
             flow_step  = data.get("flow_step") or None if flow else None,
             confidence = CONFIDENCE_HIGH,
@@ -2247,6 +2408,80 @@ _DISMISSAL_NOOP_COUNTERS: dict[str, int] = {}
 _DISMISSAL_LAST_SIGNATURE: dict[str, str] = {}
 _NOOP_WARN_THRESHOLD = 2     # log loudly after this many consecutive no-ops
 _NOOP_SKIP_THRESHOLD = 3     # skip subsequent attempts after this many
+
+# A DIALOG THAT KEEPS COMING BACK GETS ITS OWN BUTTON PRESSED (user, 2026-09-02).
+#
+# An obstruction nobody recognises is normally left alone — the bot reports it and carries on
+# — and that is right for a popup sitting harmlessly over a world. It is wrong for a MODAL,
+# which answers nothing until it is answered, and blocks every attempt to do something else.
+#
+# Live 2026-09-02 at Madeira: a staged cart made Back raise "Moving to another menu will empty
+# the cart. Continue?". No interruptor matched, the Claude consult could not run (no API key),
+# so nothing answered it — and Back, the only thing the bot kept trying, is that dialog's
+# CANCEL. It raised and cancelled the same dialog four times and the mission died on it. The
+# market top menu was one OK away, and from there the buy could have been retried.
+#
+# So: seen this many times with nothing able to answer it, press its own positive button.
+# CLAUDE.md reserves the positive-button search for exactly this case — "something unexpected
+# interrupted a goal the bot was PURSUING and had already COMMITTED an action toward" — and
+# gold is what makes it identifiable: measured on that dialog, OK is 0.32 yellow and Cancel
+# is 0.000, so the colour picks the answer with nothing left to guess.
+_UNANSWERED_SIGHTINGS = 0
+_ANSWER_IT_ANYWAY_AFTER = 2
+
+# How far BELOW the obstruction's own bbox its buttons may sit. The detector's box covers the
+# title and body and stops above the button row — on that dialog it ended at y=676 with OK at
+# y=826 — so a strictly-inside search finds nothing to press. Scoped rather than frame-wide
+# because the market's own gold Purchase button is also on screen, and pressing THAT would
+# spend money the task never asked to spend.
+_BUTTONS_BELOW_BBOX_PX = 260
+
+
+def _answer_it_anyway(frame, bbox) -> bool:
+    """Press the positive button of an obstruction nothing could answer. True if pressed.
+
+    LAST RESORT, and deliberately narrow:
+
+      * only the GOLD button — `detect_commit_buttons` measures the yellow background that
+        makes a positive button positive in this game, so Cancel (0.000) can never be
+        chosen over OK (0.32). Wording is not consulted; POSITIVE_LABELS matching on words
+        is what once tapped 'Trade Info' and a panel title.
+      * only NEAR THIS OBSTRUCTION — inside its bbox, or within `_BUTTONS_BELOW_BBOX_PX`
+        beneath it, because the box stops above the button row. Frame-wide, the market's own
+        gold Purchase button is a candidate, and pressing it spends money nobody asked to
+        spend.
+      * only after the caller has seen the thing repeatedly with no answer, so a popup that
+        would have cleared itself never reaches here.
+
+    It reports what it pressed rather than what it achieved: the next perceive says whether
+    the screen moved, which is the same contract every other action here follows.
+    """
+    try:
+        from vision.omniparser import parse_fast_cached
+        from vision.region_detectors.commit_button import detect_commit_buttons
+        from actions.ui import tap_at
+    except Exception as exc:
+        logger.debug(f"[perceive] answer-anyway unavailable: {exc}")
+        return False
+
+    buttons = detect_commit_buttons(parse_fast_cached(frame), frame)
+    if bbox is not None:
+        x1, y1, x2, y2 = bbox
+        buttons = [b for b in buttons
+                   if x1 <= b.cx <= x2 and y1 <= b.cy <= y2 + _BUTTONS_BELOW_BBOX_PX]
+    if not buttons:
+        logger.warning("[perceive] a dialog keeps coming back and has no gold button to "
+                       "press — leaving it for the caller rather than tapping blind")
+        return False
+
+    best = max(buttons, key=lambda b: getattr(b, "yellow_frac", 0.0))
+    logger.warning(
+        f"[perceive] this obstruction has come back {_UNANSWERED_SIGHTINGS}x with nothing "
+        f"able to answer it — pressing its own positive button "
+        f"{getattr(best, 'verb', '') or '(gold)'!r} @ ({best.cx},{best.cy}) "
+        f"[yellow={getattr(best, 'yellow_frac', 0)}]")
+    tap_at(best.cx, best.cy, why="answering a dialog nothing else could clear")
+    return True
 
 
 def _signature_for_dismissal(tokens) -> str:
@@ -2277,9 +2512,16 @@ def dismiss_interruptors(frame=None):
     interruptor is detected and "dismissed" repeatedly without changing
     the screen.  After _NOOP_SKIP_THRESHOLD consecutive no-ops, that
     interruptor's dismissal is skipped so the perceive cycle can move on.
+
+    Dismissing an obstruction is the ONLY act this function performs.  It does not fire
+    learned recoveries (removed 2026-08-26) and must never acquire another way to change
+    the screen: a recovery acts on the world underneath, and causing transitions belongs
+    to the dispatcher alone.
     """
+    global _UNANSWERED_SIGHTINGS
     from capture.adb_capture import capture_screen as _cap
     from actions.sail_actions import _ocr_frame
+    from vision.obstruction_classifier import KIND_NONE
 
     if frame is None:
         frame = _cap()
@@ -2290,17 +2532,34 @@ def dismiss_interruptors(frame=None):
         found, obstruction = _detect_interruptors(frame, tokens)
         obstruction_bbox = obstruction.bbox if obstruction is not None else None
 
-        # Phase 4: when no top-layer interruptor matched, fall through to
-        # learned-recovery matching so a recipe the user already taught us
-        # (e.g. recruit_crew_confirmation_dialog) fires here instead of
-        # waiting for the 5-minute recovery timeout.  Layered AFTER
-        # interruptors because learned recoveries target the UNDERLYING
-        # screen — taps would hit the wrong layer if dismissed first.
-        recoveries: list = []
+        # PERCEPTION MAY OBSERVE ANYTHING; IT MAY NOT ACT.
+        #
+        # A learned recovery targets the UNDERLYING screen — it taps the harbour, not an
+        # overlay — so firing one from here makes PERCEIVING cause a transition, which is
+        # the single thing only the dispatcher may do (docs/architecture_DRAFT.md, "Only
+        # the dispatcher causes transitions").  Until 2026-08-26 this loop executed them,
+        # and that is why `perceive` could move the fleet.
+        #
+        # Dismissing an interruptor below is NOT the same act: an obstruction is a film
+        # over a world the bot is still in, clearing it restores what was already there,
+        # and the design assigns it to the dispatcher as part of perceiving.  A recovery
+        # changes the world.
+        #
+        # The match is still made, because knowing is free and the run analysis wants it.
         if not found:
-            recoveries = _match_learned_recoveries(tokens)
-
-        if not found and not recoveries:
+            for plan in _match_learned_recoveries(tokens):
+                logger.info(
+                    f"[perceive] learned recovery {plan.scenario_id!r} MATCHES this screen "
+                    "— not firing it: a recovery acts on the world, and perception does not "
+                    "act. It is the dispatcher's to run, as a goal or a dialog answer."
+                )
+            if obstruction is not None and obstruction.kind != KIND_NONE:
+                _UNANSWERED_SIGHTINGS += 1
+                if _UNANSWERED_SIGHTINGS >= _ANSWER_IT_ANYWAY_AFTER:
+                    if _answer_it_anyway(frame, obstruction_bbox):
+                        _UNANSWERED_SIGHTINGS = 0
+                        frame = _cap()          # it changed; the next round sees the change
+                        continue
             break
 
         # Fix D: pre-screen any interruptors whose dismissal has been a
@@ -2320,6 +2579,8 @@ def dismiss_interruptors(frame=None):
                     "OCR signature."
                 )
                 continue
+            # Something knows this one, so the escalation above is not warranted.
+            _UNANSWERED_SIGHTINGS = 0
             logger.info(f"[perceive] Interruptor detected: {iid!r} — dismissing")
             pre_sig = _signature_for_dismissal(tokens)
             _dismiss_interruptor(iid, frame, obstruction_bbox=obstruction_bbox)
@@ -2344,30 +2605,6 @@ def dismiss_interruptors(frame=None):
                     _reset_dismissal_tracker(iid)
             except Exception as e:
                 logger.debug(f"[perceive] dismissal no-op tracking failed: {e}")
-        # Phase 4 loop guard: before firing any matched recovery, ask the
-        # tracker whether the same recipe has already been attempted from
-        # this exact screen signature 2× without progress.  If so, skip
-        # this fire and persist confidence='low' so future processes don't
-        # repeat the loop.  Catches recipes that the human or Claude
-        # approved at teaching time but that have stopped working in
-        # practice (UI drift, overfit keywords, partial recipes that
-        # never actually completed a flow).
-        from brain.human_escalation import (
-            _execute_plan, _signature_from_tokens, should_skip_recovery_for_loop,
-        )
-        sig = _signature_from_tokens(tokens)
-        for plan in recoveries:
-            if should_skip_recovery_for_loop(plan.scenario_id, sig):
-                logger.warning(
-                    f"[perceive] Skipping {plan.scenario_id!r} — auto-disabled "
-                    "after consecutive failures from the same screen signature"
-                )
-                continue
-            logger.info(
-                f"[perceive] Learned recovery matched proactively: "
-                f"{plan.scenario_id!r} — executing {len(plan.actions)} action(s)"
-            )
-            _execute_plan(plan)
         frame = _cap()
 
     return frame
@@ -2375,21 +2612,17 @@ def dismiss_interruptors(frame=None):
 
 def _match_learned_recoveries(ocr_tokens: list) -> list:
     """
-    Proactive learned-recovery matching: load learned_recoveries.json and
-    return any entries whose detection_keywords are all present in the
-    current OCR text.  Mirror of _match_learned_recovery in
-    human_escalation.py but matches against raw OCR tokens (more direct
-    than state+detail, which has not yet been computed at this point in
-    perceive).
+    Load learned_recoveries.json and return the entries whose detection_keywords are all
+    present in the current OCR text.  Matches against raw OCR tokens rather than
+    state+detail, which has not been computed yet at this point in perceive.
 
-    Returns a list of EscalationPlan objects ready for _execute_plan.
+    PURE OBSERVATION.  Returns EscalationPlan objects; the caller LOGS them and does not
+    run them.  It once fired them here — "promoting" recoveries from a 5-minute timeout to
+    the next perceive iteration — which is how perception came to move the fleet.  The
+    latency problem it solved is real, and the answer is for the dispatcher to act sooner,
+    not for perception to act at all.
+
     Empty list when nothing matches OR the file is absent.
-
-    Promotes human-taught recoveries from "fires only after 5-minute
-    timeout" (current behaviour: human_escalation calls
-    _match_learned_recovery in its fallback path) to "fires on the next
-    perceive iteration", removing the long blocked-bot wait the user
-    observed in the May-1 14:23 run.
     """
     import json as _json
     from pathlib import Path as _Path
@@ -2444,6 +2677,10 @@ _VILLAGE_OVERRIDE_FLOOR = 0.80
 # detail cascade (same floor the family short-circuit already uses).
 _FAMILY_TRUST_FLOOR = 0.7
 _OVERWORLD_LOCATIONS = ("sea", "port_overworld", "world_map")
+
+# Where a confident `transient` reading OUTRANKS an overworld verdict. The world map is not
+# here: its overlays are its own contexts, not interruptions of it. See the transient gate.
+_TRANSIENT_GATE_LOCATIONS = ("sea", "port_overworld")
 
 
 def _has_village_menu(frame) -> bool:
@@ -2524,17 +2761,67 @@ def _classify_nav_state(frame) -> dict:
                     "VILLAGE's (barter+gifting) — that is a chromed screen, not an overworld")
         chromed = True
 
+    # ...AND AGAINST `transient`, FOR THE SAME REASON AND A SHARPER CAUSE (user, 2026-09-04).
+    #
+    # A VILLAGE IS A CHROMED OVERLAY ON THE SEA WORLD. What shows through its translucent
+    # middle is the actual sea — which is why the game's idle lock says "On Standby at Sea"
+    # while the fleet is docked at one. So a 224x224 CNN looking at a village sees sea, and
+    # the arrival screen, before any sub-menu is selected, is the most transparent of all.
+    # This is the game's design, not a quirk of one frame, so the CNN will meet it at every
+    # village and retraining is the wrong lever: CLAUDE.md's own rule is that a downscaled
+    # image answers WHICH FAMILY and never structure, and telling "village panel over sea"
+    # from "notice over sea" at that size is precisely a structure question.
+    #
+    # Measured on the five frames that ended the birch run at Svear — the barter panel open,
+    # amity 98,597/100,000, one tap from its purpose:
+    #
+    #     frame   CNN family    conf     village menu?
+    #     332-339 transient   0.87-0.96      True (all five)
+    #
+    # The CNN was confidently wrong every time and the left menu was right every time. The
+    # alternative already existed; nothing consulted it, because a confident `transient`
+    # short-circuits ahead of it. So this is precedence, not capability.
+    #
+    # What it cost: `transient` is served by the notice-tapper, which tapped (432,172) — the
+    # amity bar — four times and stalled the mission with all three materials aboard.
+    #
+    # SAFE BECAUSE THE VOCABULARY IS EXACT. `_has_village_menu` wants barter+gifting, and its
+    # docstring invites exactly this widening ("once the left-menu detector earns it"). A
+    # genuine full-screen notice COVERS the menu, so the test goes False and a real transient
+    # is untouched. A modal over a village leaves the menu showing and now reads `village` —
+    # which is right, and safe, because the dispatcher looks for a dialog before it picks an
+    # activity (`docs/dialogs_are_windows.md`).
+    if loc == "transient" and _has_village_menu(frame):
+        logger.info("[classify] STRUCTURE GATE: the CNN said a full-screen notice, but the "
+                    "left menu is a VILLAGE's (barter+gifting) — a village is a chromed "
+                    "overlay ON the sea world, which is what the CNN is seeing through it")
+        result = {"location": "village", "port": None,
+                  "detail": "Village (left-menu vocab over a transient CNN verdict)"}
+        loc = "village"
+        chromed = True
+
     # Family-CNN base GATE: a confidently chromed frame is a panel, never an
     # overworld. Override the cascade if it landed on one.
     if chromed and loc in _OVERWORLD_LOCATIONS:
+        # NAME IT FOR WHAT IT IS. This used to report `building`, which is a screen the bot
+        # knows how to work in — so the dispatcher went looking for a building to enter.
+        # Live 2026-08-27 that made `tap_building_entry` blind-tap three calibrated port
+        # tab-strip coordinates while the bot was on the MAIN MENU; one of them opened the
+        # Placement Setting screen, and the bot re-perceived it 17 times without leaving.
+        #
+        # `unrecognized_chromed_screen` is a state like any other. Its repertoire is just
+        # smaller: back (the title bar) and home, both afforded by every chromed screen.
+        # `UnrecognizedChromedActivity` serves it, takes one of those exits, and finishes —
+        # no destination forced, no recovery loop (memory: no-subloops-task-drives-state).
         logger.info(
             f"[classify] family=chromed@{fam.confidence:.2f} GATE: cascade said "
-            f"{loc!r} but a chromed frame is never an overworld — → building"
+            f"{loc!r} but a chromed frame is never an overworld — "
+            "→ unrecognized_chromed_screen"
         )
-        result = {"location": "building", "port": None,
+        result = {"location": "unrecognized_chromed_screen", "port": None,
                   "detail": f"Chromed panel (family CNN chromed@{fam.confidence:.2f}; "
                             f"cascade said {loc})"}
-        loc = "building"
+        loc = "unrecognized_chromed_screen"
 
     # Family GATE (transient) — mirror of the chromed gate, per the principle "trust the CNN
     # when it's confident".  A confident `transient` frame (loading / cinematic / MODAL DIALOG)
@@ -2545,9 +2832,27 @@ def _classify_nav_state(frame) -> dict:
     # re-perceives / lets the interruptor layer handle the overlay instead of acting as if at
     # the port.  (Only fires on the CONTRADICTION — transient + an overworld verdict — so it
     # leaves correctly-classified transient states like 'loading' alone.)
+    #
+    # WORLD_MAP IS EXCLUDED, for the same reason the chrome gate below excludes it. On the
+    # sea or at a port an overlay is an INTERRUPTION — something arrived that the bot did not
+    # ask for, and acting as if at the port is the hazard. On the world map an overlay is the
+    # WORK: City Info, Village Info, the destination panel and the Trade Event Schedule all
+    # open over the map, and every one of them is a screen `WorldMapActivity` exists to read.
+    # A dialog changes the screen without changing the world, so it is a context, not a state
+    # (Guiding Principle #1) — and demoting it to 'unknown' means no activity claims it, the
+    # dispatcher calls itself lost, and it re-perceives the same frame forever.
+    #
+    # Live 2026-08-29: the Trade Event Schedule was left open on the map. CNN transient@0.86,
+    # cascade world_map with THREE signal groups (mode_tabs, title, bottom_left) — and the bot
+    # looped, burning a Qwen call a tick, unable to reach the activity that reads that dialog.
+    #
+    # What makes this safe is that the activity now HANDS BACK rather than acting on a context
+    # it did not expect: an unrecognised overlay reaches WorldMapActivity, classifies as MISS,
+    # returns UNRECOGNISED, and the dispatcher regains bearings — where clearing an unsolicited
+    # popup belongs. Before that change, routing a modal here would have pressed Back blindly.
     transient = bool(fam is not None and fam.family == "transient"
                      and fam.confidence >= _FAMILY_TRUST_FLOOR)
-    if transient and loc in _OVERWORLD_LOCATIONS:
+    if transient and loc in _TRANSIENT_GATE_LOCATIONS:
         logger.info(
             f"[classify] family=transient@{fam.confidence:.2f} GATE: cascade said {loc!r} "
             "but a transient overlay is never an overworld — → unknown"
@@ -2625,6 +2930,66 @@ def _read_panel_context(frame):
         return None
 
 
+# Above this the family CNN is trusted outright and no signature is consulted; below it the
+# cascade runs. Weighted signature scoring — so that several signals outvote one — is a
+# separate piece of work, deliberately not folded in here (user, 2026-08-26).
+_FAMILY_TRUSTED_MIN = 0.8
+
+
+def _is_full_screen_notice(frame) -> bool:
+    """True when the screen affords NOTHING BUT A TAP.
+
+    The `transient` family bundles dialog_* + announcement + result_screen + loading, so the
+    family alone cannot say what to do: a dialog needs its BUTTONS read (they are the answer
+    space), and loading needs nothing at all. What separates a notice from a decision is
+    whether the screen offers a NAMED ACTION.
+
+    Measured on the two stage frames, 2026-08-26:
+
+        mate promotion      chrome: none        action verbs: none        -> a notice
+        Trade Goods Info    chrome: home        action verbs: cancel,
+                                                load, purchase, sell     -> a decision
+
+    An earlier version asked only whether `detect_dialog` found a card. It does not find the
+    Trade Goods Info card, so that dialog was classified as a notice and would have been
+    tapped at a fixed point rather than answered. Absence of evidence from ONE detector is
+    not evidence of absence; asking what the screen OFFERS is the sturdier question.
+    """
+    try:
+        if _detect_dialog_on_frame(frame) is not None:
+            return False
+
+        # THE IDLE LOCK IS NOT A NOTICE, AND IT LOOKS EXACTLY LIKE ONE.
+        #
+        # Full screen, no chrome, no action verbs — it passes every other test here. But its
+        # exit is a SWIPE, and TransientActivity taps, so calling it a notice makes the bot
+        # tap a screen that only answers to a gesture. Live 2026-08-27 the CNN said transient
+        # at 0.80 on the "Barcelona / Slide up to unlock" screen and only the next tick's
+        # fingerprint rescued it.
+        #
+        # The lock says what it is, which is the cheapest possible discriminator.
+        from actions.sail_actions import _ocr_frame
+        if any("slide up" in (t or "").lower() for t, _c, _b, _i in _ocr_frame(frame, min_conf=0.3)):
+            logger.info("[classify] full-screen, but it says 'slide up' — the idle lock, "
+                        "which is swiped and not tapped")
+            return False
+
+        from vision.chrome_detector import get_chrome_detector
+        c = get_chrome_detector().detect(frame)
+        if any((c.has_back_arrow, c.has_home, c.has_hamburger, c.has_right_panel)):
+            return False        # a world with chrome is a world, whatever is drawn over it
+
+        from vision.omniparser import parse_fast_cached
+        from vision.region_detectors.dialog import _DIALOG_ACTION_VERBS
+        for e in parse_fast_cached(frame):
+            if (getattr(e, "label", "") or "").strip().lower() in _DIALOG_ACTION_VERBS:
+                return False    # it offers a named action, so it is a decision
+        return True
+    except Exception as exc:
+        logger.debug(f"[classify] notice check failed: {exc} — falling through to the cascade")
+        return False
+
+
 def _classify_nav_state_inner(frame) -> dict:
     """
     Classify a frame into a navigation state, returning the same dict shape
@@ -2664,14 +3029,51 @@ def _classify_nav_state_inner(frame) -> dict:
     # tie-breaker that catches building-vs-port_overworld
     # misclassifications.
     #
-    # Confidence floor 0.7 — anything below defers to the cascade.
-    # See vision/family_classifier.py and Phase 4a in the architecture
-    # overview doc.
+    # CONFIDENCE FLOOR: above it the CNN is trusted and the signatures are not consulted;
+    # below it, the cascade runs and fingerprints decide (user, 2026-08-26). Raised from 0.7
+    # to 0.8 on that instruction — the band between the two now gets a signature check it
+    # previously skipped.
+    #
+    # This applies only to the families that ARE states — sea, world_map, port_overworld.
+    # `chromed` and `transient` are coarse groupings, not screens, so however confident the
+    # CNN is about them the cascade still has to say WHICH building, sub-menu or overlay.
+    #
+    # See vision/family_classifier.py and Phase 4a in the architecture overview doc.
     family_verdict = None
     try:
         from vision.family_classifier import classify_family
         family_verdict = classify_family(frame)
-        if family_verdict.confidence >= 0.7:
+        if family_verdict.confidence >= _FAMILY_TRUSTED_MIN:
+            # A FULL-SCREEN NOTICE IS NOT AN UNKNOWN SCREEN.
+            #
+            # `transient` bundles dialog_* + announcement + result_screen + loading, which is
+            # why it is not short-circuited wholesale: a dialog needs its BUTTONS read (they
+            # are the answer space) and loading needs nothing at all. But a transient with no
+            # dialog card is a full-screen notice — a mate finishing promotion, a level-up,
+            # an announcement — and those are tapped through, not identified.
+            #
+            # Measured 2026-08-26 on the mate-promotion "Effect Unlocked" screen: the CNN said
+            # transient at 0.9999 and this function ignored it, spending 23s in the legacy
+            # cascade — omniparser, chrome flags, Moondream three times, read_port_name — to
+            # reach "Unknown blocking screen". Every one of those asks WHERE THE FLEET IS, and
+            # nothing about a notice covering the whole screen can answer that.
+            #
+            # "No DialogModel" was the first test here and it was far too weak: `detect_dialog`
+            # misses the market's Trade Goods Info card outright, so that dialog short-circuited
+            # to `transient` and would have been TAPPED BLIND instead of having its buttons
+            # read. The stage suite caught it before a live run. See `_is_full_screen_notice`.
+            if family_verdict.family == "transient" and _is_full_screen_notice(frame):
+                logger.info(
+                    f"[classify] → transient (family-classifier "
+                    f"conf={family_verdict.confidence:.2f}) — a full-screen notice "
+                    "(no chrome, no named action), to be tapped through"
+                )
+                return {
+                    "location": "transient",
+                    "port":     None,
+                    "detail":   (f"full-screen notice (family-classifier@"
+                                 f"{family_verdict.confidence:.2f})"),
+                }
             if family_verdict.family in ("sea", "world_map"):
                 logger.info(
                     f"[classify] → {family_verdict.family} (family-classifier "
@@ -3304,8 +3706,65 @@ def _detect_navigation_state(frame) -> tuple[str, Optional[str], str]:
 
 # ── Main perceive function ────────────────────────────────────────────────────
 
+import time as _time
+
+# WHICH observation is current. Bumped every time a new one is stored, and that is the whole
+# definition of staleness: data derived from generation N is superseded the moment N+1 exists.
+#
+# NOT a clock. Age is the wrong test in both directions — at sea a twenty-minute-old
+# observation is still the current one because nothing newer has been taken, while in a market
+# a two-second-old one is superseded as soon as a tap produces a new frame. What matters is
+# whether a NEWER frame exists, and if it does, its data overrides.
+_PERCEIVE_GENERATION = 0
+
+
+def current_observation():
+    """The frame the bot is CURRENTLY working from, its perception, and their generation.
+
+    ONE OBSERVATION, SHARED. Today 215 call sites capture their own frame, so two readers in
+    the same tick can see different moments and nothing reconciles them. That is not only
+    waste — it is DISAGREEMENT. Live 2026-08-30 at Faro the dispatcher classified one capture
+    while `sell_goods` took another: the title read 'Sell' and the goods grid was still
+    'Purchase', each true of its own frame, and the bot loaded goods it did not own into a
+    sell basket.
+
+    Ticking keeps capturing because the game moves without us — an arrival, a notice, an idle
+    lock — and a sub-loop captures because it ACTS. Both are legitimate refreshes. What is not
+    legitimate is reading a frame older than the newest one taken.
+
+    Returns `(frame, result, generation)`, or `(None, None, 0)` when nothing has been observed.
+    """
+    return _PERCEIVE_LAST_FRAME, _PERCEIVE_LAST_RESULT, _PERCEIVE_GENERATION
+
+
+def observation_generation() -> int:
+    """The current observation's generation. Zero when nothing has been observed yet."""
+    return _PERCEIVE_GENERATION
+
+
+def is_current(generation: int) -> bool:
+    """Is data derived from `generation` still the newest word on the subject?
+
+    False means a newer frame has been taken since, so whatever this data says has been
+    overridden by what that frame shows — not because it has aged, but because it has been
+    superseded.
+    """
+    return bool(_PERCEIVE_LAST_FRAME is not None
+                and generation == _PERCEIVE_GENERATION
+                and generation > 0)
+
+
+def observation_age_s() -> float:
+    """How long ago the current observation was taken. INFORMATIONAL — for logs and pacing,
+    never for deciding whether data is stale; `is_current` decides that."""
+    if _PERCEIVE_LAST_FRAME is None:
+        return float("inf")
+    return _time.monotonic() - _PERCEIVE_LAST_AT
+
+
 _PERCEIVE_LAST_FRAME = None
 _PERCEIVE_LAST_RESULT = None
+_PERCEIVE_LAST_AT = 0.0      # monotonic stamp: how old the current observation is
 _PERCEIVE_CACHE_HITS = 0
 # 0 = DISABLED (always fresh perceive).  The unchanged-screen cache is implicated in a live
 # departure regression 2026-08-18 (sail stuck in FLEET_CHECK, looping navigate-to-harbor —
@@ -3335,7 +3794,15 @@ def perceive(frame=None) -> PerceiveResult:
     """
     global _PERCEIVE_LAST_FRAME, _PERCEIVE_LAST_RESULT, _PERCEIVE_CACHE_HITS
     if frame is None:
-        frame = capture_screen()
+        # PERCEIVE IS A CLIENT LIKE ANY OTHER, not a special case that captures beside the
+        # repository. It used to call `capture_screen()` itself, so a tick paid for TWO
+        # captures of one screen — one here, one when a migrated reader asked — and the two
+        # could disagree, which is the whole failure this repository exists to remove.
+        #
+        # Being the dispatcher's reader does not make it privileged; it makes it the FIRST
+        # caller of the tick, and whatever it looks at is what everyone else that tick reads.
+        from actions.perception import screen
+        frame = screen().get(why="perceive").frame
     if (_PERCEIVE_LAST_RESULT is not None and _PERCEIVE_LAST_FRAME is not None
             and _PERCEIVE_CACHE_HITS < _PERCEIVE_MAX_CACHE_HITS):
         try:
@@ -3348,8 +3815,25 @@ def perceive(frame=None) -> PerceiveResult:
         except Exception as exc:
             logger.debug(f"[perceive] unchanged-check failed: {exc}")
     result = _perceive_uncached(frame)
+    global _PERCEIVE_LAST_AT, _PERCEIVE_GENERATION
     _PERCEIVE_LAST_FRAME, _PERCEIVE_LAST_RESULT, _PERCEIVE_CACHE_HITS = frame, result, 0
+    _PERCEIVE_LAST_AT = _time.monotonic()
+    _PERCEIVE_GENERATION += 1          # a new frame supersedes everything read off the old one
     return result
+
+
+def last_seen():
+    """The most recent perception, or None — WITHOUT making a new one.
+
+    For callers that want to say what the screen was when something failed. Calling
+    `perceive()` for that costs a full OmniParser pass (measured: 90-120s inside a test, and
+    it made `test_barter_command` appear to hang), and it answers a different question anyway
+    — what the screen is NOW, after the failure, not what it was during it.
+
+    Reading this is not perceiving: no frame is captured and nothing is decided. It is the
+    observation the dispatcher already made, offered to whoever needs to describe it.
+    """
+    return _PERCEIVE_LAST_RESULT
 
 
 def _perceive_uncached(frame=None) -> PerceiveResult:
@@ -3464,6 +3948,14 @@ def _perceive_uncached(frame=None) -> PerceiveResult:
     # on EVERY sail tick (live 2026-08-18: 6 calls / 48 s in one voyage, multiplied by
     # world-map find retries).  Skip the VLM on these; nav needs only the state.
     if nav_state in ("sea", "sea_cinematic", "world_map"):
+        detail_is_specific = True
+    # A full-screen notice and the standby lock need no DESCRIBING — they need a tap and a
+    # swipe, and an activity performs each without reading a word of Qwen's answer. Asking
+    # anyway is the same waste as on the sea, and worse in practice: live 2026-08-26 a
+    # 'Barcelona is unlocked' notice classified as `transient` at 0.81 — just under the gate
+    # above — and the Qwen call it triggered took SEVEN MINUTES to come back with the string
+    # 'Barcelona is unlocked'. Correct, cosmetic, and the most expensive thing in the run.
+    if nav_state in ("transient", "idle_lock"):
         detail_is_specific = True
     skip_qwen = nav_state != "unknown" and detail_is_specific
 
@@ -3586,6 +4078,7 @@ def _perceive_uncached(frame=None) -> PerceiveResult:
         task_complete = (l25_result or {}).get("task_complete"),
         # A2 Phase 0/3: structured view (additive; `state` stays authoritative).
         perceived     = perceived,
+        frame         = frame,
     )
     _publish_observation(result, frame)
     return result

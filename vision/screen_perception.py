@@ -47,6 +47,10 @@ class ScreenInventory:
     by_role:         dict[str, list[TaggedElement]]   # role → elements
     frame_dims:      tuple[int, int]
     nav_state:       Optional[str]
+    # The frame itself, when the parse had one. Detectors that need PIXELS rather than boxes
+    # — DialogModel segmenting a card off its title bar — cannot work from `frame_dims`, and
+    # the image is alive for the whole tick anyway under per-frame perception sharing.
+    frame:           object = None
 
     @property
     def non_noise(self) -> list[TaggedElement]:
@@ -121,6 +125,7 @@ def parse_screen(
         by_role      = grouped,
         frame_dims   = (frame.width, frame.height),
         nav_state    = nav_state,
+        frame        = frame,
     )
 
 

@@ -16,6 +16,7 @@ from brain.goals.hug_shore import (
     POINT_PURSUIT_SAFETY_DIST,
     CANDIDATE_SECTORS,
 )
+import pytest
 
 
 _SECTOR_BEARINGS = (
@@ -179,6 +180,7 @@ def test_pick_sector_all_masked_returns_none():
     assert free == []
 
 
+@pytest.mark.simulation  # simulated goal-loop run: `tick()` executes the real action code against whatever frame the fixtures supply
 def test_arrival_stop_condition_within_acceptance():
     """When destination is set and bot is within
     POINT_PURSUIT_ACCEPTANCE_DEG of it on both axes, tick() should
@@ -210,6 +212,7 @@ def test_arrival_stop_condition_within_acceptance():
     assert "destination reached" in result.note
 
 
+@pytest.mark.simulation  # simulated goal-loop run: `tick()` executes the real action code against whatever frame the fixtures supply
 def test_arrival_does_not_fire_outside_acceptance():
     """When the bot is FURTHER than POINT_PURSUIT_ACCEPTANCE_DEG on
     either axis, tick() should NOT return COMPLETE — voyage continues."""

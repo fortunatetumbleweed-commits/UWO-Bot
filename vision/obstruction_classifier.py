@@ -305,7 +305,7 @@ def _detect_dialog(inventory) -> Optional[ObstructionResult]:
     # heuristics.  Filtering by ROLE here would drop the close-X icon
     # (tagged ROLE_CHROME_ICON in some cases) and silence DialogModel.
     elements = list(inventory.raw_elements)
-    dialog = _detect_typed(elements, fw, fh)
+    dialog = _detect_typed(elements, fw, fh, frame=getattr(inventory, "frame", None))
 
     # Comparison logging — see if the legacy heuristic would have
     # fired on this frame and disagreed with DialogModel.

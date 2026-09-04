@@ -74,7 +74,11 @@ class AlreadyOnTheSellTab(unittest.TestCase):
         from actions import buy_materials
         taps = []
         seq = list(on_sell_sequence)
+        # WHERE the Sell item is, is a different question from WHETHER to tap it. These
+        # tests are about the second: `_sell_menu_item` does a real left-menu read, and is
+        # covered by `test_the_sell_tab_is_found_not_remembered`.
         with patch.object(buy_materials, "_on_sell_tab", side_effect=lambda _f: seq.pop(0)), \
+             patch.object(buy_materials, "_sell_menu_item", return_value=(65, 274)), \
              patch("vision.market_reader.read_market_page_omni", return_value=[]):
             buy_materials._read_owned_via_sell(lambda: FRAME,
                                                lambda x, y: taps.append((x, y)), 0)

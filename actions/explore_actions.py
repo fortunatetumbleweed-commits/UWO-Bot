@@ -503,12 +503,11 @@ def _enumerate_buildings_via_list(
     mx = (BUILDING_MENU_REGION[0] + BUILDING_MENU_REGION[2]) // 2
     my = (BUILDING_MENU_REGION[1] + BUILDING_MENU_REGION[3]) // 2
 
-    def _signature(buildings):
-        if not buildings:
-            return ()
-        first_cy_bucket = buildings[0][2] // 30
-        labels = tuple(lbl for lbl, *_ in buildings)
-        return (first_cy_bucket, labels)
+    # THE SHARED "HAS THIS LIST MOVED?" TEST (actions.ui.lists.signature). This was a private
+    # third copy of it — the building list had one, this had one, and the live world-map path
+    # had none at all, which is how it came to swipe five times at a list and be stopped for
+    # making no progress (2026-09-03). One implementation now.
+    from actions.ui.lists import signature as _signature
 
     collected: list[str] = []
     seen_canonical: set[str] = set()

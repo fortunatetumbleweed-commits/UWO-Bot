@@ -1,5 +1,78 @@
 # UWO Bot — Claude Code Context
 
+## Guiding Principles — read first; everything in Active Rules follows from these
+
+**0. WE DO NOT CONTROL THE GAME. WE OBSERVE IT.**
+Android's framework AUTHORS the screen, so it can hold the truth: `getRunningTasks()` is a
+lookup, not a guess, and an event cannot fail to find a window. We only ever look at what
+the game has already done — and it can put an unexpected screen, dialog or popup in front of
+us at any moment, without telling us. Every rule below is a consequence of that one
+asymmetry. When a rule seems arbitrary, re-derive it from here.
+
+**1. Centralize the observation and the routing; localize the interpretation.**
+One perceive, one dispatcher. The dispatcher decides WHO handles a screen; it never decides
+what the screen MEANS. Meaning belongs to the activity, inside its own context — a dialog,
+a tab switch, a barter round change the screen without changing the world, and none of them
+is a transition. Borrowed from Android's split between intent dispatch (coarse, rare,
+central) and input dispatch (fine-grained, constant, centrally ROUTED but locally
+INTERPRETED). See `docs/activity_as_context.md`.
+
+**2. Never store a conclusion — store the observation, recompute the conclusion.**
+An observation can be checked by looking; a conclusion outlives the evidence for it. The
+test: could a fresh screenshot prove this false? If it would take reasoning or history, do
+not write it down.
+
+**3. DO NOT ASSUME — enumerate the causes, then read the one that tells them apart.**
+Distinct from #2, and worth keeping separate: a stored conclusion was RIGHT ONCE and went
+stale; an assumption was NEVER CHECKED. It is a branch that treats one possible explanation
+as THE explanation, hardcoded when the code was written, and it is wrong from that moment —
+it just waits for the unconsidered case to arrive.
+
+Live 2026-08-27, the crash: *"the Exchange tap changed nothing, so the panel must be
+stale."* A dead Exchange has THREE causes — a material at 0, the day's rounds spent (the
+game CLOSES the submenu), or a genuinely stale panel — and the code enumerated one. It took
+the stale branch into a refresh path that had never once executed and ended the run.
+
+The same shape, the same day: *"a panel opened, so it is the port list"* (every list has a
+search box); *"the lit tab is the warm one"* (the world map lights WHITE, so warmth ranked
+the selected tab LOWEST); *"OmniParser returns clean labels"* (it returned `NarExplore`);
+*"one number can answer a per-good question"* (Iron's surplus masked Matchlock's shortfall).
+
+The test: **how many ways could this observation have come about?** If more than one, read
+the thing that distinguishes them — it is nearly always on the screen already. A grey
+Exchange and a closed submenu are different pixels, not different inferences.
+
+**4. Data has an OWNER and dies with it.** `COMPANY > FLEET > PLACE > BUILDING > PANEL`.
+Ask not "where did I read this?" but "who does it belong to?" — only the second predicts
+when it goes bad. Two ways it does: LEAVING and ACTING.
+
+**5. One loop — the task drives the state machine. No flow sub-loops.**
+A loop may wait for its OWN effect; it may never perform a sequence. Nothing delivers us an
+`onPause`: a loop that does not return cannot be told the world moved under it, and every
+one we have written has grown a private, worse copy of the dispatcher to compensate.
+
+**6. Check before acting, not after.** A precondition verified by spending the taps that
+were supposed to test it is not a precondition. Confirm the tab before reading the rail,
+the screen before tapping a calibrated point, the state before dispatching an intent.
+
+**7. The task runner is PASSIVE — it is consulted, it does not drive.**
+When the dispatcher settles to a world it *consults* the task manager for a work order, and
+the dispatcher dispatches it. The task runner does exactly two things: **provide the work
+order, and update task status.** It calls nothing.
+
+  - It does not **call down**. It never perceives — it is *handed* `state`. Going to look for
+    itself means reading a world the dispatcher owns, which is how a conclusion gets stored
+    (#0, #1, #2).
+  - It does not **call up**. It never invokes the goal loop. If it can call the loop that
+    calls it, it is the driver again under another name (#5).
+
+Its whole signature is the slot the dispatcher already declares: `next_goal(result, state)`.
+A task-layer module that needs to *look* does not import a reader — it returns the work order
+that asks an activity to look, and reads the answer when it is consulted again.
+Enforced by `tests/test_the_layering_is_enforced.py`; the layers are declared in
+`brain/layers.py`.
+
+
 ## Project Overview
 A Python bot that plays **Uncharted Waters Origin (UWO)** autonomously
 on an Android phone, mirrored to Mac via scrcpy.  Goal: grow the
@@ -43,6 +116,26 @@ repeated taps at the hardcoded close-X"), because the review navigates to specif
 Generation reuses perception the bot already recorded where available; see
 `actions/action_trace.py::_capture_with_perception`.
 
+## Run Analysis — after EVERY run
+```bash
+python -m tools.analyze_run                 # today's log
+python -m tools.analyze_run --since 10:30   # one run's window
+```
+Counts what failed and how often, and flags **checks that almost always fail**.  A single
+failure is noise; the same failure eighty-five times is a defect, and the only thing between
+them is arithmetic.
+
+Why this is a standing step, not an optional one: on 2026-08-26 `title_says_world_map`
+returned False on **85 of 89** looks from the day's first departure.  Every gathering leg
+still sailed — each needed only ONE lucky read and the goal retried until it got one — so the
+defect cost nothing until the Lisboa leg, and had been visible in the log for ten hours.  Run
+over that morning alone, this report surfaces it, the port-name reader and the bulk checkbox:
+all three bugs that were then found one at a time over the following hours.
+
+Read the SUSPECT lines first.  A flag that is always False may simply not apply
+(`has_sea_hud` in port); one that is False 93% of the time, having been True three times, is
+a check that works and usually does not — which is what a broken read looks like from outside.
+
 ## Voyage Evaluation Procedure
 Standard, single-command voyage evaluation against the canonical
 Cairo→Y-tip reference path:
@@ -69,6 +162,103 @@ Use this every voyage.  Jump straight to the surfaced issue ticks in
 the frame + trace context.
 
 ## Active Rules
+*The detail behind the Guiding Principles above. Where a rule here and a principle there
+appear to disagree, the principle wins and the rule is out of date.*
+
+- **Never store a conclusion — store the observation, recompute the conclusion** —
+  an **observation** is something that can be checked by looking at the screen
+  (`state='sea'`, `Exchange is grey`, `shelf shows 0`).  A **conclusion** is what you
+  inferred from one (`the departure failed`, `the village is out of rounds`, `the good
+  is unavailable`).  Observations may be cached — scoped to their world, see below.
+  Conclusions may **not**: recompute them from a fresh look, every time.
+  - **Why**: a conclusion outlives the evidence for it, and it is usually drawn from an
+    observation that had a second explanation nobody considered.  Live 2026-08-26:
+    `commit_departure` concluded "could not depart" from "no destination panel on the
+    map" — true after a FAILED departure, and equally true after a SUCCESSFUL one,
+    because the panel closes either way.  The fleet was already at sea.  The goal held
+    the conclusion, re-opened the world map **mid-voyage**, re-targeted the port it had
+    just left, sailed back, bought nothing, and repeated.
+  - **The test**: could a fresh screenshot prove this false?  If yes it is an
+    observation.  If it would take reasoning, history, or "well, it should have
+    worked", it is a conclusion — do not write it down.
+  - **In practice**: a primitive that acts does **not** report whether it worked.  It
+    taps and returns; the next perceive says what happened.  Any function whose result
+    is a verdict on its own success is this bug waiting to happen — most of all when
+    its success test asks a question that can only be answered *before* it succeeds.
+  - Corollary of *a transition is a switch of activity, however long it takes*
+    (`docs/architecture_DRAFT.md`).  Same rule, arrived at from the data side.
+- **A transaction's RESULT DIALOG is the proof it happened — the count is a separate
+  reading, and disagreement means the READING is wrong** (user, 2026-08-26).  After a
+  buy/sell/commit the game shows a result dialog; `_react_after_purchase` already logs it
+  as `[txn] dialog OK (confirm=False, result=True)`.  That is the observation that the
+  transaction SUCCEEDED.
+  - The owned/cargo count is a DIFFERENT observation, read from the right-hand panel, and
+    it can fail on its own: with a cluttered hold the good's tile is **below the fold**, so
+    the position tracker has no tile to follow.  There is no right-panel scroll in the
+    codebase (`MARKET_SCROLL_START` at x=1500 is the CENTRE grid) — only the generic
+    `actions.ui.scroll`.
+  - So when the result dialog says success and the number did not move, the conclusion is
+    **"I am tracking the wrong tile, or the tile is not showing"** — never "the buy
+    failed", and never "I own 0".
+  - **This has now cost three runs.** 2026-08-21: tracker returned None every round and the
+    bot bought 1,681 Ebony against a goal of 350.  2026-08-26: `owned=UNREADABLE ... 0/470`
+    for four straight rounds while ~1,300 Iron went aboard, ~558k ducats and 4 blue-gem
+    refreshes.  The response the first time was to add a log line that made the blindness
+    visible; the read was never fixed.
+  - **COUNT WHAT THIS SESSION BOUGHT** (user, 2026-08-26).  The result dialog names the
+    amount, so add it up.  A loop that cannot read the hold still knows perfectly well what
+    it has put in the hold *since it started*, and that alone bounds it: "I have bought
+    2,000 against a goal of 470" needs no cargo panel at all.  This is the fix that works
+    when the tile is unreadable, which is exactly when it is needed.
+  - **A CLEAR IS ONLY DONE WHEN THE SELL PAGE HOLDS NOTHING BUT MATERIALS** (user,
+    2026-08-26) — checked across the WHOLE list, scrolled, not the visible page.  An empty
+    visible page is not an empty hold.
+    - **COUNT THE TILES — more tiles than (materials + Water + Food) means surplus remains**
+      (user, 2026-08-26).  A cheap, whole-panel completeness test that needs NO scrolling to
+      DETECT the problem, only to fix it: the trim knows exactly what it intended to keep, so
+      any tile beyond that count is something it failed to sell.  Counting is an observation;
+      "the visible page had nothing sellable" is a conclusion, and it is the one that ended
+      tonight's clear with the hold still full.
+    - The owned quantity per good is printed ON ITS TILE in the Sell grid — the very reading
+      `_read_owned_via_sell` wants.  Live 2026-08-26 the grid showed `Iron 1,451` while
+      `buy_to_goal` reported `0/470`: the number was on screen, one page down.
+    - NOTE for the buy side: a SELL result dialog reports MONEY (Total Amount 9,461), not
+      units.  Accumulating "what this session bought" needs the buy dialog's units, or a
+      count of confirmed rounds — the per-good quantity lives on the tile, not in the dialog.
+  - **Nothing scrolls a market list at the point of ACTING, and that is one bug, not
+    three.** `read_market_all_pages` scrolls and accumulates; the sell loop and the
+    owned-count read both call the single-page `read_market_page_omni`.  Live 2026-08-26 the
+    surplus clear read `omni grid 3x3: 9 goods` four times, sold 36 goods, found nothing
+    sellable left IN VIEW and quit with the hold still full below the fold — while the buy
+    beside it reported `owned=UNREADABLE ... 0/470` and bought past 2,000.  Selling re-flows
+    the grid, so the fix is sell-page → scroll → repeat, never read-all-then-tap.
+  - Trimming the hold first (`--clear-surplus`) helps and is worth doing, but it is a
+    mitigation: it shortens the list, it does not make the reader able to see past the fold.
+- **Data has an OWNER, and dies with it** — ask not "where did I read this?" but
+  **"who does it belong to?"**  Only the second predicts when it goes bad.
+  - `COMPANY` — ducats, gems, the mission and its plan — **always valid**
+  - `FLEET` — cargo, capacity, supply, crew, ship life — **valid in every world, it
+    moves with you**
+  - `PLACE` — this port/village: buildings, prices, amity, today's rounds — dies on leaving
+  - `BUILDING` — what this market stocks, which tab is open — dies on leaving it
+  - `PANEL` — the cart, the selected tile, the open dialog — dies when the panel closes
+  - **The cart makes it concrete**: the market's right panel shows the cart AND the hold
+    in one rectangle — active tiles staged, greyed tiles already owned
+    (`memory/market-right-panel-is-cart-and-cargo`).  Same glance, two owners: leave the
+    market and the **cart is gone** (a remembered cart is an instruction to buy things
+    nobody chose), while the **cargo sails with the ship**.  So "where I read it" cannot
+    be the key.
+  - **Two ways data goes bad, not one**: **LEAVING** kills `PLACE`/`BUILDING`/`PANEL`
+    data (automatic, on transition); **ACTING** kills whatever the action changed
+    (buying changes the hold; bartering changes the hold, the amity and today's rounds).
+    Fleet data is immune to the first and fully exposed to the second.
+  - `PLACE` data is a cache to re-read cheaply, never a record to trust — a shelf
+    restocks on a timer, so it goes stale with nobody moving at all.
+  - Corollary: the mission is `COMPANY`-owned, so it must **never** hold anything from a
+    shorter-lived owner.  A task runner that remembers which tab was open has taken
+    custody of something that dies without telling it — which is the layering rule and
+    the lifetime rule turning out to be the same rule.
+  See `docs/architecture_DRAFT.md` → *Who OWNS the datum decides when it dies*.
 - **Never act blind — always know WHERE and WHAT STATE, else re-perceive** —
   before taking any action the bot must know both (1) its **location**
   (port_overworld / market / building / sub_menu / sea / village / world_map …)
@@ -107,6 +297,31 @@ the frame + trace context.
 - **CLAUDE.md stays current** — when a major decision is made or a phase
   status changes, propose a CLAUDE.md edit in the same session.  See
   `memory/feedback_claudemd_update_on_decisions.md`.
+- **DOWNSCALED IMAGES ARE FOR COARSE JUDGMENTS ONLY — never for CONTENT** (user,
+  2026-08-26).  A reduced image answers *which screen is this*, *did a popup appear or go
+  away*, *did a whole panel change* — questions about big regions.  It cannot answer *what
+  does this say* or *how many*.  This game puts small text everywhere — quantities on
+  thumbnails, ETA on the sea HUD, stock counts, amity numbers — so the same failure is
+  waiting in every reader that takes its content from a whole-frame parse.
+  - **Coarse is fine downscaled**: the family classifier (224x224), the minimap and
+    shoreline tag readers, obstruction PRESENCE, chrome flags, "is a dialog up".
+  - **Content is not**: any number or name a decision is made from.  Crop the region and
+    read it at full resolution.
+  - Measured on one Village Info trade list: the FULL 2400x1080 frame read `358, 102, 102`
+    and the `44` on Matchlock Gun's thumbnail was NEVER PROPOSED AS TEXT — `parse_raw` at
+    conf=0.01 shows only an `icon` box there, while Iron's `102` came back at conf 0.9999.
+    The same detector on a 750x520 CROP read the `44` without trouble.  Not a threshold
+    that ate it; it was never read.
+  - **The two reads fail on DIFFERENT items**, so combine rather than choose: the crop got
+    `44` right and misread Candle as `402`; the full frame got Candle right and lost the
+    `44`.  Whole-frame authoritative where it has a value, region crop filling the gaps.
+  - This is the missing half of *per-frame perception sharing* below, not an exception to
+    it: share the whole-frame parse for cost and for coarse questions, and parse a REGION
+    when its content decides something.
+  - What it cost: the row parser drops a material with no number, so a missed two-digit box
+    became a recipe with two of three materials — which then certified itself as complete
+    (`_target_complete`) and was planned from for five runs.
+
 - **Per-frame perception sharing** — capture the screenshot once per tick,
   pass the same `Image` and reuse `parse_fast_cached(img)` /
   `_ocr_frame(img)` results across detectors.  Don't re-shoot or re-parse
@@ -206,10 +421,38 @@ the frame + trace context.
   Rules: a primitive **never** presses Back to make the screen match its expectation (the
   screen is ground truth; the stale expectation is what updates) and **never** walks the
   fleet out of a settlement.  A loop inside a primitive may only wait for that primitive's
-  OWN effect ("did the map open?" ✓ / "am I somewhere else now?" ✗ — that is the task
-  runner's question).  After ANY correction — state adopted, dialog cleared, popup
-  dismissed — the loop **re-asks the task what to do next** rather than resuming a
-  half-finished intention.
+  OWN effect, and **THE BOUNDARY IS THE SCREEN** (user, 2026-08-28):
+    - ✓ "did the tab switch?" — Port to Explore, the SAME screen. The tap can be swallowed
+      while the map is still settling, so repeating it at the same point is waiting for its
+      own effect. `select_world_map_tab` does exactly this and is right to.
+    - ✗ "did the map OPEN?" — a full-screen change is a TRANSITION, not an effect, and no
+      primitive may wait on one. (This was the rule's own example until 2026-08-28, and it
+      was backwards: `open_world_map` looped ten times waiting for a new screen, which is
+      how a map-opener came to be holding an OS lock screen, a daily-news popup and an
+      Investment Season banner it had no vocabulary for.)
+    - ✗ "am I somewhere else now?" — the task runner's question, and always was.
+
+  After ANY correction — state adopted, dialog cleared, popup dismissed — the loop
+  **re-asks the task what to do next** rather than resuming a half-finished intention.
+- **Can't see what you need? You are LOST — hand back, re-perceive, TRANSITION.**
+  The screen is the truth; the bot's belief is what goes stale (user, 2026-08-24).  When a
+  primitive cannot find the control it needs, the usual cause is not a bad read but standing
+  in the wrong place.  `read_fleet_status` hunting the ☰ inside a MARKET is the shape of it:
+  the ☰ exists only on the port overworld, so the fleet was never going to be readable there
+  — and its answer, re-perceiving three times IN PLACE, only re-confirmed the same true
+  screen.  **Re-perceiving tells you where you are; it cannot change it.**  What was missing
+  was the move.
+  So: the primitive REPORTS what it could not see (naming it precisely — `read_fleet_status`
+  says "no ☰ there", which is what lets a caller tell a navigation problem from a reading
+  one), the caller re-perceives with `where_am_i`, and then TRANSITIONS to the state the work
+  requires via `brain.nav_step.reorient_to(state)` — a bounded loop over the single-move
+  `step_toward`.  `ARRIVED` means the screen was re-read and agrees; anything else is a
+  refusal to act on, never a reason to carry on as if the state had been reached.
+  Measured cost of not doing this: FOUR consecutive live failures at one step (2026-08-24),
+  each a genuinely different cause — an arrival gate hiding the ☰, the same gate clearing
+  itself before the sweep looked, then a sub-menu with no ☰ at all.  Every layer rediscovered
+  "something is in the way" separately because each owned its own private recovery policy.
+  That is the argument for the one loop (below), not for a fifth patch.
 - **Anti-cheat tap discipline** — the game fingerprints automated input:
   - **Never burst-tap** (≥ 3 taps in < 1 s).  Burst-tapping the L/R
     arrows caused the spiral that fired the anti-cheat popup.  Use
@@ -322,6 +565,121 @@ Detail:
   (+66.6M ducats); see `memory/project_village_find_worldmap_2026-08-20.md`.
   ⚠️ Unvalidated live surface: the Village Info panel navigation and the main-menu
   fleet read (`actions/fleet_status.py`) — supervise the first run.
+- **★ Event selling — FIRST LIVE SALE 2026-08-24 (branch `even_selling`)** → flow and cues in
+  `docs/trade_system.md` ("Selling into a Bazaar").  The fleet hubs at London, reads the
+  **Trade Event Schedule** (`vision/trade_event_reader.py`, times are **Korean UTC+9**), and
+  if a Bazaar for a category **in the hold** opens within 12h it sleeps, sails, and sells into
+  the window (`brain/event_selling.py`, `actions/trade_events.py`, `run_event_sell.py`).
+  Bremen: 1,644 Box of Nutmeg at 211% → **+595.5M ducats**.  Three rules earned live: the
+  row's location pin only opens **Location Info** (its gold **Move** button sails); a 1-day
+  ETA cannot be seen to FALL, so arrival confirms a short hop; and the sale is gated on the
+  tile's **price index ≥150%**, never on the clock alone.  The event to sail for follows the
+  CARGO — naming a category by hand sent the fleet after goods without checking the manifest.
+- **★ Screen knowledge as a KB — panels, not loose elements (DESIGN, 2026-08-24)** →
+  `docs/screen_knowledge_as_kb.md`.  On-screen information is organised into GROUPS tied to
+  particular screens and regions, matched roughly by content — not scattered elements to be
+  classified by size or by individual words.  Aim: a game KB an AI model infers against, so
+  that wording/layout changes degrade a read instead of breaking it, since the FUNCTIONALITY
+  is what stays constant.  Today's per-element word matching in the left-menu detector is a
+  WORKAROUND at the wrong granularity (a reward panel is one group, not five rows).
+- **★ Dialogs without sub-loops — the market as contexts (DRAFT, 2026-08-30)** →
+  `docs/market_as_contexts.md`.  A UI framework's listener registry buys INVERSION OF CONTROL,
+  not "no polling" — and we have no event source, so the substitute is the dispatcher's tick:
+  register a handler against an OBSERVED CONTEXT and the waiting becomes central.  The pattern
+  already exists twice (`world_map._HANDLERS`, `village._HANDLERS`); the MARKET is the only
+  worked activity with **no context classifier**, which is exactly where the sub-loops still
+  are (`sell_goods:205`, `buy_materials:116`, plus private dialog waiters).  Proposes the
+  market's context vocabulary, and shows both of 2026-08-30's market defects becoming
+  unreachable rather than guarded.  **Chosen as the case study** for whether the pattern holds;
+  carries a 5-step migration starting with classify-only over recorded frames.
+
+- **★ The plan is a checklist of observable conditions (DESIGN, 2026-09-01)** →
+  `docs/the_plan_is_a_checklist.md`.  The decomposition is a FUNCTION of (business need, game
+  knowledge, current state) evaluated on every consultation — not a graph computed once and
+  walked — and an item is done when the WORLD says so, not when an action reported success.
+  Both are Guiding Principle #2 applied to the plan itself.  Live 2026-09-01: `leg.done` was
+  set from "the harbour confirmed the departure", so the mission believed the sail part of
+  `gather:Barcelona` was behind it and offered BUY at sea, for twenty minutes.  *Departed* is
+  not *arrived*.  The checklist STRUCTURE already exists (`SubTask.deps`; the gathers are
+  unordered); what is missing is splitting a leg into its checkable parts — `at(Barcelona)`
+  then `buy(Iron)` — and making `done` a predicate.  **BUILT**: each activity declares
+  `CAN_START` and the dispatcher refuses work the world cannot start, asking the task once
+  more and logging a defect if the second order is also unservable.  **OPEN**: the predicate
+  half, and the intent graph it waits on.
+
+- **★ Dialogs are windows, not screens — BUILT 2026-09-03** → `docs/dialogs_are_windows.md`.
+  The game reproduces ANDROID'S dialog mechanics, closely enough that we reverse-engineered
+  `FLAG_DIM_BEHIND` without knowing it: a dialog is a separate window over the activity's, it
+  dims what it covers by a measured **x1.98** (`dimAmount ≈ 0.5`, and the scrims STACK), and
+  the activity behind keeps its state while losing **window focus**.  That splits two
+  questions the code had collapsed into one — `active_submenu()` still truthfully says
+  *Barter* (a reading), and `chrome_is_dimmed()` says whether it can be acted on (focus).
+  Collapsing them wedged the San Village mission: `_open_barter_panel` asked
+  `on_submenu("barter")`, got a true answer to the wrong question, and reported "opened the
+  barter panel" three times having tapped nothing.
+  The dispatcher now OBSERVES the dialog once and hands it DOWN — `activity.on_dialog(dialog,
+  goal)` — because only the activity knows what the buttons mean; unhandled falls back to
+  `DialogModel.safe_exit()`, bounded, then `BLOCKED`.
+  **The dispatcher ASKS, it does not decide**: the answer comes from
+  `brain.game_rules.answer_dialog` — named rules, then the DEFAULT of the positive option
+  (user, 2026-08-23: *"the default is OK unless it is spending red gem"*), then a refusal for
+  red gems, which are real money.  Where the Android analogy STOPS: Back-fires-onCancel
+  protects a human's intent from the framework, and here **the bot is the user** — cancelling
+  is not neutral, it is refusing to play.  At San Village, Cancel returns to a dialog whose
+  `Receive` cannot succeed with a full hold, so it LOOPS; the goods are discarded either way;
+  and the run had already taken that trade three times.  Same rule as flow completeness above:
+  *Back / Home = Cancel, not progress*.
+  Supersedes dismissal-by-keyword for blocking dialogs, which failed three ways: it missed by
+  vocabulary (`overflow_prompt` looks for "cargo is full"; the game said "Insufficient Empty
+  Space"), its learned entries went stale the moment detection narrowed the OCR to the front
+  card, and it could never cover a dialog nobody had met.
+
+- **★ Capability registry — the table, FOR REVIEW (DRAFT, 2026-08-30)** →
+  `docs/capability_registry_design.md`.  The concrete per-activity capability table behind the
+  note below, plus the three-way split it rests on: WORLD (has the ☰, Back exits the game) /
+  CHROMED SCREEN (the title bar is Back) / CONTEXT (drawn over something that stays visible).
+  Chromed screens are easy — **their left menu IS the capability list** — so villages,
+  markets and buildings are high-confidence rows.  The overworlds and the WORLD MAP are the
+  hard ones and are marked for review: the port's building list varies BY PORT, and the map
+  is neither world nor chromed screen, with almost all its capability living in its eight
+  CONTEXTS rather than on the map itself.
+
+- **★ What can be done HERE — activity capability registry (PROPOSED, 2026-08-30)** →
+  `docs/activity_capability_registry.md`.  Activities are handed work they cannot do — check
+  capacity or trim surplus at a VILLAGE — because an activity declares the screens it serves
+  and a flat goal list, never the WORK it can perform.  The registry says what each place can
+  do (village: barter/gift/recruit; market: buy/sell; the ☰ only on the overworlds), the
+  dispatcher refuses to dispatch elsewhere, and **an undispatched work order is logged as a
+  defect** rather than silently skipped.  Carries the overworld invariant — *overworld ⟺ has
+  the ☰ ⟺ Back is unavailable*, the chromed title being the back button everywhere else —
+  which already shows `sea` missing from `_NEVER_BACK_FROM`.  And the reframe that dissolves
+  most of yesterday: **the task is gather, barter, sell; trim, supply and capacity are
+  SUPPORT** — opportunistic when the place affords them, never mandatory legs.  Lives in the
+  dispatcher layer, which is the only one holding both the activity and the work order.
+  Supersedes the `SERVES_FOR` sketch in `docs/per_goal_serving.md`.  **Not decided.**
+
+- **★ A graph for intents — navigation as a distinct role (OPEN DESIGN, 2026-08-30)** →
+  `docs/intent_graph.md`.  The four intents are EDGES between screens, and an edge exists
+  where the screen carries the control.  Setting a course happens in exactly one place, the
+  world map — a market cannot open it and neither can a village — so "who may emit
+  OPEN_WORLD_MAP" is the whole of navigation, not decoration.  Read as a graph, three live
+  wedges in one day were one failure: no edge from here, and no search for a path.  Would
+  subsume `_is_inside`, `_TAIL_CAN_SAIL_FROM`, `_NEVER_BACK_FROM` (a MISSING back edge, not a
+  special case) and `tap_world_map_control`'s per-state branches.  **The graph gives the next
+  intent, never a plan to execute** — otherwise it is the sub-loop this architecture exists to
+  remove.  **Not decided.**
+
+- **★ Where a goal can be done — per-goal serving (OPEN DESIGN, 2026-08-30)** →
+  `docs/per_goal_serving.md`.  An activity declares ONE `SERVES` tuple for ALL its goals, and
+  the goals do not have the same reach: `ArriveAshore` is served at a village, `ReadHold` is
+  not (no ☰ there), and both are `AshoreActivity`.  Three live wedges in one day came from
+  this — OPEN_WORLD_MAP from a sub-menu, OPEN_WORLD_MAP at a village, ReadHold at a village —
+  each patched where it surfaced without writing down the fact underneath.  The note records
+  the `SERVES_FOR` shape proposed in the moment AND why it may be the symptom: the fact is
+  about CONTROLS (the ☰, the globe), not about goals, and it is already duplicated between
+  `to_intent._is_inside` and `tap_world_map_control`'s per-state branches — which is exactly
+  what let them disagree.  **Not decided**; the user asked for a deeper design first.
+
 - Full vision pipeline → `docs/vision_pipeline.md`
 - `where_am_i()` design + location vocabulary → `docs/where_am_i_design.md`
 - Architecture overview (broader) → `docs/architecture_overview.md`
@@ -449,6 +807,11 @@ Per-system detail kept out of this file to keep context light:
 - Combat (modes, Repel Support, ceasefire) → `docs/combat_system.md`
 - Exploration, fishing, port investment → `docs/exploration_and_investment.md`
 - UI anatomy (port screen, sea HUD, overlay vs modal) → `docs/ui_anatomy.md`
+- Tests come in two kinds: `tests/` is UNIT (fast, no pixels); `tests/functional/` runs
+  against REAL CAPTURED FRAMES and skips when they are absent — the frames live in
+  `tests/stage_suite/frames/`, which is NOT in the repo.
+- Perception as DATA, not flow: one owned observation, generation-based staleness,
+  invalidation from the action layer → `docs/perceive_repository.md` (DRAFT, not decided)
 
 ## Milestone Status
 One-line snapshot.  Full detail in `docs/milestones_status.md`.
@@ -465,7 +828,28 @@ One-line snapshot.  Full detail in `docs/milestones_status.md`.
 | 7 | Combat & Sea Exploration | ✅ PARTIALLY DONE — mini-map detector (F1 0.74) + shoreline classifier (F1 0.65) trained and wired into `BotObservation.minimap` / `.shoreline` on sea ticks.  `MinimapNavigationView` (classical image-processing implementation of the NavigationView Protocol) shipped: 8-sector land readings + ship heading + bow-clearance.  `HugShoreGoal` is the first sea-control consumer — calibrated press-and-hold steering (~120°/sec), closed-loop mini-map polling at sub-1s cadence, bow `land_fraction` channel direction.  **MILESTONE 2026-06-02 — first end-to-end autonomous destination reach**: Cairo (30.2, 30.4) → (5.71, 32.12) in 506 ticks, phase=COMPLETE.  Bug2-style commitment via §13.21 destination-anchored tangent + §13.25 clearance term + forward-arc-only avoider (§13.26 removed) + §13.27 stuck-detector/UTurnRecovery as safety net (didn't fire).  See `memory/project_first_autonomous_destination_reached.md`.  **Earlier milestone 2026-05-28: autonomously hugged into Nile river origin** (`memory/project_nile_river_reached.md`).  See `docs/navigation_models_status.md`, `brain/goals/hug_shore.py`, `brain/goals/uturn_recovery.py`.  Outstanding: combat-mode steering, voyage smoothness tuning. |
 | 8 | Autonomous Company Growth | Not started |
 
-**Currently in flight:** **MILESTONE 2026-07-31 — single hugging-side
+**Currently in flight:** **MILESTONE 2026-09-04 — the barter mission runs END TO END on
+the dispatcher path, first time with no relaunch.**  `hutu_groundnut` from London: plan →
+`gather:Faro` → `gather:Madeira` → supply → `sail_to_village` → 3 barter rounds at Hutu
+(amity to 100,000, 3×1,036 units) → **route home** → sold at London at 40,600 profit/unit,
+~126M ducats.  59 steps, 82 minutes, `every leg is done`.
+
+Two fixes that had only ever been checked against recorded frames ran live and worked:
+  * **the search box is not the port** (`17216da`) at FARO — the case that wedged the
+    morning's mission, where the typed prefix IS the whole name, so the box scored 1.00
+    against the row's 0.62.  `Skipping 'faro' @ (303,144) … Matched 'Faro' @ (209,200)`.
+  * **a saved route commits with a bare `Move`** (`21e88f8`) — `sail_route done` appears
+    for the FIRST time in 184 session logs.  Every route that ever sailed before went via
+    the deprecated `actions/route_execution.py`, which is what hid the gap.
+
+STILL OPEN, and none of it was needed for this run: `EXIT_BUILDING` is not retried at a
+village (`823547b`, deliberate — a stray second Back loses the village, but on a sail leg
+leaving IS the goal); the sea wake-timer sets its next sleep from a frame captured BEFORE
+that sleep; `_answer_it_anyway` taps a computed point rather than the button it located;
+and `run_barter.py` / `run_task.py` index different task sets, the latter still on the
+deprecated recovery path.
+
+**Previously in flight:** **MILESTONE 2026-07-31 — single hugging-side
 bankline tactical, validated end-to-end.**  Rethought the whole-loop
 substrate into ONE hugging-side bankline (`LoopTactical`, `--tactical loop`
 — see the "Tactical substrate — CURRENT" pointer above): raw ship-water-CC

@@ -1,7 +1,90 @@
 {
+  "bambara_groundnut": {
+    "good": "Bambara Groundnut",
+    "season": "",
+    "inputs": [
+      {
+        "material": "Raisin",
+        "ratio": 279,
+        "source_ports": [
+          "Bordeaux",
+          "Madeira",
+          "Trabzon"
+        ]
+      },
+      {
+        "material": "Pig",
+        "ratio": 279,
+        "source_ports": [
+          "Faro",
+          "Gijon",
+          "Nokor",
+          "Prey"
+        ]
+      }
+    ],
+    "village_inputs": {
+      "hutu_village": [
+        {
+          "material": "Raisin",
+          "ratio": 279,
+          "source_ports": [
+            "Bordeaux",
+            "Madeira",
+            "Trabzon"
+          ]
+        },
+        {
+          "material": "Pig",
+          "ratio": 279,
+          "source_ports": [
+            "Faro",
+            "Gijon",
+            "Nokor",
+            "Prey"
+          ]
+        }
+      ],
+      "san_village": [
+        {
+          "material": "Raisin",
+          "ratio": 225,
+          "source_ports": [
+            "Bordeaux",
+            "Madeira",
+            "Trabzon"
+          ]
+        },
+        {
+          "material": "Pig",
+          "ratio": 285,
+          "source_ports": [
+            "Faro",
+            "Gijon",
+            "Nokor",
+            "Prey"
+          ]
+        }
+      ]
+    },
+    "villages": [
+      "San Village",
+      "Hutu Village"
+    ],
+    "output_per_round": {
+      "Neutral": 829
+    },
+    "preconditions": {
+      "amity_min": null,
+      "trade_level_min": null,
+      "negotiation_expertise_min": null,
+      "guild": null,
+      "event": null
+    },
+    "notes": ""
+  },
   "box_of_nutmeg": {
     "good": "Box of Nutmeg",
-    "season": "7",
     "inputs": [
       {
         "material": "Ebony",
@@ -35,6 +118,20 @@
         ]
       }
     ],
+    "notes": "Season 7 (2026-08-10 to 2026-12-09). Melanesian & Khmer: Ebony+Coral+Textiles; Malay: Ebony+Coral+Dhaka Muslin (Dhaka Muslin needs a Monopolizing Guild in Masulipatnam/Kolkata/Pegu/Pondicherry). Khmer requires Negotiation Expertise LV24. Ratios + per-round output UNKNOWN here — read live from the village barter panel. [Melanesian ratios read live 2026-08-15: 136 Ebony + 204 Coral + 180 Textiles -> 591 Box of Nutmeg/round @ Neutral.]",
+    "output_per_round": {
+      "Friendly": 679,
+      "Neutral": 591,
+      "Trusting": 476
+    },
+    "preconditions": {
+      "amity_min": null,
+      "event": null,
+      "guild": null,
+      "negotiation_expertise_min": null,
+      "trade_level_min": null
+    },
+    "season": "7",
     "village_inputs": {
       "melanesian_village": [
         {
@@ -74,24 +171,10 @@
       "Melanesian Village",
       "Malay Village",
       "Khmer Village"
-    ],
-    "output_per_round": {
-      "Neutral": 591,
-      "Friendly": 679,
-      "Trusting": 476
-    },
-    "preconditions": {
-      "amity_min": null,
-      "trade_level_min": null,
-      "negotiation_expertise_min": null,
-      "guild": null,
-      "event": null
-    },
-    "notes": "Season 7 (2026-08-10 to 2026-12-09). Melanesian & Khmer: Ebony+Coral+Textiles; Malay: Ebony+Coral+Dhaka Muslin (Dhaka Muslin needs a Monopolizing Guild in Masulipatnam/Kolkata/Pegu/Pondicherry). Khmer requires Negotiation Expertise LV24. Ratios + per-round output UNKNOWN here — read live from the village barter panel. [Melanesian ratios read live 2026-08-15: 136 Ebony + 204 Coral + 180 Textiles -> 591 Box of Nutmeg/round @ Neutral.]"
+    ]
   },
   "camas": {
     "good": "Camas",
-    "season": "",
     "inputs": [
       {
         "material": "Avocado",
@@ -106,24 +189,24 @@
         ]
       }
     ],
-    "villages": [
-      "Apache Village"
-    ],
+    "notes": "",
     "output_per_round": {
       "Friendly": 559
     },
     "preconditions": {
       "amity_min": null,
-      "trade_level_min": null,
-      "negotiation_expertise_min": null,
+      "event": null,
       "guild": null,
-      "event": null
+      "negotiation_expertise_min": null,
+      "trade_level_min": null
     },
-    "notes": ""
+    "season": "",
+    "villages": [
+      "Apache Village"
+    ]
   },
   "pink_diamond": {
     "good": "Pink Diamond",
-    "season": "",
     "inputs": [
       {
         "material": "Goldware",
@@ -136,6 +219,18 @@
         "source_ports": []
       }
     ],
+    "notes": "",
+    "output_per_round": {
+      "Friendly": 199
+    },
+    "preconditions": {
+      "amity_min": null,
+      "event": null,
+      "guild": null,
+      "negotiation_expertise_min": null,
+      "trade_level_min": null
+    },
+    "season": "",
     "village_inputs": {
       "melanesian_village": [
         {
@@ -152,10 +247,506 @@
     },
     "villages": [
       "Melanesian Village"
+    ]
+  },
+  "birch_tree": {
+    "good": "Birch Tree",
+    "season": "",
+    "inputs": [
+      {
+        "material": "Iron",
+        "ratio": 88,
+        "source_ports": [
+          "Amsterdam",
+          "Chinook Village",
+          "Barcelona",
+          "Ciguayo Village",
+          "Dublin",
+          "Oriya Village",
+          "Kuching",
+          "Nubia",
+          "Village",
+          "Production",
+          "Sioux Village",
+          "Smelting Handbook: Uncut Ore",
+          "Bari Village",
+          "Lusitanian Villag",
+          "Yawuru",
+          "Village"
+        ]
+      },
+      {
+        "material": "Matchlock Gun",
+        "ratio": 44,
+        "source_ports": [
+          "Barcelona",
+          "Chinook",
+          "Village",
+          "Seville",
+          "Ciguayo Village",
+          "Oriya Village",
+          "Nubia",
+          "Village",
+          "Sioux Village",
+          "Bari Village",
+          "Lusitanian Villag",
+          "Yawuru",
+          "Village"
+        ]
+      },
+      {
+        "material": "Candle",
+        "ratio": 88,
+        "source_ports": [
+          "Santa Island",
+          "Chinook Village",
+          "Tripoli",
+          "Ciguayo Village",
+          "Production",
+          "Oriya Village",
+          "Sundry Goods Company Directory_",
+          "Nubia",
+          "Village",
+          "Sioux Village",
+          "Bari Village",
+          "Lusitanian Villag",
+          "Yawuru",
+          "Village"
+        ]
+      }
+    ],
+    "village_inputs": {
+      "svear_village": [
+        {
+          "material": "Iron",
+          "ratio": 88,
+          "source_ports": [
+            "Amsterdam",
+            "Chinook Village",
+            "Barcelona",
+            "Ciguayo Village",
+            "Dublin",
+            "Oriya Village",
+            "Kuching",
+            "Nubia",
+            "Village",
+            "Production",
+            "Sioux Village",
+            "Smelting Handbook: Uncut Ore",
+            "Bari Village",
+            "Lusitanian Villag",
+            "Yawuru",
+            "Village"
+          ]
+        },
+        {
+          "material": "Matchlock Gun",
+          "ratio": 44,
+          "source_ports": [
+            "Barcelona",
+            "Chinook",
+            "Village",
+            "Seville",
+            "Ciguayo Village",
+            "Oriya Village",
+            "Nubia",
+            "Village",
+            "Sioux Village",
+            "Bari Village",
+            "Lusitanian Villag",
+            "Yawuru",
+            "Village"
+          ]
+        },
+        {
+          "material": "Candle",
+          "ratio": 88,
+          "source_ports": [
+            "Santa Island",
+            "Chinook Village",
+            "Tripoli",
+            "Ciguayo Village",
+            "Production",
+            "Oriya Village",
+            "Sundry Goods Company Directory_",
+            "Nubia",
+            "Village",
+            "Sioux Village",
+            "Bari Village",
+            "Lusitanian Villag",
+            "Yawuru",
+            "Village"
+          ]
+        }
+      ]
+    },
+    "villages": [
+      "Svear Village"
     ],
     "output_per_round": {
-      "Friendly": 199
+      "Neutral": 448
     },
+    "preconditions": {
+      "amity_min": null,
+      "trade_level_min": null,
+      "negotiation_expertise_min": null,
+      "guild": null,
+      "event": null
+    },
+    "notes": ""
+  },
+  "juniper_berry": {
+    "good": "Juniper Berry",
+    "season": "",
+    "inputs": [
+      {
+        "material": "Vodka",
+        "ratio": 126,
+        "source_ports": []
+      },
+      {
+        "material": "Lingonberry",
+        "ratio": 75,
+        "source_ports": []
+      }
+    ],
+    "village_inputs": {
+      "svear_village": [
+        {
+          "material": "Vodka",
+          "ratio": 126,
+          "source_ports": []
+        }
+      ]
+    },
+    "villages": [
+      "Svear Village"
+    ],
+    "output_per_round": {},
+    "preconditions": {
+      "amity_min": null,
+      "trade_level_min": null,
+      "negotiation_expertise_min": null,
+      "guild": null,
+      "event": null
+    },
+    "notes": ""
+  },
+  "meteorite": {
+    "good": "Meteorite",
+    "season": "",
+    "inputs": [
+      {
+        "material": "Compass",
+        "ratio": 126,
+        "source_ports": []
+      },
+      {
+        "material": "Chorong",
+        "ratio": 126,
+        "source_ports": []
+      },
+      {
+        "material": "Olive Oil",
+        "ratio": 126,
+        "source_ports": []
+      }
+    ],
+    "village_inputs": {
+      "svear_village": [
+        {
+          "material": "Compass",
+          "ratio": 126,
+          "source_ports": []
+        },
+        {
+          "material": "Chorong",
+          "ratio": 126,
+          "source_ports": []
+        },
+        {
+          "material": "Olive Oil",
+          "ratio": 126,
+          "source_ports": []
+        }
+      ]
+    },
+    "villages": [
+      "Svear Village"
+    ],
+    "output_per_round": {},
+    "preconditions": {
+      "amity_min": null,
+      "trade_level_min": null,
+      "negotiation_expertise_min": null,
+      "guild": null,
+      "event": null
+    },
+    "notes": ""
+  },
+  "naverslojd": {
+    "good": "Naverslojd",
+    "season": "",
+    "inputs": [
+      {
+        "material": "Birch Tree",
+        "ratio": 252,
+        "source_ports": []
+      },
+      {
+        "material": "Iron",
+        "ratio": 126,
+        "source_ports": []
+      }
+    ],
+    "village_inputs": {
+      "svear_village": [
+        {
+          "material": "Birch Tree",
+          "ratio": 252,
+          "source_ports": []
+        },
+        {
+          "material": "Iron",
+          "ratio": 126,
+          "source_ports": []
+        }
+      ]
+    },
+    "villages": [
+      "Svear Village"
+    ],
+    "output_per_round": {},
+    "preconditions": {
+      "amity_min": null,
+      "trade_level_min": null,
+      "negotiation_expertise_min": null,
+      "guild": null,
+      "event": null
+    },
+    "notes": ""
+  },
+  "eagle_feather": {
+    "good": "Eagle Feather",
+    "season": "",
+    "inputs": [
+      {
+        "material": "Pulque",
+        "ratio": 75,
+        "source_ports": []
+      },
+      {
+        "material": "Guarana",
+        "ratio": 75,
+        "source_ports": []
+      }
+    ],
+    "village_inputs": {
+      "cheyenne_village": [
+        {
+          "material": "Pulque",
+          "ratio": 75,
+          "source_ports": []
+        },
+        {
+          "material": "Guarana",
+          "ratio": 75,
+          "source_ports": []
+        }
+      ]
+    },
+    "villages": [
+      "Cheyenne Village"
+    ],
+    "output_per_round": {},
+    "preconditions": {
+      "amity_min": null,
+      "trade_level_min": null,
+      "negotiation_expertise_min": null,
+      "guild": null,
+      "event": null
+    },
+    "notes": ""
+  },
+  "goldenseal": {
+    "good": "Goldenseal",
+    "season": "",
+    "inputs": [
+      {
+        "material": "Chicle",
+        "ratio": 187,
+        "source_ports": []
+      },
+      {
+        "material": "Corn",
+        "ratio": 187,
+        "source_ports": []
+      },
+      {
+        "material": "Gold Dust",
+        "ratio": 187,
+        "source_ports": []
+      }
+    ],
+    "village_inputs": {
+      "cheyenne_village": [
+        {
+          "material": "Chicle",
+          "ratio": 187,
+          "source_ports": []
+        },
+        {
+          "material": "Corn",
+          "ratio": 187,
+          "source_ports": []
+        },
+        {
+          "material": "Gold Dust",
+          "ratio": 187,
+          "source_ports": []
+        }
+      ]
+    },
+    "villages": [
+      "Cheyenne Village"
+    ],
+    "output_per_round": {},
+    "preconditions": {
+      "amity_min": null,
+      "trade_level_min": null,
+      "negotiation_expertise_min": null,
+      "guild": null,
+      "event": null
+    },
+    "notes": ""
+  },
+  "american_bison": {
+    "good": "American Bison",
+    "season": "",
+    "inputs": [
+      {
+        "material": "Horse",
+        "ratio": 150,
+        "source_ports": []
+      },
+      {
+        "material": "Hand Cannon",
+        "ratio": 150,
+        "source_ports": []
+      },
+      {
+        "material": "Bullet",
+        "ratio": 150,
+        "source_ports": []
+      }
+    ],
+    "village_inputs": {
+      "cheyenne_village": [
+        {
+          "material": "Horse",
+          "ratio": 150,
+          "source_ports": []
+        },
+        {
+          "material": "Hand Cannon",
+          "ratio": 150,
+          "source_ports": []
+        },
+        {
+          "material": "Bullet",
+          "ratio": 150,
+          "source_ports": []
+        }
+      ]
+    },
+    "villages": [
+      "Cheyenne Village"
+    ],
+    "output_per_round": {},
+    "preconditions": {
+      "amity_min": null,
+      "trade_level_min": null,
+      "negotiation_expertise_min": null,
+      "guild": null,
+      "event": null
+    },
+    "notes": ""
+  },
+  "moccasin": {
+    "good": "Moccasin",
+    "season": "",
+    "inputs": [
+      {
+        "material": "American Bison",
+        "ratio": 300,
+        "source_ports": []
+      },
+      {
+        "material": "Wool",
+        "ratio": 340,
+        "source_ports": []
+      }
+    ],
+    "village_inputs": {
+      "cheyenne_village": [
+        {
+          "material": "American Bison",
+          "ratio": 300,
+          "source_ports": []
+        },
+        {
+          "material": "Wool",
+          "ratio": 340,
+          "source_ports": []
+        }
+      ]
+    },
+    "villages": [
+      "Cheyenne Village"
+    ],
+    "output_per_round": {},
+    "preconditions": {
+      "amity_min": null,
+      "trade_level_min": null,
+      "negotiation_expertise_min": null,
+      "guild": null,
+      "event": null
+    },
+    "notes": ""
+  },
+  "waversioja": {
+    "good": "waversioja",
+    "season": "",
+    "inputs": [
+      {
+        "material": "Birch Tree",
+        "ratio": 252,
+        "source_ports": []
+      },
+      {
+        "material": "Iron",
+        "ratio": 126,
+        "source_ports": []
+      }
+    ],
+    "village_inputs": {
+      "svear_village": [
+        {
+          "material": "Birch Tree",
+          "ratio": 252,
+          "source_ports": []
+        },
+        {
+          "material": "Iron",
+          "ratio": 126,
+          "source_ports": []
+        }
+      ]
+    },
+    "villages": [
+      "Svear Village"
+    ],
+    "output_per_round": {},
     "preconditions": {
       "amity_min": null,
       "trade_level_min": null,

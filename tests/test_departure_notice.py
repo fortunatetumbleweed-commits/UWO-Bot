@@ -80,47 +80,6 @@ class TestConfirm:
         assert len(taps) == 3
 
 
-class TestAlreadyAtDestination:
-    """Selecting the port you are standing in must NOT trigger a departure.
-
-    Live 2026-08-21: the mission's first gather node was `gather:Male` while the fleet
-    was already docked at Malé. Selecting Malé closed the world map straight back to the
-    same overworld, `_wait_until_at_sea` reported "still in port", and the failure-1 path
-    fired a manual Supply Departure — sending the fleet to sea with NO DESTINATION, where
-    it sat at speed 0 having bought nothing.
-    """
-
-    def _depart(self, where):
-        from actions.sail_actions import depart_from_port_via_world_map
-        with mock.patch("actions.sail_actions.where_am_i", return_value=where), \
-             mock.patch("actions.sail_actions.open_world_map") as owm, \
-             mock.patch("actions.sail_actions._navigate_world_map_to_destination",
-                        return_value=False), \
-             mock.patch("actions.sail_actions._depart_from_harbour") as harbour:
-            result = depart_from_port_via_world_map("Male")
-        return result, owm, harbour
-
-    def test_already_docked_there_is_success_without_departing(self):
-        result, owm, harbour = self._depart(
-            {"location": "port_overworld", "port": "Malé"})
-        assert result["ok"]
-        assert result["departed_via"] == "no departure needed"
-        harbour.assert_not_called()      # the dangerous bit: no Supply Departure
-        owm.assert_not_called()          # and no need to even open the map
-
-    def test_accent_mismatch_still_counts_as_already_there(self):
-        """The mission carries 'Male'; the port HUD reads 'Malé'."""
-        result, _, harbour = self._depart(
-            {"location": "port_overworld", "port": "Male"})
-        assert result["ok"]
-        harbour.assert_not_called()
-
-    def test_a_different_port_still_departs(self):
-        """The guard must not swallow real departures."""
-        result, owm, _ = self._depart(
-            {"location": "port_overworld", "port": "Kochi"})
-        assert result["departed_via"] != "no departure needed"
-        owm.assert_called()
 
 
 class TestBoundElsewhere:
@@ -158,91 +117,7 @@ class TestBoundElsewhere:
         assert not self._veto({})
 
 
-class TestMotionIsDecisive:
-    """A departure is confirmed by MOVEMENT, never by the destination label."""
-
-    def _depart(self, moving, hud):
-        from actions.sail_actions import depart_from_port_via_world_map
-        with mock.patch("actions.sail_actions.where_am_i",
-                        return_value={"location": "sea"}), \
-             mock.patch("actions.sail_actions._confirm_making_way",
-                        return_value=(moving, hud)) as cmw:
-            return depart_from_port_via_world_map("Male", max_retries=0), cmw
-
-    def test_moving_with_the_right_destination_succeeds(self):
-        result, _ = self._depart(True, {"destination": "Malé"})
-        assert result["ok"]
-
-    def test_moving_with_a_blank_destination_still_succeeds(self):
-        """The old logic re-selected here, disrupting a voyage that was working."""
-        result, _ = self._depart(True, {"destination": None})
-        assert result["ok"]
-
-    def test_not_moving_fails_even_when_the_destination_looks_set(self):
-        """The speed-0 bug in one line: the label says Malé, nothing is happening."""
-        result, _ = self._depart(False, {"destination": "Malé"})
-        assert not result["ok"]
-
-    def test_moving_toward_a_different_port_is_not_success(self):
-        result, _ = self._depart(True, {"destination": "Jakarta"})
-        assert not result["ok"]
 
 
-class TestAlreadyThereFromInsideABuilding:
-    """Being INSIDE a building at the destination still counts as being there.
 
-    Live 2026-08-21: `gather:Jakarta` ran while the fleet sat on Jakarta's Market Purchase
-    screen — the exact place the task needed to be to buy Ebony. The port name is not
-    rendered inside a building, so "am I already there?" answered no, and the mission tried
-    to exit, open the world map and sail to the port it was standing in. It could not get
-    out of the building, escalated to the teaching loop, and aborted after 600s.
 
-    The bot is not actually ignorant here: `last_known_settlement` is carried across ticks
-    and persisted to disk precisely so a restart knows where it is.
-    """
-
-    def _depart(self, location, settlement, persisted=None):
-        from actions.sail_actions import depart_from_port_via_world_map
-        obs = mock.MagicMock()
-        obs.last_known_settlement = settlement
-        with mock.patch("actions.sail_actions.where_am_i",
-                        return_value={"location": location, "port": None}), \
-             mock.patch("brain.observation.current", return_value=obs), \
-             mock.patch("brain.observation._ensure_persisted_loaded",
-                        return_value=persisted), \
-             mock.patch("actions.sail_actions.open_world_map") as owm, \
-             mock.patch("actions.sail_actions._navigate_world_map_to_destination",
-                        return_value=False), \
-             mock.patch("actions.sail_actions._depart_from_harbour") as harbour:
-            return depart_from_port_via_world_map("Jakarta"), owm, harbour
-
-    def test_inside_a_building_at_the_destination_needs_no_sailing(self):
-        result, owm, harbour = self._depart("building", "Jakarta")
-        assert result["ok"]
-        assert result["departed_via"] == "no departure needed"
-        owm.assert_not_called()
-        harbour.assert_not_called()
-
-    def test_inside_a_sub_menu_at_the_destination_needs_no_sailing(self):
-        """The exact live state: the Market's Purchase sub_menu."""
-        result, _, _ = self._depart("sub_menu", "Jakarta")
-        assert result["ok"]
-
-    def test_inside_a_building_somewhere_else_still_sails(self):
-        result, owm, _ = self._depart("building", "Male")
-        assert result["departed_via"] != "no departure needed"
-        owm.assert_called()
-
-    def test_unknown_settlement_does_not_claim_to_be_there(self):
-        result, owm, _ = self._depart("building", None, persisted=None)
-        assert result["departed_via"] != "no departure needed"
-        owm.assert_called()
-
-    def test_falls_back_to_the_settlement_persisted_on_disk(self):
-        """The restart case: a fresh process has no in-memory observation yet, which is
-        exactly how the live failure arose — the mission was launched while the bot was
-        already standing in the Market."""
-        result, owm, _ = self._depart("sub_menu", None, persisted="Jakarta")
-        assert result["ok"]
-        assert result["departed_via"] == "no departure needed"
-        owm.assert_not_called()

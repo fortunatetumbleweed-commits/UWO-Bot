@@ -42,8 +42,18 @@ VILLAGE_MENU = ["Explore", "Gifting", "Loot", "Recruit Crew", "Barter"]
 PORT_MENU = ["Purchase", "Sell"]
 
 
-def _resume(state, menu=None):
-    """Run _resume_at_village from `state` (and left menu); return executors called."""
+def _resume(state, menu=None, *, sub_menu=None, scene_type=None):
+    """Run _resume_at_village from `state`; return executors called.
+
+    THE SEAM MOVED. `_at_a_village` stopped capturing a screen and running OmniParser over the
+    left menu to decide where it was. It reads the position the dispatcher established, and
+    the evidence stays plural — `sub_menu` and `scene_type` are two INDEPENDENT reads carried
+    on the same observation, which is what the left menu was there to provide.
+
+    `menu` is kept as an argument only so the callers below read the same; VILLAGE_MENU now
+    means "the screen reads as a village by some means other than its state", which is
+    exactly what a village left menu was evidence of.
+    """
     import types
     called = []
 
@@ -54,13 +64,15 @@ def _resume(state, menu=None):
         return run
 
     labels = list(menu if menu is not None else VILLAGE_MENU)
-    region = types.SimpleNamespace(labels=lambda: labels, items=[], find=lambda l: None)
+    # A village menu is the screen SAYING it is a village by a route other than its state.
+    # That is `scene_type` now — an independent read on the same observation.
+    if scene_type is None and set(labels) & {"Barter", "Gifting"}:
+        scene_type = "village"
     executors = {"sail_to_village": _ex("sail_to_village"), "barter": _ex("barter")}
     with patch("brain.barter_mission_live.make_live_executors", return_value=executors), \
-         patch("actions.sail_actions.where_am_i", return_value={"location": state}), \
-         patch("capture.adb_capture.capture_screen", return_value=_FRAME), \
-         patch("vision.omniparser.parse_fast_cached", return_value=[]), \
-         patch("vision.region_detectors.left_menu.detect_left_menu", return_value=region), \
+         patch("brain.activities.bootstrap.establish_position",
+               return_value={"ok": True, "state": state, "port": None,
+                             "sub_menu": sub_menu, "scene_type": scene_type}), \
          patch("brain.mission_progress.finish"):
         barter_command._resume_at_village(_cmd(), {"rounds": 1})
     return called
@@ -84,6 +96,8 @@ class ResumeAtTheVillage(unittest.TestCase):
         Live 2026-08-23: a run began with the Barter panel still open, the narrow
         state=='village' test failed, and the fleet sailed away from the village it was in.
         """
+        self.assertEqual(_resume("sub_menu:barter", menu=VILLAGE_MENU), ["barter"])
+        # and by the scene alone, when the state is not one the village serves
         self.assertEqual(_resume("building", menu=VILLAGE_MENU), ["barter"])
 
     def test_a_port_building_is_NOT_a_village(self):
@@ -124,41 +138,34 @@ class BlockedPerceptionIsNotAnAnswer(unittest.TestCase):
     THEN decide.
     """
 
-    def _decide(self, *, cleared, state_after, menu_after):
-        import types
-        region = types.SimpleNamespace(labels=lambda: list(menu_after), items=[],
-                                       find=lambda l: None)
-        with patch("brain.unexpected_dialog.clear_blockers",
-                   return_value={"cleared": cleared}) as cb, \
-             patch("capture.adb_capture.capture_screen", return_value=_FRAME), \
-             patch("actions.sail_actions.where_am_i", return_value={"location": state_after}), \
-             patch("vision.omniparser.parse_fast_cached", return_value=[]), \
-             patch("vision.region_detectors.left_menu.detect_left_menu", return_value=region):
+    def test_the_decision_is_made_on_an_ESTABLISHED_position(self):
+        """The guarantee moved; it did not go away.
+
+        `_at_a_village` used to sweep for blockers itself and then look. It no longer looks at
+        all — it reads the position `establish_position()` returns, and that runs the
+        dispatcher loop, whose `unblock` clears an obstruction and re-perceives before any
+        activity reports. So the reading it decides on is a cleared one BY CONSTRUCTION,
+        rather than by a sweep this function remembers to perform.
+
+        What is asserted here is that it consults the bootstrap at all — that it does not
+        decide from a screen of its own. The clearing itself is
+        `tests/test_the_dispatcher_clears_obstructions.py`.
+        """
+        with patch("brain.activities.bootstrap.establish_position",
+                   return_value={"ok": True, "state": "village", "port": None,
+                                 "sub_menu": None, "scene_type": "village"}) as est:
             ok, why = barter_command._at_a_village()
-        return ok, why, cb.called
-
-    def test_a_blocker_is_cleared_before_the_decision(self):
-        ok, _why, checked = self._decide(cleared=True, state_after="village",
-                                         menu_after=VILLAGE_MENU)
-        self.assertTrue(checked, "the screen must be cleared before deciding")
-        self.assertTrue(ok, "after clearing, the village is visible again")
-
-    def test_it_still_decides_when_nothing_was_blocking(self):
-        ok, _why, _checked = self._decide(cleared=False, state_after="sea", menu_after=[])
-        self.assertFalse(ok)
-
-    def test_a_failing_blocker_check_does_not_stop_the_decision(self):
-        import types
-        region = types.SimpleNamespace(labels=lambda: VILLAGE_MENU, items=[],
-                                       find=lambda l: None)
-        with patch("brain.unexpected_dialog.clear_blockers",
-                   side_effect=RuntimeError("no frame")), \
-             patch("capture.adb_capture.capture_screen", return_value=_FRAME), \
-             patch("actions.sail_actions.where_am_i", return_value={"location": "village"}), \
-             patch("vision.omniparser.parse_fast_cached", return_value=[]), \
-             patch("vision.region_detectors.left_menu.detect_left_menu", return_value=region):
-            ok, _why = barter_command._at_a_village()
         self.assertTrue(ok)
+        self.assertTrue(est.called, "it decided without establishing a position")
+
+    def test_a_position_that_could_not_be_established_is_not_a_village(self):
+        """Unknown is not "already there" — the safe default when blind is to sail."""
+        with patch("brain.activities.bootstrap.establish_position",
+                   return_value={"ok": False, "state": None, "port": None,
+                                 "reason": "position could not be established"}):
+            ok, why = barter_command._at_a_village()
+        self.assertFalse(ok)
+        self.assertIn("could not be established", why)
 
 
 class TheTailIsPartOfTheTask(unittest.TestCase):
@@ -187,11 +194,9 @@ class TheTailIsPartOfTheTask(unittest.TestCase):
         # Stubbed here so these tests measure only the chaining — and so they do not spend
         # eight seconds pressing Back at a scripted village that never yields.
         with patch("brain.barter_mission_live.make_live_executors", return_value=executors), \
-             patch("actions.sail_actions.where_am_i", return_value={"location": "village"}), \
-             patch("capture.adb_capture.capture_screen", return_value=_FRAME), \
-             patch("vision.omniparser.parse_fast_cached", return_value=[]), \
-             patch("vision.region_detectors.left_menu.detect_left_menu", return_value=region), \
-             patch("brain.unexpected_dialog.clear_blockers", return_value={"cleared": False}), \
+             patch("brain.activities.bootstrap.establish_position",
+                   return_value={"ok": True, "state": "village", "port": None,
+                                 "sub_menu": None, "scene_type": "village"}), \
              patch.object(barter_command, "_depart_village_to_sea", return_value=True), \
              patch("brain.mission_progress.finish"):
             barter_command._resume_at_village(cmd, {"rounds": 1})

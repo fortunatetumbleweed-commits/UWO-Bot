@@ -8,12 +8,13 @@ building-name label.  A single small CNN looking at the whole frame
 distinguishes the families purely on background gestalt — port world
 vs sea horizon vs world map vs interior chrome.
 
-Family vocabulary (5 classes):
+Family vocabulary (6 classes):
   port_overworld   port_overworld + port_arrival_overlay + port_loading + port_map
   sea              sea + sailing_idle
   world_map        world_map
   chromed          building_interior + sub_menu + village + main_menu
   transient        dialog_* + announcement + result_screen + loading + others
+  idle_lock        the standby lock — its own family because its EXIT is a swipe
 
 Training corpus: data/labels.jsonl (1015 labelled frames).  Stratified
 80/20 train/val split.  MobileNetV3-small pretrained on ImageNet,
@@ -85,11 +86,20 @@ SCREEN_TYPE_TO_FAMILY: dict[str, str] = {
     "story_npc_conversation": "transient",
     "building_npc_overlay": "transient",
     "task_progress":        "transient",
+
+    # THE IDLE LOCK IS ITS OWN FAMILY, added 2026-08-27 (user's suggestion). It did not
+    # exist when this model was trained, so it fell into `transient` by default — and that
+    # is exactly why it was mistaken for a full-screen notice: same gestalt, no chrome, no
+    # buttons. But its exit is a SWIPE where a notice is TAPPED, and the bot tapped a screen
+    # that only answers to a gesture (live 2026-08-27, "Barcelona / Slide up to unlock"
+    # classified transient@0.80). A family whose members need different ACTIONS is not one
+    # family.
+    "idle_lock":            "idle_lock",
     # 'other' is intentionally NOT mapped — those go to the negative class
     # and aren't trained against any family.
 }
 
-CLASSES = sorted(set(SCREEN_TYPE_TO_FAMILY.values()))   # 5 in alphabetical order
+CLASSES = sorted(set(SCREEN_TYPE_TO_FAMILY.values()))   # 6 in alphabetical order
 NUM_CLASSES = len(CLASSES)
 CLASS_TO_IDX = {c: i for i, c in enumerate(CLASSES)}
 
@@ -123,8 +133,13 @@ def _load_records():
             fname = r.get("file", "")
             path = SESSIONS_ROOT / session / "frames" / fname
             if not path.exists():
-                skipped["missing_frame"] += 1
-                continue
+                # Action traces keep their frames beside the trace, not under frames/.
+                alt = SESSIONS_ROOT / session / fname
+                if alt.exists():
+                    path = alt
+                else:
+                    skipped["missing_frame"] += 1
+                    continue
             records.append((path, CLASS_TO_IDX[family]))
     return records, skipped
 

@@ -62,6 +62,29 @@ _MIN_CLUSTER_SIZE = 2
 # real Purchase/Sell menu and were wrongly returned as the menu.)
 _REWARD_BOX_WIDTH_NORM = 260.0 / 2400.0
 
+# ── Identity by association ──────────────────────────────────────────────────
+# What a cluster SAYS is stable; how OmniParser boxes it is not.
+#
+# Reward / status widgets name themselves, and they live in the centre panel of screens that
+# have one (the Village Info page carries "Achievement Reward" and "Weekly Reward" boxes).
+_REWARD_WORDS = ("reward", "achievement", "weekly", "discoveries", "village status",
+                 "status effect", "effect details", "amity effect")
+
+# Left-menu commands, across the screens the bot works: village, market, and other chromed
+# buildings. A cluster naming several of these IS the menu — no measurement required.
+_MENU_WORDS = ("explore", "gifting", "loot", "recruit crew", "barter",
+               "purchase", "sell", "trade info", "trade points",
+               "harbor", "harbour", "market", "shipyard", "bank", "inn",
+               "cathedral", "bureau", "item shop", "union", "palace",
+               "fortune teller", "base", "notice", "quest", "supply")
+
+
+def _says_any(label: str, words) -> bool:
+    low = (label or "").strip().lower()
+    return any(w in low for w in words)
+
+
+
 # Lock-indicator search tolerance.  A label is "locked" when an
 # 'Unavailable' / 'Locked' element is within this Y radius AND within
 # this X radius of the menu item's centre.
@@ -95,6 +118,7 @@ def detect_left_menu(
     elements:     List[DetectedElement],
     frame_width:  int,
     frame_height: int,
+    frame=None,
 ) -> Optional[LeftMenuRegion]:
     """Detect the vertical left menu in a chromed scene.
 
@@ -103,7 +127,7 @@ def detect_left_menu(
     `items=[]` when candidates exist but none cluster into a real
     menu column (e.g. only chrome elements in the zone).
     """
-    candidates = _collect_candidates(elements, frame_width, frame_height)
+    candidates = _collect_candidates(elements, frame_width, frame_height, frame)
     if not candidates:
         return None
 
@@ -113,7 +137,7 @@ def detect_left_menu(
 
     cluster.sort(key=lambda e: e.cy)
 
-    lock_indicators = _find_lock_indicators(elements, frame_width, frame_height)
+    lock_indicators = _find_lock_indicators(elements, frame_width, frame_height, frame)
 
     items: List[dict] = []
     for el in cluster:
@@ -187,6 +211,7 @@ def _collect_candidates(
     elements:     List[DetectedElement],
     frame_width:  int,
     frame_height: int,
+    frame=None,
 ) -> List[DetectedElement]:
     """Filter OmniParser elements down to plausible menu-item candidates.
 
@@ -207,6 +232,11 @@ def _collect_candidates(
         if el.element_type not in ("text", "button"):
             continue
         label = (el.label or "").strip()
+        # A ROW THAT NAMES A REWARD IS NEVER A MENU COMMAND. Rejecting these here — per
+        # ELEMENT — rather than condemning a whole cluster keeps a reward box that happens
+        # to share the menu's left edge from taking the menu down with it.
+        if _says_any(label, _REWARD_WORDS):
+            continue
         if not (2 <= len(label) <= 30):
             continue
         if not any(c.isalpha() for c in label):
@@ -216,8 +246,10 @@ def _collect_candidates(
         if not (cy_min <= el.cy <= cy_max):
             continue
         # Reject label tokens that are clearly lock indicators — they
-        # belong in lock_indicators, not items.
-        if label.lower() in _LOCK_KEYWORDS:
+        # belong in lock_indicators, not items. A RED RIBBON is one of those however it is
+        # worded: `Cannot Exchange` listed itself as a sixth menu item at Svear because it
+        # matched no keyword (see `_is_red_ribbon`).
+        if label.lower() in _LOCK_KEYWORDS or _is_red_ribbon(el, frame):
             continue
         out.append(el)
     return out
@@ -266,19 +298,64 @@ def _largest_left_column(
     # real menu even when the reward widgets outnumber it.
     box_w = _REWARD_BOX_WIDTH_NORM * frame_width
 
-    def _is_reward_cluster(c: List[DetectedElement]) -> bool:
-        widths = sorted(e.x2 - e.x1 for e in c)
-        return widths[len(widths) // 2] >= box_w   # median member is full-width
+    def _menu_word_hits(c: List[DetectedElement]) -> int:
+        """How many members are known menu commands — the positive signal."""
+        return sum(1 for e in c if _says_any(e.label, _MENU_WORDS))
 
-    clusters.sort(key=lambda c: (_is_reward_cluster(c), -len(c),
+    # IDENTIFY BY ASSOCIATION, NOT BY DIMENSION (user, 2026-08-24).
+    # Prefer the cluster that NAMES MENU COMMANDS; reject the one that names rewards; only
+    # then fall back to size and position. Sizes are the wrong evidence here: OmniParser
+    # boxes the same rows differently between captures, and the old "median member is
+    # full-width → reward box" test flipped on that alone. At San Village on 2026-08-24 the
+    # menu came back as three full-row boxes plus two tight ones, the median width went
+    # 121 → 367 past a 260px threshold, and Explore/Gifting/Loot/Recruit Crew/Barter were
+    # discarded as a reward widget — the barter was abandoned with the fleet standing there.
+    # What the rows SAY did not change between those captures, and never does.
+    clusters.sort(key=lambda c: (-_menu_word_hits(c), -len(c),
                                  sum(x.cx for x in c) / len(c)))
     return clusters[0]
+
+
+# A RED RIBBON IS THE GAME'S "YOU CANNOT" AND IT IS A STYLE, NOT A SENTENCE (user,
+# 2026-09-04). The words vary — `Unavailable`, `Cannot Exchange`, and whatever the next screen
+# says — so a keyword list is always one wording behind. Live 2026-09-04 at Svear: the day's
+# barter rounds were spent and the menu carried a red `Cannot Exchange` ribbon, which matched
+# none of `_LOCK_KEYWORDS`. It became a SIXTH MENU ITEM instead of marking Barter, `is_locked`
+# stayed False, and `_open_barter_panel` — whose whole job in that branch is "NOT A FAILURE,
+# the game is saying the day's barters are used up" — tapped anyway, twice.
+#
+# Measured on frame_0344 of trace_barter_cmd_2026-09-04T10-33-18:
+#
+#     'Cannot Exchange' ribbon   median R=244 G= 34 B= 69   red 5762/7676 px  (75%)
+#     'Barter' label             median R= 66 G= 66 B= 68   red  301/3392  ( 9%)
+#     'Recruit Crew', 'Loot'                                red    0       ( 0%)
+#
+# So the ribbon is read off its FILL, which no wording can slip past.
+_RIBBON_RED_FRACTION = 0.40
+
+
+def _is_red_ribbon(el, frame) -> bool:
+    """True when this element is a solid red badge rather than a menu label."""
+    if frame is None:
+        return False
+    try:
+        import numpy as np
+        a = np.asarray(frame.convert("RGB")).astype(float)
+        sub = a[max(el.y1, 0):el.y2, max(el.x1, 0):el.x2]
+        if sub.size == 0:
+            return False
+        R, G, B = sub[:, :, 0], sub[:, :, 1], sub[:, :, 2]
+        red = ((R > G + 55) & (R > B + 55) & (R > 90)).sum()
+        return bool(red / max(R.size, 1) >= _RIBBON_RED_FRACTION)
+    except Exception:                                  # noqa: BLE001 — no pixels is not a ribbon
+        return False
 
 
 def _find_lock_indicators(
     elements:     List[DetectedElement],
     frame_width:  int,
     frame_height: int,
+    frame=None,
 ) -> List[Tuple[int, int]]:
     """Return the (cx, cy) of every lock-indicator element on the frame.
 
@@ -292,7 +369,7 @@ def _find_lock_indicators(
         if el.element_type not in ("text", "button"):
             continue
         label = (el.label or "").lower()
-        if any(kw in label for kw in _LOCK_KEYWORDS):
+        if any(kw in label for kw in _LOCK_KEYWORDS) or _is_red_ribbon(el, frame):
             out.append((el.cx, el.cy))
     return out
 

@@ -30,8 +30,17 @@ from vision.family_classifier import (
 
 class FamilyMappingTests(unittest.TestCase):
 
-    def test_five_classes(self):
-        self.assertEqual(len(CLASSES), 5)
+    def test_the_classes_the_bot_routes_on_are_present(self):
+        """Pin the NAMES the routing depends on, not the COUNT.
+
+        This asserted `len(CLASSES) == 5` and broke when the model legitimately gained a
+        sixth. A count is a restatement of a constant: it fails whenever the classifier grows
+        and it catches nothing, since adding a class breaks nothing while REMOVING one that
+        `brain/perceive.py` gates on breaks routing outright.
+        """
+        for name in ("chromed", "sea"):
+            with self.subTest(family=name):
+                self.assertIn(name, CLASSES)
         self.assertIn("port_overworld", CLASSES)
         self.assertIn("sea", CLASSES)
         self.assertIn("world_map", CLASSES)

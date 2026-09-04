@@ -35,9 +35,13 @@ def _ocr(words):
 def _check(words, *, home=False, back=False):
     """Run _has_daily_news_close_x with the given screen text.
 
-    The pixel signature is forced ON and Moondream forced to say YES, so the ONLY thing that
-    can return False is a context guard. That makes the result a direct read of "did a guard
-    reject this screen?" rather than of the detector's other stages.
+    Every stage EXCEPT the context guards is forced to pass, so the ONLY thing that can
+    return False is a guard. That makes the result a direct read of "did a guard reject this
+    screen?" rather than of the detector's other stages.
+
+    The close-X stub matters: the detector stopped assuming where the X is and now goes and
+    LOOKS for it (`_round_close_x`). Without stubbing that, these tests never reached the
+    guards they exist to exercise — they failed at a stage they were not testing.
     """
     chrome = mock.MagicMock(has_home=home, has_back_arrow=back)
     # a 50x50 crop that satisfies the pixel signature (dark pixels AND bright pixels)
@@ -49,7 +53,9 @@ def _check(words, *, home=False, back=False):
     with mock.patch("vision.chrome_detector.get_chrome_detector") as gcd, \
          mock.patch("actions.sail_actions._ocr_frame", return_value=_ocr(words)), \
          mock.patch("numpy.array", return_value=crop), \
-         mock.patch("vision.omniparser.parse_fast_cached", return_value=[big]):
+         mock.patch("vision.omniparser.parse_fast_cached", return_value=[big]), \
+         mock.patch.object(p, "_round_close_x",
+                           return_value=mock.MagicMock(cx=1250, cy=140)):
         gcd.return_value.detect.return_value = chrome
         return p._has_daily_news_close_x(_frame())
 

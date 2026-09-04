@@ -55,6 +55,8 @@ MID_RIGHT        = (0.65, 0.33, 1.00, 0.67)
 BACK_ARROW       = (0.00, 0.00, 0.10, 0.10)
 # Bottom-center action button (world map's 'Go to City').
 BOTTOM_CENTER    = (0.30, 0.80, 0.70, 1.00)
+# The whole screen — for a state that IS the whole screen, like the idle lock.
+FULL_FRAME       = (0.00, 0.00, 1.00, 1.00)
 
 
 # ── Known label sets (KB-driven) ─────────────────────────────────────────────
@@ -147,6 +149,33 @@ SEA_HUD_TOKENS = frozenset({
 # right-side icon grid, bottom-left utility column) are present too
 # but are confirmatory rather than required, so we leave them out
 # rather than complicate the confidence ratio.
+# ── idle lock ────────────────────────────────────────────────────────────────
+# A FULL-SCREEN takeover after inactivity: nothing of the previous world survives, which is
+# what makes it a state and not a popup. Promoted from the LEARNED fingerprints
+# `learned_on_standby_at_sea_slide_up_to_unlock` / `learned_london_slide_up_to_unlock` on
+# 2026-08-26 — those named the screen correctly on every look but named it something the FSM
+# had no node for, so nothing could route out of it. The mission re-perceived it for 34
+# minutes across two attempts and aborted at Svear Village with a full hold.
+#
+# Matched on the PROMPT, not the title. The title describes the standby MODE, not the fleet's
+# position: it read "On Standby at Sea" with server "Atlantic Ocean" while the fleet was tied
+# up in a village. The prompt is the invariant, and it is also the exit instruction.
+register_fingerprint(Fingerprint(
+    state_id="idle_lock",
+    description=(
+        "The game's idle standby lock. Identified by its own 'Slide up to unlock' "
+        "prompt — the one element that is always present and always means this screen."
+    ),
+    positive_signals=(
+        TextContainsSignal(
+            name="unlock_prompt",
+            region=FULL_FRAME,
+            required=("slide up",),
+        ),
+    ),
+))
+
+
 register_fingerprint(Fingerprint(
     state_id="main_menu",
     description=(

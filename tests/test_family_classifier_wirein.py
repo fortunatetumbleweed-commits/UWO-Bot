@@ -135,14 +135,30 @@ class FamilyShortCircuitTests(unittest.TestCase):
         mock_omni.assert_not_called()
         mock_cls.assert_not_called()
 
-    def test_transient_family_falls_through(self):
-        """transient family needs DialogModel/overlay detectors that
-        live downstream — short-circuit would lose context."""
-        result = self._classify(
-            family="transient", confidence=0.95,
-            omni_result={"state": "sub_menu", "detail": "fallback"},
-        )
+    def test_a_transient_WITH_a_dialog_card_falls_through(self):
+        """A dialog offers a CHOICE, and its buttons are the answer space
+        (`brain.dialog_question`). Short-circuiting past it would lose the one
+        thing that makes the choice answerable, so the cascade still runs."""
+        with patch("brain.perceive._detect_dialog_on_frame", return_value=object()):
+            result = self._classify(
+                family="transient", confidence=0.95,
+                omni_result={"state": "sub_menu", "detail": "fallback"},
+            )
         self.assertEqual(result["location"], "sub_menu")
+
+    def test_a_transient_with_NO_dialog_card_is_a_full_screen_notice(self):
+        """Changed 2026-08-26. A mate finishing promotion, a level-up, an announcement:
+        full-screen, no buttons, cleared by tapping. The CNN said `transient` at 0.9999
+        and the cascade spent 23 SECONDS — omniparser, chrome flags, Moondream three
+        times, read_port_name — to reach "Unknown blocking screen". Every question in
+        that cascade asks WHERE THE FLEET IS, and a notice covering the whole screen
+        cannot answer it."""
+        with patch("brain.perceive._detect_dialog_on_frame", return_value=None):
+            result = self._classify(
+                family="transient", confidence=0.95,
+                omni_result={"state": "sub_menu", "detail": "fallback"},
+            )
+        self.assertEqual(result["location"], "transient")
 
 
 class PalmaShipyardRegressionTests(unittest.TestCase):

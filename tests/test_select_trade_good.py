@@ -26,6 +26,7 @@ import unittest
 from unittest.mock import patch
 
 from brain import barter_mission_live as bml
+import actions.barter_panel as bp
 
 RECIPE = {"Ebony": 168, "Coral": 228, "Textiles": 252}
 
@@ -62,36 +63,48 @@ def _reading(good=None, materials=RECIPE):
 class TilesAreFoundByLayout(unittest.TestCase):
 
     def test_all_four_tiles_are_read(self):
-        tiles = bml._tradable_tiles(_panel_elements())
+        tiles = bp._tradable_tiles(_panel_elements())
         self.assertEqual(len(tiles), 4)
         self.assertEqual({t["category"] for t in tiles},
                          {"Spices", "Food", "Livestock", "Jewelry"})
 
     def test_a_tile_taps_its_icon_not_its_label(self):
-        tiles = bml._tradable_tiles(_panel_elements())
+        tiles = bp._tradable_tiles(_panel_elements())
         self.assertTrue(all(t["cy"] == 424 for t in tiles), "the icon row, not the labels")
 
     def test_the_stock_status_is_carried(self):
-        tiles = {t["category"]: t["status"] for t in bml._tradable_tiles(_panel_elements())}
+        tiles = {t["category"]: t["status"] for t in bp._tradable_tiles(_panel_elements())}
         self.assertEqual(tiles["Food"], "Depleted")
 
 
 class SelectionVerifiesByReadingBack(unittest.TestCase):
 
-    def _select(self, readings, good="Box of Nutmeg", recipe=RECIPE):
-        taps, seq = [], list(readings)
+    def _select(self, readings, good="Box of Nutmeg", recipe=RECIPE, baseline=None):
+        # The panel is read ONCE before any tap, to establish what is already selected — a
+        # first tap can be swallowed dismissing an info tip, and without a baseline that
+        # unchanged reading gets recorded as "this tile is not the good" (live 2026-08-26).
+        # Default baseline: nothing selected, matching no recipe.
+        base = baseline or types.SimpleNamespace(
+            selected_good="(nothing selected)", materials=[], amity_points=(0, 100000))
+        taps, seq = [], [base] + list(readings)
         with patch("vision.omniparser.parse_fast_cached", return_value=_panel_elements()), \
              patch("capture.adb_capture.capture_screen", return_value=object()), \
              patch("actions.ui.tap_at", side_effect=lambda x, y, **k: taps.append((x, y))), \
-             patch("actions.barter_reader.read_barter_panel", side_effect=lambda _f: seq.pop(0)):
-            ok = bml._select_trade_good(good, recipe)
+             patch("actions.barter_reader.read_barter_panel",
+                   side_effect=lambda _f: seq.pop(0) if len(seq) > 1 else seq[0]):
+            ok = bp._select_trade_good(good, recipe)
         return ok, taps
 
     def test_the_category_hint_is_tried_first(self):
         """Box of Nutmeg is a spice — try the Spices tile before the rest."""
         ok, taps = self._select([_reading(good="Box of Nutmeg")])
         self.assertTrue(ok)
-        self.assertEqual(taps, [(424, 424)])
+        # BELOW the icon's centre: a locked good draws a red banner across the middle of the
+        # thumbnail, and tapping the banner raises an info tip instead of selecting — the tip
+        # then swallows the next tap (live 2026-08-26, Svear).
+        self.assertEqual(len(taps), 1)
+        self.assertEqual(taps[0][0], 424)
+        self.assertGreater(taps[0][1], 440, "the tap must clear the lock banner")
 
     def test_a_wrong_tile_moves_on_to_the_next(self):
         ok, taps = self._select([_reading(good="Salted Cod"),
@@ -118,52 +131,74 @@ class SelectionVerifiesByReadingBack(unittest.TestCase):
     def test_no_tiles_reports_failure(self):
         with patch("vision.omniparser.parse_fast_cached", return_value=[]), \
              patch("capture.adb_capture.capture_screen", return_value=object()):
-            self.assertFalse(bml._select_trade_good("Box of Nutmeg", RECIPE))
+            self.assertFalse(bp._select_trade_good("Box of Nutmeg", RECIPE))
 
 
 if __name__ == "__main__":
     unittest.main()
 
 
-class TheSelectionPathIsReachable(unittest.TestCase):
-    """The barter node must reach selection without crashing.
+class TheNodeStatesAGoalAndMapsTheResult(unittest.TestCase):
+    """The barter node no longer knows what a panel is.
 
-    Live 2026-08-23, run 35: the panel opened, read back good=None/materials=[] as expected,
-    and then
+    It was 219 lines and was both the goal and the procedure — open the panel, pick the tile,
+    tap Exchange, confirm, clear overflow, count rounds, decide whether to sail. All of that
+    is the village activity's now, and is tested in tests/test_village_activity.py. What is
+    left here is a goal and a translation, so that is what these test.
 
-        File "brain/barter_mission_live.py", line 312, in barter
-            prog = mission_progress.current() or {}
-        UnboundLocalError: cannot access local variable 'mission_progress'
-
-    The node referenced `mission_progress` near the top AND re-imported it locally further
-    down; a local import makes the name local for the WHOLE function, so the earlier
-    reference was unbound. Every unit test had patched `_open_barter_panel` to False, so the
-    selection block was never entered.
+    This class replaces `TheSelectionPathIsReachable`, which guarded a 2026-08-23
+    UnboundLocalError caused by `mission_progress` being imported twice inside the node — a
+    bug that cannot recur in a body with neither import nor branch.
     """
 
-    def _run_barter_node(self, *, panel_open, selected):
+    def _run(self, observed, *, ok=True):
+        from unittest.mock import patch
+        from brain.activities.village import Barter
         from brain.barter_mission_live import make_live_executors
+        from brain.dispatcher import ActivityResult, BLOCKED, FINISHED
+
         task = types.SimpleNamespace(params={"rounds": 1, "good": "Box of Nutmeg",
                                              "village": "Melanesian Village"})
-        with patch("brain.barter_mission_live._open_barter_panel", return_value=panel_open), \
-             patch("brain.barter_mission_live._read_panel_state",
-                   return_value=_panel_state() if selected else None), \
-             patch("brain.barter_mission_live._select_trade_good", return_value=selected), \
-             patch("brain.barter_mission_live._no_panel_failure",
-                   return_value={"ok": False, "reason": "no panel", "screen": "x"}), \
-             patch("actions.barter_executor.barter_commit_verified",
-                   return_value={"ok": True, "reason": "committed"}):
-            return make_live_executors()["barter"](task)
+        goals = []
+        result = ActivityResult(FINISHED if ok else BLOCKED, observed, detail="barter")
+        with patch("brain.run_goal.run_goal",
+                   side_effect=lambda g, **k: goals.append(g) or result), \
+             patch("brain.mission_progress.record_rounds"), \
+             patch("brain.mission_progress.advance"):
+            res = make_live_executors()["barter"](task)
+        return res, goals
 
-    def test_the_node_reaches_selection_without_crashing(self):
-        res = self._run_barter_node(panel_open=True, selected=False)
-        self.assertIsInstance(res, dict)          # not an exception
+    def test_the_goal_names_the_good_and_the_village(self):
+        from brain.activities.village import Barter
+        _res, goals = self._run({"rounds_committed": 3})
+        self.assertEqual(goals, [Barter("Box of Nutmeg", "Melanesian Village")])
 
-    def test_a_successful_selection_proceeds(self):
-        res = self._run_barter_node(panel_open=True, selected=True)
-        self.assertIsInstance(res, dict)
+    def test_the_plans_round_count_is_not_passed_on(self):
+        """`rounds` is the pre-sail estimate and the panel outranks it."""
+        _res, goals = self._run({"rounds_committed": 3})
+        self.assertFalse(hasattr(goals[0], "rounds"))
 
-    def test_mission_progress_has_one_binding(self):
-        """A second, function-local import is what caused the UnboundLocalError."""
-        src = open("brain/barter_mission_live.py").read()
-        self.assertEqual(src.count("from brain import mission_progress"), 1)
+    def test_the_rounds_committed_come_back(self):
+        res, _g = self._run({"rounds_committed": 3})
+        self.assertEqual(res["committed"], 3)
+
+    def test_why_it_stopped_becomes_the_reason(self):
+        res, _g = self._run({"rounds_committed": 3,
+                             "stopped_because": "the village refused — Exchange is greyed"})
+        self.assertIn("refused", res["reason"])
+
+    def test_no_caller_is_told_to_come_back_for_more(self):
+        """The activity barters until the village refuses, so there is nothing to re-enter
+        for. Re-entering on a number the task re-derived from materials is what produced the
+        74-round loop at Svear."""
+        res, _g = self._run({"rounds_committed": 3})
+        self.assertEqual(res["more_rounds_fundable"], 0)
+
+    def test_a_village_that_cannot_be_reached_is_reported(self):
+        from unittest.mock import patch
+        from brain.barter_mission_live import make_live_executors
+        task = types.SimpleNamespace(params={"good": "Box of Nutmeg", "village": "X"})
+        with patch("brain.run_goal.run_goal", return_value=None):
+            res = make_live_executors()["barter"](task)
+        self.assertFalse(res["ok"])
+        self.assertEqual(res["committed"], 0)

@@ -63,10 +63,24 @@ class TestTabStripDetection:
         assert self._candidates(els) == [(bx0 + 80, y), (bx0 + 160, y), (bx0 + 240, y)]
 
     def test_ignores_elements_outside_the_strip(self):
+        """The band filter still rejects what is not in the strip.
+
+        The fixture carries a REAL strip (three evenly spaced icons at one height) because a
+        tab strip is a row — a lone icon in the band is not one. That rule exists because an
+        event popup's close-X sat inside the band at Bordeaux (2026-08-24) and was offered as
+        a tab; tapping popup furniture cannot select the Buildings tab.
+        """
         bx0, by0, bx1, by1 = sa._tab_strip_band()
         y = (by0 + by1) // 2
-        inside, below, far_left = _El(bx0 + 80, y), _El(bx0 + 80, by1 + 400), _El(50, y)
-        assert self._candidates([inside, below, far_left]) == [(inside.cx, inside.cy)]
+        strip = [_El(bx0 + 80, y), _El(bx0 + 180, y), _El(bx0 + 280, y)]
+        below, far_left = _El(bx0 + 80, by1 + 400), _El(50, y)
+        assert self._candidates(strip + [below, far_left]) == [(e.cx, e.cy) for e in strip]
+
+    def test_a_lone_icon_in_the_band_is_not_a_tab_strip(self):
+        """The Bordeaux case: a popup close-X inside the band, and nothing else."""
+        bx0, by0, bx1, by1 = sa._tab_strip_band()
+        y = (by0 + by1) // 2
+        assert self._candidates([_El(bx0 + 80, y)]) == []
 
     def test_no_detection_yields_no_candidates_rather_than_a_guess(self):
         """The old code always produced a coordinate, even a wrong one."""

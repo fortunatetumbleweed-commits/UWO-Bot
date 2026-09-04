@@ -39,6 +39,13 @@ class MarketGood:
     category: str = ""                   # e.g. "Food", "Textile", "Metal"
     available_qty: Optional[int] = None  # units in stock at market (purchase tab only; None if unknown)
     sold_out: bool = False               # True when restocking timer shown instead of price
+    # GATED, NOT EMPTY. Some goods are conditional — purchasable only when a condition holds
+    # (a time window, or membership of the city's monopolising guild). They are NOT a sold-out
+    # shelf and NO blue-gem refresh will ever restock them, so they must be skipped rather
+    # than refreshed (user, 2026-08-24). Marked by a coloured ribbon in the tile's TOP-LEFT
+    # corner; measured at Bordeaux, Hungary Water's corner is 62% magenta against 0% on every
+    # other tile on the grid.
+    conditional: bool = False
     profit_per_unit: Optional[int] = None  # sell tab: per-unit profit baked with distance (negative = loss)
     is_loss: bool = False                # sell tab: selling here loses money (profit < 0)
     owned_qty: Optional[int] = None      # sell tab: units of this good currently in cargo

@@ -1,0 +1,19 @@
+{
+  "task_name": "Lisboa — sell the Birch Tree",
+  "started_at": "2026-08-30T22:23:00.301950+00:00",
+  "ended_at": "2026-08-30T22:25:32.639063+00:00",
+  "elapsed_seconds": 152.337113,
+  "rounds_completed": 1,
+  "total_profit": 35857696,
+  "ducats_per_hour": 847381856.3175739,
+  "steps": [
+    {
+      "action": "sell_all",
+      "port": "?",
+      "ok": true,
+      "profit": 35857696,
+      "duration_s": 119.44259516568854,
+      "notes": "sold 1 goods  +35,857,696d"
+    }
+  ]
+}

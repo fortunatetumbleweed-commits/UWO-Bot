@@ -142,3 +142,58 @@ class LearnedPriorityTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ConfidenceMustNotOutrankProvenance(unittest.TestCase):
+    """A learned fingerprint never outranks a standard one, whatever its confidence.
+
+    Confidence used to be compared FIRST, and confidence is a fire RATIO — so a learned
+    fingerprint with a single signal fired 1/1 = 100% and was graded HIGH, the top band, on
+    the thinnest evidence there is, and beat a standard fingerprint that had matched less
+    completely.
+
+    Live 2026-08-26: the screen came back as 'learned_updates_august_10_mon_update_advance' —
+    an announcement popup, which the FSM has no node for — and `open_world_map` spent three
+    attempts on a state it could do nothing with before giving up.
+
+    NOTE this module does not import `vision.state_fingerprints_data`, so the standard
+    fingerprints are only present when another test module has loaded it first. That is a
+    pre-existing order dependence in this file; the test below registers both sides itself so
+    it holds either way.
+    """
+
+    def setUp(self):
+        self._snapshot = dict(FINGERPRINT_REGISTRY)
+
+    def tearDown(self):
+        FINGERPRINT_REGISTRY.clear()
+        FINGERPRINT_REGISTRY.update(self._snapshot)
+
+    def _fp(self, state_id, *labels, min_match=1):
+        register_fingerprint(Fingerprint(
+            state_id=state_id,
+            description=state_id,
+            positive_signals=tuple(
+                LabelSetSignal(name=f"sig_{i}", region=(0.0, 0.0, 1.0, 1.0),
+                               labels=frozenset({lab}), min_matches=1)
+                for i, lab in enumerate(labels)),
+            min_positive_to_match=min_match,
+        ))
+
+    def test_a_one_signal_learned_match_loses_to_a_partial_standard_one(self):
+        """The exact shape of the failure: learned fires 1/1 (HIGH), standard fires 1/2
+        (MEDIUM). Provenance decides, not the ratio."""
+        self._fp("learned_announcement", "updates")
+        # A synthetic standard id — anything not starting with 'learned_'. Two signals, only
+        # one of which will fire, so it grades MEDIUM against the learned one's HIGH.
+        self._fp("standard_screen", "updates", "explore")
+        result = classify_via_registry(
+            [_text("Updates", 120, 40)], SCREEN_W, SCREEN_H)
+        self.assertEqual(result.state, "standard_screen")
+
+    def test_a_learned_match_still_wins_when_nothing_standard_matches(self):
+        """Learned fingerprints are not useless — they are only outranked."""
+        self._fp("learned_announcement", "zzz_unique_label")
+        result = classify_via_registry(
+            [_text("zzz_unique_label", 120, 40)], SCREEN_W, SCREEN_H)
+        self.assertEqual(result.state, "learned_announcement")

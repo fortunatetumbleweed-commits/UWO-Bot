@@ -28,6 +28,7 @@ from typing import Optional
 from loguru import logger
 
 from brain import mission_progress
+from brain.activities.bootstrap import establish_position
 
 # barter <good> at <village> [ [,] (then|and) (take the route <name> | sail to <port>) ]
 _COMMAND_RE = re.compile(
@@ -99,6 +100,58 @@ def _last_known_hold(max_age_s: float = 3600.0):
     return hold
 
 
+def _complete_materials_from_kb(trade, good: str, village: str = "") -> None:
+    """Add materials the KB knows and this read did not return, at their last-known ratio.
+
+    Mutates `trade`. Loud on purpose: a filled ratio is a guess where every other number came
+    off the screen, and the log is the only place that distinction survives.
+    """
+    try:
+        from memory.barter_kb import load_recipe
+        known = load_recipe(good)
+    except Exception as exc:
+        logger.debug(f"[barter_command] could not load the KB recipe for {good!r}: {exc}")
+        return
+    if not known or not getattr(known, "inputs", None):
+        return
+
+    have = {(m or "").strip().lower() for m in (getattr(trade, "materials", {}) or {})}
+    for inp in known.inputs:
+        name = (inp.material or "").strip()
+        if not name or name.lower() in have:
+            continue
+        trade.materials[name] = int(inp.ratio)
+        logger.warning(
+            f"[barter_command] {good!r} at {village or 'this village'}: the read did not "
+            f"return {name!r}, which the KB knows is required. Planning with its last-known "
+            f"ratio {inp.ratio} — A GUESS, where every other quantity was read from the "
+            "screen. Without it the fleet would arrive unable to barter at all.")
+
+
+def _recipe_is_partial(trade, good: str) -> bool:
+    """True when the cached recipe names fewer materials than the KB knows for `good`.
+
+    Materials are invariant, so fewer can only mean the read that produced the cache scrolled
+    short of the whole list. Compared by NAME — the quantities are volatile and re-roll every
+    few hours, but which materials a recipe takes does not.
+    """
+    try:
+        from memory.barter_kb import load_recipe
+        known = load_recipe(good)
+    except Exception as exc:
+        logger.debug(f"[barter_command] could not load the KB recipe for {good!r}: {exc}")
+        return False
+    if not known or not getattr(known, "inputs", None):
+        return False
+    known_names = {(i.material or "").strip().lower() for i in known.inputs}
+    cached_names = {(m or "").strip().lower() for m in (getattr(trade, "materials", {}) or {})}
+    missing = known_names - cached_names
+    if missing:
+        logger.warning(f"[barter_command] cached recipe for {good!r} is missing "
+                       f"{sorted(missing)} — the KB knows {sorted(known_names)}")
+    return bool(missing)
+
+
 def _cached_trade(prog: Optional[dict]):
     """The recipe recorded when this task started, or None if there is none.
 
@@ -114,35 +167,34 @@ def _cached_trade(prog: Optional[dict]):
 
 
 def _depart_village_to_sea(max_backs: int = 4) -> bool:
-    """Back out of a village until the fleet is at sea. True when it reaches sea.
+    """Back out of a village until the world map can be opened. True when it can.
 
     A village is a PLACE, so leaving it is never done to satisfy a state test — but the tail
     genuinely requires it, and that is the task's call to make (see
     docs/one_loop_task_drives_state.md, "the state machine owns the HOW, the task owns the
-    WHETHER"). This is the task making it, deliberately and in one place.
-    """
-    from actions.sail_actions import press_back, where_am_i
-    from capture.adb_capture import capture_screen
-    import time as _t
+    WHETHER"). This is still the task making it; what changed is that the decision now
+    travels as a WORK ORDER instead of running its own loop.
 
-    for attempt in range(max_backs):
-        try:
-            state = where_am_i(capture_screen()).get("location")
-        except Exception as exc:
-            logger.warning(f"[barter_command] could not perceive while leaving the village: "
-                           f"{exc}")
-            return False
-        if state in ("sea", "sea_cinematic", "world_map"):
-            logger.info(f"[barter_command] at {state!r} — clear of the village, the tail can "
-                        "open the world map")
-            return True
-        logger.info(f"[barter_command] leaving the village for the tail "
-                    f"(state={state!r}, back {attempt + 1}/{max_backs})")
-        press_back()
-        _t.sleep(2.0)
-    logger.warning("[barter_command] could not reach the sea from the village — the tail "
-                   "cannot open the world map from here")
-    return False
+    It was a `for attempt in range(max_backs)` that captured a screen, ran `where_am_i`,
+    decided, and pressed — the shape Guiding Principle #5 removes. Every part has an owner:
+    the perceiving is the dispatcher's and arrives as `state`; the pressing is one Back per
+    tick from `to_intent`; and the screens that end by FINISHING rather than by Back (the
+    idle lock, `loading`) are the clearing activities' business, which is where they belonged
+    all along — `finish_current_activity()` was firing on ordinary villages and skipping the
+    Back it was standing in for, which is why
+    `test_it_backs_out_until_it_reaches_the_sea` counted one press where two were due.
+    """
+    from brain.barter_runner import HAVE_CLEAR, NEED_CLEAR, BarterTaskRunner
+    from brain.run_goal import run_task
+
+    runner = run_task(BarterTaskRunner(village="", good="", status=NEED_CLEAR),
+                      max_ticks=max_backs * 2)
+    if runner.status != HAVE_CLEAR:
+        logger.warning(f"[barter_command] could not reach the sea from the village — "
+                       f"{runner.reason or 'the tail cannot open the world map from here'}")
+        return False
+    return True
+
 
 
 def _resume_tail(cmd, prog: dict) -> dict:
@@ -186,7 +238,7 @@ def _resume_tail(cmd, prog: dict) -> dict:
             "reason": res.get("reason", "")}
 
 
-def _try_barter_here(cmd) -> Optional[dict]:
+def _try_barter_here(cmd, position: dict = None) -> Optional[dict]:
     """Already at the village? Then read the ratio off the PANEL and barter. No world map.
 
     ENTRY BY PERCEPTION, not by rote. A task is a set of steps with preconditions, not a
@@ -206,26 +258,28 @@ def _try_barter_here(cmd) -> Optional[dict]:
     Returns a mission result when the barter was done here, or None to fall through to the
     ordinary check-and-plan path.
     """
-    from brain.barter_mission_live import (_open_barter_panel, _read_panel_state,
-                                           _select_trade_good, make_live_executors)
-    from brain.mission import SubTask
+    from brain.barter_runner import HAVE_PANEL, NEED_PANEL, BarterTaskRunner
+    from brain.run_goal import run_task
 
-    at_village, why = _at_a_village()
+    at_village, why = _at_a_village(position)
     if not at_village:
         logger.info(f"[barter_command] not at the village ({why}) — planning the trip")
         return None
 
     logger.info(f"[barter_command] at the village ({why}) — reading the ratio from the "
                 "panel instead of opening the world map")
-    if not _open_barter_panel():
-        logger.info("[barter_command] could not open the Barter panel here — falling back "
-                    "to the remote check")
-        return None
-    if not _select_trade_good(cmd.good, None):
-        logger.info(f"[barter_command] {cmd.good!r} is not on offer here — falling back")
+    # ASKED FOR, NOT DONE HERE (Guiding Principle #7). This opened the panel, selected the
+    # good and read it back — three UI steps in the task runner. They were invisible to the
+    # layering guard because they arrived through `barter_mission_live`, a task module that
+    # imported thirteen UI modules on this one's behalf; one hop was enough to hide them.
+    probe = run_task(BarterTaskRunner(village=cmd.village, good=cmd.good, status=NEED_PANEL),
+                     max_ticks=12)
+    if probe.status != HAVE_PANEL:
+        logger.info(f"[barter_command] the panel did not answer here ({probe.reason}) — "
+                    "falling back to the check-and-plan path")
         return None
 
-    state = _read_panel_state()
+    state = probe.panel
     if state is None or state.rounds_remaining < 1:
         short = getattr(state, "shortfall", None) if state else None
         logger.info(f"[barter_command] the hold funds no full round here "
@@ -240,7 +294,7 @@ def _try_barter_here(cmd) -> Optional[dict]:
     return _resume_at_village(cmd, {"rounds": state.rounds_remaining})
 
 
-def _at_a_village() -> tuple:
+def _at_a_village(position: dict = None) -> tuple:
     """(are we at a village?, why). Includes the village's SUB-SCREENS, not just its landing.
 
     `state == "village"` alone is too narrow. Live 2026-08-23 a run began with the BARTER
@@ -248,50 +302,52 @@ def _at_a_village() -> tuple:
     (corrected afterwards to 'village'), the narrow test failed, and the fleet sailed away
     from the village it was standing in — for the second time that day.
 
-    The left menu settles it. A village's menu — barter / explore / gifting / loot /
-    recruit crew — belongs to no other screen, and it stays visible on every sub-screen,
-    which is exactly the case the state alone gets wrong. Read via the canonical region
-    detector (vision.region_detectors.left_menu).
+    INTERPRETED, NOT RE-OBSERVED (Guiding Principle #7). This used to capture a screen, sweep
+    for blockers, capture again, run `where_am_i`, and then run OmniParser a second time to
+    read the left menu — five perception calls to answer a question about a screen that had
+    already been perceived. The sweep is the dispatcher's `unblock` and the perceiving is the
+    dispatcher's; what belongs here is only the reading of the evidence.
+
+    THE EVIDENCE IS STILL PLURAL, which is the part that mattered. The left menu was decisive
+    because it is INDEPENDENT of the classifier that got it wrong — and `sub_menu` and
+    `scene_type` are two more independent reads, carried through from the same observation.
+    Any one of them naming a village is enough; the classifier alone was what was too narrow.
+
+    And the left-menu read is not lost by removing it from here: `brain/perceive.py` runs the
+    SAME `{barter, gifting}` check inside `_classify_nav_state` now. This copy was written
+    when the classifier did not, and it has been re-deriving a signal already folded into the
+    verdict it was second-guessing.
     """
-    from actions.sail_actions import where_am_i
-    from capture.adb_capture import capture_screen
-    try:
-        frame = capture_screen()
-        # CLEAR WHAT IS IN THE WAY BEFORE DECIDING. A blocked screen is not evidence about
-        # where the fleet is. Live 2026-08-23 the game had dropped to its standby lock while
-        # idle — state read as 'learned_on_standby_at_sea_slide_up_to_unlock', the left menu
-        # was unreadable, and the guard was about to sail away from the village behind the
-        # lock. Same rule as brain/goals/sail_to._handle_unknown: never navigate on blindness.
-        try:
-            from brain.unexpected_dialog import clear_blockers
-            if clear_blockers(frame).get("cleared"):
-                logger.info("[barter_command] a blocker was covering the screen — cleared it, "
-                            "re-perceiving before deciding whether to sail")
-                frame = capture_screen()
-        except Exception as exc:
-            logger.debug(f"[barter_command] blocker check failed: {exc}")
-        state = where_am_i(frame).get("location")
-    except Exception as exc:
-        logger.warning(f"[barter_command] could not perceive: {exc}")
-        return False, f"perceive failed: {exc}"
-    if state == "village":
-        return True, "state is 'village'"
-    try:
-        from vision.omniparser import parse_fast_cached
-        from vision.region_detectors.left_menu import detect_left_menu
-        menu = detect_left_menu(list(parse_fast_cached(frame)), frame.width, frame.height)
-        labels = {l.strip().lower() for l in (menu.labels() if menu else [])}
-    except Exception as exc:
-        logger.debug(f"[barter_command] left-menu read failed: {exc}")
-        labels = set()
-    if _VILLAGE_MENU_MARKERS <= labels:
-        return True, f"state is {state!r} but the left menu is a village's ({sorted(labels)})"
-    return False, f"state is {state!r}, menu={sorted(labels) or 'unreadable'}"
+    # ESTABLISHED ONCE, NOT PER CALLER. `run_barter_command` has just bootstrapped — three
+    # perceives and a full clearing pass — and this used to do the whole thing again seconds
+    # later, on a screen nothing had touched. Live 2026-08-30 that was 9 captures and 84
+    # seconds before the first tap, with "position established: 'village'" logged twice.
+    #
+    # A caller that already knows passes it; one that does not still asks.
+    if position is None:
+        from brain.activities.bootstrap import establish_position
+        position = establish_position()
+        if not position.get("ok"):
+            return False, position.get("reason") or "position could not be established"
+
+    state = position.get("state")
+    sub_menu = (position.get("sub_menu") or "").lower()
+    scene = (position.get("scene_type") or "").lower()
+
+    if state in _VILLAGE_STATES:
+        return True, f"state is {state!r}"
+    if sub_menu in _VILLAGE_SUB_MENUS:
+        return True, f"state is {state!r} but the {sub_menu!r} sub-menu is a village's"
+    if scene == "village":
+        return True, f"state is {state!r} but the scene reads as a village"
+    return False, f"state is {state!r}, sub_menu={sub_menu or None}, scene={scene or None}"
 
 
-# Menu entries that together belong only to a village. 'barter' alone is not enough — the
-# word turns up elsewhere — but barter+gifting does not occur on any port screen.
-_VILLAGE_MENU_MARKERS = {"barter", "gifting"}
+# The states and sub-screens that ARE a village. Kept beside VillageActivity.SERVES, which
+# is the same fact for the dispatcher; they are asserted equal in the tests so the two cannot
+# drift apart the way two lists of where the market works once did.
+_VILLAGE_STATES = ("village", "sub_menu:barter")
+_VILLAGE_SUB_MENUS = ("barter", "gifting")
 
 
 # Each pass must commit something or the loop stops; this only bounds a pathological
@@ -299,7 +355,7 @@ _VILLAGE_MENU_MARKERS = {"barter", "gifting"}
 _MAX_BARTER_PASSES = 4
 
 
-def _resume_at_village(cmd, prog: dict) -> dict:
+def _resume_at_village(cmd, prog: dict, position: dict = None) -> dict:
     """Run the BARTER phase: get to the village, then barter. Nothing else.
 
     No village check and no cargo check — both questions were closed by the phases before
@@ -335,7 +391,7 @@ def _resume_at_village(cmd, prog: dict) -> dict:
     # Being in a village while the mission is in its BARTERING phase is the evidence that
     # matters: the phase is only reached by sailing here. This mirrors what the task-loop
     # path already does (brain/barter_task.BarterPhaseTask.next_step).
-    at_village, why = _at_a_village()
+    at_village, why = _at_a_village(position)
     logger.info(f"[barter_command] perceived before deciding: at_village={at_village} ({why})")
 
     if not at_village:
@@ -402,7 +458,6 @@ def run_barter_command(text: str, *, cargo_capacity: Optional[int] = None,
     re-roll, or an amity tier crossing mid-barter); 0.0 plans on the snapshot exactly.
     `dry_run` stops after the plan — it still performs the remote check, because the plan
     has no meaning without this window's live quantities."""
-    from actions.village_check import read_village_barter_remote
     from brain.barter_quantity import (AMITY_CUSHION, free_space_for_barter,
                                        plan_barter_rounds)
 
@@ -419,6 +474,25 @@ def run_barter_command(text: str, *, cargo_capacity: Optional[int] = None,
                 "[, then take the route <name> | and sail to <port>]"}
     logger.info(f"[barter_command] {cmd.describe()}")
 
+    # WHERE ARE WE? — BEFORE ANY WORK ORDER IS ACCEPTED.
+    #
+    # A fresh run knows nothing: the phone may be locked, the daily news up, a perk banner
+    # over the port name — and any of those makes sea and port indistinguishable. Taking the
+    # order first means the preamble starts navigating on an unknown position, which is how
+    # `open_world_map` came to be holding a lock screen on 2026-08-28: it waited for a
+    # TransientActivity it reached zero times, then read "Season" out of an Investment Season
+    # banner, called it a port name, and reported "Overworld confirmed".
+    #
+    # The dispatcher peels one layer per tick — lock, notice, unnameable chromed screen —
+    # and stops at a state the task runner can be asked about. Nothing is guessed, and a
+    # position that cannot be established is reported as unknown rather than invented.
+    if not dry_run:
+        here = establish_position()
+        if not here.get("ok"):
+            return {"ok": False, "step": "bootstrap", "command": cmd,
+                    "reason": here.get("reason", "position could not be established")}
+        logger.info(f"[barter_command] starting from {here.get('port') or here.get('state')}")
+
     prog = None if dry_run else mission_progress.current()
     if prog and (prog.get("village") or "").lower() != cmd.village.lower():
         prog = None                                   # a different village — not our mission
@@ -433,12 +507,13 @@ def run_barter_command(text: str, *, cargo_capacity: Optional[int] = None,
         logger.info(f"[barter_command] already {prog.get('phase')} for {cmd.village} "
                     f"({prog.get('age_s', 0):.0f}s ago) — skipping the check and the plan, "
                     "arriving and bartering with what is aboard")
-        return {**_resume_at_village(cmd, prog), "resumed_from": prog.get("phase")}
+        return {**_resume_at_village(cmd, prog, position=None if dry_run else here),
+                "resumed_from": prog.get("phase")}
 
     # ENTRY BY PERCEPTION: if the fleet is already standing in the village, the ratio is on
     # the panel in front of it and the whole check-and-plan preamble is moot.
     if not dry_run and prog is None:
-        done_here = _try_barter_here(cmd)
+        done_here = _try_barter_here(cmd, position=None if dry_run else here)
         if done_here is not None:
             return {**done_here, "entered_at": "barter"}
 
@@ -451,19 +526,68 @@ def run_barter_command(text: str, *, cargo_capacity: Optional[int] = None,
     check = None
     trade = _cached_trade(prog)
     rounds_remaining = (prog or {}).get("rounds_remaining")
+    # A CACHED RECIPE MISSING A MATERIAL THE KB KNOWS IS A PARTIAL READ, NOT A RECIPE.
+    #
+    # Materials are INVARIANT — a recipe does not lose an ingredient between runs — so if the
+    # cache names fewer than the KB does, what was cached is a trade-list read that scrolled
+    # short. `write_back_invariants` already protects the KB from this ("keeping known
+    # material 'Matchlock Gun' that this read did not return"); nothing protected the PLAN.
+    #
+    # Live 2026-08-26: the cached recipe held {Iron, Candle} while the KB held {Iron, Candle,
+    # Matchlock Gun}, and every run that day planned from it. The fleet would have reached
+    # Svear with two of three materials and been unable to barter at all — after two voyages
+    # to fetch them (user: "if the plan missed matchlock we need to replan, otherwise the
+    # barter will not work").
+    if trade is not None and _recipe_is_partial(trade, cmd.good):
+        logger.warning("[barter_command] the cached recipe is missing a material the KB "
+                       "knows — discarding it and re-checking the village")
+        mission_progress.finish()
+        prog, trade, rounds_remaining = None, None, None
+
     if trade is not None:
         logger.info(f"[barter_command] reusing the recipe from the start of this task "
                     f"({prog.get('age_s', 0):.0f}s ago): {cmd.good} {trade.obtain} ← "
                     f"{trade.materials} — not re-checking {cmd.village}")
     else:
-        check = read_village_barter_remote(cmd.village, good=cmd.good)
-        if not check.ok:
-            return {"ok": False, "step": "check", "reason": check.reason, "command": cmd}
+        # THE RECIPE IS ASKED FOR, NOT FETCHED (Guiding Principle #7).
+        #
+        # This was `read_village_barter_remote(...)` — a task module reaching past the
+        # dispatcher to drive the world map itself, with its own `for i in range(max_scrolls)`
+        # inside. Now the passive runner returns a `RemoteCheck` work order, `run_task` turns
+        # the crank, and `WorldMapActivity` does the reading one screen per tick. The partial
+        # -read refusal moved with it: the activity will not certify a short list, and the
+        # runner will not plan from one.
+        from brain.barter_runner import FAILED as _TASK_FAILED, BarterTaskRunner
+        from brain.run_goal import run_task
+
+        runner = run_task(BarterTaskRunner(village=cmd.village, good=cmd.good))
+        if runner.status == _TASK_FAILED or not runner.trades:
+            return {"ok": False, "step": "check", "command": cmd,
+                    "reason": runner.reason or f"could not read {cmd.village}"}
+        # The runner IS the reading: it carries the trades and the day's rounds, and answers
+        # `trade_for` / `rounds_remaining` exactly as `VillageCheck` did. Adapting it into a
+        # `VillageCheck` would mean importing one from `actions` — the reach this change
+        # exists to remove.
+        check = runner
         trade = check.trade_for(cmd.good)
         if trade is None:
             return {"ok": False, "step": "check", "command": cmd,
                     "reason": f"{cmd.village} does not barter {cmd.good!r} — it offers "
                               f"{[t.good for t in check.trades]}"}
+        # A FRESH READ CAN BE PARTIAL TOO. `_recipe_is_partial` guards the CACHED path; this
+        # is the same condition arriving by the other route, and it was left open — live
+        # 2026-08-27 the read reached the bottom of the list, still never returned Matchlock
+        # Gun, and the plan was built from two of three materials anyway.
+        #
+        # The material list is INVARIANT, so a missing one is a reading failure and not a
+        # recipe change. Completing it from the KB is what lets the mission proceed; refusing
+        # would be safe and would also block every run until the read is fixed, and arriving
+        # with two of three materials is the one outcome that guarantees no barter at all.
+        #
+        # The RATIO is filled from the KB too, and that is an estimate — ratios re-roll (Iron
+        # went 102 -> 126 overnight). It only has to be close: the plan's numbers are a
+        # guide, the panel decides each round, and the +15% cushion is sized for exactly this.
+        _complete_materials_from_kb(trade, cmd.good, cmd.village)
         rounds_remaining = check.rounds_remaining
     if rounds_remaining is None:
         return {"ok": False, "step": "check", "command": cmd,
@@ -487,21 +611,92 @@ def run_barter_command(text: str, *, cargo_capacity: Optional[int] = None,
 
     # ── PLAN: rounds bounded by the daily allowance and the free hold ────────
     capacity, used = cargo_capacity, cargo_used
+    # THE HOLD IS NOT READ TO START A MISSION (user, 2026-08-29).
+    #
+    # Two numbers came back and the plan uses ONE of them: `free_space_for_barter(capacity,
+    # 0)` passes the cargo as literal zero, deliberately — "what is already in the hold is
+    # deliberately NOT subtracted" (user, 2026-08-27). And capacity is a property of the
+    # SHIP, constant for the whole mission.
+    #
+    # So the opening move was a read of the ☰ for a constant. The ☰ lives on the overworlds,
+    # and live 2026-08-29 a run started in a village died on tick 2 — "cannot open the main
+    # menu from 'village' (no ☰ there)" — before touching the game. Reading the hold is no
+    # more the village's work than sailing was.
+    #
+    # Remembered instead: the capacity is stamped whenever the hold IS read somewhere it can
+    # be. Only a fleet never once read falls through to asking.
+    if capacity is None:
+        try:
+            from memory.observed_facts import recall
+            seen = recall("fleet_capacity", max_age_s=None)
+            if seen is not None:
+                capacity, _age = seen[0], seen[1]
+                logger.info(f"[barter_command] capacity {capacity} — the ship, remembered; "
+                            "not re-reading the hold to start")
+        except Exception as exc:
+            logger.debug(f"[barter_command] no remembered capacity: {exc}")
+    used = 0 if used is None and capacity is not None else used
     if capacity is None or used is None:
-        from actions.fleet_status import read_fleet_status
-        status = read_fleet_status()
-        capacity = capacity if capacity is not None else status.get("cargo_capacity")
-        used = used if used is not None else status.get("cargo_used")
+        # THE HOLD IS ASKED FOR, NOT FETCHED (Guiding Principle #7).
+        #
+        # This was a sixty-line ladder: read the fleet; if it came back empty, sweep for
+        # blockers and read again; if it STILL came back empty and the reason mentioned a
+        # missing ☰, walk to the port overworld and read a third time. Every rung had an
+        # owner already. The sweep is the dispatcher's `unblock`, which runs on every tick.
+        # The walk is its routing — `ReadHold` from inside a building now yields an
+        # EXIT_BUILDING intent, one Back per tick, instead of an FSM path executed inside a
+        # single call. What is left is one read, done by the activity that owns the screen.
+        from brain.barter_runner import (FAILED as _TASK_FAILED, NEED_HOLD,
+                                         BarterTaskRunner)
+        from brain.run_goal import run_task
+
+        hold = run_task(BarterTaskRunner(village=cmd.village, good=cmd.good,
+                                         status=NEED_HOLD))
+        if hold.status != _TASK_FAILED:
+            capacity = capacity if capacity is not None else hold.capacity
+            used = used if used is not None else hold.used
+        _hold_reason = hold.reason
     if capacity is None or used is None:
         # Assuming an empty hold would over-plan the gather; assuming a full one would
         # abandon a good mission.  Neither is a guess worth making (never act blind).
         missing = "capacity" if capacity is None else "current cargo"
+        # SAY WHY, NOT JUST WHAT. "cargo capacity unreadable" describes the symptom and
+        # points at the market reader; twice at Bordeaux the actual cause was a full-screen
+        # arrival gate hiding the ☰ so the main menu never opened. An unreadable value means
+        # the wrong screen, something covering it, or a read aimed at the wrong place
+        # (user, 2026-08-24) — the layer above can only choose between those if it is told.
+        # THE LAST OBSERVATION, NOT A NEW ONE. This called `perceive()` purely to name the
+        # screen in the message below — a full OmniParser pass for a log line, from inside a
+        # task module (Guiding Principle #7). It cost 90-120s per test and made this file look
+        # like it hung. `last_seen()` returns what was already observed and captures nothing;
+        # it also answers the more useful question, since a fresh pass would describe the
+        # screen AFTER the failure rather than during it.
+        try:
+            from brain.perceive import last_seen
+            _where = getattr(last_seen(), "location", None)
+        except Exception:
+            _where = None
+        logger.error(f"[barter_command] fleet unreadable while the screen reads {_where!r} "
+                     f"— {_hold_reason}")
         # `cleared_surplus` rides along even on this early exit — if cargo was sold, the
         # caller must be told, whatever step we stopped at.
         return {"ok": False, "step": "plan", "command": cmd, "cleared_surplus": cleared,
-                "reason": f"cargo {missing} unreadable — pass cargo_capacity=/cargo_used= "
-                          "to plan against known numbers"}
-    free_space = free_space_for_barter(capacity, used)
+                "reason": f"cargo {missing} unreadable on screen {_where!r} — the main menu "
+                          "never opened (a gate or popup may be covering it); pass "
+                          "cargo_capacity=/cargo_used= to plan against known numbers"}
+    # SIZE THE MISSION ON THE SHIP, NOT ON TODAY'S CLUTTER. The budget is capacity minus a
+    # supply reserve; what is already in the hold is deliberately NOT subtracted. Trade
+    # goods aboard are fungible with the mission — they get trimmed, exchanged away by the
+    # barter itself, or dumped on overflow — so counting them as unavailable makes the hold
+    # its own obstacle (user, 2026-08-27).
+    #
+    # Subtracting them was circular: a full hold shrank the plan, and the trim then sized
+    # itself on that shrunken plan and sold material the mission needed. Live 2026-08-27 at
+    # Barcelona a hold of 3,040/4,952 planned ONE round of seven available and set out to
+    # trim Iron 2,099 → 102 and Candle 148 → 61, when five rounds fit and it should have
+    # been keeping 506 of each. `plan_barter_rounds` still caps rounds by what the OUTPUT
+    # needs, so space remains a real limit — just not a self-inflicted one.
+    free_space = free_space_for_barter(capacity, 0)
     plan = plan_barter_rounds(trade.obtain, trade.materials, rounds_remaining, free_space,
                               materials_on_hand=((cleared or {}).get("owned")
                                                  or _last_known_hold()),
@@ -536,11 +731,16 @@ def run_barter_command(text: str, *, cargo_capacity: Optional[int] = None,
         if cleared.get("ok"):
             logger.info(f"[barter_command] cleared surplus at {cleared.get('port')}: "
                         f"{cleared.get('reason')}")
-            from actions.fleet_status import read_fleet_status
-            status = read_fleet_status()
-            used = status.get("cargo_used", used)
-            capacity = status.get("cargo_capacity", capacity)
-            free_space = free_space_for_barter(capacity, used)
+            # RE-MEASURE AFTER CLEARING — asked for, not fetched. Same `ReadHold` work
+            # order as the first read; the numbers changed because the hold did.
+            from brain.barter_runner import NEED_HOLD, BarterTaskRunner
+            from brain.run_goal import run_task
+
+            re_read = run_task(BarterTaskRunner(village=cmd.village, good=cmd.good,
+                                                status=NEED_HOLD))
+            used = re_read.used if re_read.used is not None else used
+            capacity = re_read.capacity if re_read.capacity is not None else capacity
+            free_space = free_space_for_barter(capacity, 0)
             plan = plan_barter_rounds(trade.obtain, trade.materials, rounds_remaining,
                                       free_space,
                                       materials_on_hand=(cleared.get("owned")
@@ -573,6 +773,18 @@ def run_barter_command(text: str, *, cargo_capacity: Optional[int] = None,
         already_held=(cleared or {}).get("owned") if isinstance(cleared, dict) else None)}
 
 
+# A mission is many legs and every leg is many ticks — a voyage alone is dozens. The ceiling
+# is a runaway guard, not a policy; `run_task` also stops on consecutive stalls, which is what
+# actually catches a mission that is stuck.
+_MISSION_MAX_TICKS = 600
+
+
+def _village_leg_floor() -> float:
+    """The round-trip supply floor a village leg carries — a village has no harbour."""
+    from brain.supply_planner import VILLAGE_LEG_RESERVE_DAYS
+    return float(VILLAGE_LEG_RESERVE_DAYS)
+
+
 def _run_mission_for(cmd: BarterCommand, trade, plan, from_port: Optional[str] = None,
                      already_held: Optional[dict] = None) -> dict:
     """Build the sub-task graph from the live plan and run it."""
@@ -600,13 +812,25 @@ def _run_mission_for(cmd: BarterCommand, trade, plan, from_port: Optional[str] =
     if start is None:
         start = current_position(coords)
     if start is None:
-        # The gather ORDER is chosen by distance from here, so a made-up origin sends the
-        # fleet the wrong way across the world (live 2026-08-21: Atuona at 5,948 instead
-        # of Masulipatnam at 294). Refuse rather than guess.
-        return {"ok": False, "step": "gather-plan",
-                "reason": "current port unreadable, so the gather route cannot be ordered "
-                          "— pass from_port= (CLI: --from=<port>) or re-run where the port "
-                          "name is legible"}
+        # AN UNREADABLE PORT IS A WORSE ROUTE, NOT A DEAD MISSION (user, 2026-08-31: "from
+        # port is only for good logging, for sailing it is really not important").
+        #
+        # The origin ORDERS the gather legs by distance; it does not decide which ports to
+        # visit or whether the fleet can sail. Without it the legs run in an arbitrary order
+        # — some extra sailing, and every leg still reachable, because choosing a destination
+        # on the world map never depended on knowing where we started.
+        #
+        # This refused instead, and it cost two runs on consecutive days. Both times the
+        # cause was the same and had nothing to do with legibility: the REMOTE CHECK leaves
+        # the fleet on the world map, which paints no port name, so the very step that reads
+        # the recipe guarantees the next one cannot see a port.
+        #
+        # The 2026-08-21 case this guard was written for is still respected — a MADE-UP
+        # origin sent the fleet 5,948 units the wrong way. Ordering by nothing is not the
+        # same as ordering by a fiction: we drop the ordering rather than invent a place.
+        logger.warning("[barter_command] no readable port to order the gather route from — "
+                       "running the legs unordered. Pass --from=<port> for a shorter route; "
+                       "the mission does not need it to sail.")
     # What the hold was measured to contain during the surplus clear. Passing it means the
     # gather legs cover only the SHORTFALL — the mission does not sail to a port to
     # rediscover materials it is already carrying.
@@ -642,7 +866,27 @@ def _run_mission_for(cmd: BarterCommand, trade, plan, from_port: Optional[str] =
         mission_progress.advance("bartering")
 
     logger.info(f"[barter_command] graph: {[t.id for t in graph]}")
-    result = run_mission(graph, coords, make_live_executors(opp), start=start,
-                         recover=make_barter_recover(recipe))
-    return {"ok": result.ok, "step": "mission", "reason": result.reason,
-            "mission": result, "task_plan": task_plan}
+
+    # THE DISPATCHER WALKS THE MISSION NOW (user, 2026-08-29).
+    #
+    # `run_mission` walked the same graph but EXECUTED each leg — `executors[kind](task)`,
+    # each running a whole leg to completion with its own loops inside. So the dispatcher
+    # never saw the mission: it was handed "sail to Amsterdam" by an executor that had already
+    # decided to gather there, and the reason why — Iron 822, at Amsterdam, because the plan
+    # says so — lived a layer above anything it could consult.
+    #
+    # `MissionRunner` answers "which leg next, and what does that leg want" and nothing else.
+    # The work order that reaches the dispatcher is `Hold({'Iron': 822})`, which names the
+    # what and the where. Two levels of task-running became one.
+    from brain.mission_runner import DONE, MissionRunner
+    from brain.run_goal import run_task
+
+    runner = run_task(MissionRunner(subtasks=graph, coords=coords, good=cmd.good,
+                                    village=cmd.village,
+                                    keep=("Water", "Food", *sorted(trade.materials)),
+                                    min_supply_days=_village_leg_floor()),
+                      max_ticks=_MISSION_MAX_TICKS)
+    ok = runner.status == DONE
+    return {"ok": ok, "step": "mission",
+            "reason": "every leg is done" if ok else runner.where_it_stopped(),
+            "completed": runner.completed, "task_plan": task_plan}

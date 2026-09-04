@@ -171,44 +171,20 @@ def _auto_calibrate_ui() -> None:
     img = Image.open(BytesIO(raw))
 
     # 1. Mini-map via OmniParser
+    #
+    # The detection and the disc-rim insets moved into
+    # `vision.minimap_navigation_view.calibrate_minimap_crop` — this used to be an inline
+    # copy that also had to assign the crop into TWO modules by hand, because the value was
+    # mirrored in both. There is one value now, so one call sets it everywhere.
     import vision.minimap_navigation_view as mnv
-    import brain.ai_nav.vision_input as vi
     try:
         from vision.omniparser import parse_fast_cached
-        parsed = parse_fast_cached(img)
-        candidates = [
-            e for e in parsed
-            if e.element_type == "button" and e.cx >= 1600 and e.cy <= 500
-            and e.height >= 180
-        ]
-        if candidates:
-            comp = max(candidates, key=lambda e: e.height)
-            y0, y1 = mnv.MINIMAP_CROP[1], mnv.MINIMAP_CROP[3]
-            # OmniParser's mini-map bbox is slightly larger than the
-            # actual disc — includes ~5 px of overworld sliver on each
-            # side and a few icon-strip pixels on top.  Verified by
-            # eyeballing a fresh capture on 2026-07-24: shrinking the
-            # crop by +5 L / -5 R / +2 T lands cleanly on the disc rim.
-            # Contaminating "water" pixels on the left edge (seen in
-            # t13 / t374 / t375 across earlier sessions) come from
-            # that overworld strip being classified as water.
-            MM_LEFT_INSET   = 5
-            MM_RIGHT_INSET  = -5
-            MM_TOP_INSET    = 3
-            MM_BOTTOM_INSET = 0
-            new_mm = (comp.x1 + MM_LEFT_INSET, y0 + MM_TOP_INSET,
-                      comp.x2 + MM_RIGHT_INSET, y1 + MM_BOTTOM_INSET)
-            mnv.MINIMAP_CROP = new_mm
-            vi.MINIMAP_CROP = new_mm
-            log.info("[calibrate] MINIMAP_CROP -> %s  (OmniParser + disc-rim insets "
-                     "L%+d R%+d T%+d B%+d)", new_mm,
-                     MM_LEFT_INSET, MM_RIGHT_INSET, MM_TOP_INSET, MM_BOTTOM_INSET)
-        else:
+        if mnv.calibrate_minimap_crop(parse_fast_cached(img)) is None:
             log.warning("[calibrate] OmniParser found no mini-map compound; "
-                        "keeping default %s", mnv.MINIMAP_CROP)
+                        "keeping default %s", mnv.get_minimap_crop())
     except Exception as e:
         log.warning("[calibrate] mini-map calibration failed (%s); "
-                    "keeping default %s", e, mnv.MINIMAP_CROP)
+                    "keeping default %s", e, mnv.get_minimap_crop())
 
     # 2. Wheel arrows via bright-pixel centroid
     #

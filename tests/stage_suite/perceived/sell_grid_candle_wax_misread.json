@@ -1,0 +1,10 @@
+{
+ "state": "sub_menu:sell",
+ "port": null,
+ "detail": "sub_menu: sell",
+ "raw": {
+  "location": "sub_menu",
+  "port": null,
+  "detail": "sub_menu: sell"
+ }
+}

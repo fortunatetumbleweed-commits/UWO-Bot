@@ -25,6 +25,8 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Optional
 
+import types
+
 from loguru import logger
 
 
@@ -70,6 +72,66 @@ class TickResult:
 
 # ── SailToGoal ───────────────────────────────────────────────────────────────
 
+def arrival_verdict(state, phase, *, matches_destination: bool,
+                    destination_is_likely_village: bool):
+    """Has the fleet arrived? Returns the REASON it decided so, or None.
+
+    Pulled out of `tick()` so the decision can be tested without executing a voyage. The
+    test that guards it used to drive `tick()` itself, which — for any phase below SAILING —
+    falls past this decision into the real departure action: `open_world_map()` OCRing a
+    blank frame through ten retries. That cost an hour per run, could only ever fail by
+    raising from the action path, and asserted something the enum ordering already
+    guarantees. The decision is four conditions; this makes them checkable in microseconds.
+
+    `matches_destination` and `destination_is_likely_village` are passed in rather than
+    looked up, so this function needs no goal instance and no screen.
+    """
+    sailing = phase.value >= SailPhase.SAILING.value
+
+    # The high-confidence path: the port NAME was read and it is the destination.
+    if state.state in ("port_overworld", "village") and matches_destination:
+        return f"state={state.state}, port={state.port!r}"
+
+    # Once SAILING, the Go-to-City tap already committed the destination, so the next
+    # port_overworld IS the destination by construction. This is the fallback for the race
+    # where the tick lands on a transition frame before port-name OCR has caught up.
+    # Origin: 2026-05-25 sail-to-London. The tick saw port=None, the OCR check failed, the
+    # dispatcher fell through to navigate_to_building and the goal never terminated — the
+    # bot re-entered harbour and re-departed in a loop.
+    if state.state == "port_overworld" and sailing:
+        return (f"phase-aware: state=port_overworld with phase>=SAILING; "
+                f"port reading was {state.port!r}")
+
+    # A village screen shows literally "Village" as its title, so `port` is None while the
+    # state is 'village'. Having sailed TOWARD a village, landing in one is the destination.
+    # The phase guard stops this firing on a pre-departure tick. Origin: 2026-05-23 Berber.
+    if (state.state == "village" and state.port is None and sailing
+            and destination_is_likely_village):
+        return ("state=village with unknown identity; sailed-to a village destination "
+                "-> treating as arrival")
+
+    # Qwen's goal-aware task_complete, gated hard: it must be high confidence, we must
+    # actually have been sailing, and the scene must be somewhere one can arrive.
+    if (state.task_complete is True and state.confidence == "high" and sailing
+            and state.scene_type in ("village", "port_overworld")):
+        return (f"qwen task_complete=true, scene_type={state.scene_type!r}, "
+                f"state.port={state.port!r}, detail={state.detail[:80]!r}")
+
+    return None
+
+
+# How many times the task runner will commit a destination before walking to the harbour.
+# Each commit is one tick, with a perceive in between — so a fleet that arrives, or gets
+# under way, is noticed immediately instead of after a primitive's internal retries.
+_MAX_DEPARTURE_COMMITS = 3
+
+
+# `HarborActivity` guards on the perceived state before it works. This phase has already
+# established that the bot is in the harbour — it just read the departure panel — so it is
+# told plainly rather than paying for a second perceive to learn what it already knows.
+_HARBOR_STATE = types.SimpleNamespace(state="building:harbor", port=None)
+
+
 @dataclass
 class SailToGoal:
     """
@@ -90,7 +152,7 @@ class SailToGoal:
     # Picking the destination FROM PORT makes the game run to the harbour, supply and
     # sail in one operation. Tried once per goal; on failure we fall back to the older
     # harbour → fleet-check → depart path rather than looping on it.
-    _port_departure_tried: bool = field(default=False, init=False)
+    _departure_commits: int = field(default=0, init=False)
     _fail_reason:          str  = field(default="", init=False)
     _tick_count:           int  = field(default=0, init=False)
     _max_ticks:            int  = field(default=300, init=False)  # ~25-50 min
@@ -204,85 +266,14 @@ class SailToGoal:
             f"flow={state.flow!r}  detail={state.detail[:60]!r}"
         )
 
-        # Already at destination?  port_overworld for ports, village
-        # for the new village interior state (introduced 2026-05-22).
-        if (state.state in ("port_overworld", "village")
-                and self._matches_destination(state.port)):
+        reason = arrival_verdict(
+            state, self.phase,
+            matches_destination=self._matches_destination(self._settlement_now(state)),
+            destination_is_likely_village=self._destination_is_likely_village(),
+        )
+        if reason:
             self.phase = SailPhase.ARRIVED
-            logger.info(
-                f"[sail_to] Arrived at {self.destination!r} "
-                f"(state={state.state}, port={state.port!r})"
-            )
-            self._pop_goal_safely()
-            return TickResult("arrived", SailPhase.ARRIVED)
-
-        # Phase-aware arrival heuristic — once we've reached SAILING
-        # phase, the Go-to-City tap already committed the destination,
-        # so the next port_overworld state IS the destination by
-        # construction.  The OCR-confirmed check above is the
-        # high-confidence path; this is the fallback for the race where
-        # the goal-loop tick lands on a port_overworld transition frame
-        # before port-name OCR has caught up (state.port returns None
-        # or a partial like "City" / "Harbor").
-        #
-        # Origin: 2026-05-25 sail-to-London run.  Bot arrived at London
-        # (visible in subsequent logs as port='London') but the
-        # goal-loop tick at the transition frame saw port=None, the
-        # OCR-confirmed check failed, dispatcher fell through to
-        # navigate_to_building, and the goal never terminated — the
-        # bot kept re-entering harbor and re-departing in a loop.
-        if (state.state == "port_overworld"
-                and self.phase.value >= SailPhase.SAILING.value):
-            self.phase = SailPhase.ARRIVED
-            logger.info(
-                f"[sail_to] Arrived at {self.destination!r} "
-                f"(phase-aware: state=port_overworld with phase>=SAILING; "
-                f"port reading was {state.port!r})"
-            )
-            self._pop_goal_safely()
-            return TickResult("arrived", SailPhase.ARRIVED)
-
-        # Village arrival with no readable identity — the in-game
-        # village screen shows literally "Village" as the title (no
-        # specific name), so state.port is None but state.state is
-        # 'village'.  When we've been sailing toward a village
-        # destination and now land in a village interior, that is the
-        # destination by construction.  The phase guard prevents this
-        # from firing on pre-departure ticks where state.state could
-        # transiently be 'village' for unrelated reasons.
-        # Origin: 2026-05-23 Berber sail.
-        if (state.state == "village"
-                and state.port is None
-                and self.phase.value >= SailPhase.SAILING.value
-                and self._destination_is_likely_village()):
-            self.phase = SailPhase.ARRIVED
-            logger.info(
-                f"[sail_to] Arrived at {self.destination!r} "
-                f"(state=village with unknown identity; sailed-to a village "
-                "destination → treating as arrival)"
-            )
-            self._pop_goal_safely()
-            return TickResult("arrived", SailPhase.ARRIVED)
-
-        # Secondary arrival signal — Qwen's goal-aware task_complete.
-        # Triggers when:
-        #   • Qwen was given the task_hint (we pushed GoalContext)
-        #   • Qwen returned task_complete=True with high confidence
-        #   • We've actually been sailing (phase ≥ SAILING) — guards
-        #     against premature completion on world-map / pre-departure
-        #     frames where the destination name happens to be on screen
-        #   • scene_type is village-or-port-like (sanity check; if Qwen
-        #     thinks task_complete on a 'sea' frame, ignore it)
-        if (state.task_complete is True
-                and state.confidence == "high"
-                and self.phase.value >= SailPhase.SAILING.value
-                and state.scene_type in ("village", "port_overworld")):
-            self.phase = SailPhase.ARRIVED
-            logger.info(
-                f"[sail_to] Arrived at {self.destination!r} "
-                f"(qwen task_complete=true, scene_type={state.scene_type!r}, "
-                f"state.port={state.port!r}, detail={state.detail[:80]!r})"
-            )
+            logger.info(f"[sail_to] Arrived at {self.destination!r} ({reason})")
             self._pop_goal_safely()
             return TickResult("arrived", SailPhase.ARRIVED)
 
@@ -306,6 +297,34 @@ class SailToGoal:
 
         # Dispatch based on current state (trust ground truth)
         return self._dispatch(state)
+
+    def _settlement_now(self, state) -> Optional[str]:
+        """Where the fleet IS, even when the screen does not say.
+
+        Inside a building the port name is not on screen, so `state.port` is None — and a
+        destination check that only reads the screen then concludes "not there" and sails to
+        the port it is standing in. Live 2026-08-21: `gather:Jakarta` ran while the fleet sat
+        in Jakarta's Market, the one place it needed to be, and instead of buying it tried to
+        exit, open the world map and sail to Jakarta.
+
+        The bot still KNOWS where it is — the settlement is carried across ticks and persisted
+        — so a building or sub-menu falls back to that belief. This is the one place the
+        repository outranks the screen, and only because the screen is silent rather than
+        contradicting it.
+        """
+        if state.port:
+            return state.port
+        if state.state not in ("building", "sub_menu"):
+            return None
+        try:
+            from brain import observation as _obs
+            cur = _obs.current()
+            return (cur.last_known_settlement if cur else None) \
+                or _obs._ensure_persisted_loaded()
+        except Exception as exc:
+            logger.debug(f"[sail_to] could not resolve the settlement from inside a "
+                         f"building ({type(exc).__name__}: {exc})")
+            return None
 
     def _matches_destination(self, port: Optional[str]) -> bool:
         if not port:
@@ -429,29 +448,62 @@ class SailToGoal:
         and burns supply while the bot navigates (user 2026-08-21). The world-map work is
         identical; only the consequence differs.
 
-        `depart_from_port_via_world_map` owns the two ways this misbehaves — staying
-        ashore, and reaching the sea with speed 0 — and falls back to the harbour flow
-        below if it cannot get the fleet under way at all."""
+        The two ways this misbehaves — staying ashore, and reaching the sea with speed 0 —
+        are handled HERE, one tick at a time, with a perceive between each. They used to be
+        handled inside the departure call, which meant this goal could not see a fleet that
+        had already arrived (2026-08-25)."""
         if not self.from_port and state.port:
             self.from_port = state.port
         self._reset_failures()
 
-        if not self._port_departure_tried:
-            self._port_departure_tried = True
-            from actions.sail_actions import depart_from_port_via_world_map
-            res = depart_from_port_via_world_map(self.destination)
+        # ONE ACTION PER TICK. `commit_departure` taps and returns; whether the fleet then
+        # moved, stayed, or ARRIVED is read by the next perceive and decided here — not
+        # inside the primitive. The old call owned all of that internally and the goal lost
+        # control for six minutes while the fleet sat at its destination (2026-08-25).
+        if self._departure_commits < _MAX_DEPARTURE_COMMITS:
+            self._departure_commits += 1
+            from actions.sail_actions import commit_departure
+            res = commit_departure(self.destination)
             if res.get("ok"):
                 self._destination_selected = True
-                self.phase = SailPhase.SAILING
-                return TickResult(f"departed:{res.get('departed_via')}", SailPhase.SAILING,
+                # NOT "sailing" yet — that is a fact about the world, and the next tick will
+                # perceive it. Claiming it here is how a fleet that never left, or one that
+                # already arrived, both got recorded as under way.
+                return TickResult("departure committed", self.phase,
                                   note=res.get("reason"), delay=3.0)
-            logger.warning(f"[sail_to] port departure did not get under way "
-                           f"({res.get('reason')}) — falling back to the harbour flow")
+            logger.warning(f"[sail_to] could not commit the departure "
+                           f"({res.get('reason')}) — attempt "
+                           f"{self._departure_commits}/{_MAX_DEPARTURE_COMMITS}")
+            return TickResult("departure not committed", self.phase,
+                              note=res.get("reason"), delay=2.0)
 
+        logger.warning(f"[sail_to] {self._departure_commits} departure commits did not get "
+                       "the fleet under way — falling back to the harbour flow")
         self.phase = SailPhase.GO_TO_HARBOR
         return self._action_navigate_to_harbor()
 
     def _handle_sea(self, state) -> TickResult:
+        # THE SCREEN OUTRANKS THE FLAG.
+        #
+        # `_destination_selected` is a CONCLUSION this goal drew earlier, and CLAUDE.md
+        # forbids trusting one: it cannot be checked by looking. The sea HUD PRINTS the
+        # destination at bottom-centre — `Barcelona / ETA 1 d` — so the same question has an
+        # observation to answer it.
+        #
+        # Live 2026-08-26 is what the flag alone costs. The departure worked, a post-tap check
+        # misread the cinematic as failure, the flag stayed False, and this branch re-opened
+        # the world map MID-VOYAGE and re-targeted the port the fleet had just left. That
+        # frame's HUD said `Barcelona ETA 1 d` the whole time.
+        #
+        # Safe in the other direction too: the game can show a destination while a tap had no
+        # effect (user 2026-08-21), so believing it could in principle wait on a fleet that is
+        # not moving. That is what SAILING's own stall detection is for — a stalled voyage is
+        # caught by watching for MOVEMENT, which is the observation for THAT question.
+        if not self._destination_selected and self._already_bound(state):
+            logger.info(f"[sail_to] the HUD says the fleet is already bound for "
+                        f"{self.destination!r} — not re-selecting it")
+            self._destination_selected = True
+
         if self._destination_selected:
             self.phase = SailPhase.SAILING
             return self._action_sailing(state)
@@ -459,6 +511,21 @@ class SailToGoal:
         # Need to open world map and select destination
         self.phase = SailPhase.SEA_NAVIGATE
         return self._action_open_world_map()
+
+    def _already_bound(self, state) -> bool:
+        """Does the sea HUD name the destination this goal wants?"""
+        from vision.region_detectors.sea_destination import bound_for
+        frame = getattr(state, "frame", None)
+        try:
+            if frame is None:
+                from capture.adb_capture import capture_screen
+                frame = capture_screen()
+            return bool(bound_for(frame, self.destination))
+        except Exception as exc:
+            # A failed read is NOT "no destination" — it is no answer, and the goal proceeds
+            # exactly as it did before this check existed.
+            logger.debug(f"[sail_to] could not read the destination from the HUD: {exc}")
+            return False
 
     def _handle_world_map(self, state) -> TickResult:
         self.phase = SailPhase.WORLD_MAP
@@ -565,22 +632,58 @@ class SailToGoal:
         except Exception as exc:
             logger.debug(f"[sail_to] blocker check failed: {exc}")
 
-        from brain.planner import get_planner
+        # A TRANSIENT IS NOT UNEXPECTED — IT IS THIS GOAL'S OWN ACTION STILL LANDING.
+        #
+        # `transient` and `loading` are the departure cinematic, the arrival fade, the notice
+        # the game throws mid-move. Their defining property is that the destination is not yet
+        # knowable: the action has been COMMITTED and finished, and where it lands is a
+        # question only the next perceive can answer — the same shape as the idle lock's
+        # swipe (user, 2026-08-27). So the answer is to WAIT AND LOOK AGAIN, never to plan a
+        # recovery.
+        #
+        # Live 2026-08-27: the fleet committed a departure to Svear Village, the cinematic
+        # came up, this called it "Unexpected state 'transient'" and planned back to
+        # port_overworld. `recover_to_port_overworld` saw `sea`, took its
+        # `_recover_from_sea` branch, and SAILED THE FLEET BACK to home port Barcelona —
+        # cancelling the voyage the mission had just started. It ran 311.5s and reported
+        # SUCCESS, because reaching port_overworld is its only success test.
+        if (state.state or "") in ("transient", "loading"):
+            logger.info(f"[sail_to] {state.state!r} — the committed action is still landing; "
+                        "waiting to perceive where it ends up rather than recovering")
+            return TickResult("settling", self.phase, delay=2.0)
 
-        logger.warning(
-            f"[sail_to] Unexpected state {state.state!r} — planning back to overworld"
-        )
-        ok = get_planner().plan_to(
-            "port_overworld", current_state=state.state,
-            home_port=self.from_port, timeout=60.0,
-        )
-        if ok:
-            self._reset_failures()
-            return TickResult("recovered", self.phase, delay=2.0)
+        # ONE ACT, THEN REPORT — NEVER NAVIGATE.
+        #
+        # This used to call `planner.plan_to("port_overworld", home_port=…)`, which is the
+        # only live path into `recover_to_port_overworld`. That function owns a 20-attempt
+        # loop, accepts one destination as success, and — given a `home_port`, which every
+        # caller passes — reaches `_recover_from_sea`, whose first branch is
+        # `sail_to_port(home_port)`: full navigation. So a goal that could not read a screen
+        # ended up MOVING THE FLEET.
+        #
+        # Live 2026-08-27: the fleet committed a departure to Svear Village, the departure
+        # cinematic came up, this called it unexpected, and the recovery sailed the fleet
+        # back to Barcelona — cancelling the voyage. It ran 311.5s and logged SUCCESS,
+        # because reaching port_overworld is its only success test.
+        #
+        # Getting off a screen is one tap (`exit_current_screen` picks Home / the dialog X /
+        # the in-game back arrow, and refuses a system back on an overworld). Where that
+        # lands is the next perceive's business. If the screen is still unreadable after
+        # three ticks, that is a fact for the layer above to act on — retry the leg, re-plan,
+        # or stop — and not a licence for this goal to decide where the fleet should be.
+        from actions.screen_exit import exit_current_screen
+
+        logger.warning(f"[sail_to] cannot read state {state.state!r} — taking ONE exit and "
+                       "re-perceiving; this goal does not navigate to recover")
+        try:
+            res = exit_current_screen()
+            logger.info(f"[sail_to] exit attempt: {getattr(res, 'method', res)}")
+        except Exception as exc:
+            logger.warning(f"[sail_to] could not exit the screen: {exc}")
 
         if self._track_failure(self.phase):
-            return TickResult("recovery_failed", SailPhase.FAILED, ok=False)
-        return TickResult("recovering", self.phase, delay=5.0)
+            return TickResult("unreadable_state", SailPhase.FAILED, ok=False)
+        return TickResult("exiting", self.phase, delay=3.0)
 
     # ── Individual actions ───────────────────────────────────────────────
     # Each action does ONE thing and returns.  Phase transitions happen
@@ -645,10 +748,27 @@ class SailToGoal:
         )
 
     def _action_fleet_check(self) -> TickResult:
-        """Check fleet readiness (crew, supplies) before departure."""
-        from actions.sail_actions import _ensure_fleet_ready
+        """Check fleet readiness (crew, supplies) before departure.
 
-        ok = _ensure_fleet_ready()
+        The readiness check no longer walks back to the harbour after a resolution attempt —
+        that is navigation, and this goal owns navigation. So when the read says the bot is
+        not looking at the departure panel, step back to GO_TO_HARBOR rather than re-reading
+        the same wrong screen until the failure count runs out.
+        """
+        from actions.sail_actions import read_fleet_readiness
+
+        reading = read_fleet_readiness()
+        if not reading["ready"] and not reading["on_departure_panel"]:
+            logger.info(f"[sail_to] the fleet check is not looking at the departure panel "
+                        f"({reading['detail']}) — going back to the harbour")
+            self.phase = SailPhase.GO_TO_HARBOR
+            return TickResult("fleet_check_needs_harbor", SailPhase.GO_TO_HARBOR, ok=False,
+                              note="not on the departure panel")
+
+        ok = reading["ready"]
+        if not ok:
+            logger.warning(f"[sail_to] fleet not ready: {reading['detail']}")
+            self._serve_blocker(reading)
         if ok:
             self._fleet_checked = True
             self._reset_failures()
@@ -663,6 +783,40 @@ class SailToGoal:
             "fleet_check_retry", SailPhase.FLEET_CHECK, ok=False,
             note="fleet not ready — will re-check next tick",
         )
+
+    def _serve_blocker(self, reading: dict) -> None:
+        """A BLOCKER IS NOT A RECOVERY — IT IS THE NEXT GOAL (user, 2026-08-26).
+
+        "Not enough crew" is not an exception raised by sailing; it is the world saying the
+        fleet is not ready, and the remedy is ordinary work. So the named blocker becomes a
+        goal, and the harbour activity serves it — one rung, then this phase re-checks on its
+        next tick and reads the game's own answer, which outranks anything counted here.
+
+        The old ladder is still the fallback for blockers nothing yet serves — an unnamed one,
+        or "not enough supply", whose remedy is at the market. That is a HYBRID and known to
+        be one: this phase machine is standing in for the dispatcher until `sail_to` is
+        migrated. What it buys is that the common case — crew, eleven of the eighteen learned
+        recoveries — stops going through four rungs of guessing, without any case losing its
+        handling in the meantime.
+        """
+        from brain.activities.harbor import HarborActivity, RecruitCrew, goal_for_blocker
+
+        blocker = reading.get("blocker") or {}
+        named = blocker.get("text") if isinstance(blocker, dict) else str(blocker or "")
+        goal = goal_for_blocker(named)
+
+        if goal is None:
+            from actions.sail_actions import resolve_fleet_blocker
+            logger.info(f"[sail_to] no goal serves {named or 'an unnamed blocker'} — "
+                        "falling back to the resolution ladder")
+            res = resolve_fleet_blocker(reading)
+            logger.info(f"[sail_to] resolution attempt via {res['via']}: "
+                        f"resolved={res['resolved']}")
+            return
+
+        logger.info(f"[sail_to] {named!r} blocks departure — next goal: {goal}")
+        result = HarborActivity().work(goal, _HARBOR_STATE)
+        logger.info(f"[sail_to] {goal} -> {result.status} {dict(result.observed)}")
 
     def _action_depart(self) -> TickResult:
         """Tap Depart and wait for sea confirmation."""
@@ -825,9 +979,29 @@ def drive_sail_to(destination: str, from_port=None, min_supply_days=None) -> dic
     fix included), not the older monolithic sail_to_port. The task runner's run_sail_to
     drives the same goal; supply mid-voyage watch lives there (each barter leg departs
     via Supply Departure, so legs start topped up)."""
+    # DEPRECATED, AND LOUD ABOUT IT — same treatment as `open_world_map`, for the same
+    # reason. It drives `SailToGoal`, eight phases that walk to the harbour, open the world
+    # map, pick the destination and then POLL FOR ARRIVAL in a SAILING phase of their own.
+    # That poll does not perceive through the dispatcher, so it receives neither the
+    # interruptor pass that dismisses a daily-news popup nor `IdleLockActivity` — the exact
+    # failure `_await_route_arrival` was deleted for.
+    #
+    # Its production callers are gone: `brain/barter_mission_live._sail_to` states the leg as
+    # work orders (Depart -> ChooseDestination -> ArriveAshore) and the dispatcher routes
+    # each. Left standing as the reference for what those orders must reproduce; any caller
+    # appearing in a log is a leg that went around the dispatcher.
+    import inspect as _inspect
     import random
     import time as _time
     from loguru import logger as _logger
+
+    _caller = "?"
+    for _fr in _inspect.stack()[1:]:
+        if _fr.filename != __file__:
+            _caller = f"{_fr.filename.rsplit('/', 1)[-1]}:{_fr.lineno} in {_fr.function}()"
+            break
+    _logger.warning(f"[drive_sail_to] DEPRECATED — called from {_caller}. State the leg as "
+                    f"work orders (see brain/sail_runner.py); report this caller.")
 
     # Already at the destination? Skip the pointless round-trip. (The Malé bug: the
     # scheduler picked the CURRENT port, but where_am_i's port read None, so SailToGoal

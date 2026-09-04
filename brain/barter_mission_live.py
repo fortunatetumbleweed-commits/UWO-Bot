@@ -18,8 +18,63 @@ from typing import Mapping, Optional
 from loguru import logger
 
 from memory.barter_kb import BarterRecipe
-from brain import mission_progress
+from brain import mission_progress, owned_state
 from brain.gathering_solver import plan_gathering, assign_purchases
+
+
+# ── THE FAÇADE, AND WHY IT IS STILL HERE ─────────────────────────────────────
+#
+# FUTURE ENHANCEMENT, deliberately deferred (user, 2026-08-28: "lets mark this
+# barter_mission_live facade as future enhancement, and log all the calls and see if they
+# cause issues").
+#
+# This module is a task module that still reaches the UI: 8 UI imports, and functions that
+# capture screens and drive `run_goal` themselves. Two modules that are otherwise clean —
+# `brain/barter_command.py` and `brain/barter_task.py` — reach the UI THROUGH it, which is
+# how `barter_command` measured 0 UI imports while using the whole barter panel. That second
+# hop is declared in `tests/test_the_layering_is_enforced.py::KNOWN_SECOND_HOP` so it cannot
+# grow.
+#
+# What is left, and who owns it when it moves:
+#
+#   current_position / _current_port    "where are we?" — the dispatcher perceives it
+#   _at_a_market_port / supply_verify   the same question, again
+#   gather / sell / sell_surplus / barter   run_goal drivers — market work orders
+#   _enter_market_at / _exit_market_to_overworld   transitions the dispatcher should route
+#
+# The market work is the bulk of it and is being left alone for now. Until then, every call
+# through the façade is LOGGED with its caller, so a live run says whether these paths are
+# actually causing trouble rather than merely being in the wrong place. A quiet log is
+# evidence the deferral is safe; a noisy one names the first thing to move.
+
+
+def _facade(fn):
+    """Log a call through the façade, with the caller that made it.
+
+    Not a deprecation — these are the paths the mission still runs on. It is a MEASUREMENT:
+    the point of deferring this refactor is to find out whether it costs anything, and that
+    cannot be answered from the code. It has to be watched.
+    """
+    import functools
+    import inspect as _inspect
+
+    @functools.wraps(fn)
+    def wrapped(*args, **kwargs):
+        caller = "?"
+        for fr in _inspect.stack()[1:]:
+            if fr.filename != __file__:
+                caller = f"{fr.filename.rsplit('/', 1)[-1]}:{fr.lineno} in {fr.function}()"
+                break
+        logger.info(f"[facade] {fn.__name__} <- {caller}")
+        return fn(*args, **kwargs)
+
+    return wrapped
+
+
+
+# The village menu animates in and a standby gate can cover it for a moment, so one
+# empty capture is not proof the menu is absent — look again before concluding.
+_MENU_READ_ATTEMPTS = 3
 
 
 # ── Deterministic planning core (unit-tested) ──────────────────────────────────
@@ -106,6 +161,7 @@ def _strip_accents(s: str) -> str:
                    if not unicodedata.combining(c)).lower()
 
 
+@_facade
 def catalogue_coords() -> dict:
     """{port: (x, y)} from the COMPLETE 224-port catalogue
     (memory/knowledge/world_map/port_coordinates.json via load_port_catalogue),
@@ -128,6 +184,7 @@ def catalogue_coords() -> dict:
 # opportunity-driven path (docs/opportunity_driven_architecture.md); it replaced the rigid
 # 5-phase runner, which was deleted 2026-08-20 once nothing called it.
 
+@_facade
 def current_position(coords: Mapping[str, tuple], fallback=None, tries: int = 3):
     """The bot's current position as (x, y) for the scheduler — from where_am_i()'s port,
     mapped through the (accent-stripped) catalogue.
@@ -189,6 +246,7 @@ def current_position(coords: Mapping[str, tuple], fallback=None, tries: int = 3)
     return fallback
 
 
+@_facade
 def _exit_market_to_overworld() -> None:
     """Leave the market back to port_overworld so the next sub-task's sail starts from
     a KNOWN state (the frame-19 stall was SailToGoal inheriting a market it should never
@@ -200,6 +258,35 @@ def _exit_market_to_overworld() -> None:
             logger.warning("[mission] exit to port_overworld not confirmed after buy/sell")
     except Exception as exc:
         logger.debug(f"[mission] exit_to_overworld skipped: {exc}")
+
+
+@_facade
+def _enter_market_at(port: str) -> dict:
+    """Get into the Market at *port*. Returns {"ok": bool, "reason": str}.
+
+    `navigate_to_building` no longer walks the bot out of wherever it happens to be — it
+    reports and returns (see docs/one_loop_task_drives_state.md). That was the right fold:
+    the primitive pressing Back on a screen it did not recognise is what cancelled a
+    successful departure four times over. But it means SOMEONE has to do the walking, and
+    at this layer that someone is the task.
+
+    So: try to enter; if the screen was not a port overworld, reorient to one and try once
+    more. `may_leave_a_place=False` — this is stepping out of a PANEL, never out of the
+    settlement the mission sailed to.
+    """
+    from actions.sail_actions import navigate_to_building
+    from brain.nav_step import reorient_to, ARRIVED
+
+    if navigate_to_building("Market"):
+        return {"ok": True, "reason": ""}
+
+    logger.info(f"[mission] Market at {port} not reachable from here — reorienting")
+    step = reorient_to("port_overworld", may_leave_a_place=False)
+    if step.outcome != ARRIVED:
+        return {"ok": False, "reason": f"could not reach the {port} overworld: {step.reason}"}
+    if navigate_to_building("Market"):
+        return {"ok": True, "reason": ""}
+    return {"ok": False, "reason": f"could not reach Market at {port}"}
 
 
 def make_live_executors(opp=None) -> dict:
@@ -215,13 +302,10 @@ def make_live_executors(opp=None) -> dict:
     TypeError before a single tap.
     """
 
+    @_facade
     def gather(task) -> dict:
-        import time as _t
-        from actions.sail_actions import navigate_to_building
-        from actions.adb_actions import tap
-        from actions.market_actions import MARKET_COORDS
-        from actions.buy_materials import buy_to_goal
-        from brain.goals.sail_to import drive_sail_to
+        from brain.activities.market import Hold
+        from brain.run_goal import run_goal
         port = task.params["port"]
         orders = task.params["orders"]
 
@@ -235,259 +319,107 @@ def make_live_executors(opp=None) -> dict:
             return {"ok": True, "skipped": True,
                     "reason": f"already own the {port} orders"}
 
-        sail = drive_sail_to(port)
+        sail = _sail_to(port)
         if not sail.get("ok"):
             return {"ok": False, "reason": f"sail to {port}: {sail.get('reason')}"}
-        if not navigate_to_building("Market"):
-            return {"ok": False, "reason": f"could not reach Market at {port}"}
-        tap(*MARKET_COORDS["purchase"])          # show the goods grid (market opens on the greeting)
-        _t.sleep(2.0)
-        # Buy toward the goal, refreshing the market with blue gems if a material sells
-        # out before the target is met (rather than waiting ~20 min for the timer).
-        # Scale the round bound to the goal (each round buys ~one shelf or refreshes); the
-        # loop stops early once the goal is met, so this is only a backstop. No gem-budget
-        # guard (user 2026-08-18: "just raise the bound"); the cap keeps a tiny-stock /
-        # huge-goal case from burning unbounded blue gems.
-        goal_total = sum(orders.values())
-        max_rounds = min(60, max(4, -(-goal_total // 20)))
-        res = buy_to_goal(port, orders, max_rounds=max_rounds)
-        # buy_to_goal returns "already own ... >= goal" as a VALUE; without this the log
-        # showed a market visit that bought nothing and no reason why.
-        if res.get("met") and not res.get("rounds"):
-            logger.info(f"[gather] {port}: {res.get('reason')}")
-        _exit_market_to_overworld()   # clean hand-off: leave port_overworld for the next leg
-        return {"ok": bool(res.get("ok")), "reason": res.get("reason", ""), **res}
 
+        # THE MARKET IS TOLD THE WHOLE LIST, not one material per visit. Only the market
+        # activity can see what this port actually stocks — it may carry one of the three or
+        # all — so splitting the list forces this layer to guess. And a visit that knows the
+        # whole list will not clear Iron out of the hold to make room for Candle.
+        #
+        # Getting to the market is an INTENT the loop dispatches; the tab tap, the shelf
+        # rounds and the gem refresh are the activity's business and no longer appear here.
+        result = run_goal(Hold(dict(orders)))
+        if result is None:
+            return {"ok": False, "reason": f"could not reach the market at {port}"}
+        observed = dict(result.observed)
+        _exit_market_to_overworld()   # clean hand-off: leave port_overworld for the next leg
+        return {"ok": bool(result.ok), "port": port,
+                "bought_total": observed.get("bought_total"),
+                "met": observed.get("met"),
+                "reason": observed.get("stopped_because") or result.detail}
+
+    @_facade
     def sail_to_village(task) -> dict:
         # Sailing to a village is the SAME operation as sailing to a port — SailToGoal
         # dispatches Explore-tab village selection and its arrival check accepts the
         # 'village' state (user 2026-08-17: "no difference except the arrival check").
         # The difference that matters is SUPPLY: a village has no harbour, so this leg
         # carries a round-trip floor and the at-sea watch enforces it the whole way.
-        from brain.goals.sail_to import drive_sail_to
         from brain.supply_planner import VILLAGE_LEG_RESERVE_DAYS
         # Committed. From here the materials aboard are the materials we barter with, and
         # re-checking them can only cost us the position we are sailing to.
         # Gathering is over by construction — the graph runs gathers and the surplus
         # clear before this node. From here on, no cargo checks.
         mission_progress.advance("bartering")
-        return drive_sail_to(task.params["village"],
-                             min_supply_days=task.params.get("min_days",
-                                                             VILLAGE_LEG_RESERVE_DAYS))
+        # The village is on the Explore tab, which `ChooseDestination(kind='village')`
+        # already knows. The round-trip floor still rides along, but it is now WEIGHED by the
+        # task runner from what `SeaActivity` reports each tick — an activity that decides to
+        # turn back is deciding the mission's business.
+        return _sail_to(task.params["village"], kind="village",
+                        min_supply_days=task.params.get("min_days",
+                                                        VILLAGE_LEG_RESERVE_DAYS))
 
+    @_facade
     def barter(task) -> dict:
-        """BARTER at the village, sized by the PANEL, not by the pre-sail plan.
+        """BARTER AT THE VILLAGE — the goal, and nothing about how.
 
-        The plan was built from a remote check that is hours old by the time the fleet
-        arrives, and the cargo may not have survived the voyage (2026-08-20: a fleet death
-        took 75% of the materials and nothing noticed until afterwards, because this loop
-        read the panel and threw the reading away).  The panel's X/Y is ground truth, and
-        it BOUNDS the round target — the per-round gate alone would keep attempting rounds
-        the hold cannot fund whenever a read comes back stale."""
-        from brain.barter_mission import run_barter_phase
-        from actions.barter_executor import barter_commit_verified
+        This node was 219 lines and was BOTH the goal and the procedure: it opened the panel,
+        picked the tile, tapped Exchange, confirmed the dialog, cleared overflow, counted
+        rounds and decided whether to sail. Nearly every bug of 2026-08-26 lived in it.
 
-        planned = task.params["rounds"]
-        arrival = _read_panel_state()
-        seen = {"on_arrival": None, "shortfall": None, "partial_left": None}
-        target = planned
+        Now it states a goal and hands it to the loop. `Barter("Birch Tree", "Svear Village")`
+        mentions no panel, no tile and no round count — the panel bounds the rounds, and the
+        village activity reports what it did in task vocabulary.
 
-        if arrival is None:
-            # OPEN THE BARTER SUB-MENU FIRST. `barter_commit_verified` acts on an already-open
-            # panel — it does not navigate — so arriving at the village INTERIOR and going
-            # straight to a commit hunts for a positive button on a screen that has none.
-            # Live 2026-08-22: the fleet reached Melanesian Village, perceive reported the
-            # left menu verbatim as ['barter', 'explore', 'gifting', 'loot', 'recruit crew'],
-            # and the mission aborted with "no positive button found — settled after 0 tap(s)"
-            # twice without ever tapping the 'barter' item it had just read.
-            panel_open = _open_barter_panel()
-            if panel_open == "unavailable":
-                # The day's rounds are spent. Finish the phase so the tail can run.
-                mission_progress.advance("sailing_route")
-                return {"ok": True, "exhausted": True, "committed": 0,
-                        "reason": "the village's barters for today are used up",
-                        "planned_rounds": planned, "attempted_rounds": 0}
-            if panel_open:
-                arrival = _read_panel_state()
-                # The panel opens with NOTHING selected — it reads "Select Trade Good." and
-                # the tiles carry no names, only a thumbnail, a stock status and a category.
-                # Live 2026-08-23 that came back as good=None, materials=[], which is not a
-                # failure to open: it is a selection still to make.
-                if arrival is None or not getattr(arrival, "materials", None):
-                    good = task.params.get("good") or ""
-                    prog = mission_progress.current() or {}
-                    recipe = ((prog.get("recipe") or {}).get("materials")
-                              if isinstance(prog.get("recipe"), dict) else None)
-                    if _select_trade_good(good, recipe):
-                        arrival = _read_panel_state()
-            if arrival is None:
-                # STOP. Not knowing where we are is a reason to re-establish position, never
-                # a reason to start tapping: `barter_commit_verified` assumes an open panel,
-                # so committing from an unidentified screen taps whatever happens to look
-                # positive on it. The screen is ground truth — report what it actually shows
-                # and let the caller correct itself, rather than acting out a state we only
-                # believe we are in.
-                fail = _no_panel_failure()
-                if panel_open:      # the panel IS open — say what actually went wrong
-                    fail = {**fail, "reason": f"the Barter panel is open but {task.params.get('good')!r} "
-                                              "could not be selected from the tradable goods"}
-                    logger.warning(f"[mission.barter] {fail['reason']}")
-                return {**fail, "planned_rounds": planned, "attempted_rounds": 0}
-        else:
-            seen["on_arrival"] = dict(arrival.materials)
-            seen["partial_left"] = arrival.partial_fraction
-            # THE PANEL BOUNDS THE ROUNDS, NOT THE PRE-SAIL PLAN. Keep bartering while the
-            # materials fund a round — the per-round gate below stops on a full hold or on
-            # consumption (user, 2026-08-23: "should continue until the ship is fully loaded
-            # or the materials are all gone").
-            #
-            # `planned` is computed before sailing and is systematically too small: it prices
-            # each round at the PEAK footprint, while a round actually FREES space — live
-            # 2026-08-23, 648 units of materials left and 497 of product arrived, a net -151.
-            # So the plan said 1 round where the materials funded 3, and the mission stopped
-            # with two rounds' worth of cargo still aboard.
-            # BOTH bounds are real, so take the smaller: the PANEL bounds by materials
-            # actually aboard, and the PLAN bounds by cargo space and the daily barter limit.
-            #
-            # Neither may be dropped. `max()` re-opened the 2026-08-20 fleet-death case — a
-            # stale plan of 6 against materials for 1 would attempt 6. Ignoring the plan
-            # instead would over-commit past the space and daily limits it encodes.
-            #
-            # The "only 1 round when 3 were funded" problem (2026-08-23) was never this
-            # line: `planned` had been computed from an UNKNOWN hold and came out too small.
-            # That is fixed where it belongs — `_try_barter_here` sizes the rounds from the
-            # panel when the fleet is already at the village.
-            target = min(int(planned), int(arrival.rounds_remaining))
-            logger.info(f"[mission.barter] panel: {arrival.materials} → "
-                        f"{arrival.rounds_remaining} full round(s) fundable "
-                        f"(planned {planned}) → committing {target}")
-            if arrival.rounds_remaining < planned:
-                seen["shortfall"] = {"planned": planned,
-                                     "fundable": arrival.rounds_remaining,
-                                     "binding": arrival.binding,
-                                     "short_by": arrival.shortfall}
-                logger.warning(
-                    f"[mission.barter] MATERIAL SHORTFALL — planned {planned} round(s), "
-                    f"the hold funds {arrival.rounds_remaining}. Limited by "
-                    f"{arrival.binding!r}; short {arrival.shortfall} for one more round. "
-                    "Cargo does not match the plan (a loss en route, or the ratio moved "
-                    "since the remote check).")
-            if arrival.rounds_remaining == 0 and arrival.partial_fraction > 0:
-                logger.info(f"[mission.barter] {arrival.partial_fraction:.1%} of a further "
-                            "round is fundable — not spending a daily round on a partial")
+        `rounds` is still accepted in params and is deliberately IGNORED. It was the pre-sail
+        estimate, computed from a remote check hours old on arrival and systematically too
+        small: it priced each round at its peak footprint while a round actually FREES space
+        (2026-08-23 — 648 units of materials out, 497 of product in, a net -151, so a plan of
+        1 against materials that funded 3).
+        """
+        from brain.activities.village import Barter
+        from brain.run_goal import run_goal
 
-        def read_state():
-            """Per-round gate: re-read the panel so consumption stops the loop on ground
-            truth rather than on the round counter.  `overflow` reports the units the
-            game is holding PENDING because the hold is full — non-zero hands control to
-            `jettison_fn`, which must clear it before the goods are discarded."""
-            from actions.overflow_dialog import read_overflow
-            from capture.adb_capture import capture_screen
-            from vision.omniparser import parse_fast_cached
-            overflow = 0
-            try:
-                ov = read_overflow(parse_fast_cached(capture_screen()))
-                if ov is not None and ov.pending:
-                    overflow = int(ov.pending)
-                    logger.warning(f"[mission.barter] OVERFLOW — {overflow} unit(s) pending, "
-                                   "the hold is full; clearing before they are discarded")
-            except Exception as exc:
-                logger.debug(f"[mission.barter] overflow probe skipped: {exc}")
-            state = _read_panel_state()
-            if state is None:
-                return {"rounds_remaining": 1, "overflow": overflow}
-            seen["partial_left"] = state.partial_fraction
-            return {"rounds_remaining": state.rounds_remaining, "overflow": overflow}
+        good, village = task.params["good"], task.params.get("village", "")
+        result = run_goal(Barter(good, village))
+        if result is None:
+            return {"ok": False, "committed": 0,
+                    "reason": "could not reach the village barter panel"}
 
-        def jettison(overflow_units) -> dict:
-            """Clear the overflow dialog: dump the cheapest cargo, keep the supply
-            reserve, never dump the output, then Receive.  Dismissing the dialog would
-            LOSE the pending goods, so this is not optional once it is up."""
-            from actions.overflow_dialog import clear_overflow
-            from brain.supply_planner import supply_needed_each, VILLAGE_LEG_RESERVE_DAYS
-            reserve = supply_needed_each(VILLAGE_LEG_RESERVE_DAYS)
-            res = clear_overflow(output_good=task.params.get("good", ""),
-                                 reserves={"water": reserve, "food": reserve})
-            seen["overflow_cleared"] = res
-            if res.get("sacrificed"):
-                logger.warning(f"[mission.barter] {res['sacrificed']} unit(s) of "
-                               f"{task.params.get('good')} given up — the supply reserve "
-                               "could not be preserved any other way")
-            logger.info(f"[mission.barter] overflow: {res.get('reason')}")
-            return res
+        observed = dict(result.observed)
+        committed = int(observed.get("committed") or observed.get("rounds_committed") or 0)
+        mission_progress.record_rounds(committed)
 
-        play = type("P", (), {"rounds": target})()
-        res = run_barter_phase(play, read_state_fn=read_state,
-                               commit_fn=barter_commit_verified,
-                               jettison_fn=jettison)
-        # A STALL WITH NOTHING LEFT TO BARTER IS COMPLETION, NOT FAILURE.
-        #
-        # `run_barter_phase` reports ok=False when a commit produces no amity/cargo change —
-        # correct when something went wrong, wrong when the game simply refused because the
-        # materials are spent. Live 2026-08-23 the fleet bartered until Coral hit 2 against a
-        # need of 3, the last tap changed nothing, and the mission FAILED — so the tail never
-        # ran and the fleet sat in the village with its cargo.
-        #
-        # The panel distinguishes the two: if no further barter is affordable, the phase is
-        # done. Only a stall with a barter still available is a real failure.
-        #
-        # It must also have COMMITTED something. Arriving unable to barter at all is not
-        # completion — the materials never made it, and that is worth reporting.
-        mission_progress.record_rounds(int(res.get("committed") or 0))
+        # A STALL WITH NOTHING LEFT TO BARTER IS COMPLETION, NOT FAILURE. The activity has
+        # already asked the only question that separates them — is Exchange still live — so
+        # nothing here re-derives it from materials. Live 2026-08-23 the fleet bartered until
+        # Coral hit 2 against a need of 3, the last tap changed nothing, and the mission
+        # FAILED with its cargo aboard because a stall was read as an error.
+        ok = bool(result.ok)
+        if ok:
+            mission_progress.advance("sailing_route")
 
-        # "Committed" spans the MISSION, not this run. A later run finds the same empty panel
-        # whether the materials were spent by earlier rounds or never arrived at all — and
-        # only the mission's running total tells them apart. Live 2026-08-23 a mission that
-        # had bartered three times reported "bartered 0 round(s)" on the run that found
-        # nothing left, failed, and never took its route.
-        _bartered = (int(res.get("committed") or 0) >= 1
-                     or mission_progress.committed_total() >= 1)
-        if not res.get("ok") and _bartered and not _exchange_still_live():
-            done_state = _read_panel_state()
-            short = getattr(done_state, "shortfall", None) if done_state else None
-            logger.info("[mission.barter] the commit stalled and Exchange is greyed — the "
-                        f"materials are spent (short {short}); treating the bartering as "
-                        "FINISHED rather than failed")
-            res = {**res, "ok": True, "exhausted": True,
-                   "reason": "bartered until the materials ran out"}
+        # `more_rounds_fundable` is 0 BY CONSTRUCTION now. The activity bartered until the
+        # village refused, so there is nothing left for a caller to re-enter for — and
+        # re-entering on a number the task re-derived from materials is precisely what caused
+        # the 74-round loop at Svear (the phase declared itself finished, the outer check said
+        # "74 more fundable", and it only stopped when it was killed). `barter_command`'s
+        # re-entry loop still exists and now breaks immediately; it should be deleted once
+        # this has run live.
+        return {"ok": ok, "committed": committed, "more_rounds_fundable": 0,
+                "good": observed.get("good", good),
+                "amity": observed.get("amity"),
+                "materials_left": observed.get("materials_left"),
+                "reason": observed.get("stopped_because") or result.detail}
 
-        if res.get("ok"):
-            # "A round succeeded" is NOT "the bartering is finished". Advance to the tail only
-            # when the panel says no further FULL round is fundable — otherwise the mission
-            # sails away with materials still aboard. Live 2026-08-23 it committed one round,
-            # advanced the phase, and left for London with 2-3 rounds' worth unspent (user).
-            #
-            # Re-read rather than reason from the plan: amity tiers and the stock refresh move
-            # the ratio, so what is fundable AFTER the rounds is not derivable from before.
-            after = _read_panel_state()
-            more = int(getattr(after, "rounds_remaining", 0) or 0) if after else 0
-            # THE GAME'S OWN ANSWER OUTRANKS OURS. A live (yellow) Exchange button means the
-            # game will accept another barter — it has already applied every rule we would be
-            # re-deriving: materials, the daily count, the stock state. Live 2026-08-23 the
-            # bot did 2 rounds and stopped while Exchange was still enabled (user), so the
-            # material arithmetic disagreed with the game and the game was right.
-            if _exchange_still_live():
-                logger.info("[mission.barter] Exchange is still live — the game will accept "
-                            "another barter, whatever the material maths says")
-                more = max(more, 1)
-            if more >= 1:
-                logger.info(f"[mission.barter] {more} more full round(s) still fundable — "
-                            "staying in the BARTERING phase; the tail can wait")
-            else:
-                logger.info("[mission.barter] no further full round is fundable — the "
-                            "bartering is finished; moving to the tail")
-                mission_progress.advance("sailing_route")
-            res = {**res, "more_rounds_fundable": more}
-        return {**res, "planned_rounds": planned, "attempted_rounds": target,
-                "panel_on_arrival": seen["on_arrival"],
-                "material_shortfall": seen["shortfall"],
-                "partial_round_left": seen["partial_left"],
-                "overflow_cleared": seen.get("overflow_cleared")}
 
+    @_facade
     def sail_to_sell(task) -> dict:
-        from brain.goals.sail_to import drive_sail_to
-        return drive_sail_to(task.params["sell_port"])
+        return _sail_to(task.params["sell_port"])
 
+    @_facade
     def sell_surplus(task) -> dict:
         """Trim each material down to what the plan needs, before the village leg.
 
@@ -496,22 +428,48 @@ def make_live_executors(opp=None) -> dict:
         goods the plan NAMED (whole-good disposal of unrelated cargo is the separate,
         opt-in pre-gather clear) and sells nothing it could not verify — see
         `actions.sell_goods.sell_down_to`."""
-        from actions.sail_actions import navigate_to_building
-        from actions.sell_goods import sell_down_to
+        from brain.activities.market import FreeHold, TrimHold
+        from brain.run_goal import run_goal
         keep_qty = task.params.get("keep_qty") or {}
+
+        # BEFORE the gather this also CLEARS: anything that is not a material or a supply is
+        # sold outright (user, 2026-08-26 — "if it is not a material we should just sell
+        # them"). Space is what gathering needs, and a shorter cargo list is also what keeps
+        # the bought good's tile on the first page where the buy loop can see it.
+        if task.params.get("clear"):
+            from actions.sell_goods import barter_materials_exclude
+            keep = barter_materials_exclude(task.params.get("good", ""))
+            freed = run_goal(FreeHold(tuple(keep)))
+            logger.info(f"[mission.sell_surplus] pre-gather clear: "
+                        f"{dict(freed.observed) if freed else 'could not reach the market'}")
         if not keep_qty:
             return {"ok": True, "reason": "no material targets to trim against"}
-        port = _current_port()
-        if not port:
-            return {"ok": False, "reason": "not at a port — cannot trim surplus"}
-        if not navigate_to_building("Market"):
-            return {"ok": False, "reason": f"could not reach Market at {port}"}
-        res = sell_down_to(port, keep_qty)
+        # NO PORT GATE. Everything this node does happens INSIDE THE MARKET (user,
+        # 2026-08-27), so the port name is decoration — a log line and a field in the
+        # result — and it gated nothing.
+        #
+        # It cost a mission anyway: `_current_port()` answers only on the port overworld,
+        # the pre-gather clear had already walked into the market, and this aborted the
+        # whole run from inside Barcelona having just successfully sold the surplus. A
+        # precondition that is not a precondition can still fail, and it fails for reasons
+        # that have nothing to do with the work.
+        #
+        # The name is still WANTED for the log, so it is looked up and allowed to be absent.
+        # `owned_state` holds it under PLACE — which survives entering a building and dies
+        # when the fleet puts to sea — so it is usually there.
+        port = _current_port() or owned_state.recall("port") or ""
+        result = run_goal(TrimHold(dict(keep_qty)))
+        if result is None:
+            return {"ok": False,
+                    "reason": f"could not reach the market{f' at {port}' if port else ''}"}
         _exit_market_to_overworld()
-        logger.info(f"[mission.sell_surplus] {port}: {res.get('reason')}")
-        return {"ok": bool(res.get("ok")), "reason": res.get("reason", ""),
-                "trimmed": res.get("trimmed"), "port": port}
+        observed = dict(result.observed)
+        logger.info(f"[mission.sell_surplus] {port or 'this port'}: "
+                    f"{observed.get('stopped_because')}")
+        return {"ok": bool(result.ok), "reason": observed.get("stopped_because") or "",
+                "trimmed": observed.get("trimmed"), "port": port}
 
+    @_facade
     def supply_verify(task) -> dict:
         """Confirm the fleet is somewhere it can supply — NOT a days-of-supply gate.
 
@@ -540,6 +498,7 @@ def make_live_executors(opp=None) -> dict:
         return {"ok": False, "reason": f"cannot confirm supply readiness from {loc!r} — "
                                        "expected a port or open sea"}
 
+    @_facade
     def sail_route(task) -> dict:
         """Tail leg via a pre-planned in-game ROUTE (Route tab → Move). The route
         auto-resupplies at its port waypoints, so the only supply question is whether
@@ -549,29 +508,64 @@ def make_live_executors(opp=None) -> dict:
         start = execute_route(task.params["route"], longest_leg_days=int(ROUTE_LEG_DAYS))
         if not start.ok:
             return {"ok": False, "reason": start.reason}
-        return _await_route_arrival(start, task.params["route"])
+        # THE DISPATCHER SAILS IT, not a poll loop. `_await_route_arrival` slept and read
+        # `_current_port()` — a FIELD READ, not a perceive — so it received neither the
+        # interruptor pass that dismisses a daily-news popup nor `IdleLockActivity`. Live
+        # 2026-08-28 it would have polled four hours at London past an idle lock that
+        # DISPLAYED the port name it was waiting for.
+        #
+        # Now: tick, perceive, `SeaActivity` reports WORKING and how long to wait, and the
+        # leg ends when perceive stops saying `sea` — arrival is a context change to notice,
+        # not an event to wait for (docs/activity_as_context.md §11).
+        # THE ROUTE IS THE DESTINATION. If the ship turns out not to be moving, the course
+        # is re-set by selecting the same route on the Route tab — `ChooseDestination` with
+        # kind='route' — not by picking a port.
+        return _sail_until_ashore(f"route {task.params['route']!r}",
+                                  destination=task.params["route"], kind="route")
 
+    @_facade
     def sell(task) -> dict:
-        from actions.sail_actions import navigate_to_building
-        from actions.sell_goods import sell_goods, barter_materials_exclude
+        """FIRST NODE MIGRATED TO THE DISPATCHER (2026-08-26).
+
+        It used to navigate: `_enter_market_at(port)` — perceive, tap, reorient, retry — and
+        then sell. That navigation is a TRANSITION written by hand at the task layer, which is
+        why it had to be patched into four call sites at once, and why a tail that "knew" it
+        was in a village pressed Back at a port overworld and raised "Exit Game?".
+
+        Now it states a goal and hands it to the loop. `SellHold(exclude=...)` mentions no
+        tab, no tile and no port: the dispatcher works out that the market is a building to be
+        entered, the market activity does the selling, and the answer comes back in task
+        words. See docs/architecture_DRAFT.md, "Worked example: splitting `barter`".
+        """
+        from actions.sell_goods import barter_materials_exclude
+        from brain.activities.market import SellHold
+        from brain.run_goal import run_goal
+
         # A route tail ends wherever the route ends — resolve the port live rather than
         # planning it (a port_overworld ALWAYS has a name; unreadable = anomaly, not None).
         port = task.params.get("sell_port") or _current_port()
         if not port:
             return {"ok": False, "reason": "arrival port unreadable — cannot sell here"}
-        if not navigate_to_building("Market"):
-            return {"ok": False, "reason": f"could not reach Market at {port}"}
-        res = sell_goods(port, exclude=barter_materials_exclude(task.params["good"]))
+
+        keep = barter_materials_exclude(task.params["good"])
+        result = run_goal(SellHold(tuple(keep)))
+        if result is None:
+            return {"ok": False, "port": port,
+                    "reason": f"could not sell at {port} — the goal did not finish"}
+
+        sold = list(result.observed.get("sold") or [])
         _exit_market_to_overworld()   # clean hand-off: leave port_overworld for the next leg
-        if res.get("ok"):
-                mission_progress.advance("done")
-        return {"ok": bool(res.get("ok")), "reason": res.get("reason", ""), "port": port, **res}
+        if result.ok:
+            mission_progress.advance("done")
+        return {"ok": bool(result.ok), "port": port, "sold": sold,
+                "reason": result.observed.get("stopped_because") or result.detail}
 
     return {"gather": gather, "sail_to_village": sail_to_village, "barter": barter,
             "sell_surplus": sell_surplus, "supply_verify": supply_verify,
             "sail_route": sail_route, "sail_to_sell": sail_to_sell, "sell": sell}
 
 
+@_facade
 def orders_already_held(orders: Mapping[str, int], port: str = "") -> bool:
     """True when the hold already satisfies `orders`, so the leg can be skipped.
 
@@ -599,6 +593,7 @@ def orders_already_held(orders: Mapping[str, int], port: str = "") -> bool:
     return False
 
 
+@_facade
 def _at_a_market_port() -> bool:
     """True when the fleet is at a port whose Market we could read right now."""
     try:
@@ -608,6 +603,7 @@ def _at_a_market_port() -> bool:
         return False
 
 
+@_facade
 def _owned_here() -> Optional[dict]:
     """{good: units} from the Market's Sell tab, or None if it cannot be read.
 
@@ -615,11 +611,10 @@ def _owned_here() -> Optional[dict]:
     read would arrive at the village empty-handed.
     """
     try:
-        from actions.sail_actions import navigate_to_building
         from actions.buy_materials import _read_owned_via_sell
         from capture.adb_capture import capture_screen
         from actions.adb_actions import tap
-        if not navigate_to_building("Market"):
+        if not _enter_market_at(_current_port() or "this port")["ok"]:
             return None
         owned = _read_owned_via_sell(capture_screen, tap, 1.2) or None
         # PUT THE FLEET BACK. This function reads like a question — `orders_already_held()
@@ -641,6 +636,7 @@ def _owned_here() -> Optional[dict]:
         return None
 
 
+@_facade
 def clear_surplus_at_current_port(good: str, trim_to: Optional[Mapping[str, int]] = None) -> dict:
     """Free hold space: sell everything that is NOT a barter material or a supply, and —
     when `trim_to` is given — cut over-stocked MATERIALS back to those quantities.
@@ -658,13 +654,17 @@ def clear_surplus_at_current_port(good: str, trim_to: Optional[Mapping[str, int]
 
     Runs BEFORE the gather so the freed space is real before buy targets are sized —
     `buy_to_goal` stops early with "sell surplus to free space" when the hold is full."""
-    from actions.sail_actions import navigate_to_building
     from actions.sell_goods import sell_goods, sell_down_to, barter_materials_exclude
-    port = _current_port()
+    # This one DOES need the name — `_enter_market_at` walks to that port's market. But
+    # `_current_port()` answers only on the overworld, so standing in a building made it
+    # refuse: live 2026-08-26 a --clear-surplus run failed here from inside Barcelona's
+    # market. PLACE survives entering a building, so ask what is remembered before giving up.
+    port = _current_port() or owned_state.recall("port")
     if not port:
-        return {"ok": False, "reason": "not at a port — cannot sell surplus here"}
-    if not navigate_to_building("Market"):
-        return {"ok": False, "reason": f"could not reach Market at {port}"}
+        return {"ok": False, "reason": "cannot tell which port this is — cannot sell surplus"}
+    entered = _enter_market_at(port)
+    if not entered["ok"]:
+        return entered
     keep = barter_materials_exclude(good)
     logger.info(f"[clear_surplus] {port}: selling all non-kept cargo (keeping {keep})")
     res = sell_goods(port, goal="clear", keep=keep)
@@ -705,209 +705,22 @@ def clear_surplus_at_current_port(good: str, trim_to: Optional[Mapping[str, int]
             "trimmed": trimmed, "owned": owned, "reason": res.get("reason", "")}
 
 
-def _no_panel_failure() -> dict:
-    """Why we are refusing to barter, described by what the screen ACTUALLY shows.
-
-    Reporting the perceived screen is the point: the caller's state is the thing that is
-    wrong, and it can only correct itself if it is told what is really there.
-    """
-    from actions.sail_actions import where_am_i
-    from actions.ui import active_submenu
-    try:
-        here = where_am_i()
-        detail = here.get("detail") or here.get("location")
-        submenu = active_submenu()
-    except Exception as exc:
-        detail, submenu = f"unreadable ({exc})", None
-    logger.warning(f"[mission.barter] the Barter panel is not open and could not be opened — "
-                   f"screen reads {detail!r} (sub-menu {submenu!r}). Not committing from here.")
-    return {"ok": False, "reason": f"barter panel not open — screen shows {detail!r}",
-            "screen": detail, "submenu": submenu}
+# THE BARTER PANEL LIVES IN `actions/barter_panel.py`.
+#
+# `_no_panel_failure`, `_open_barter_panel`, `refresh_stale_panel`, `_exchange_still_live`,
+# `_select_trade_good`, `_read_panel_state` and their tile helpers captured screens, parsed
+# them and tapped — UI, in a task module. Import them from there.
+#
+# They were briefly re-exported here so callers could be moved one at a time, and that
+# re-export was a TRAP: `from brain.barter_mission_live import _read_panel_state` binds the
+# original function object, so patching `actions.barter_panel._read_panel_state` did not reach
+# it. `VillageActivity._panel()` went on calling the real reader — a live screen capture — in
+# a test that had stubbed the panel, and the stale value it returned failed a test that passed
+# alone. A name is resolved where it is bound, not where it is written.
 
 
-def _open_barter_panel() -> bool:
-    """Open the village's Barter sub-menu. True when the screen confirms we are on it.
 
-    Goes through the LEFT MENU REGION, not a frame-wide label search. A chromed screen has a
-    known layout (user, 2026-08-23): title top-left, the menu item list directly below it on
-    the left, a centre panel, a right panel, and a top menu bar at the top right — except a
-    VILLAGE, which has no top menu bar. Searching the whole frame for a word ignores that
-    layout and picks up prose: live 2026-08-23 the village page carried "Barter" both as the
-    menu item (x=183) and inside "Increase Barter Count by 3" in the Amity Effect panel
-    (x=1052). The unconstrained search took the prose and the tap did nothing.
-
-    `vision.region_detectors.left_menu` is the canonical reader for that region and also
-    reports `is_locked` / `is_selected`, so this needs no geometry of its own.
-
-    Confirmed by the TITLE, which in this game is always the sub-menu currently selected
-    (`actions.ui.active_submenu`) — so "did the tap work?" is answered by reading, not
-    assuming.
-    """
-    from actions import ui
-    from actions.ui import on_submenu
-    from capture.adb_capture import capture_screen
-    from vision.omniparser import parse_fast_cached
-    from vision.region_detectors.left_menu import detect_left_menu
-    try:
-        frame = capture_screen()
-        if on_submenu("barter", frame):
-            return True                      # already there — do not tap again
-
-        menu = detect_left_menu(list(parse_fast_cached(frame)), frame.width, frame.height)
-        item = menu.find("Barter") if menu else None
-        if item is None:
-            logger.warning(f"[mission.barter] no 'Barter' item in the left menu "
-                           f"(menu reads {menu.labels() if menu else None})")
-            return False
-        if item.get("is_locked"):
-            # NOT A FAILURE — this is the game saying the day's barters are used up. When the
-            # last available round is spent the panel returns to the village top menu on its
-            # own and the Barter item goes dark under a red "Unavailable" ribbon (user,
-            # 2026-08-23). It means the ship should LEAVE, which is success, not an error.
-            logger.info("[mission.barter] the Barter item is UNAVAILABLE — the day's barters "
-                        "are used up; the bartering is finished and the fleet should leave")
-            return "unavailable"
-
-        ui.tap_element(item, why="village → Barter", dwell="dialog")
-        opened = on_submenu("barter", capture_screen())
-        logger.info(f"[mission.barter] Barter panel opened: {opened}")
-        return opened
-    except Exception as exc:
-        logger.warning(f"[mission.barter] could not open the Barter panel: {exc}")
-        return False
-
-
-def _exchange_still_live() -> bool:
-    """True when a LIVE (yellow) Exchange button is on screen.
-
-    The game greys the button the moment another barter is impossible, so this is its own
-    verdict on "can I barter again?" — ahead of any count we compute from the panel.
-    """
-    try:
-        from capture.adb_capture import capture_screen
-        from vision.omniparser import parse_fast_cached
-        from brain.commit_actions import _yellow_commit_button
-        frame = capture_screen()
-        btn = _yellow_commit_button(parse_fast_cached(frame), frame, ["exchange"])
-        return btn is not None
-    except Exception as exc:
-        logger.debug(f"[mission.barter] Exchange liveness check failed: {exc}")
-        return False
-
-
-def _select_trade_good(good: str, recipe: Optional[Mapping[str, int]] = None) -> bool:
-    """Select `good` in the Tradable Trade Goods row. True when the panel confirms it.
-
-    The tiles carry NO NAMES — only a thumbnail, a stock status and a category (user,
-    2026-08-23). So the bot cannot search for "Box of Nutmeg": it taps a tile and READS BACK
-    what the panel then shows, which is the verification the name would have given.
-
-    Order matters only as an optimisation: the category is a strong hint (Box of Nutmeg is a
-    spice), so a tile whose category matches is tried first, and the rest follow. Correctness
-    comes from the read-back, never from the hint.
-
-    A stock status of "Insufficient" or "Depleted" is NOT a reason to skip a tile — those
-    reduce the YIELD, not the ability to trade (docs/game_mechanics.md).
-    """
-    from actions import ui
-    from capture.adb_capture import capture_screen
-    from vision.omniparser import parse_fast_cached
-
-    frame = capture_screen()
-    tiles = _tradable_tiles(parse_fast_cached(frame))
-    if not tiles:
-        logger.warning("[mission.barter] no tradable goods tiles found on the Barter panel")
-        return False
-
-    want = _category_hint(good)
-    tiles.sort(key=lambda t: 0 if (want and t["category"] == want) else 1)
-    logger.info(f"[mission.barter] {len(tiles)} tradable tile(s): "
-                f"{[(t['category'], t['status']) for t in tiles]}"
-                + (f" — trying {want!r} first" if want else ""))
-
-    from actions.barter_reader import read_barter_panel
-    for tile in tiles:
-        ui.tap_at(tile["cx"], tile["cy"],
-                  why=f"barter → select the {tile['category'] or 'unnamed'} good")
-        # Verify against the RAW reading: it carries `selected_good` and each material's
-        # label/need. `_read_panel_state` derives a PanelBarterState for the ROUND maths and
-        # drops the good's name, so it cannot answer "is this the right good?".
-        reading = read_barter_panel(capture_screen())
-        if reading is None:
-            continue
-        if _panel_matches(reading, good, recipe):
-            logger.info(f"[mission.barter] selected {good!r} via the "
-                        f"{tile['category']!r} tile")
-            return True
-        logger.info(f"[mission.barter] the {tile['category']!r} tile is not {good!r} "
-                    "— trying the next")
-    logger.warning(f"[mission.barter] none of the tradable tiles is {good!r}")
-    return False
-
-
-def _tradable_tiles(elements) -> list:
-    """The goods tiles: an icon with a CATEGORY label directly beneath it.
-
-    Measured on the Melanesian Village barter panel: icons at cy≈424, status labels at
-    cy≈509, category labels at cy≈552, in four columns at cx ≈ 424/560/693/828. The columns
-    are found by pairing each category label with the icon above it, so nothing here is a
-    fixed coordinate.
-    """
-    icons = [e for e in elements
-             if getattr(e, "element_type", "") == "icon" and 350 < e.cy < 480]
-    labels = [e for e in elements
-              if (getattr(e, "label", "") or "").strip() and 530 < e.cy < 580]
-    status = [e for e in elements
-              if (getattr(e, "label", "") or "").strip().lower()
-              in ("insufficient", "depleted", "sufficient", "abundant")]
-    out = []
-    for lab in labels:
-        icon = min(icons, key=lambda e: abs(e.cx - lab.cx), default=None)
-        if icon is None or abs(icon.cx - lab.cx) > 80:
-            continue
-        st = min(status, key=lambda e: abs(e.cx - lab.cx), default=None)
-        out.append({"cx": icon.cx, "cy": icon.cy,
-                    "category": (lab.label or "").strip(),
-                    "status": (st.label or "").strip()
-                              if st and abs(st.cx - lab.cx) <= 80 else ""})
-    return out
-
-
-# Output good -> the category its tile carries. A hint for ORDERING only; the panel read-back
-# is what decides. Extend as goods are met.
-_GOOD_CATEGORY = {"box of nutmeg": "Spices"}
-
-
-def _category_hint(good: str) -> Optional[str]:
-    return _GOOD_CATEGORY.get((good or "").strip().lower())
-
-
-def _panel_matches(reading, good: str, recipe: Optional[Mapping[str, int]]) -> bool:
-    """Is the selected good the one we want? By NAME when the panel gives one, else by the
-    RECIPE — the materials and their per-round needs are a fingerprint we already hold."""
-    name = (getattr(reading, "selected_good", None) or "").strip().lower()
-    if name:
-        return name == (good or "").strip().lower()
-    mats = {(m.label or "").strip().lower(): m.need for m in getattr(reading, "materials", [])}
-    if not mats or not recipe:
-        return False
-    return all(mats.get(k.lower()) == v for k, v in recipe.items())
-
-
-def _read_panel_state():
-    """The village barter panel as a `PanelBarterState`, or None if it isn't readable.
-
-    ONE place converts the panel into rounds — the arrival bound and the per-round gate
-    must not drift apart."""
-    from brain.barter_quantity import panel_barter_state
-    from actions.barter_reader import read_barter_panel
-    from capture.adb_capture import capture_screen
-    reading = read_barter_panel(capture_screen())
-    if reading is None or not reading.materials:
-        return None
-    return panel_barter_state(reading.materials, reading.output_quantity or 0)
-
-
+@_facade
 def _current_port(tries: int = 3) -> Optional[str]:
     """The port we are standing in, re-read a few times (OmniParser is non-deterministic
     and a port_overworld always has a name — see the never-act-blind rule)."""
@@ -922,6 +735,105 @@ def _current_port(tries: int = 3) -> Optional[str]:
     return None
 
 
+@_facade
+def _sail_to(destination: str, *, kind: str = "port", resupply: bool = True,
+             min_supply_days: float = None, max_ticks: int = 240) -> dict:
+    """One sail leg, stated as work orders and driven by the dispatcher.
+
+    Replaces `drive_sail_to`, which drove `SailToGoal` — eight phases that walked to the
+    harbour, opened the world map, picked the destination and then POLLED FOR ARRIVAL in a
+    SAILING phase of its own. That poll did not perceive through the dispatcher, so it got
+    neither the interruptor pass that dismisses a daily-news popup nor `IdleLockActivity`:
+    the same failure `_await_route_arrival` was deleted for, still live on every port and
+    village leg until now.
+    """
+    from brain.run_goal import run_task
+    from brain.sail_runner import ARRIVED, SailRunner
+
+    runner = run_task(SailRunner(destination=destination, kind=kind, resupply=resupply,
+                                 min_supply_days=min_supply_days),
+                      max_ticks=max_ticks)
+    if runner.status == ARRIVED:
+        # ARRIVED SOMEWHERE IS NOT ARRIVED THERE. The runner takes a confirmed departure as
+        # committed, which it must — the cinematic is not the sea yet — but that is a BELIEF,
+        # and a departure that silently did not take would leave the fleet ashore at the
+        # origin with the runner reporting arrival. Checking the name costs nothing and is
+        # the only thing standing between that belief and a gather leg buying at the wrong
+        # port.
+        from brain.sail_runner import _same_place
+
+        # A CARRIED NAME CANNOT DISPROVE AN ARRIVAL. `state.port` is painted only by a
+        # settlement overworld. On the sea/arrival frame it still holds the ORIGIN, and a
+        # VILLAGE never sets it at all — measured live 2026-08-30 at Hutu Village, where
+        # perceive reports state='village', port=None.
+        #
+        # That night the fleet sailed Luanda -> Hutu Village, arrived, and this read the
+        # carried 'Luanda' off the arrival frame, concluded "the departure did not take", and
+        # ended the mission standing in the village it had been sent to, with six barter
+        # rounds open and both materials aboard.
+        #
+        # The guard's real case is port-to-port: a departure that silently failed leaves the
+        # fleet on the ORIGIN's overworld, which does paint its name, and that is worth
+        # catching. A PORT name simply has nothing to say about arriving at a VILLAGE.
+        if runner.port and not _same_place(runner.port, destination):
+            # THE CALLER ALREADY KNOWS WHICH IT IS — `kind` says so, and the village leg
+            # passes it. Deriving it from the NAME meant reaching into `vision` from the task
+            # layer, which is exactly the import the layering rule forbids, to re-answer a
+            # question the work order had already answered.
+            if (kind or "").lower() == "village":
+                logger.info(f"[mission.sail] {runner.port!r} is a port name and the leg was "
+                            f"for the village {destination!r} — a village interior paints no "
+                            f"name, so that reading was carried from before, not read here; "
+                            f"taking the arrival")
+            else:
+                reason = (f"reported arrival at {runner.port!r} but the leg was for "
+                          f"{destination!r} — the departure did not take")
+                logger.warning(f"[mission.sail] {reason}")
+                return {"ok": False, "reason": reason}
+        logger.info(f"[mission.sail] arrived at {runner.port or destination}")
+        return {"ok": True, "reason": f"arrived at {runner.port or destination}",
+                "port": runner.port}
+    reason = runner.reason or f"did not reach {destination}"
+    logger.warning(f"[mission.sail] {reason}")
+    return {"ok": False, "reason": reason}
+
+
+@_facade
+def _sail_until_ashore(what: str, *, destination: str = None, kind: str = "port",
+                       max_ticks: int = 200) -> dict:
+    """Tick until the fleet is no longer at sea. No loop of our own beyond the tick.
+
+    `run_task` does the ticking: each tick PERCEIVES (so interruptors are dismissed and the
+    idle lock is cleared by the activity that owns it), `SeaActivity` looks at the HUD and
+    reports whether the ETA is still falling, and the leg ends when the sea stops matching.
+
+    `destination` is what to re-select if the ship turns out NOT to be moving — a departure
+    that never took, or a Move that was swallowed. Without one the leg can only report being
+    adrift; with one, `VoyageRunner` asks for the course to be set again and the dispatcher
+    opens the world map to do it.
+    """
+    from brain.run_goal import run_task
+    from brain.voyage_runner import ARRIVED, VoyageRunner
+
+    runner = run_task(VoyageRunner(what=what, destination=destination, kind=kind),
+                      max_ticks=max_ticks)
+    if runner.status == ARRIVED:
+        port = runner.port
+        logger.info(f"[mission.sail] {what} arrived{f' at {port}' if port else ''}")
+        return {"ok": True, "reason": f"{what} arrived{f' at {port}' if port else ''}",
+                "port": port}
+    reason = runner.reason or f"{what} did not reach a port"
+    logger.warning(f"[mission.sail] {reason}")
+    return {"ok": False, "reason": reason}
+
+
+# DEAD as of 2026-08-28 — no callers. Kept for one commit so the diff shows what the sea
+# activity replaced; delete on the next pass.
+#
+# It is the sub-loop that does not perceive: `_current_port(tries=1)` and `read_sea_hud()`
+# READ FIELDS. So it received neither the interruptor pass that dismisses a daily-news popup
+# nor `IdleLockActivity`, and at London on 2026-08-28 it would have polled for four hours
+# past an idle lock that DISPLAYED the port name it was waiting for.
 def _await_route_arrival(start, route_name: str, timeout_s: float = 4 * 3600) -> dict:
     """Sleep-and-check until the route lands us in a port.
 

@@ -102,6 +102,7 @@ def detect_grid(
     cell_types: Tuple[str, ...] = ("button",),
     min_cells: int = 4,
     size_tol: float = 0.22,
+    size_tol_h: Optional[float] = None,
 ) -> Optional[GridModel]:
     """Find a grid/list of congruent cells among OmniParser `elements`.
 
@@ -131,10 +132,18 @@ def detect_grid(
     # congruence: keep the cells near the median size (the dominant repeat)
     med_w = median([e.x2 - e.x1 for e in cands])
     med_h = median([e.y2 - e.y1 for e in cands])
+    # HEIGHT IS THE SOFT AXIS — because DETECTION is unreliable there, not the layout.
+    # The tiles are all the same size; what varies is how much of one OmniParser encloses. A
+    # market tile wearing a BAZAAR banner comes back 432x181 next to 435x231 neighbours
+    # (Bremen 2026-08-24): the WIDTH is dead-on (dw=0.01) and the box is simply clipped
+    # short, the banner having tripped the detector. A symmetric tolerance read that clipping
+    # as "not part of the repeat" and dropped the one tile the voyage was for.
+    # Width is the axis that actually identifies a column, so it stays strict.
+    h_tol = size_tol if size_tol_h is None else size_tol_h
     congr = [
         e for e in cands
         if abs((e.x2 - e.x1) - med_w) <= size_tol * med_w
-        and abs((e.y2 - e.y1) - med_h) <= size_tol * med_h
+        and abs((e.y2 - e.y1) - med_h) <= h_tol * med_h
     ]
     if len(congr) < min_cells:
         return None
@@ -152,6 +161,20 @@ def detect_grid(
         )
         for e in congr
     ]
+    # ONE CELL PER SLOT. OmniParser sometimes returns two overlapping boxes for the same tile
+    # — a full one and a clipped one (433x150 beside 438x240 for one Textiles tile, Bremen
+    # 2026-08-24). A symmetric height tolerance discarded the clipped twin as a side effect;
+    # now that height is deliberately loose so BAZAAR tiles survive, the twin reaches the
+    # lattice and the good is read TWICE, which would stage and sell it twice. The box closest
+    # to the median cell size is the one that encloses the whole tile.
+    best: dict = {}
+    for c in cells:
+        fit = abs(c.w - med_w) / med_w + abs(c.h - med_h) / med_h
+        key = (c.row, c.col)
+        if key not in best or fit < best[key][0]:
+            best[key] = (fit, c)
+    cells = [c for _fit, c in best.values()]
+
     return GridModel(
         cells=cells, n_rows=len(row_centers), n_cols=len(col_centers),
         cell_w=int(med_w), cell_h=int(med_h),

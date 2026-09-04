@@ -124,3 +124,37 @@ def fuse_chrome_states(
         has_hamburger = template_state.has_hamburger,
         scores = {**template_state.scores, **omniparser_state.scores},
     )
+
+
+def port_overworld_is_drawn(frame, elements=None) -> bool:
+    """Has a port overworld finished RENDERING, or is the scene still arriving?
+
+    A port arrives in two stages. The 3-D scene draws first; the UI — the name banner top
+    left, the ☰, the right-edge tab/minimap/building cluster — lands a beat later. In
+    between the frame is unmistakably a port to a classifier that reads pixels, and carries
+    none of the things a port is read FOR.
+
+    Live 2026-09-02, four seconds after the sea: the family classifier said port_overworld
+    at 1.00 and `read_port_name` returned None, because the banner did not exist yet. The
+    voyage's arrival check then compared the destination against a name that had come from
+    somewhere other than that frame, decided the fleet was still at Lisboa, and failed a
+    mission whose fleet was standing in Faro.
+
+    Measured on that frame against two settled ones (the second with the port-info overlay
+    OPEN, which is what a tapped lighthouse icon shows and must NOT read as undrawn):
+
+        Lisboa, settled          right-panel score 2.5   47 elements
+        Faro, MID-RENDER         right-panel score 0.0   13 elements
+        Faro + overlay, settled  right-panel score 1.5   41 elements
+
+    The right-edge cluster is what separates them, and it is the same cluster the
+    port_overworld fingerprint is written on ("port name top-left + right-edge tab
+    cluster"). The port NAME alone would also separate these three, but it is one field and
+    OCR can lose it on a drawn screen; the cluster is structural.
+
+    This answers "is it drawn", never "where am I" — an undrawn port is still a port.
+    """
+    if elements is None:
+        from vision.omniparser import parse_fast_cached
+        elements = parse_fast_cached(frame)
+    return bool(detect_chrome_from_elements(elements).has_right_panel)

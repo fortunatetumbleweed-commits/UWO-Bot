@@ -58,6 +58,7 @@ def _matches_category(action: str, category: str, side: str) -> bool:
 
 @pytest.mark.parametrize("scenario", LOGGED_FAILURES,
                          ids=lambda s: s.name)
+@pytest.mark.simulation  # simulated goal-loop run: `tick()` executes the real action code against whatever frame the fixtures supply
 def test_logged_failure_does_not_regress(scenario: Scenario,
                                          monkeypatch) -> None:
     if scenario.name in _BUG2_KNOWN_LIMITATIONS:

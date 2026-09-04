@@ -535,10 +535,25 @@ def classify_via_registry(
     #      was winning over `building: harbor` on the FLEET_CHECK frame.
     #   3. more signals matched
     #   4. alphabetical state_id (stable tiebreak)
+    # A LEARNED FINGERPRINT NEVER OUTRANKS A STANDARD ONE, whatever its confidence.
+    #
+    # Confidence used to be compared FIRST, and confidence is a fire RATIO — so a learned
+    # fingerprint with a single signal fired 1/1 = 100% and was graded HIGH, the top band, on
+    # the thinnest evidence there is. It then beat a standard fingerprint that had matched
+    # less completely. Live 2026-08-26 the screen came back as
+    # 'learned_updates_august_10_mon_update_advance' — an announcement popup, a thing the FSM
+    # has no node for — and `open_world_map` spent three attempts on a state it could do
+    # nothing with, then gave up.
+    #
+    # Standard fingerprints are authored against the FSM state graph; learned ones are
+    # heuristic Claude-derived candidates that fire on shadows of well-known states. The
+    # earlier note below records the same lesson from 2026-05-22. Ordering them ahead of
+    # confidence is what makes that preference actually hold (user, 2026-08-26: no single
+    # signature should overrule all the others).
     candidates.sort(
         key=lambda c: (
-            -confidence_rank.get(c.confidence, 0),
             c.state.startswith("learned_"),
+            -confidence_rank.get(c.confidence, 0),
             -len(c.signals),
             c.state,
         )

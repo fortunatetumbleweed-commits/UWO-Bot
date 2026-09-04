@@ -30,6 +30,36 @@ def _is_loss(g):
     return bool(v)
 
 
+def _field(g, *names):
+    """The first of `names` this good carries a value for, or None."""
+    for field in names:
+        v = getattr(g, field, None)
+        if v is None and isinstance(g, dict):
+            v = g.get(field)
+        if v is not None:
+            return v
+    return None
+
+
+def _unpriced(g) -> bool:
+    """True when nothing on this tile says what it is worth.
+
+    Checked across the fields a Sell tile can carry it in — a good read from the grid has at
+    least one; a stray label has none.
+    """
+    return _field(g, "profit_per_unit", "sell_price", "buy_price", "price", "unit_price") is None
+
+
+def _unowned(g) -> bool:
+    """True when the tile does not say we hold any of it.
+
+    THIS is what separates a good from a stray label, not the price. A good is on the SELL
+    page BECAUSE we own it, so the owned count is the one field it cannot lack — whereas the
+    price is just the field OmniParser is most likely to drop.
+    """
+    return _field(g, "owned_qty", "owned", "qty_owned") is None
+
+
 def select_sellable(goods: Sequence, goal: str = "profit",
                     keep: Optional[Sequence[str]] = None,
                     only: Optional[Sequence[str]] = None,
@@ -54,8 +84,70 @@ def select_sellable(goods: Sequence, goal: str = "profit",
             continue                          # not in the whitelist
         if goal == "profit" and _is_loss(g):
             continue                          # profit-aware: don't sell at a loss
+        # A GOOD HAS A PRICE. A tile with none is not a good that is merely unprofitable —
+        # it is something else on the screen that got read as one.
+        #
+        # Live 2026-08-30 at Lisboa: `load-to-sell Im glad @ (730,355) (profit/u None)`. "Im
+        # glad" is another player's CHAT MESSAGE, and it went into the sell basket beside the
+        # Birch Tree the mission had come to sell. `goal="clear"` deliberately sells at a
+        # loss, so nothing downstream was ever going to stop it — an unpriced tile and a
+        # loss-making one are different things, and only the second is a decision.
+        #
+        # But PRICE IS THE WRONG DISCRIMINATOR, and using it cost a whole cargo. Live
+        # 2026-08-30 at Lisboa the Birch Tree the mission had sailed there to sell read
+        # `owned 3,622, Wares, index 100%` with its price line missing from the parse
+        # entirely — OmniParser emitted no token for `13,455 (10,463)` anywhere in the frame,
+        # though a tile crop reads it plainly. It was skipped as "not a good" and the mission
+        # reported success having sold nothing: roughly 48M ducats left in the hold.
+        #
+        # What actually separates them is the OWNED COUNT. "Im glad" has a name and nothing
+        # else; a good is on the Sell page because we hold it. So junk is a tile that says
+        # neither what it is worth NOR that we have any.
+        if _unpriced(g) and _unowned(g):
+            logger.info(f"[sell] skipping {name!r} — no price and no owned count, "
+                        f"so it is not a good")
+            continue
+        # Owned but unpriced: real cargo, one unreadable field. Whether that matters depends
+        # on what THIS pass is deciding — "clear" sells regardless of profit, so it does not
+        # need the price at all; "profit" does, and must not guess.
+        if _unpriced(g):
+            if goal == "profit":
+                logger.warning(f"[sell] skipping {name!r} — we hold "
+                               f"{_field(g, 'owned_qty', 'owned', 'qty_owned')} but its price "
+                               f"is unreadable, and this pass sells on profit")
+                continue
+            logger.warning(f"[sell] {name!r}: price unreadable, selling anyway — this pass "
+                           f"clears the hold regardless of profit")
         out.append(g)
     return out
+
+
+def _sell_page(frame):
+    """Read the Sell grid — but ONLY once the screen agrees that is what it is.
+
+    `tab="sell"` is an ARGUMENT, not an observation: the reader parses whatever grid is on
+    screen and labels it with the caller's claim, which is why every log line said `[sell]`
+    while a PURCHASE grid was being read (live 2026-08-30 at Faro). Nothing downstream can
+    catch that — a correctly-read tile from the wrong page looks exactly like a correctly-read
+    tile from the right one, and the numbers it carries are the SHOP's stock rather than the
+    fleet's hold.
+
+    `_on_sell_tab` was written for this on 2026-08-22 and already had a test file. It simply
+    was never called from the selling side. Ask it, and read nothing until it says yes.
+
+    THE WRONG PAGE AND AN EMPTY PAGE MUST NOT BE THE SAME ANSWER. This returned `[]` for
+    both, and `[]` is what the caller reads as "nothing left to sell" — so a clear that never
+    reached the Sell grid reported itself finished. Live 2026-09-01 at Luanda that is exactly
+    what happened, twice in one clear, and the mission then gathered into a hold it believed
+    was empty. `None` means "I was not looking at the hold"; `[]` means "I was, and it holds
+    nothing sellable".
+    """
+    from actions.buy_materials import _on_sell_tab
+    from vision.market_reader import read_market_page_omni
+    if not _on_sell_tab(frame):
+        logger.warning("[sell] this is not the Sell grid — not reading it as the hold")
+        return None
+    return read_market_page_omni(frame, tab="sell")
 
 
 def _find_sell_commit(frame, elements):
@@ -70,6 +162,33 @@ def _find_sell_commit(frame, elements):
         if "sell" in (getattr(c, "verb", "") or "").lower():
             return c
     return commits[0] if commits else None
+
+
+# How many times the sell list may be scrolled looking for more to sell. A hold deep
+# enough to need more than this is a bigger problem than a clear can fix in one visit.
+_MAX_SELL_SCROLLS = 6
+
+
+def surplus_remains(goods, keep) -> bool:
+    """True when the hold still holds something the clear was meant to sell.
+
+    COUNT THE TILES (user, 2026-08-26). A clear intends to leave exactly the kept goods —
+    the recipe's materials plus Water and Food — so ANY tile beyond that set is something it
+    failed to sell. Counting is an OBSERVATION and needs no scrolling to DETECT the problem,
+    only to fix it.
+
+    What this replaces: "the visible page had nothing sellable, so we are done". That is a
+    CONCLUSION, and on 2026-08-26 it ended a clear after four pages of 9 goods with the rest
+    of the hold untouched below the fold — the run then gathered into a hold it believed was
+    empty.
+    """
+    kept = {(k or "").strip().lower() for k in (keep or ())}
+    leftover = [g for g in (goods or [])
+                if (getattr(g, "name", "") or "").strip().lower() not in kept]
+    if leftover:
+        logger.info(f"[sell] {len(leftover)} good(s) still aboard that the clear should have "
+                    f"sold: {[getattr(g, 'name', '?') for g in leftover][:8]}")
+    return bool(leftover)
 
 
 def barter_materials_exclude(good: str = "Box of Nutmeg") -> list:
@@ -94,6 +213,7 @@ def sell_goods(port: str, goal: str = "profit", keep: Optional[Sequence[str]] = 
                omni_fn: Optional[Callable] = None,
                read_profits_fn: Optional[Callable] = None,
                commit_fn: Optional[Callable] = None,
+               scroll_fn: Optional[Callable] = None,
                settle: float = 1.2) -> dict:
     """Goal-driven SELL — a bounded perceive→act→perceive loop (symmetric to buy_to_goal):
 
@@ -119,27 +239,88 @@ def sell_goods(port: str, goal: str = "profit", keep: Optional[Sequence[str]] = 
         from vision.omniparser import parse_fast_cached
         omni_fn = parse_fast_cached
     if read_profits_fn is None:
-        from vision.market_reader import read_market_page_omni
-        read_profits_fn = lambda f: read_market_page_omni(f, tab="sell")   # bbox reader: name+price+profit+is_loss+tap
+        read_profits_fn = _sell_page          # confirms the grid before believing it
     if commit_fn is None:
         commit_fn = _find_sell_commit
+    if scroll_fn is None:
+        def scroll_fn():
+            """One page down the goods grid. Goes through `ui.scroll`, which carries the
+            anti-cheat jitter — a fixed-cadence swipe loop terminated the game on
+            2026-08-21 (CLAUDE.md, anti-cheat tap discipline)."""
+            from actions import ui
+            from config.settings import MARKET_SCROLL_START, MARKET_SCROLL_END
+            sx, sy_start = MARKET_SCROLL_START
+            _, sy_end = MARKET_SCROLL_END
+            ui.scroll(sx, sy_start, sy_end - sy_start, why="sell list, next page")
 
-    # ACTION: switch to the Sell tab (once; it persists across rounds).
+    # ACTION: switch to the Sell tab (once; it persists across rounds), and CONFIRM it.
+    # `ensure_sell_tab` is the one implementation — see its docstring for what tapping the
+    # calibrated point blind cost at Luanda.
     try:
-        from actions.market_actions import MARKET_COORDS
-        tap_fn(*MARKET_COORDS["sell"])
-        time.sleep(settle)
+        from actions.buy_materials import ensure_sell_tab
+        on_sell = ensure_sell_tab(capture_fn, tap_fn, settle)
     except Exception as exc:
-        logger.debug(f"[sell] sell-tab tap skipped: {exc}")
+        logger.debug(f"[sell] sell-tab switch raised: {exc}")
+        on_sell = False
+    if not on_sell:
+        # NOT AN EMPTY HOLD — we never got to look at it. Saying "nothing to sell" here is
+        # the conclusion that sailed a full hold to Tripoli.
+        logger.error(f"[{port}] could not reach the Sell grid — refusing to report the hold "
+                     "as clear")
+        return {"ok": False, "sold": [], "port": port,
+                "reason": "could not reach the Sell grid"}
 
     sold: list = []
     rounds: list = []
+    scrolled_pages = 0
     for r in range(max_rounds):
         # PERCEIVE the Sell page → per-good profit + tap targets.
         goods = read_profits_fn(capture_fn())
+        if goods is None:
+            # ONE UNREADABLE LOOK IS NOT A LOST GRID. The frame right after a sale is
+            # expected to be unsettled — the result dialog has just been answered and the
+            # grid is re-flowing — and capturing into that window is the mid-animation read
+            # the settle waits exist for. Live 2026-09-01 at Tripoli this refused nine
+            # seconds after a SUCCESSFUL sale of 4,448 Bambara Groundnut (+130M ducats) on a
+            # page that reads perfectly a moment later, turning a completed clear into a
+            # failed leg. Waiting for our own effect is allowed; declaring defeat on the
+            # first blink is not.
+            time.sleep(settle)
+            goods = read_profits_fn(capture_fn())
+        if goods is None:
+            # STILL unreadable. A dialog, a stray tap, a tab that flipped back — the cause
+            # does not matter here; what matters is that the hold is unread, and an unread
+            # hold is not an empty one. Hand back rather than declare it clear.
+            logger.error(f"[{port}] lost the Sell grid after selling {sold or 'nothing'} — "
+                         "refusing to report the hold as clear")
+            return {"ok": False, "sold": sold, "port": port,
+                    "reason": "lost the Sell grid mid-clear"}
         sellable = select_sellable(goods, goal, keep, only, exclude)
         if not sellable:
-            break                         # goal met — nothing left to sell (only kept goods)
+            # NOTHING SELLABLE *IN VIEW* IS NOT AN EMPTY HOLD.
+            #
+            # The grid shows one 3x3 page. Live 2026-08-26 this break ended a clear after four
+            # pages with the rest of the hold still aboard below the fold, and the run then
+            # gathered into a hold it believed was empty. So before believing it: SCROLL, and
+            # look again. Only a page that yields nothing new AND nothing sellable is the end.
+            if scrolled_pages < _MAX_SELL_SCROLLS:
+                scrolled_pages += 1
+                scroll_fn()
+                goods = read_profits_fn(capture_fn())
+                if goods is None:
+                    logger.error(f"[{port}] lost the Sell grid while scrolling — refusing to "
+                                 "report the hold as clear")
+                    return {"ok": False, "sold": sold, "port": port,
+                            "reason": "lost the Sell grid mid-clear"}
+                sellable = select_sellable(goods, goal, keep, only, exclude)
+                if not sellable:
+                    logger.info(f"[{port}] nothing sellable after scrolling to page "
+                                f"{scrolled_pages + 1} — the clear is finished")
+                    break
+                logger.info(f"[{port}] scrolled to page {scrolled_pages + 1}: "
+                            f"{len(sellable)} more to sell")
+            else:
+                break
 
         # ACTION: load each selected good's tile into the sell basket (selective).
         for g in sellable:
@@ -208,24 +389,39 @@ def sell_goods(port: str, goal: str = "profit", keep: Optional[Sequence[str]] = 
 # WITHOUT tapping Sell — nothing has left the hold at that point. This is what stops the
 # bulk-still-ON case (tile tap silently loads the full stack) from selling everything.
 
-_QTY_PAIR_RE = re.compile(r"^\s*(\d[\d,]*)\s*/\s*(\d[\d,]*)\s*$")
+_QTY_PAIR_RE = re.compile(r"^\s*(\d[\d,]*)?\s*/\s*(\d[\d,]*)\s*$")
 
 
-def _find_qty_field(elements, expect_total: Optional[int] = None) -> Optional[tuple]:
-    """The `n / owned` quantity field in the Trade Goods Info dialog — tapping it opens
-    the keypad. Detected, not hardcoded; None when the dialog isn't up.
+def _find_qty_field(elements, dialog_bbox=None) -> Optional[tuple]:
+    """The `n / owned` quantity field in the Trade Goods Info dialog, as
+    `(cx, cy, owned)` — where `owned` IS the game telling us how many we hold.
+    None when the dialog isn't up.
 
-    `expect_total` is how many of the good we OWN, i.e. the denominator the real field must
-    show. Pass it: "N / M" is not a unique shape on this screen. The **Cargo bar** reads
-    `3,823/4,108` and matches the same pattern, and it sits ABOVE the goods, so a
-    first-match scan finds the Cargo bar instead. Tapping that opens Set Load Ratio — not a
-    keypad — and the digit detector then fails against a dialog that has no digits to find.
+    Scoped by `dialog_bbox`, not by a number we expect. "N / M" is not a unique shape
+    here: the **Cargo bar** reads `3,040/4,952`, matches the same pattern, and sits ABOVE
+    the goods, so a first-match scan finds it, and tapping it opens Set Load Ratio rather
+    than a keypad (live 2026-08-21, Jakarta). The old defence was to require the
+    denominator to equal what the SELL GRID said we owned — which made a grid misread able
+    to veto the truth. Live 2026-08-27 at Barcelona the grid read Candle as 2148 (truly
+    148), so this refused the real `1/148` field and reported "quantity dialog did not
+    open" while it was plainly open. The bbox settles it without an expectation: the Cargo
+    bar is OUTSIDE the dialog, so the only match inside is the good's own field.
 
-    Live 2026-08-21, Jakarta: `sell_down_to` computed "own 1681, keep 700 → sell 981"
-    correctly, tapped what it thought was the quantity field, and aborted with
-    "Keypad: digit '8' not detected". The trim never ran and the hold stayed at 3823/4108.
+    The DENOMINATOR alone carries the fact: it is the field's upper limit, and on the SELL
+    dialog the most one can sell is the whole holding. So `/148` means we hold 148 — the
+    numerator is merely how many are currently dialled in and is irrelevant here (and it is
+    routinely missing: OmniParser reads the live `1/148` spinner as `/148`, the green slider
+    splitting the leading digit off, which is why the numerator is optional in the pattern).
+
+    That makes the denominator the AUTHORITY on how many we own — an observation, where the
+    grid badge was only a belief. Callers should recompute from it, not check it.
     """
-    fallback = None
+    if dialog_bbox is None:
+        logger.warning("[sell] no dialog bbox — refusing to look for a quantity field. "
+                       "Unscoped, the first 'N / M' on this page is the CARGO BAR, and "
+                       "tapping it opens Set Load Ratio instead of the keypad.")
+        return None
+    best = None
     for e in elements or []:
         lab = (getattr(e, "label", "") or "").strip()
         m = _QTY_PAIR_RE.match(lab)
@@ -234,19 +430,16 @@ def _find_qty_field(elements, expect_total: Optional[int] = None) -> Optional[tu
         cx, cy = getattr(e, "cx", None), getattr(e, "cy", None)
         if cx is None or cy is None:
             continue
+        x0, y0, x1, y1 = dialog_bbox
+        if not (x0 <= cx <= x1 and y0 <= cy <= y1):
+            continue              # the Cargo bar and anything else behind the scrim
         total = int(m.group(2).replace(",", ""))
-        if expect_total is not None and total == int(expect_total):
-            return (cx, cy)                      # the good's own field — unambiguous
-        if fallback is None:
-            fallback = (cx, cy, total)
-
-    if expect_total is not None:
-        # Better to report "not found" than to tap the Cargo bar and open the wrong dialog.
-        logger.warning(f"[sell] no quantity field showing '… / {expect_total}' — "
-                       f"refusing to tap {fallback[:2] if fallback else None} "
-                       f"(total {fallback[2] if fallback else '?'}), which is not this good")
-        return None
-    return fallback[:2] if fallback else None
+        if best is None:
+            best = (cx, cy, total)
+    if best is None:
+        logger.warning("[sell] no quantity field inside the dialog "
+                       f"{dialog_bbox} — not tapping anything outside it")
+    return best
 
 
 def sell_down_to(port: str, keep: Mapping[str, int], *,
@@ -257,6 +450,7 @@ def sell_down_to(port: str, keep: Mapping[str, int], *,
                  set_bulk_fn: Optional[Callable] = None,
                  type_qty_fn: Optional[Callable] = None,
                  commit_fn: Optional[Callable] = None,
+                 overlay_fn: Optional[Callable] = None,
                  react_fn: Optional[Callable] = None,
                  find_button_fn: Optional[Callable] = None,
                  settle: float = 1.2) -> dict:
@@ -273,12 +467,14 @@ def sell_down_to(port: str, keep: Mapping[str, int], *,
         capture_fn = capture_screen
     if tap_fn is None:
         from actions.adb_actions import tap as tap_fn
+    if overlay_fn is None:
+        from vision.overlay import detect_overlay
+        overlay_fn = detect_overlay
     if omni_fn is None:
         from vision.omniparser import parse_fast_cached
         omni_fn = parse_fast_cached
     if read_page_fn is None:
-        from vision.market_reader import read_market_page_omni
-        read_page_fn = lambda f: read_market_page_omni(f, tab="sell")
+        read_page_fn = _sell_page             # confirms the grid before believing it
     if set_bulk_fn is None:
         from actions.market_actions import _ensure_bulk_mode
         set_bulk_fn = _ensure_bulk_mode
@@ -297,9 +493,17 @@ def sell_down_to(port: str, keep: Mapping[str, int], *,
 
     from actions.market_actions import _SELL_LOAD_BUTTON
 
-    def _abort(reason: str, skipped) -> dict:
+    def _abort(reason: str, skipped, overlay=None) -> dict:
         """Bail out with NOTHING sold — and always hand the market back with bulk ON,
-        or the next buy silently breaks (live 2026-08-20)."""
+        or the next buy silently breaks (live 2026-08-20).
+
+        Clear the dialog FIRST. Restoring bulk taps a checkbox on the page behind, and
+        while a modal is up that point is not the checkbox — it is the modal's backdrop,
+        where a tap DISMISSES rather than toggles. Live 2026-08-27 this cleanup ran under
+        an open Trade Goods Info dialog, threw it away, and still logged "'Put in Bulk'
+        still not ON", leaving the market in exactly the state it exists to prevent."""
+        if overlay is not None and overlay.is_modal:
+            _dismiss_dialog(overlay, capture_fn, tap_fn, find_button_fn, settle)
         _restore_bulk(set_bulk_fn, capture_fn, settle)
         logger.warning(f"[sell_down_to] {reason}")
         return {"ok": False, "trimmed": {}, "skipped": skipped, "reason": reason}
@@ -339,7 +543,12 @@ def sell_down_to(port: str, keep: Mapping[str, int], *,
         owned = int(g.owned_qty)
         excess = owned - int(keep[name])
 
-        logger.info(f"[{port}] trim {name}: own {owned}, keep {keep_qty} → sell {excess}")
+        # keep[name], NOT keep_qty: that name is the loop variable from the decide-first
+        # pass above and still holds the LAST good's figure. The arithmetic was always
+        # right; only the message lied — live 2026-08-27 it printed "trim Candle: own 2148,
+        # keep 61 → sell 2046" when Candle's keep was 102 (61 was Matchlock Gun's), which
+        # sent a debugging session chasing a trim target that was never used.
+        logger.info(f"[{port}] trim {name}: own {owned}, keep {keep[name]} → sell {excess}")
         tap_fn(g.tap_x, g.tap_y)
         time.sleep(settle)
 
@@ -348,30 +557,53 @@ def sell_down_to(port: str, keep: Mapping[str, int], *,
         # at the coordinates we remember".
         # Pass what we own so the good's field is told apart from the Cargo bar, which is
         # the same "N / M" shape and sits above it.
-        qty_field = _find_qty_field(omni_fn(capture_fn()), expect_total=int(owned))
+        dlg_frame = capture_fn()
+        overlay = overlay_fn(dlg_frame)
+        qty_field = _find_qty_field(omni_fn(dlg_frame), dialog_bbox=overlay.bbox)
         if qty_field is None:
             return _abort(f"{name}: quantity dialog did not open (Put In Bulk still ON?) "
-                          "— aborted before selling anything", skipped)
-        tap_fn(*qty_field)
+                          "— aborted before selling anything", skipped, overlay=overlay)
+
+        # THE DIALOG IS THE AUTHORITY. Its denominator is the game stating how many we
+        # hold; the grid badge was our reading of a 40px overlay, and on 2026-08-27 that
+        # overlay's melted-wax artwork OCR'd as a leading digit — 148 became 2148, at
+        # confidence 0.65 against OmniParser's 0.9987. Recompute rather than verify: an
+        # observation is available, so no belief should survive here.
+        qx, qy, dialog_owned = qty_field
+        if dialog_owned != owned:
+            logger.warning(f"[{port}] {name}: the grid read {owned} but the dialog shows "
+                           f"{dialog_owned} — trusting the dialog and re-deriving the trim")
+            owned = dialog_owned
+            excess = owned - int(keep[name])
+            if excess <= 0:
+                _dismiss_dialog(overlay, capture_fn, tap_fn, find_button_fn, settle)
+                skipped.append(f"{name}: {owned} ≤ keep {keep[name]} (per the dialog)")
+                continue
+        tap_fn(qx, qy)
         time.sleep(settle)
 
         if not type_qty_fn(excess, capture_fn=capture_fn, tap_fn=tap_fn):
             return _abort(f"{name}: could not confirm the typed quantity {excess} "
-                          "— aborted before selling anything", skipped)
+                          "— aborted before selling anything", skipped,
+                          overlay=overlay_fn(capture_fn()))
 
         load = _find_button_fn(capture_fn(), "load") or _SELL_LOAD_BUTTON
         tap_fn(*load)
         time.sleep(settle)
-        # Pass what we OWN here too. Without it this matched the Cargo bar ("3,823/4,108")
-        # on the sell page behind the closed dialog and concluded the dialog was still
-        # open — live 2026-08-22, right after "Keypad: 981 entered and confirmed", it
-        # aborted with "quantity dialog still open after Load" when Load had worked.
-        # While the dialog IS open it shows "<staged> / <owned>", so the owned count is
-        # what tells the two apart (Load stages the goods; it does not change what we own).
-        if _find_qty_field(omni_fn(capture_fn()), expect_total=int(owned)) is not None:
+        # DID THE DIALOG CLOSE? Ask the scrim, which lifts with it — do not infer it from
+        # an "N / M" match on the page behind. Unscoped, that match was the Cargo bar
+        # ("3,823/4,108"), and live 2026-08-22, right after "Keypad: 981 entered and
+        # confirmed", this aborted with "quantity dialog still open after Load" when Load
+        # had in fact worked. Guarding it with the owned count only moved the failure: the
+        # count itself can be misread (Candle 2148 for 148, live 2026-08-27). With no modal
+        # up there is nothing to search, so the Cargo bar cannot be mistaken for the field.
+        after = capture_fn()
+        overlay_after = overlay_fn(after)
+        if (overlay_after.is_modal
+                and _find_qty_field(omni_fn(after), dialog_bbox=overlay_after.bbox)):
             return _abort(f"{name}: quantity dialog still open after Load — the amount "
                           "may not be in the basket; aborted before selling anything",
-                          skipped)
+                          skipped, overlay=overlay_after)
         trimmed[name] = excess
 
     if not trimmed:
@@ -401,6 +633,26 @@ def sell_down_to(port: str, keep: Mapping[str, int], *,
     after = {n: q - int(sold.get(n, 0)) for n, q in owned_now.items()}
     return {"ok": True, "trimmed": trimmed, "skipped": skipped, "owned": after,
             "reason": f"trimmed {trimmed}"}
+
+
+def _dismiss_dialog(overlay, capture_fn, tap_fn, find_button_fn, settle: float) -> None:
+    """Close an open dialog through its OWN control (Cancel / Close), never by tapping
+    outside it. An outside tap does dismiss a dialog the bot opened — but it is the same
+    gesture as a misfire, so using it deliberately makes the two indistinguishable in the
+    log, and it does nothing at all for a game-pushed popup."""
+    try:
+        frame = capture_fn()
+        for label in ("cancel", "close"):
+            pos = find_button_fn(frame, label)
+            if pos and not overlay.blocks(*pos):
+                logger.info(f"[sell_down_to] closing the dialog via {label!r} @ {pos}")
+                tap_fn(*pos)
+                time.sleep(settle)
+                return
+        logger.warning("[sell_down_to] dialog is up but no Cancel/Close found inside it — "
+                       "leaving it open rather than tapping outside")
+    except Exception as exc:
+        logger.warning(f"[sell_down_to] could not close the dialog: {exc}")
 
 
 def _restore_bulk(set_bulk_fn, capture_fn, settle: float) -> None:

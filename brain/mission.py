@@ -74,6 +74,16 @@ class SubTask:
     deps: tuple = ()
     done: bool = False
 
+    # CAN THE MISSION GO ON WITHOUT THIS LEG? Only the trim before the VILLAGE is required:
+    # the barter output has to fit somewhere, and a hold that is full when the fleet arrives
+    # cannot take it (user, 2026-08-29 — "make the trim only hard required when the next is
+    # to the village, otherwise it is all optional").
+    #
+    # An optional leg that cannot run WHERE THE FLEET IS is skipped rather than fatal. The
+    # pre-gather clear is the case: it frees space before buying, which is worth doing and
+    # not worth stranding a mission over — and the gather port has a market of its own.
+    optional: bool = False
+
 
 @dataclass
 class MissionTail:
@@ -100,9 +110,23 @@ def build_barter_graph(opp: Opportunity, plan, tail: Optional[MissionTail] = Non
     nobody checked.  `tail` selects the route vs free-sail ending; the default reproduces
     the original free-sail-to-`opp.sell_port` shape."""
     tail = tail or MissionTail(kind="sail", value=opp.sell_port, sell_port=opp.sell_port)
+    # TRIM AT BOTH ENDS OF GATHERING (user, 2026-08-26).
+    #
+    # The end trim alone is too late. Gathering needs SPACE to succeed, and a hold that
+    # arrives cluttered has two problems, not one: no room for what is being bought, and a
+    # cargo panel so long that the bought good's tile falls below the fold — which is what
+    # blinded the buy loop on 2026-08-26 while it bought 2,000 Iron against a goal of 470.
+    #
+    # So: clear the non-materials and trim the materials to plan BEFORE buying anything, and
+    # trim again after, because whole-shelf buying always overshoots.
+    keep_qty = dict(getattr(plan, "needs", {}) or {})
+    before = SubTask("trim_before_gather", "sell_surplus", "",
+                     params={"good": opp.good, "keep_qty": keep_qty, "clear": True},
+                     optional=True)          # an optimisation, not a precondition
     gathers = [
         SubTask(id=f"gather:{port}", kind="gather", location=port,
-                params={"port": port, "orders": dict(orders)})
+                params={"port": port, "orders": dict(orders)},
+                deps=("trim_before_gather",))
         for port, orders in plan.purchases.items()
     ]
     gather_ids = tuple(g.id for g in gathers)
@@ -113,7 +137,7 @@ def build_barter_graph(opp: Opportunity, plan, tail: Optional[MissionTail] = Non
         # over-stocked (live: 1,644 Textiles against 900 needed) and the barter OUTPUT
         # has nowhere to go. Trimming to the plan's own needs is pure surplus disposal.
         SubTask("sell_surplus", "sell_surplus", "",
-                params={"good": opp.good, "keep_qty": dict(getattr(plan, "needs", {}) or {})},
+                params={"good": opp.good, "keep_qty": keep_qty},
                 deps=gather_ids),
         SubTask("supply_verify", "supply_verify", "",
                 params={"village": opp.village}, deps=("sell_surplus",)),
@@ -123,7 +147,7 @@ def build_barter_graph(opp: Opportunity, plan, tail: Optional[MissionTail] = Non
                 params={"rounds": opp.rounds, "good": opp.good}, deps=("sail_to_village",)),
     ]
     if tail.kind == "none":
-        return gathers + chain               # ends at the village; nothing to sell
+        return [before] + gathers + chain    # ends at the village; nothing to sell
     if tail.kind == "route":
         chain.append(SubTask("sail_route", "sail_route", tail.sell_port or "",
                              params={"route": tail.value}, deps=("barter",)))
@@ -135,7 +159,7 @@ def build_barter_graph(opp: Opportunity, plan, tail: Optional[MissionTail] = Non
     chain.append(SubTask("sell", "sell", tail.sell_port or "",
                          params={"sell_port": tail.sell_port, "good": opp.good},
                          deps=(last,)))
-    return gathers + chain
+    return [before] + gathers + chain
 
 
 def opp_loc(village: Optional[str]) -> str:
@@ -272,4 +296,26 @@ def _run_with_retry(task: SubTask, executors: Mapping[str, Callable],
         if last.get("ok"):
             return last
         logger.info(f"[mission] {task.id} attempt {attempt + 1} failed: {last.get('reason')}")
+        if attempt < max_retries:
+            # RETRYING WHILE AN ACTIVITY IS STILL OPEN IS NOT A RETRY. Some screens are
+            # activities whose only exit is a FINISH — the idle lock, a loading transition —
+            # and no work can happen on them, so an executor re-run lands on the same wall.
+            # Live 2026-08-26 the barter did exactly that at Svear Village: two attempts,
+            # both against the standby lock, then abort with 445 Iron, 146 Matchlock Gun and
+            # 438 Candle aboard and the barter one tap away.
+            #
+            # The TASK layer deciding to let the current activity finish before spending
+            # another attempt is its call to make. No state is named here.
+            #
+            # INTERIM: under the dispatcher an activity finishing IS the loop, and this hook
+            # disappears. Keeping it named after the general rule rather than after the lock
+            # is what makes that deletion obvious later.
+            try:
+                from brain.nav_step import finish_current_activity
+                acted = finish_current_activity()
+                if acted:
+                    logger.info(f"[mission] let the open activity finish ({acted!r}) "
+                                "before retrying")
+            except Exception as exc:
+                logger.debug(f"[mission] transitional-screen check unavailable: {exc}")
     return last

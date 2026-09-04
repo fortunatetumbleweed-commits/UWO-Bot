@@ -488,7 +488,10 @@ class InteractiveTeachingLoopTests(unittest.TestCase):
 
         # Stub _execute_plan so we can record executions without ADB.
         self._original_execute = he._execute_plan
-        def fake_execute(plan):
+        # **kw so the double does not drift from the real signature again: production grew
+        # `auto_drain` and this stub kept the old arity, so both tests in this class failed
+        # with TypeError rather than telling us anything about the teaching loop.
+        def fake_execute(plan, **kw):
             self._executed.append(plan.scenario_id)
         he._execute_plan = fake_execute
 

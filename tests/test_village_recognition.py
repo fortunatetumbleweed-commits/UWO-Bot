@@ -6,6 +6,7 @@ Covers:
   • SailToGoal arrival check accepts state.state == 'village' when the
     village name matches the destination.
 """
+import pytest
 import unittest
 from unittest.mock import patch, MagicMock
 
@@ -63,6 +64,7 @@ class SailToVillageArrivalTests(unittest.TestCase):
         s.detail = ""
         return s
 
+    @pytest.mark.simulation  # simulated goal-loop run: `tick()` executes the real action code against whatever frame the fixtures supply
     def test_village_arrival_marks_complete(self):
         goal = self.SailToGoal(destination="Berber", from_port="Tripoli")
         # Skip past INIT — pretend the goal had been working through phases.
@@ -82,6 +84,7 @@ class SailToVillageArrivalTests(unittest.TestCase):
         self.assertTrue(goal.is_complete)
         self.assertEqual(result.action, "arrived")
 
+    @pytest.mark.simulation  # simulated goal-loop run: `tick()` executes the real action code against whatever frame the fixtures supply
     def test_port_arrival_still_works(self):
         # Regression: don't break existing port arrival behaviour.
         goal = self.SailToGoal(destination="Lisbon", from_port="Tripoli")
@@ -97,6 +100,7 @@ class SailToVillageArrivalTests(unittest.TestCase):
         self.assertEqual(goal.phase, self.SailPhase.ARRIVED)
         self.assertEqual(result.action, "arrived")
 
+    @pytest.mark.simulation  # simulated goal-loop run: `tick()` executes the real action code against whatever frame the fixtures supply
     def test_village_state_with_wrong_destination_does_not_arrive(self):
         """If the bot is in some unrelated village (not the destination),
         SailToGoal must not mark ARRIVED."""

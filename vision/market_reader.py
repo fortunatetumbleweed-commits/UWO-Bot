@@ -20,6 +20,7 @@ from __future__ import annotations
 import re
 import time
 from datetime import datetime, timezone
+from statistics import median
 from typing import Optional
 
 import numpy as np
@@ -507,6 +508,57 @@ def _tile_label(cell, elements) -> str:
     return label
 
 
+# A SOLD-OUT TILE IS GREY. The game desaturates the thumbnail art when a shelf is empty,
+# and that is a STATE readable from one frame — unlike watching a tile go grey across a buy,
+# which only catches a shelf emptying while you stand there (arrive already-empty, or leave
+# the building and come back, and there is no transition left to see).
+#
+# Measured on the Bordeaux Purchase grid, 2026-08-24 (thumbnail art, saturation):
+#     Raisin (SOLD OUT) 0.004    every active tile 0.233 - 0.622
+# A ~60x gap, so the threshold is not delicate. Brightness agrees (18.5 vs 43.9-119.8) and is
+# kept as a second condition so a legitimately dark-but-colourful tile is not condemned.
+_SOLD_OUT_MAX_SAT = 0.10
+_SOLD_OUT_MAX_BRIGHT = 35.0
+
+
+# A CONDITION RIBBON sits in the tile's TOP-LEFT corner, carrying an icon for the condition
+# (a guild badge, an hourglass). Measured on the Bordeaux grid 2026-08-24: Hungary Water's
+# corner is 62% magenta, every other tile 0% — so this is not a delicate threshold either.
+_RIBBON_MIN_MAGENTA = 0.15
+
+
+def _tile_has_condition_ribbon(frame, cell) -> bool:
+    """True when the tile carries a corner ribbon marking it as CONDITIONAL."""
+    try:
+        import numpy as np
+        cor = np.asarray(frame.convert("RGB")).astype(float)[
+            cell.y1:cell.y1 + 40, cell.x1:cell.x1 + 40]
+        if cor.size == 0:
+            return False
+        R, G, B = cor[..., 0], cor[..., 1], cor[..., 2]
+        magenta = ((R > 120) & (B > 120) & (R - G > 40) & (B - G > 40)).mean()
+        return float(magenta) >= _RIBBON_MIN_MAGENTA
+    except Exception as exc:
+        logger.debug(f"[market] condition-ribbon check skipped: {exc}")
+        return False
+
+
+def _tile_looks_sold_out(frame, cell) -> bool:
+    """True when the tile's artwork is greyed — the single-frame sold-out signal."""
+    try:
+        import numpy as np
+        art = np.asarray(frame.convert("RGB")).astype(float)[
+            cell.y1 + 18:cell.y1 + 110, cell.x1 + 14:cell.x1 + 120]
+        if art.size == 0:
+            return False
+        mx, mn = art.max(axis=2), art.min(axis=2)
+        sat = float(((mx - mn) / np.maximum(mx, 1)).mean())
+        return sat <= _SOLD_OUT_MAX_SAT and float(art.mean()) <= _SOLD_OUT_MAX_BRIGHT
+    except Exception as exc:
+        logger.debug(f"[market] grey-tile check skipped: {exc}")
+        return False
+
+
 def read_market_page_omni(
     frame: Image.Image,
     tab: str = "purchase",
@@ -538,15 +590,29 @@ def read_market_page_omni(
     # tile after a barter run), which the default min_cells=4 rejects → "no goods grid detected"
     # → sell_goods concluded "nothing to sell" while holding ~605 Box of Nutmeg (live 2026-08-20).
     # Purchase pages keep the stricter minimum (they always show a full grid).
+    # A BAZAAR tile detects SHORT — same tile, clipped box, the banner having tripped
+    # OmniParser (432x181 against 435x231 neighbours, Bremen 2026-08-24). Width still
+    # identifies the column, so only the height tolerance is loosened. Without this the Box
+    # of Nutmeg at 211% was filtered out of a live bazaar and the page read as "no Spices".
     grid = detect_grid(elements, W, H, zone=zone, cell_types=("button",),
-                       min_cells=(1 if tab != "purchase" else 4))
+                       min_cells=(1 if tab != "purchase" else 4), size_tol_h=0.45)
     if grid is None:
         logger.info(f"[{tab}] omni: no goods grid detected")
         return []
 
     text_els = [e for e in elements if getattr(e, "element_type", "") == "text"]
+    # A SHORT-BOXED CELL STILL OWNS A FULL ROW OF TEXT. The price index sits at the bottom of
+    # the tile, but a BAZAAR tile's box is clipped above it (y2=616 against a 211% at y=642), so the
+    # `211%` on the Box of Nutmeg fell outside its own cell and the good came back with no
+    # index — which reads as "cannot confirm the bazaar" and refuses the sale. Every cell is
+    # measured against the row pitch so the text below a short box is still attributed to it.
+    from dataclasses import replace as _replace
+    _row_h = int(median([c.h for c in grid.cells])) if grid.cells else 0
     goods: list[MarketGood] = []
+    owned_candidates: dict[str, list[int]] = {}
     for cell in grid.in_reading_order():
+        if cell.h < _row_h:
+            cell = _replace(cell, y2=cell.y1 + _row_h)
         cell_text = [e for e in text_els if cell.contains(e.cx, e.cy)]
         good = _parse_tile_from_button(cell, cell_text, tab, label=_tile_label(cell, elements))
         if not good:
@@ -556,17 +622,49 @@ def read_market_page_omni(
         # when it's missing, re-read exactly that sub-region instead of guessing.
         if good.index_pct is None:
             good.index_pct = _recover_cell_index(frame, cell)
-        # SELL tab: the owned-count overlay (white, bottom-left of the icon) is too small for the
-        # general OmniParser pass — it mangles multi-digit counts (1,444→444/14444). Read it
-        # directly from that sub-region (threshold the white digits + targeted OCR).
+        # The greyed-out artwork is the sold-out state itself, independent of any timer text
+        # (which is all `_classify_token` ever set this from) and of the quantity badge.
+        if tab == "purchase" and _tile_has_condition_ribbon(frame, cell):
+            # CONDITIONAL BEFORE SOLD-OUT: a gated good may also read as greyed, and calling
+            # it "sold out" sends the buy loop off to spend a blue gem that cannot help.
+            logger.info(f"[{tab}] {good.name!r} carries a condition ribbon — gated, not empty")
+            good.conditional = True
+        elif tab == "purchase" and not good.sold_out and _tile_looks_sold_out(frame, cell):
+            logger.info(f"[{tab}] {good.name!r} tile is greyed — sold out")
+            good.sold_out = True
+        # SELL tab: the owned-count overlay (white, bottom-left of the icon) is too small for
+        # the general OmniParser pass — it mangles multi-digit counts (1,444→444/14444), so
+        # read it directly from that sub-region (threshold the white digits + targeted OCR).
+        #
+        # KEEP BOTH READINGS. This used to overwrite the OmniParser value outright, which
+        # meant the specialist won even when it was the one that was wrong: live 2026-08-27
+        # it read Candle's badge as 2148 (truly 148) because the melted-wax artwork beside
+        # the digits thresholded into a leading '2', at confidence 0.6519 against
+        # OmniParser's 0.9987 — and it discards its own confidence, so it could not know.
+        # The two candidates are reconciled below against what the hold can contain.
         if tab != "purchase":
             q = _read_owned_qty(frame, cell)
             if q is not None:
+                if good.owned_qty is not None and int(good.owned_qty) != int(q):
+                    owned_candidates[good.name] = [int(q), int(good.owned_qty)]
                 good.owned_qty = q
         goods.append(good)
 
+    if tab != "purchase" and owned_candidates:
+        _reconcile_owned_against_the_hold(frame, goods, owned_candidates)
+
     if claude_fallback:
         goods = _apply_claude_fallback(frame, goods, tab)
+
+    # THE RECOVERY BELONGS TO THE READ, NOT TO ONE CALLER OF IT. This used to live only in
+    # `read_market_all_pages`, so the ledger got the tile fallback and `sell_down_to` — which
+    # calls THIS function directly — did not. On 2026-08-29 that split the two apart by eleven
+    # seconds: the accumulator recovered `Candle 1182` from its tile, the trim asked the same
+    # page, got None, and skipped Candle as unreadable. Both were individually right. Fill the
+    # gaps HERE, while this frame's tiles are still where they were, and every caller gets the
+    # combined read instead of each choosing.
+    fill_missing_quantities(frame, goods)
+
     logger.info(
         f"[{tab}] omni grid {grid.n_rows}×{grid.n_cols}: {len(goods)} goods"
     )
@@ -659,6 +757,55 @@ def read_market_page_claude(
 
 # ── Multi-page helpers (unchanged interface) ───────────────────────────────────
 
+
+# The quantity badge sits in the lower-right of a tile's THUMBNAIL, which is left of the
+# label. Offsets from the tile's tap point, measured on Barcelona sell pages 2026-08-27.
+_TILE_QTY_BOX = (-215, -120, -40, 40)
+# x4, because x2 was not enough for the smallest badge measured (`Lemon Oil 1`).
+_TILE_QTY_SCALE = 4
+
+
+def fill_missing_quantities(frame, goods, *, read_text_fn=None):
+    """Re-read `owned_qty` for goods the page read left as None, from EACH GOOD'S OWN TILE.
+
+    A whole-frame parse is silent about the smallest badges, and upscaling the WHOLE FRAME is
+    not the answer: measured 2026-08-27, x2 recovered `Lemon Oil 1` while turning `Neroli 2`
+    into `8`, and the resample filter changed both. A wrong number is worse than a missing one
+    because nothing downstream can tell.
+
+    A tight crop of one tile has the number ALONE in the image rather than one of forty in a
+    busy 2400x1080 frame, and it reads `Lemon Oil 1`, `Iron 2,099` and `Gunpowder 2` correctly.
+    Only the gaps pay for it.
+
+    Mutates and returns `goods`. A tile that still will not read stays None — UNREADABLE IS
+    NOT ZERO.
+    """
+    if read_text_fn is None:
+        from vision.ocr import read_text as read_text_fn
+
+    dx1, dy1, dx2, dy2 = _TILE_QTY_BOX
+    for g in goods:
+        if getattr(g, "owned_qty", None) is not None:
+            continue
+        x, y = getattr(g, "tap_x", None), getattr(g, "tap_y", None)
+        if x is None or y is None:
+            continue
+        try:
+            tile = frame.crop((max(0, x + dx1), max(0, y + dy1),
+                               max(0, x + dx2), min(frame.height, y + dy2)))
+            tile = tile.resize((tile.width * _TILE_QTY_SCALE, tile.height * _TILE_QTY_SCALE))
+            digits = [t for t in (read_text_fn(tile) or "").replace(",", "").split()
+                      if t.isdigit()]
+        except Exception as exc:
+            logger.debug(f"[market] tile re-read failed for {g.name!r}: {exc}")
+            continue
+        if digits:
+            g.owned_qty = int(digits[-1])
+            logger.info(f"[market] {g.name!r} owned was unreadable on the page; its tile "
+                        f"reads {g.owned_qty}")
+    return goods
+
+
 def read_market_all_pages(
     capture_fn,
     tab: str = "purchase",
@@ -674,7 +821,7 @@ def read_market_all_pages(
 
     for scroll_n in range(max_scrolls + 1):
         frame     = capture_fn()
-        page_goods = read_market_page_omni(frame, tab=tab, port=port)
+        page_goods = read_market_page_omni(frame, tab=tab, port=port)  # fills its own gaps
 
         new_goods = [g for g in page_goods if g.name not in seen_names]
         if not new_goods and scroll_n > 0:
@@ -714,8 +861,15 @@ def read_both_tabs(
     purchase = read_market_all_pages(capture_fn, tab="purchase", port=port)
 
     logger.info("Market: reading Sell tab…")
-    tap_fn(*MARKET_COORDS["sell"])
-    time.sleep(1.5)
+    # The Sell item is FOUND in the left menu, never tapped at a remembered point — see
+    # `actions.buy_materials._sell_menu_item`. Reading the Purchase grid while labelling it
+    # "sell" reports the SHOP'S stock as the fleet's hold, which is the one mistake this
+    # function must not make.
+    from actions.buy_materials import ensure_sell_tab
+    if not ensure_sell_tab(capture_fn, tap_fn, 1.5):
+        logger.warning("Market: could not reach the Sell tab — returning no hold rather "
+                       "than the shop's stock")
+        return purchase, []
     sell = read_market_all_pages(capture_fn, tab="sell", port=port)
 
     return purchase, sell
@@ -774,3 +928,44 @@ if __name__ == "__main__":
         )
         save_snapshot(snap)
         logger.info(f"\nSnapshot saved → memory/knowledge/markets/{port}__market.json")
+
+
+def _reconcile_owned_against_the_hold(frame, goods, candidates) -> None:
+    """Settle disagreeing owned-quantity readings by what the ship can carry.
+
+    The Cargo bar is on this same frame, so the check is free. It can only VETO the
+    impossible — where the arithmetic does not bind, the specialist's reading stands, and
+    the good is logged as unsettled rather than silently believed."""
+    from actions.market_actions import _read_cargo_capacity
+    from vision.owned_constraints import reconcile_owned
+
+    try:
+        used, capacity = _read_cargo_capacity(frame)
+    except Exception as exc:                       # a check must never break the read
+        logger.warning(f"[sell] cargo bar unreadable ({exc}) — owned readings left as-is")
+        return
+    if not used or not capacity:
+        logger.info("[sell] no cargo bar on this frame — cannot check owned readings "
+                    f"against the hold; disagreements stand: {candidates}")
+        return
+
+    # Every good on the page, so the SUM is checked, not just the disputed one: 2,148 is
+    # under the 3,040 held and passes any per-good bound. Only Iron+Candle=4,247 is
+    # impossible.
+    by_name = {g.name: g for g in goods}
+    full = {g.name: [int(g.owned_qty)] for g in goods
+            if getattr(g, "owned_qty", None) is not None}
+    full.update({n: v for n, v in candidates.items()})
+
+    verdict = reconcile_owned(full, used, capacity)
+    for name, value in verdict.values.items():
+        good = by_name.get(name)
+        if good is None or getattr(good, "owned_qty", None) is None:
+            continue
+        if int(good.owned_qty) != int(value):
+            logger.warning(f"[sell] {name}: readers disagreed {candidates.get(name)} — "
+                           f"the hold ({used}/{capacity}) admits {value}. {verdict.reason}")
+            good.owned_qty = int(value)
+    if verdict.unresolved:
+        logger.warning(f"[sell] owned quantity NOT settled by the hold for "
+                       f"{list(verdict.unresolved)} — {verdict.reason}")

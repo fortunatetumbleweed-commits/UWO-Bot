@@ -87,3 +87,50 @@ Set from Bureau → *Manage Market Event*, 1 hr duration, consume currency:
 - **Closeout** — selected trade good *type* purchases lower
 - Consecutive mayoral terms unlock additional event types and more good
   designations.
+
+### Selling into a Bazaar — measured flow (Bremen, 2026-08-24)
+
+First live event sale: **1,644 Box of Nutmeg at 211% → +595,535,712 ducats.**
+
+**Reading the schedule.** World map → *Trade Event Schedule* (bottom-left). The table is
+`Market Event | Trade Goods | Fixed-term | Location`, read column-anchored by
+`vision/trade_event_reader.py`. **Times are Korean (UTC+9)** — not local, not in-world — so
+everything is handled timezone-aware. The list scrolls; a clipped row comes back with
+`start=None` rather than an invented time.
+
+**Getting there.** Each row has two right-edge buttons: scales (trade info) and the
+**location pin**. The pin does *not* sail — it opens a **Location Info** dialog (city,
+`Nearby` badge, mini-map) and its gold **Move** button commits the voyage. On arrival the
+player walks to the market unaided, so no world-map search and no saved route are needed.
+
+**Confirming departure.** Read the **speed**, which the game prints in knots in the tile-strip
+left of the mini-map: `>0` is under way, `0.0` is the speed-0 bug. This is the direct answer
+and confirms departure immediately, rather than waiting a game-day for the older test (falling
+ETA / rising day-at-sea) — which cannot answer these hops at all, since a 1-day ETA has no
+finer granularity to fall through and the trip is over in ~90 s.
+
+Two caveats, both learned live: `read_speed` needs `locate=True`, because its fixed crop is an
+offset from a `MINIMAP_CROP` constant the UI has drifted ~120px away from (the mini-map's real
+left edge measured x≈1862 against a constant saying 1984, so the crop landed inside the disc
+and returned None on every at-sea frame). And an unreadable speed is *unknown*, not stopped —
+it falls through to the ETA test, with **arrival** as the final confirmation. A `0.0` read
+immediately after the tap is not a verdict either; the ship may still be accelerating.
+
+The band is located from the mini-map rather than hardcoded, and is deliberately generous:
+**speed is the only decimal in that strip** (wind and current are integers), so the
+`\d{1,2}\.\d{1,2}` pattern disambiguates it without needing precise geometry.
+
+**Confirming the bazaar before selling.** Two cues on the Sell tile, both measured:
+- a **green banner carrying the literal word `Bazaar`** — machine-readable, so no colour
+  threshold needs calibrating;
+- a **price index far above normal**: 211% against the 96-99% of the ordinary goods beside
+  it. `BAZAAR_MIN_INDEX = 150` gates the sale.
+
+Sell **only** that category. The rest of the hold is at ordinary pricing and is often barter
+materials the mission still needs.
+
+**Perception gotcha.** A tile wearing the banner is detected *clipped* — OmniParser returns
+432x181 where its neighbours are 435x231. The width is dead-on; only the height is short, and
+the index text falls *below* the clipped box. Both the grid's congruence filter and the
+cell's text pickup allow for this (`vision/grid_detector.py`, `vision/market_reader.py`), and
+the grid keeps one cell per slot so the clipped twin of a normal tile is not read twice.

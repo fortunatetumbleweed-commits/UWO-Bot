@@ -45,7 +45,11 @@ if str(_PROJECT_ROOT) not in sys.path:
 # via user-drawn red bbox on frame 0010 (see
 # /tmp/0010_164950703_minimap_bbox.png).  Bbox extracted by detecting
 # the red rectangle's edges in that annotation.
-MINIMAP_CROP = (2003, 191, 2384, 375)        # 381×184
+# Was a stale local literal (2003, 191, 2384, 375). The crop drifts, so this analysis tool
+# reads the canonical value instead of pinning its own.
+from vision.minimap_navigation_view import get_minimap_crop as _get_minimap_crop
+
+MINIMAP_CROP = _get_minimap_crop()
 
 # Important: the mini-map shows MORE THAN the small translucent radar
 # disc around the ship — the surrounding rectangular area is also part

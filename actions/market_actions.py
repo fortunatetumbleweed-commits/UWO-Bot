@@ -1002,9 +1002,14 @@ def sell_all_cargo(
     flow = _load_flow("market_sell")
     logger.info(f"[{port}] Selling all cargo via Load All (negotiation={negotiation_strategy!r})")
 
-    # Switch to Sell tab
-    tap(*MARKET_COORDS["sell"])
-    time.sleep(1.5)
+    # Switch to Sell tab — found in the left menu, never a remembered point. See
+    # `buy_materials._sell_menu_item`: the calibrated coordinate was 49px off and landed
+    # between 'Purchase' and 'Sell', and a whole-page label search can pick 'Sell Supplies'.
+    from actions.buy_materials import ensure_sell_tab
+    from capture.adb_capture import capture_screen
+    if not ensure_sell_tab(capture_screen, tap, 1.5):
+        logger.error(f"[{port}] could not reach the Sell tab — not selling blind")
+        return []
 
     # Gate on the reliable "Cargo X/Y" counter, NOT the sell-page grid parse —
     # the sell layout differs from the buy grid so that parse is unreliable and
@@ -1960,8 +1965,29 @@ def _find_bulk_button(frame: Image.Image, elements=None):
 
 
 def _bulk_green_centre(frame: Image.Image, el):
-    """Centre of the green tick inside `el`'s bbox, or None when the box is unticked."""
-    a = np.array(frame)[el.y1:el.y2, el.x1:el.x2]
+    """Centre of the green tick for `el`'s checkbox, or None when it is unticked.
+
+    THE TICK IS SOMETIMES INSIDE THE DETECTED BBOX AND SOMETIMES BESIDE IT, because
+    OmniParser does not always return the same element for this control:
+
+      sell page,     2026-08-22: a BUTTON, bbox (481,986)-(684,1030), tick at x=504 — INSIDE
+      purchase page, 2026-08-26: the TEXT,  bbox (403,993)-(567,1029), tick at x=387 — OUTSIDE
+
+    Each of those geometries has now caused a live failure by being assumed to be the only
+    one. Searching a narrow offset LEFT of the label missed a tick that was inside, so bulk
+    stayed ON and a tile tap loaded an entire 1,681-unit Ebony stack into the sell cart.
+    Searching only INSIDE the bbox missed a tick that was outside, so a plainly-ticked box
+    read as unticked, `_ensure_bulk_mode(True)` "corrected" it with a tap, and every
+    subsequent tile tap loaded nothing — "tap Purchase ... cost=0".
+
+    So search the UNION: the bbox plus a checkbox-width margin to its left. Identify the
+    control by what it IS — a green tick next to this label — not by which side it falls on.
+    """
+    h = max(1, el.y2 - el.y1)
+    pad = max(24, int(0.9 * h))
+    x1 = max(0, el.x1 - pad - 8)
+    x2 = min(frame.width, el.x2 + 4)
+    a = np.array(frame)[el.y1:el.y2, x1:x2]
     if a.size == 0:
         return None
     r, g, b = (a[:, :, i].astype(int) for i in range(3))
@@ -1969,7 +1995,11 @@ def _bulk_green_centre(frame: Image.Image, el):
     if int(mask.sum()) < 5:
         return None
     ys, xs = np.nonzero(mask)
-    return (int(el.x1 + xs.mean()), int(el.y1 + ys.mean()))
+    # THE LEFTMOST TICK, not the average of every green pixel in the band. "Apply Load Ratio"
+    # sits just to the right and carries its own checkbox; if both were ticked, a mean over
+    # the union would land in the empty space between them and the tap would hit neither.
+    keep = xs <= xs.min() + h
+    return (int(x1 + xs[keep].mean()), int(el.y1 + ys[keep].mean()))
 
 
 def _is_bulk_mode_on(frame: Image.Image) -> bool:
@@ -2018,6 +2048,20 @@ def _ensure_bulk_mode(target_on: bool, frame: Image.Image) -> bool:
     #
     # This prevents the common failure mode where detection returns False on a checkbox
     # that is already ON, causing an unintended toggle that breaks bulk behaviour.
+
+    # A modal makes this control VISIBLE BUT UNREACHABLE. OmniParser reads straight
+    # through the scrim, so the checkbox is found and its state read correctly — and the
+    # tap then lands on the dimmed backdrop. Worse, for a dialog the bot opened itself an
+    # outside tap is the DISMISS gesture: live 2026-08-27 this cleanup destroyed the Trade
+    # Goods Info dialog whose `1/148` was the very fact that would have corrected the
+    # `2148` misread that caused the abort.
+    from vision.overlay import detect_overlay
+    overlay = detect_overlay(frame)
+    if overlay.is_modal:
+        logger.warning(f"'Put in Bulk' not touched — a modal is up ({overlay.state}, "
+                       f"bbox={overlay.bbox}); tapping outside it would dismiss it, "
+                       "not toggle the checkbox")
+        return False
 
     current = _is_bulk_mode_on(frame)
     anchor = _find_put_in_bulk_anchor(frame)

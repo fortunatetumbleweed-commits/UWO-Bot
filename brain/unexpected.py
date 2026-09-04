@@ -43,6 +43,7 @@ class Unexpected:
 
     case: str
     state: Optional[str] = None                 # the perceived nav state
+    title: Optional[str] = None                 # the dialog's title bar, when it has one
     text: Tuple[str, ...] = ()                  # dialog/popup body, for a decision
     options: Tuple[str, ...] = ()               # action labels offered, e.g. ('Ok', 'Cancel')
     positive: Optional[str] = None              # the label that commits, when there is one
@@ -88,7 +89,13 @@ def look(frame=None, *, expected_state: Optional[str] = None) -> Unexpected:
         positive = next((a.label for a in dialog.actions if a.is_positive), None)
         # A decision is offered → the task must make it. Only a close-X → noise.
         case = ACTION_DIALOG if actions else SYSTEM_POPUP
-        return Unexpected(case=case, state=state, text=tuple(dialog.body_text),
+        # The TITLE is carried because a decision needs it: "Notice" over "Recruit Crew?
+        # 181,224 ducats will be spent" is a different question from the same body under
+        # "Insufficient Funds". It was dropped here until 2026-08-26, which left the
+        # decider describing two thirds of a dialog.
+        return Unexpected(case=case, state=state,
+                          title=dialog.title_bar.text if dialog.title_bar else None,
+                          text=tuple(dialog.body_text),
                           options=actions, positive=positive, bbox=dialog.bbox,
                           signals=("dialog",))
 

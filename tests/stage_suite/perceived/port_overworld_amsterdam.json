@@ -1,0 +1,10 @@
+{
+ "state": "port_overworld",
+ "port": "Amsterdam",
+ "detail": "port_overworld (family-classifier@1.00, port='Amsterdam')",
+ "raw": {
+  "location": "port_overworld",
+  "port": "Amsterdam",
+  "detail": "port_overworld (family-classifier@1.00, port='Amsterdam')"
+ }
+}

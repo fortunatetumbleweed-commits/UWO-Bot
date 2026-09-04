@@ -21,7 +21,23 @@ from PIL import Image
 # Normalized region boxes (x0, y0, x1, y1). The port/building name is TITLE (top-left);
 # LOWER_LEFT is the sea steering wheel (empty in port).
 REGIONS = {
-    "title":       (0.00, 0.02, 0.40, 0.12),
+    # THE TITLE ENDS BEFORE THE TAB ROW. At 0.40 this crop reached into the world map's
+    # Port/Explore/Route/Trade tabs, which start near x=0.33, and `title_text` — which returns
+    # ONE element — picked 'Port' as the title. Live 2026-08-26 that made `_is_on_port_map`
+    # call the world map a port map while the actual title, 'World' + 'Map', sat at x 164..330
+    # in the same crop; the fleet re-perceived an open map instead of sailing to Lisboa.
+    # Measured titles end far earlier — 'Amsterdam' 223..435, 'Purchase' 1..401, 'Barter'
+    # 0..367 — so 0.29 keeps ample headroom and cannot reach the tabs.
+    # THE TITLE ONLY. Measured 2026-08-26 on real frames:
+    #   world map   'World' x  96..232 y 22..72,  'Map' x 229..336 y 20..85
+    #   port map    'London' x 316..468 y 24..72
+    #   first mode tab 'Port' x 762..955      <- must stay OUT
+    #   icon bar    y 115..227               <- must stay OUT
+    # The old box (0.00,0.02,0.40,0.12) reached BOTH: it swallowed the 'Port' tab, which
+    # `title_text` then returned as the title because it is a boxed high-contrast button and
+    # the title is two plain words — and it clipped 14px off the icon bar below. Its top edge
+    # at 0.02H=21 also shaved the title, whose glyphs start at y=20.
+    "title":       (0.00, 0.01, 0.27, 0.09),
     "top_hud":     (0.55, 0.00, 1.00, 0.08),   # currency / clock (ignored for change)
     "chrome_tr":   (0.90, 0.00, 1.00, 0.09),   # ☰ / ⌂ top-right
     "chrome_tl":   (0.00, 0.00, 0.10, 0.09),   # ← back arrow top-left

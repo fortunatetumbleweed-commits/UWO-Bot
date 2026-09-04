@@ -205,3 +205,32 @@ def test_refresh_is_told_which_sold_out_good_to_verify():
     # so refresh_market can verify by that tile going active again.
     res, log = _run({"Coral": 500}, _Sim([{"Coral": 200}, {"Coral": 400}]))
     assert res["met"] and log["verify_goods"] == ["Coral"]
+
+
+def test_it_stops_the_first_time_the_owned_count_is_unreadable():
+    """NEVER BUY BLIND.
+
+    If the owned count cannot be read, the loop cannot tell whether it is making progress —
+    and it keeps SPENDING while it fails to find out. Live twice: 1,681 Ebony bought against
+    a goal of 350 (2026-08-21), and at Bordeaux on 2026-08-24 four Purchase taps at 149,695
+    ducats each while the counter sat at 0/777, on course for all 39 rounds.
+
+    One buy is defensible — the read might recover. A second is not: nothing has changed
+    that would make it readable, so the loop must stop and report (user, 2026-08-24).
+    """
+    sim = _Sim([{"Coral": 200}] * 40, sells_out=False)
+    sim.cargo_of = lambda _frame: None                  # the cargo strip cannot be read
+    res, log = _run({"Coral": 777}, sim, max_rounds=39)
+
+    assert res["met"] is False
+    assert res["ok"] is False, "a blind loop is a failure to report, not a partial success"
+    assert len(log["buys"]) == 1, f"bought {len(log['buys'])} times while blind"
+    assert "unreadable" in res["reason"].lower()
+
+
+def test_a_readable_count_still_runs_to_the_goal():
+    """The blind-stop must not fire on a loop that CAN see itself progressing."""
+    sim = _Sim([{"Coral": 100}] * 40, sells_out=False)
+    res, log = _run({"Coral": 350}, sim, max_rounds=39)
+    assert res["met"] is True and res["bought_total"] >= 350
+    assert len(log["buys"]) >= 4

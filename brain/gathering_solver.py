@@ -45,7 +45,8 @@ def plan_gathering(needed: Sequence[str],
     needed:            materials to gather.
     material_sources:  {material: [ports that sell it]}.
     port_coords:       {port: (x, y)} for the sourceable ports.
-    start:             (x, y) current position.
+    start:             (x, y) current position, or None when it cannot be read — the legs
+                       then run unordered (by coverage) rather than the plan failing.
     """
     needed = set(needed)
     # Materials with no known/reachable source can't be covered.
@@ -65,8 +66,20 @@ def plan_gathering(needed: Sequence[str],
             new = {m for m in uncovered if port in material_sources.get(m, ())}
             if not new:
                 continue
-            d = _dist(cur, coords)
-            score = len(new) / (d + 1.0)          # coverage per marginal distance
+            # NO ORIGIN? ORDER BY COVERAGE ALONE. `start` is what makes this a ROUTE rather
+            # than a set: without it we cannot say which port is nearer, so we choose the one
+            # that covers the most materials and accept the extra sailing.
+            #
+            # A missing origin is normal, not exceptional: the remote check that reads the
+            # recipe leaves the fleet on the WORLD MAP, which paints no port name (user,
+            # 2026-08-31: "from port is only for good logging, for sailing it is really not
+            # important"). Refusing instead cost two runs on consecutive days.
+            #
+            # What is NOT allowed is inventing an origin — on 2026-08-21 a made-up one sent
+            # the fleet to Atuona at 5,948 instead of Masulipatnam at 294. Dropping the
+            # distance term is not the same as guessing at it.
+            d = _dist(cur, coords) if cur is not None else 0.0
+            score = len(new) if cur is None else len(new) / (d + 1.0)
             if score > best_score:
                 best, best_score, best_new, best_d = port, score, new, d
         if best is None:

@@ -102,3 +102,46 @@ class CheckbackTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_the_route_TAB_is_not_a_route_ROW():
+    """A saved route named "Sailing Route 2" contains the word "route".
+
+    Live 2026-08-24: the Route tab token was not OCR'd at all, so an unbounded CONTAINS match
+    picked the ROW instead — tapping it leaves the panel showing something else, and the row
+    scan that follows then reports the wanted route "not found in list" even though it is
+    right there. Bounding the search to the tab bar refuses rather than mis-taps.
+    """
+    from actions.route_execution import find_text_button
+    toks = [("Port", 1.0, 859, 53), ("Map", 1.0, 282, 53),
+            ("Sailing Route 2", 0.92, 149, 145), ("san to london", 0.87, 143, 204)]
+    assert find_text_button(toks, "route") == (149, 145)          # the trap
+    assert find_text_button(toks, "route", y_max=110) is None      # guarded
+
+    with_tab = toks + [("Route", 1.0, 1234, 53)]
+    assert find_text_button(with_tab, "route", y_max=110) == (1234, 53)
+
+
+def test_the_tab_bar_identifies_itself():
+    """OmniParser labels every world-map tab and gives it a box, so "which tab" needs no
+    pixel band — the tabs are Port | Explore | Route | Trade in a ROW at one height, and a
+    saved-route row named "Sailing Route 2" is not part of that row (user, 2026-08-24)."""
+    import types
+    from unittest import mock
+    from actions.route_execution import world_map_tab
+
+    def _el(label, cx, cy):
+        return types.SimpleNamespace(label=label, element_type="button", cx=cx, cy=cy,
+                                     x1=cx - 40, y1=cy - 20, x2=cx + 40, y2=cy + 20)
+
+    bar = [_el("Port", 858, 52), _el("Explore", 1047, 55),
+           _el("Route", 1234, 50), _el("Trade", 1424, 50)]
+    row_trap = _el("Sailing Route 2", 149, 145)
+
+    with mock.patch("vision.omniparser.parse_fast_cached", return_value=bar + [row_trap]):
+        assert world_map_tab(object(), "route") == (1234, 50)
+        assert world_map_tab(object(), "explore") == (1047, 55)
+
+    # A lone word is not a tab bar — refuse rather than tap a route row.
+    with mock.patch("vision.omniparser.parse_fast_cached", return_value=[row_trap]):
+        assert world_map_tab(object(), "route") is None

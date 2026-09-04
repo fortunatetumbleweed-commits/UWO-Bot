@@ -23,11 +23,15 @@ from unittest.mock import patch
 from brain import unexpected as ux
 
 
-def _dialog(actions=(), body=("Continue?",), bbox=(826, 212, 1574, 863)):
+def _dialog(actions=(), body=("Continue?",), bbox=(826, 212, 1574, 863), title="Notice"):
     import types
     acts = tuple(types.SimpleNamespace(label=l, is_positive=(l.lower() in ("ok", "confirm")))
                  for l in actions)
+    # `title_bar` is part of a DialogModel and `look` carries it out (2026-08-26), because a
+    # decision needs it: the same body under "Notice" and under "Insufficient Funds" is not
+    # the same question.
     return types.SimpleNamespace(bbox=bbox, body_text=body, actions=acts,
+                                 title_bar=types.SimpleNamespace(text=title),
                                  close_button=(1540, 238, 1580, 278))
 
 

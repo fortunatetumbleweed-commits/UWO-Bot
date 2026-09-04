@@ -18,6 +18,7 @@ from __future__ import annotations
 import logging
 import re
 import subprocess
+import time
 from typing import Optional
 
 from config.settings import ADB_DEVICE_ID, ADB_TIMEOUT, CANONICAL_ROTATION
@@ -64,6 +65,12 @@ def is_autorotate_on() -> bool:
     ).strip() == "1"
 
 
+def unlock_autorotate() -> None:
+    """Hand rotation back to the sensor, so a physical position can take effect."""
+    _adb_out(["shell", "settings", "put", "system",
+              "accelerometer_rotation", "1"])
+
+
 def lock_autorotate() -> None:
     """Disable Android auto-rotate so the game can't flip orientation."""
     _adb_out(["shell", "settings", "put", "system",
@@ -81,21 +88,36 @@ def ensure_canonical_orientation(raise_on_mismatch: bool = True) -> bool:
 
     Returns True when the display is at CANONICAL_ROTATION.
     """
-    if is_autorotate_on():
-        logger.warning("[orientation] auto-rotate was ON — locking it off so "
-                       "the game can't flip orientation mid-session")
-        lock_autorotate()
-
+    # LOCK ONLY ONCE CANONICAL. Locking first is what made this guard unfixable: a run that
+    # started while the display sat at ROTATION_90 disabled the sensor, freezing it there,
+    # and then asked for a PHYSICAL rotation that could no longer take effect — the game
+    # follows the sensor, and with auto-rotate off there is no sensor reading to follow at
+    # the next world switch. Live 2026-08-25: `user_rotation=3` plus a full
+    # overworld->world-map->overworld round trip left it at 90; enabling the sensor moved it
+    # to 270 immediately, the phone having been in the right position the whole time.
     rot = get_display_rotation()
+    if rot != CANONICAL_ROTATION and not is_autorotate_on():
+        logger.warning(f"[orientation] display is ROTATION_{rot} with auto-rotate OFF — "
+                       "handing rotation back to the sensor so the phone's real position "
+                       "can take effect")
+        unlock_autorotate()
+        time.sleep(1.5)
+        rot = get_display_rotation()
+
     if rot == CANONICAL_ROTATION:
+        # Now it is safe to freeze: locking here pins the CORRECT orientation.
+        if is_autorotate_on():
+            logger.info("[orientation] at the canonical rotation — locking auto-rotate off "
+                        "so the game cannot flip mid-session")
+            lock_autorotate()
         return True
 
     msg = (f"[orientation] display is ROTATION_{rot}, expected "
            f"ROTATION_{CANONICAL_ROTATION}.  All hardcoded UI coords are "
            f"calibrated for ROTATION_{CANONICAL_ROTATION}; tapping now would "
-           f"mis-hit by the per-screen notch offset.  Physically rotate the "
-           f"phone to the canonical landscape (auto-rotate is now locked off), "
-           f"then rerun.")
+           f"mis-hit by the per-screen notch offset.  Auto-rotate has been left "
+           f"ON so the sensor can follow: physically rotate the phone to the "
+           f"canonical landscape, then rerun.")
     if raise_on_mismatch:
         raise OrientationError(msg)
     logger.error(msg)

@@ -151,3 +151,42 @@ def read_barter_panel(frame: Image.Image) -> Optional[BarterPanelReading]:
                     f"good={result.selected_good} out={result.output_quantity} "
                     f"materials={[(m.label, m.have, m.need) for m in result.materials]}")
     return result
+
+# ── the Trade Count strip ──────────────────────────────────────────────────────
+_TRADE_COUNT_BAND = (20, 180)      # how far below the label the slot row sits
+
+
+def read_trade_count(frame=None, *, elements=None) -> list:
+    """The day's rounds, read off the strip along the bottom of the barter panel.
+
+    Each SPENT round leaves a tile carrying what that round produced, so the strip is a
+    ledger: `[859, 859, 898, 898]` is four rounds and their yields. Empty and locked slots
+    carry no number. Measured live 2026-08-30 at Hutu Village, where the strip went
+    [] -> [859, 859] -> [859, 859, 898] -> [859, 859, 898, 898] across the run.
+
+    THIS IS THE ONLY DIRECT STATEMENT OF HOW MANY ROUNDS ARE LEFT. Everything else the bot
+    used — a locked ribbon, a notice, a panel that vanished, an amity delta — is an inference
+    from a side effect, and each one has been wrong at least once. That night the bot reported
+    3 rounds committed and left while this strip read 4 of 6 spent, with two still available.
+
+    Anchored on the 'Trade Count' label rather than a fixed y: the row moves with the panel.
+    Returns the yields left to right, or [] when the strip is not on screen.
+    """
+    if elements is None:
+        if frame is None:
+            return []
+        from vision.omniparser import parse_fast_cached
+        elements = parse_fast_cached(frame)
+    anchor = next((e for e in elements or []
+                   if "trade count" in (getattr(e, "label", "") or "").strip().lower()), None)
+    if anchor is None:
+        return []
+    lo = anchor.cy + _TRADE_COUNT_BAND[0]
+    hi = anchor.cy + _TRADE_COUNT_BAND[1]
+    slots = []
+    for e in elements or []:
+        text = (getattr(e, "label", "") or "").strip().replace(",", "")
+        if text.isdigit() and lo <= getattr(e, "cy", 0) <= hi:
+            slots.append((e.cx, int(text)))
+    return [v for _cx, v in sorted(slots)]
+

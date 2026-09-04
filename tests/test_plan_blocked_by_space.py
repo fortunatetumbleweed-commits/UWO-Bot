@@ -29,8 +29,20 @@ def _plan(rounds):
 
 
 def _check():
+    """The village reading, as the passive task runner hands it back.
+
+    `run_barter_command` no longer calls `read_village_barter_remote`: it returns a
+    `RemoteCheck` work order and `run_task` turns the crank (Guiding Principle #7). So the
+    thing to stub is the crank, and what it returns answers `trade_for` / `rounds_remaining`
+    exactly as the old `VillageCheck` did.
+    """
     chk = mock.MagicMock()
     chk.ok, chk.rounds_remaining = True, 7
+    chk.status, chk.reason = "have-recipe", ""
+    chk.trades = [mock.MagicMock()]                 # non-empty: the read completed
+    # The hold is a second consultation of the same crank, so the stub answers it too. Real
+    # numbers, not MagicMocks: the plan does arithmetic with them.
+    chk.capacity, chk.used = 4108, 500
     chk.trade_for.return_value = mock.MagicMock(obtain=mock.MagicMock(), materials={})
     return chk
 
@@ -55,8 +67,7 @@ def wiring(monkeypatch):
 
     # All of these are imported INSIDE run_barter_command, so patch them at the source
     # module — patching this module's namespace would never be consulted.
-    monkeypatch.setattr("actions.village_check.read_village_barter_remote",
-                        lambda *a, **k: _check())
+    monkeypatch.setattr("brain.run_goal.run_task", lambda *a, **k: _check())
     monkeypatch.setattr("brain.barter_quantity.plan_barter_rounds", fake_plan)
     monkeypatch.setattr("brain.barter_quantity.free_space_for_barter",
                         lambda cap, used: max(cap - used, 0))

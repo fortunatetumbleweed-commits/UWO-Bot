@@ -1,0 +1,116 @@
+SUB-LOOP INVENTORY — 80 functions own an internal loop with waits
+
+function                                file                 lp slp  worst_s nests  callers
+----------------------------------------------------------------------------------------------------------------------
+_dismiss_android_connection             perceive.py           1   2      240     0  perceive.py:_dismiss_interruptor
+_try_port_search                        sail_actions.py       7  11       68     0  sail_actions.py:_navigate_world_map_to_port, sail_actions.py:pan_to_village
+_dismiss_android_dialog_if_present      sail_actions.py       2   1       60     0  (none)
+buy_goods                               market_actions.py     3   8       34     3  market_actions.py:auto_buy
+_navigate_world_map_to_port             sail_actions.py       5   6       32     5  sail_actions.py:_navigate_sea_to_destination, sail_actions.py:_navigate_world_map_to_destination +1
+open_world_map                          sail_actions.py       2   3       25     2  agent.py:act, nav_step.py:_execute +5
+navigate_to_building                    sail_actions.py       7  14       22     1  barter_mission_live.py:_owned_here, barter_mission_live.py:clear_surplus_at_current_port +10   [FOLDED 2026-08-25 → tap_building_entry; reports instead of recovering]
+recover_to_port_overworld               recovery.py           1   9       18     2  explore_actions.py:_assert_at_port, plan_actions.py:_handle_exit_to_port_overworld +8
+_try_village_search                     sail_actions.py       3   9       15     1  sail_actions.py:_navigate_world_map_to_village, village_check.py:read_village_barter_remote
+_dismiss_arrival_overlay                sail_actions.py       1   2       10     0  sail_actions.py:_wait_for_arrival
+_recover_from_sea                       recovery.py           1   1       10     0  recovery.py:recover_to_port_overworld
+_depart_from_harbour                    sail_actions.py       1   4        8     2  clear_cloud.py:_tick_depart, explore_voyage.py:_ensure_at_sea +3
+select_route_and_move                   route_execution.py    1   4        6     0  route_execution.py:execute_route
+auto_buy                                market_actions.py     3   1        6     1  task_runner.py:run_buy_all
+_wait_for_arrival                       sail_actions.py       1   3        6     2  sail_actions.py:_navigate_sea_to_destination
+_enter_keypad_quantity                  market_actions.py     2   3        5     0  market_actions.py:_buy_load_one_good
+_react_after_purchase                   buy_materials.py      1   1        4     0  buy_materials.py:purchase_goods
+_resolve_blocker_with_reasoning         sail_actions.py       1   2        4     0  sail_actions.py:_ensure_fleet_ready
+_dismiss_story_event                    perceive.py           1   4        4     0  perceive.py:_dismiss_interruptor
+sell_all_cargo                          market_actions.py     2   3        4     3  task_runner.py:run_sell_all
+_tap_building_action                    recovery.py           2   2        4     0  plan_actions.py:_handle_tap_primary_action
+exit_to_overworld                       sail_actions.py       1   2        3     1  barter_mission_live.py:_exit_market_to_overworld, explore_actions.py:explore_port +4   [FOLDED 2026-08-25 → no longer escalates into recover_to_port_overworld]
+_wait_until_at_sea                      sail_actions.py       1   2        3     0  sail_actions.py:depart_from_port_via_world_map
+run_task                                task_runner.py        3   1        3     2  barter_task.py:run_barter_phase
+explore_visible_ports_on_world_map      world_map.py          1   1        3     0  (none)
+advance_mandatory_flow                  recovery.py           1   2        3     0  recovery.py:_advance_active_flow, sail_actions.py:_advance_mandatory_flow
+iterate_menu_items                      explore_actions.py    1   1        2     1  explore_actions.py:explore_building
+_ensure_active_sea_view                 sail_actions.py       1   2        2     0  sail_actions.py:open_world_map
+_sell_handle_negotiation_and_wait_resultmarket_actions.py     1   2        2     0  market_actions.py:_sell_one_good, market_actions.py:sell_all_cargo
+_buy_handle_negotiation                 market_actions.py     1   2        2     0  market_actions.py:buy_goods
+explore_port                            explore_actions.py    2   1        2     2  task_runner.py:run_explore_port
+_tap_depart_button                      sail_actions.py       8   1        2     0  sail_actions.py:_depart_from_harbour
+_ensure_harbor_top_level                sail_actions.py       2   1        2     0  sail_actions.py:_ensure_fleet_ready
+_ensure_fleet_ready                     sail_actions.py       1   1        2     3  sail_actions.py:sail_to_port, sail_to.py:_action_fleet_check   [FOLDED 2026-08-25 -> read_fleet_readiness + resolve_fleet_blocker; goal owns the retry]
+_select_city_on_map                     sail_actions.py       1   1        2     0  sail_actions.py:_navigate_world_map_to_port
+_depart_village_to_sea                  barter_command.py     1   1        2     0  barter_command.py:_resume_tail
+escalate                                human_escalation.py   1   1        2     1  recovery.py:recover_to_port_overworld, sail_actions.py:_ensure_fleet_ready
+_dismiss_tap_ok                         perceive.py           1   2        2     0  perceive.py:_dismiss_interruptor
+_dismiss_tap_decline                    perceive.py           1   2        2     0  perceive.py:_dismiss_interruptor
+plan_to                                 planner.py            1   1        2     1  sail_to.py:_handle_unknown
+_navigate_world_map_to_village          sail_actions.py       2   2        2     2  sail_actions.py:_navigate_world_map_to_destination
+drive_sail_to                           sail_to.py            2   2        2     0  barter_mission_live.py:gather, barter_mission_live.py:make_live_executors +2
+_tap_from_list                          sail_actions.py       3   1        2     0  sail_actions.py:navigate_to_building   [DELETED 2026-08-25 → _scroll_list_for]
+_refind_city                            sail_actions.py       1   1        2     0  sail_actions.py:_navigate_world_map_to_port
+current_position                        barter_mission_live.py  1   1        2     0  barter_command.py:_run_mission_for, barter_mission_live.py:run_default_barter_mission
+_open_barter_panel                      barter_mission_live.py  1   1        2     0  barter_command.py:_try_barter_here, barter_mission_live.py:barter +1
+claude_guided_loop                      claude_guidance.py    1   2        2     0  (none)
+_execute_chained_dismissal              perceive.py           1   5        2     0  perceive.py:_dismiss_interruptor
+_buy_load_one_good                      market_actions.py     1   2        1     2  market_actions.py:buy_goods
+_sell_all_cargo_per_good                market_actions.py     1   1        1     0  market_actions.py:sell_all_cargo
+_tap_in_panel                           world_map_gather.py   2   1        1     0  world_map_gather.py:gather_port_trade_info
+_current_port                           barter_mission_live.py  1   1        1     0  agent.py:_quick_classify, agent.py:perceive +8
+zoom_world_map_to_max                   world_map.py          1   2        1     1  (none)
+purchase_goods                          buy_materials.py      1   4        0     1  buy_materials.py:buy_materials_at_port, task_runner.py:run_buy_all
+_buy_load_bulk                          market_actions.py     1   1        0     0  (none)
+pinch_zoom                              adb_actions.py        1   1        0     1  world_map.py:zoom_world_map_to_max
+input_text                              adb_actions.py        2   3        0     0  (none)
+buy_to_goal                             buy_materials.py      2   2        0     0  barter_mission_live.py:gather, barter_mission_live.py:make_live_executors
+_back_to_state                          explore_actions.py    1   1        0     0  explore_actions.py:iterate_menu_items
+_wait_for_screen                        sail_actions.py       1   1        0     0  market_actions.py:_buy_load_one_good, market_actions.py:_sell_one_good +2
+type_quantity_on_keypad                 market_actions.py     3   3        0     0  (none)
+get_trade_point_award                   market_actions.py     2   1        0     0  sell_goods.py:sell_goods
+_wait_for_state_change                  sail_actions.py       1   2        0     0  sail_actions.py:_navigate_world_map_to_port, sail_actions.py:_navigate_world_map_to_village
+select_world_map_tab                    sail_actions.py       2   1        0     0  sail_actions.py:_calibrate_scale_on_port_tab, sail_actions.py:pan_to_village
+depart_from_port_via_world_map          sail_actions.py       1   1        0     3  (none)
+_do_turn                                sea_actions.py        1   2        0     0  sea_actions.py:turn_left, sea_actions.py:turn_right
+sell_goods                              sell_goods.py         2   4        0     1  barter_mission_live.py:clear_surplus_at_current_port, barter_mission_live.py:make_live_executors +2
+sell_down_to                            sell_goods.py         2   5        0     0  barter_mission_live.py:clear_surplus_at_current_port, barter_mission_live.py:make_live_executors +1
+run_sail_to                             task_runner.py        1   1        0     1  self_grow.py:_run_trade_round, self_grow.py:run_self_grow +2
+scan_world_map_trade_info               world_map_gather.py   3   1        0     0  (none)
+pan_to_port                             world_map_nav.py      2   2        0     1  sail_actions.py:_navigate_world_map_to_port, sail_actions.py:pan_to_village
+_stride_from                            world_map_nav.py      1   1        0     0  world_map_nav.py:pan_to_port
+_navigate_from_port_map                 agent.py              1   1        0     1  agent.py:step
+_random_tap_exploration                 agent.py              1   2        0     0  agent.py:_navigate_from_port_map
+_wait_for_outcome                       agent.py              1   1        0     0  agent.py:step
+run                                     agent.py              1   1        0     0  adb_actions.py:_adb, adb_actions.py:pinch_zoom +4
+_await_route_arrival                    barter_mission_live.py  1   1        0     1  barter_mission_live.py:make_live_executors, barter_mission_live.py:sail_route
+commit_via_positive_taps                commit_actions.py     1   1        0     0  barter_executor.py:barter_commit_verified, human_escalation.py:_drain_positive_button_chain +4
+_perceive_uncached                      perceive.py           2   1        0     0  perceive.py:perceive
+run_hug_shore_loop                      hug_shore.py          1   3        0     0  explore_voyage.py:run_explore_voyage
+
+
+NESTED SUB-LOOPS — a sub-loop calling another sub-loop (how one call blocks for minutes)
+----------------------------------------------------------------------------------------------------------------------
+  _navigate_world_map_to_port            -> _refind_city, _select_city_on_map, _try_port_search, _wait_for_state_change, pan_to_port
+  sell_all_cargo                         -> _sell_all_cargo_per_good, _sell_handle_negotiation_and_wait_result, _wait_for_screen
+  buy_goods                              -> _buy_handle_negotiation, _buy_load_one_good, _wait_for_screen
+  _ensure_fleet_ready                    -> _ensure_harbor_top_level, _resolve_blocker_with_reasoning, escalate
+  depart_from_port_via_world_map         -> _depart_from_harbour, _wait_until_at_sea, open_world_map
+  explore_port                           -> exit_to_overworld, navigate_to_building
+  _buy_load_one_good                     -> _enter_keypad_quantity, _wait_for_screen
+  _depart_from_harbour                   -> _tap_depart_button, recover_to_port_overworld
+  open_world_map                         -> _ensure_active_sea_view, exit_to_overworld
+  _navigate_world_map_to_village         -> _try_village_search, _wait_for_state_change
+  _wait_for_arrival                      -> _dismiss_arrival_overlay, _navigate_world_map_to_port
+  run_task                               -> _current_port, run_sail_to
+  recover_to_port_overworld              -> _recover_from_sea, escalate
+  pinch_zoom                             -> run
+  purchase_goods                         -> _react_after_purchase
+  iterate_menu_items                     -> _back_to_state
+  auto_buy                               -> buy_goods
+  exit_to_overworld                      -> recover_to_port_overworld
+  navigate_to_building                   -> _tap_from_list
+  _try_village_search                    -> run
+  sell_goods                             -> get_trade_point_award
+  run_sail_to                            -> recover_to_port_overworld
+  zoom_world_map_to_max                  -> pinch_zoom
+  pan_to_port                            -> _stride_from
+  _navigate_from_port_map                -> _random_tap_exploration
+  _await_route_arrival                   -> _current_port
+  escalate                               -> commit_via_positive_taps
+  plan_to                                -> recover_to_port_overworld

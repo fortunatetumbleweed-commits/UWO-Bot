@@ -35,6 +35,152 @@ _DIALOG_ACTION_VERBS = {
 }
 
 
+# ── The brown title bar — the game's own layer marker ───────────────
+#
+# EVERY DIALOG IN THIS GAME HAS A BROWN TITLE BAR (user, 2026-09-03), and the game composites
+# a flat ~50% scrim over whatever a dialog covers. So a bar's own brightness says WHICH LAYER
+# it is on, and that is the signal the element-cluster approach could never see.
+#
+# Measured on the San Village barter, the same `Insufficient Empty Space` dialog in front
+# (frame 334) and then behind a `Notice` (frame 335):
+#
+#                          R     G     B    R/B   G/B    median luminance
+#   IES bar, in front     71    46    35   2.03  1.31         50.5
+#   Notice bar, in front  70    46    35   2.00  1.31         50.5
+#   IES bar, behind       36    23    18   2.00  1.28         25.4
+#
+# Two things fall out, and both are load-bearing:
+#
+#   * THE RATIOS SURVIVE THE DIM — scaling every channel by ½ leaves R/B and G/B untouched —
+#     so COLOUR identifies "this is a title bar" regardless of layer, and LUMINANCE then
+#     identifies the layer. Ranking bars by brightness needs no absolute constant.
+#   * A FRONT BAR IS DARKER THAN A DIMMED BODY (50.5 against a rear card's 105-120). So the
+#     bar can never be found by thresholding brightness, and a dialog's extent can never be
+#     "the bright pixels": the title bar is dark BY DESIGN. That inversion is why the same
+#     trick had to be re-derived for tab selection, and it is the whole reason this is a
+#     colour test with a luminance ranking rather than a brightness test.
+#
+# Two false positives were found by sweeping 400 frames across 243 recorded sessions, and the
+# guards below exist for them specifically:
+#
+#   * WARM SCENERY. Market beams, sacks and tavern wood are the same hue family and pass the
+#     ratios outright. Chrome is FLAT PAINT and a photograph is not: real bars measured
+#     std 2.1-5.0, scenery 12.8-23.0.
+#   * THE MARKET'S TAN PRICE STRIPS (R=149 G=121 B=82) — flat, horizontal, and warm, but
+#     R/B 1.82 and G/B 1.48 against a real bar's 2.00 and 1.33.
+#
+# After both guards the sweep gives at most TWO bars on any frame, front bars clustering at
+# 48-54 and dimmed ones at 24-28.
+#
+# NOTE this finds any CHROME HEADER, not only a dialog's — a side panel's `Requested Trade
+# Goods` header reads 51.7, front-level and perfectly real. Telling a modal from a panel is
+# the geometric guards' job, and they can finally do it because they are handed the card
+# rather than a full-height stripe.
+
+_BAR_R_OVER_B = (1.88, 2.16)
+_BAR_G_OVER_B = (1.20, 1.42)
+_BAR_MIN_R, _BAR_MAX_R = 12, 170
+_BAR_MIN_WIDTH_FRAC = 0.12
+_BAR_MIN_H, _BAR_MAX_H = 18, 90
+_BAR_MAX_STD = 8.0
+
+
+@dataclass(frozen=True)
+class TitleBarBand:
+    """One brown chrome header, with the brightness that places it in the stack."""
+    bbox:      Tuple[int, int, int, int]
+    luminance: float
+    flatness:  float
+
+
+def find_title_bars(frame) -> List[TitleBarBand]:
+    """Every brown chrome header on `frame`, brightest (frontmost) FIRST.
+
+    `frame` is a PIL Image. Returns [] when none is found, which is the common case —
+    most screens are not showing a dialog or a panel.
+    """
+    import numpy as np
+
+    a = np.asarray(frame.convert("RGB")).astype(float)
+    h, w, _ = a.shape
+    R, G, B = a[:, :, 0], a[:, :, 1], a[:, :, 2]
+    Bs = np.maximum(B, 1.0)
+    brown = ((R / Bs > _BAR_R_OVER_B[0]) & (R / Bs < _BAR_R_OVER_B[1])
+             & (G / Bs > _BAR_G_OVER_B[0]) & (G / Bs < _BAR_G_OVER_B[1])
+             & (R > _BAR_MIN_R) & (R < _BAR_MAX_R) & (R > G) & (G > B))
+    lum = 0.2126 * R + 0.7152 * G + 0.0722 * B
+
+    wide_enough = brown.sum(axis=1) > _BAR_MIN_WIDTH_FRAC * w
+    bars: List[TitleBarBand] = []
+    y = 0
+    while y < h:
+        if not wide_enough[y]:
+            y += 1
+            continue
+        y0 = y
+        while y < h and wide_enough[y]:
+            y += 1
+        if not (_BAR_MIN_H <= y - y0 <= _BAR_MAX_H):
+            continue
+        cols = np.where(brown[y0:y].sum(axis=0) > 0.5 * (y - y0))[0]
+        if cols.size < _BAR_MIN_WIDTH_FRAC * w:
+            continue
+        x1, x2 = int(cols.min()), int(cols.max())
+        paint = lum[y0:y, x1:x2][brown[y0:y, x1:x2]]
+        if paint.size == 0 or float(paint.std()) > _BAR_MAX_STD:
+            continue
+        bars.append(TitleBarBand(bbox=(x1, y0, x2, y),
+                                 luminance=float(np.median(paint)),
+                                 flatness=float(paint.std())))
+    bars.sort(key=lambda b: -b.luminance)
+    return bars
+
+
+# The front card's BODY is bright, and the scrim makes "bright" relative rather than
+# absolute: measured against a front bar at 50.5, its own body reads 235 (x4.7) while the
+# card behind it reads 105-120 (x2.1-2.4). Three times the bar sits cleanly between them and
+# needs no constant of its own — if the game ever re-grades its palette, the bar moves with
+# the body and the ratio holds.
+_BODY_OVER_BAR = 3.0
+
+
+def card_from_bar(frame, bar: TitleBarBand) -> Optional[Tuple[int, int, int, int]]:
+    """The full card under `bar` — the bar itself plus the bright body beneath it.
+
+    This is what replaces "every element in a vertical band". The band had no bottom, so it
+    ran from a dialog's title straight through the panel behind it to the footer at the
+    bottom of the screen — 932px on the San Village frame, which then tripped the very height
+    guard meant to reject side panels. The card is 566px, and it is the dialog.
+    """
+    import numpy as np
+    from scipy import ndimage
+
+    a = np.asarray(frame.convert("RGB")).astype(float)
+    lum = 0.2126 * a[:, :, 0] + 0.7152 * a[:, :, 1] + 0.0722 * a[:, :, 2]
+    bx1, by1, bx2, by2 = bar.bbox
+
+    body = lum > bar.luminance * _BODY_OVER_BAR
+    body[:by2, :] = False                       # the card is BELOW its own bar
+    labelled, n = ndimage.label(body)
+    if not n:
+        return None
+    # The card is the biggest bright thing whose columns overlap the bar's.
+    best, best_size = None, 0
+    for sl, idx in zip(ndimage.find_objects(labelled), range(1, n + 1)):
+        if sl is None:
+            continue
+        y1, y2 = sl[0].start, sl[0].stop
+        x1, x2 = sl[1].start, sl[1].stop
+        if x2 < bx1 or x1 > bx2:
+            continue                            # a bright thing somewhere else entirely
+        size = int((labelled[sl] == idx).sum())
+        if size > best_size:
+            best, best_size = (x1, y1, x2, y2), size
+    if best is None:
+        return None
+    return (min(bx1, best[0]), by1, max(bx2, best[2]), best[3])
+
+
 # ── Data shapes ─────────────────────────────────────────────────────
 
 
@@ -116,6 +262,7 @@ def detect_dialog(
     elements:     Sequence[DetectedElement],
     frame_width:  int,
     frame_height: int,
+    frame=None,
 ) -> Optional[DialogModel]:
     """Return a DialogModel when a bounded card overlay is detected.
 
@@ -129,6 +276,23 @@ def detect_dialog(
     measures fire rate against labelled frames and we iterate.
     """
     fw, fh = frame_width, frame_height
+
+    # THE CARD FIRST, WHEN WE HAVE PIXELS (user, 2026-09-03). With a frame we can ask the
+    # screen where the dialog actually is, instead of inferring it from where elements happen
+    # to sit. `_card_cluster` returns the elements INSIDE the frontmost card; everything
+    # below then proceeds unchanged on a set that contains only this dialog's own widgets.
+    #
+    # This is what fixes the stacked case. Before it, hunting the anchors across the whole
+    # frame took a side panel's close-X (2173,336) over the dialog's own (1616,238), and
+    # counted the panel's `Receive` button as one of the dialog's actions — then the
+    # full-height cluster tripped the side-panel height guard and a plainly-visible modal was
+    # reported CLEAN on every frame for two minutes.
+    card_bbox = None
+    if frame is not None:
+        try:
+            card_bbox, elements = _card_cluster(frame, elements)
+        except Exception:                        # noqa: BLE001 — pixels are a bonus, never required
+            card_bbox = None
 
     # Exclude top-and-bottom chrome strips (status bars, system chrome).
     top_chrome_y = int(0.06 * fh)
@@ -190,7 +354,7 @@ def detect_dialog(
     if len(cluster) < 3:
         return None
 
-    bbox = (
+    bbox = card_bbox or (
         min(e.x1 for e in cluster),
         min(e.y1 for e in cluster),
         max(e.x2 for e in cluster),
@@ -212,7 +376,28 @@ def detect_dialog(
     bbox_w = bbox[2] - bbox[0]
     bbox_h = bbox[3] - bbox[1]
     bbox_cx = (bbox[0] + bbox[2]) / 2
-    if bbox_h > 0.80 * fh:
+    # THE HEIGHT GUARD WAS FOR A CONTAMINATED CLUSTER, NOT FOR A CARD. It was written when
+    # the "cluster" was a full-height vertical STRIPE that swallowed whatever shared its
+    # columns, so height stood in for "this is not really one widget". Now that the card is
+    # segmented off its own title bar, height means what it says — and real dialogs are tall.
+    #
+    # Live 2026-09-04: a `Gear Info` modal measured 880px against this 864px limit and was
+    # reported CLEAN, so nothing could close a dialog the bot had just opened, and the run
+    # died. ff60c83's own commit message predicted exactly this ("it would be rejecting
+    # genuinely tall dialogs") and deferred it; the deferral cost the mission.
+    #
+    # The guard's original case is covered twice over WITHOUT it. The 2026-05-23 world-map
+    # nearby-ports panel sat at (1921,123)-(2399,1028): centre x=2160 (0.90 fw) fails the
+    # centring test below, and left edge 1921 > 0.70 fw fails the edge test. Those two are
+    # what actually distinguish a side panel from a modal — a panel HUGS AN EDGE, a modal is
+    # centred and inset. Height never separated them; it only happened to correlate.
+    #
+    # SO THE LIMIT DEPENDS ON HOW THE BBOX WAS DERIVED, which the frameless path proves:
+    # without pixels the cluster is still that full-height stripe — 932px on the very frame
+    # this fix was built from — and there the guard is doing real work. Segmented from the
+    # card, 0.92 leaves room for a genuinely tall dialog; inferred from elements, 0.80 keeps
+    # the contaminated cluster out.
+    if bbox_h > (0.92 if card_bbox else 0.80) * fh:
         return None
     if not (0.30 * fw <= bbox_cx <= 0.70 * fw):
         return None
@@ -243,6 +428,25 @@ def detect_dialog(
         anchors_fired=tuple(fired),
     )
 
+
+
+def _card_cluster(frame, elements: Sequence[DetectedElement]):
+    """(card bbox, the elements inside it) for the frontmost dialog card.
+
+    Falls back to (None, elements) whenever the screen does not offer a card, so a caller
+    that hands us a frame is never worse off than one that does not.
+    """
+    bars = find_title_bars(frame)
+    if not bars:
+        return None, elements
+    card = card_from_bar(frame, bars[0])
+    if card is None:
+        return None, elements
+    x1, y1, x2, y2 = card
+    inside = [e for e in elements if x1 <= e.cx <= x2 and y1 <= e.cy <= y2]
+    if len(inside) < 3:
+        return None, elements          # a card we cannot populate is not evidence
+    return card, inside
 
 # ── Anchor detectors ────────────────────────────────────────────────
 

@@ -22,18 +22,21 @@ from typing import Optional, Protocol
 
 from PIL import Image
 
+from vision.minimap_navigation_view import get_minimap_crop
+
 
 # Region coordinates on the 2400×1080 phone screen.
 # Kept in one place so a future game update or device change is a
 # single-line fix.  The current MINIMAP_CROP is mirrored from
 # vision/minimap_navigation_view.py — it drifts with game updates,
 # see memory/project_minimap_crop_drifts_with_game_updates.md.
-MINIMAP_CROP = (1984, 205, 2379, 395)        # 395 × 190
-# 2026-07-24: shrunk from (1979, 202, 2384, 395) — see
-# vision/minimap_navigation_view.py for the disc-rim inset rationale.
-# 2026-07-21: recalibrated against a fresh live OmniParser reading.
-# See vision/minimap_navigation_view.py for full context.
-# 2026-07-14: reverted from an incorrect 2026-07-13 recalibration.
+# THE MINI-MAP CROP LIVES IN ONE PLACE — `vision.minimap_navigation_view`.
+# This module used to keep its own MIRRORED copy of the literal, which meant two globals
+# that must never disagree: `tools/run_ai_nav_live.py` had to assign BOTH after calibrating,
+# and calibrating only one would leave half of perception reading a stale box, silently.
+# `MINIMAP_CROP` is still readable as a module attribute (see `__getattr__` below) so
+# existing `from brain.ai_nav.vision_input import MINIMAP_CROP` callers keep working, but it
+# now resolves to the canonical value at ACCESS time rather than being frozen at import.
 SEA_HUD_LATLON_CROP = (2240, 348, 2395, 400)  # the "lat,lon" text
 # Fallback absolute crop; the live value is derived from MINIMAP_CROP
 # at call time via _sea_hud_latlon_crop().  See vision/sea_hud.py for
@@ -44,7 +47,7 @@ def _sea_hud_latlon_crop() -> tuple[int, int, int, int]:
     """Live SEA_HUD_LATLON_CROP derived from the current MINIMAP_CROP.
     Uses the same offset math as vision.sea_hud.latlon_crop_for so
     OCR follows the mini-map when it shifts."""
-    _, _, mx1, my1 = MINIMAP_CROP
+    _, _, mx1, my1 = get_minimap_crop()
     return (mx1 - 129, my1 - 35, mx1 + 11, my1 + 5)
 # `sea_view` is "the rendered 3D world, minus all chrome" — useful
 # for future VLM input.  Today this is the full screen minus the
@@ -72,7 +75,7 @@ class VisionFrame:
 
     def minimap(self) -> Image.Image:
         """The 400×190 minimap crop (top-right radar)."""
-        return self.raw.crop(MINIMAP_CROP)
+        return self.raw.crop(get_minimap_crop())
 
     def sea_hud_latlon(self) -> Image.Image:
         """The bottom-right lat/lon text crop, anchored to the current
@@ -151,14 +154,15 @@ class FileVisionSource:
         img = Image.open(path).convert("RGB")
 
         if self.paste_to_full_screen:
-            mm_w = MINIMAP_CROP[2] - MINIMAP_CROP[0]
-            mm_h = MINIMAP_CROP[3] - MINIMAP_CROP[1]
+            _mm = get_minimap_crop()
+            mm_w = _mm[2] - _mm[0]
+            mm_h = _mm[3] - _mm[1]
             if img.size != (2400, 1080):
                 wrapped = Image.new("RGB", (2400, 1080), (0, 0, 0))
                 # Resize the saved minimap to the canonical crop dims
                 # so `frame.minimap()` returns the same pixels we loaded.
                 wrapped.paste(img.resize((mm_w, mm_h)),
-                              (MINIMAP_CROP[0], MINIMAP_CROP[1]))
+                              (_mm[0], _mm[1]))
                 img = wrapped
         return VisionFrame(raw=img, tick=tick, wall_ts=time.time())
 
@@ -172,3 +176,15 @@ class StaticVisionSource:
 
     def capture(self, tick: int) -> VisionFrame:
         return VisionFrame(raw=self.img, tick=tick, wall_ts=time.time())
+
+
+def __getattr__(name):
+    """Resolve `MINIMAP_CROP` to the canonical live value at access time.
+
+    Keeps `from brain.ai_nav.vision_input import MINIMAP_CROP` working for existing callers
+    while there is only ONE value in the process. Note this hook fires only for attribute
+    access from OUTSIDE the module; code inside it calls `get_minimap_crop()` directly.
+    """
+    if name == "MINIMAP_CROP":
+        return get_minimap_crop()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

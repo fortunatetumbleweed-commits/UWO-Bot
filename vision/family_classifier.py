@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Optional
 
 from loguru import logger
+from vision.frame_cache import FrameCache
 
 
 _MODEL_PATH = Path("data/models/family_classifier.pt")
@@ -107,8 +108,11 @@ def _ensure_loaded() -> bool:
         return False
 
 
-_RESULT_CACHE: "OrderedDict[int, FamilyVerdict]" = OrderedDict()
-_RESULT_CACHE_MAX = 8
+# Keyed on the frame via `vision.frame_cache`, which exists because this exact bug was found
+# twice: omniparser 2026-08-21 (197 id collisions in 200 images — a world-map frame came back
+# carrying the port overworld's buildings) and here 2026-08-26 (109 in 120 — a survey reported
+# `chromed` and `transient` screens as `sea`). Same defect, silent both times.
+_RESULT_CACHE = FrameCache("family_classifier", max_entries=8)
 
 
 def _reset_for_test() -> None:
@@ -128,23 +132,17 @@ def _reset_for_test() -> None:
 def classify_family(frame) -> FamilyVerdict:
     """Classify a frame's nav-state family.
 
-    `frame` is a PIL.Image.  Result is cached per `id(frame)` so multiple
-    callers within one perceive tick share inference cost — PIL Images
-    aren't hashable so we use a small manual LRU keyed on the int id.
+    `frame` is a PIL.Image.  Result is cached so multiple callers within one
+    perceive tick share inference cost — PIL Images aren't hashable, so the
+    LRU is keyed on the int id AND guarded by a weak reference, because an
+    id alone is reused after collection and hands one image another's verdict.
 
     On no-model / load-failure, returns FamilyVerdict("unknown", 0.0).
     """
     if not _ensure_loaded():
         return FamilyVerdict("unknown", 0.0)
 
-    key = id(frame)
-    cached = _RESULT_CACHE.get(key)
-    if cached is not None:
-        _RESULT_CACHE.move_to_end(key)
-        return cached
-
-    verdict = _run_inference(frame)
-    _RESULT_CACHE[key] = verdict
+    return _RESULT_CACHE.memoize(frame, lambda: _run_inference(frame))
     if len(_RESULT_CACHE) > _RESULT_CACHE_MAX:
         _RESULT_CACHE.popitem(last=False)
     return verdict

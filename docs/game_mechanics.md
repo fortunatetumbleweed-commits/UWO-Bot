@@ -161,3 +161,128 @@ and never taking its route.
 
 The `is_locked` flag from `vision.region_detectors.left_menu` is what surfaces the
 "Unavailable" state.
+
+## Amity drives BOTH the round count and the exchange ratio
+
+Measured live at San Village, 2026-08-24, across one session:
+
+| after | amity | per-round need | output |
+|---|---|---|---|
+| arrival | Neutral 60,000 | Raisin 225 + Pig 285 | 829 |
+| round 1 | Favorable 66,983 | 225 + 285 | 870 |
+| round 2 | Favorable 74,530 | 155 + 197 | 600 |
+| round 3 | Trusting 79,733 | 3 + 3 | 9 |
+
+Two effects, both tied to amity, and bartering itself raises amity:
+
+1. **Round count** — every amity GRADE opens one more barter; reaching **Friendly** is where
+   the daily allowance reaches **7**. The Base tab's "Daily Barter Progress N/M" shows the
+   total for the grade you ARRIVE with (San read 0/5 at Neutral, Hutu 0/4 at Favorable), so
+   it rises as you trade. 7 is the best hope, not a promise: if amity does not climb to
+   Friendly before the available barters are spent, 7 will not happen, and that is normal.
+2. **Exchange ratio** — as amity grows the ratio gets MORE FAVOURABLE: fewer materials are
+   consumed per round (user, 2026-08-24). The panel rescales the trade to what is fundable,
+   so late rounds cost a fraction of the first.
+
+**Planning consequence.** Sizing a gather on the ARRIVAL ratio over-buys, because later
+rounds need less — or, seen the other way, the same materials stretch to MORE rounds than
+planned. San's 2-round plan produced 3 commits for exactly this reason. A gather sized on the
+average ratio across rising amity would fit more rounds into the same hold, which matters
+because the HOLD, not the daily allowance, is what has actually bound every plan so far
+(San: 2 rounds vs an allowance of 5; Hutu: 3 vs 7).
+
+Amity also DECAYS over time, so these gains are not permanent.
+
+## Conditional goods — unavailable is not the same as sold out
+
+Some goods at a port are **conditional**: purchasable only when a condition is met (user,
+2026-08-24). They are NOT an empty shelf, and the difference is operational — a sold-out
+shelf is restocked by a **blue-gem refresh**, while a conditional good will never restock,
+so refreshing it burns gems forever.
+
+Kinds seen so far:
+
+| Condition | Tile appearance |
+|---|---|
+| **Time-limited** | GREYED, quantity 0, plus a bright **magenta band** carrying the window, e.g. `09/21/2026/00:00:00 -`, and a magenta corner flag with an hourglass. Measured at Bordeaux: Hungary Water. |
+| **Nation-controlled** | Purchasable only by players whose nation controls the area — and these tiles are **ACTIVE**, not greyed. They pass every visual test and only fail at purchase. (See the frames where the bot bought Textiles.) |
+
+So the tile states worth telling apart are three, not two:
+
+1. **In stock** — buy it.
+2. **Sold out** — greyed, dark, no condition band. A blue-gem refresh restocks it.
+3. **Condition not met** — greyed WITH a condition band (time), or active but restricted
+   (nation). A refresh is wasted; the good must be skipped, or sourced elsewhere.
+
+### Reading caution
+
+"Greyed" is not one appearance. A sold-out tile is uniformly dark grey (Raisin measured
+saturation 0.004, brightness 18.5). A time-limited tile keeps a coloured backdrop behind its
+grey artwork and carries the magenta band, so a naive saturation sample of the thumbnail
+reads it as ACTIVE (Hungary Water measured 0.470). Sampling the tile ground, or detecting the
+condition band, separates them — the artwork alone does not.
+
+## Barter goods can be MATERIALS for other barter goods
+
+A village's trade list mixes two roles, and the same name can hold both (user, 2026-08-24).
+Read at Svear Village:
+
+    Birch Tree     648  ← Iron 91 + Matchlock Gun 53 + Candle 105
+    Näverslöjd   1,036  ← Birch Tree 260 + Iron 130          ← Birch Tree is a MATERIAL here
+    Juniper Berry  926  ← Lingonberry 65 + Vodka 150
+    Meteorite    1,111  ← Compass 150 + Chorong 150 + Olive Oil 150
+
+So barter output can be barter input — at the SAME village or at another one — which makes
+multi-stage chains possible: buy Iron/Matchlock/Candle → barter for Birch Tree → barter Birch
+Tree (plus Iron) for Näverslöjd. **Goods that consume barter goods generally sell for more**,
+which is what makes the extra stage worth it.
+
+Two consequences for the bot:
+
+- **Reading**: a name appearing in the list does not tell you its role. Only the row's
+  structure does — flush-left qty tile with no pin = the GOOD; indented with a location pin =
+  a MATERIAL. Birch Tree appears both ways on one screen.
+- **Planning**: a material may be obtainable by BARTER rather than purchase, so "unsourced
+  material" is not necessarily a dead end — it may be another village recipe. The gather
+  planner currently only knows how to buy materials at ports.
+
+## Multi-stage barter (barter chains)
+
+Some barter goods are made from **other barter goods**, not from port-bought trade goods. The
+chain is the game's route to its highest-value cargo — a good that consumes barter goods sells
+for considerably more than one made from ordinary materials (user, 2026-08-24/25).
+
+Confirmed chains:
+
+    Naverslojd(769)     <- Birch Tree 340, Iron 170          Svear Village
+    Moccasin(769)       <- American Bison 300, Wool 340      Cheyenne Village
+    Eagle Feather(512)  <- Pulque 75, Guarana 75             Cheyenne Village
+
+`Birch Tree` and `American Bison` are goods at the SAME village that also appear there as
+materials. `Pulque` and `Guarana` are goods at OTHER villages, appearing at Cheyenne as
+materials — so Eagle Feather, one of the game's high-value goods, needs two prior barters at
+two other villages before it can be made at all.
+
+### How a chained material looks on screen
+
+Exactly like any other material: an indented row with a **location pin**. What the pin's popup
+names is the difference — a **village** for a chained material, a **port** for one that is
+bought. That popup is the only thing on screen that distinguishes them, and it is what a
+gathering plan needs: a port material means go shopping, a village material means run another
+barter first.
+
+### What the bot cannot do yet
+
+`memory/knowledge/barter/recipes.json` stores every material as if it were port-bought
+(`source_ports`), with no field saying a material comes from a village. So a mission planning
+`Moccasin` would try to BUY American Bison, and `Eagle Feather` would look purchasable when it
+actually requires barters at two other villages first.
+
+Making chains work needs, in order:
+
+1. **Record the source kind.** Read the pin popup for each material and store village-vs-port.
+2. **Plan recursively.** A village material expands into its own barter (its own materials,
+   its own amity and daily-round limits at that village) before the parent good can be made.
+3. **Sequence across villages.** A chain spans several villages and several days: each village
+   allows a limited number of rounds per day, and amity decays, so the plan is a schedule
+   rather than a shopping list.

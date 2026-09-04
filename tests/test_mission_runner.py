@@ -52,7 +52,13 @@ def _nutmeg_opp(**kw):
 def test_build_barter_graph_deps():
     plan = _Plan(purchases={"Near": {"Coral": 100}, "Far": {"Ebony": 50}})
     g = {t.id: t for t in build_barter_graph(_nutmeg_opp(), plan)}
-    assert g["gather:Near"].deps == () and g["gather:Far"].deps == ()
+    # The gathers are unordered WITH RESPECT TO EACH OTHER, and both wait on the pre-gather
+    # trim: gathering needs space, and a cluttered hold also hides the bought good's tile
+    # below the fold (2026-08-26).
+    assert g["gather:Near"].deps == ("trim_before_gather",)
+    assert g["gather:Far"].deps == ("trim_before_gather",)
+    assert "gather:Far" not in g["gather:Near"].deps
+    assert g["trim_before_gather"].deps == ()
     # Trim surplus once every gather is in, THEN check supply, THEN sail: the trim
     # changes what is aboard, so a supply/space check before it would read stale.
     assert set(g["sell_surplus"].deps) == {"gather:Near", "gather:Far"}
@@ -119,7 +125,7 @@ def test_route_tail_runs_in_order():
                                          tail=MissionTail(kind="route", value="R")),
                       COORDS, ex, start=COORDS["Home"])
     assert res.ok
-    assert seen == ["gather:Near", "sell_surplus", "supply_verify", "sail_to_village",
+    assert seen == ["trim_before_gather", "gather:Near", "sell_surplus", "supply_verify", "sail_to_village",
                     "barter", "sail_route", "sell"]
 
 
@@ -241,3 +247,169 @@ def test_every_kind_the_graph_emits_has_a_live_executor():
                  MissionTail(kind="none")):
         for task in build_barter_graph(_nutmeg_opp(), plan, tail=tail):
             assert task.kind in execs, f"no executor for {task.kind!r}"
+
+
+def test_a_material_underfoot_is_not_sailed_away_from():
+    """A GATHER LEG NAMES THE PORT THAT SOURCES ITS MATERIAL. Amsterdam has the Iron,
+    Tripoli has the Candle — so a leg whose port is the one under our feet costs no voyage
+    at all, and leaving it is wrong at any distance.
+
+    Live 2026-08-29: the fleet stood in Amsterdam and the port read as 'Peking' (a 'Herring'
+    label snapped to the nearest port at 0.62 similarity). Ranked by distance from Peking,
+    Tripoli won, and the mission sailed away from the Iron it had come for.
+
+    Ranking by distance would ALSO have picked Amsterdam here, at distance zero — which is
+    exactly why the rule must be stated rather than left to fall out of the arithmetic. Said
+    outright, a bad position read can no longer trade it away.
+    """
+    import types
+
+    from brain.mission_runner import _same_port
+
+    assert _same_port("Amsterdam", "amsterdam")
+    assert _same_port("Lubeck", "Lübeck"), "the catalogue and the screen disagree on accents"
+    assert not _same_port("Amsterdam", "Peking")
+    assert not _same_port("Amsterdam", None)
+
+
+def test_a_gather_leg_asks_for_everything_still_wanted():
+    """THE SHELF IS THE AUTHORITY, NOT THE PLAN.
+
+    `assign_purchases` pins each material to the FIRST port of the planned route that
+    sources it. That held while `run_mission` walked the route in order; this runner
+    re-decides the next leg from where the fleet actually is, so a diverged itinerary leaves
+    the assignment describing a journey nobody took.
+
+    Live 2026-08-29: Iron was pinned to Amsterdam because Amsterdam led the route. A misread
+    port sent the fleet to Tripoli first, and at Barcelona — a known Iron source, Iron on the
+    shelf — it bought only its assigned Matchlock Gun and left the Iron behind.
+    """
+    import types
+
+    from brain.mission_runner import MissionRunner
+
+    r = MissionRunner.__new__(MissionRunner)
+    r.subtasks = [
+        types.SimpleNamespace(id="gather:Amsterdam", kind="gather", done=False,
+                              params={"port": "Amsterdam", "orders": {"Iron": 822}}),
+        types.SimpleNamespace(id="gather:Barcelona", kind="gather", done=False,
+                              params={"port": "Barcelona", "orders": {"Matchlock Gun": 411}}),
+        types.SimpleNamespace(id="gather:Tripoli", kind="gather", done=True,
+                              params={"port": "Tripoli", "orders": {"Candle": 934}}),
+        types.SimpleNamespace(id="sell", kind="sell", done=False, params={}),
+    ]
+
+    # every material a pending gather leg wants — whichever port it was assigned to
+    assert r._everything_still_wanted() == {"Iron": 822, "Matchlock Gun": 411}
+
+    # A PARTIAL BUY SETTLES NOTHING. The result carries a total and a verdict, not a
+    # per-good breakdown, so which material fell short is unknown — guessing strands one.
+    r._settle_gathers(met=False)
+    assert [t.id for t in r.subtasks if not t.done] == [
+        "gather:Amsterdam", "gather:Barcelona", "sell"]
+
+    # ...and a buy that met the whole list finishes every gather leg at once.
+    r._settle_gathers(met=True)
+    assert [t.id for t in r.subtasks if not t.done] == ["sell"]
+
+
+def test_a_village_has_no_market_either():
+    """ASHORE IS NOT ENOUGH. A village is ashore and has no market — its left menu is
+    Explore / Gifting / Loot / Recruit Crew / Barter, with no building list to open. So
+    ENTER_BUILDING has nothing to tap there and the tap changes nothing.
+
+    Live 2026-08-30: a run started at Svear with the mission's optional trim first. The
+    market intent went out at the village every tick — "already dispatched... nothing
+    changed" — and the guard stopped the run before the barter it had sailed there for. The
+    check knew a market leg cannot run AT SEA and stopped there.
+
+    Optional legs are SKIPPED on this, not failed, so the mission moves on to the barter —
+    which is the work a village actually has.
+    """
+    import types
+
+    from brain.mission_runner import MissionRunner
+
+    r = MissionRunner.__new__(MissionRunner)
+    leg = types.SimpleNamespace(id="trim_before_gather", kind="sell_surplus", optional=True)
+
+    for nowhere in ("village", "sea", "sea_cinematic"):
+        assert r._can_run_here(leg, types.SimpleNamespace(state=nowhere)), nowhere
+    for somewhere in ("port_overworld", "building:market"):
+        assert r._can_run_here(leg, types.SimpleNamespace(state=somewhere)) is None, somewhere
+
+
+def test_once_it_departs_for_the_village_there_is_no_more_gathering():
+    """THE DEPARTURE IS THE LINE, NOT THE ARRIVAL (user, 2026-08-30).
+
+    The trim and the checks all happen BEFORE the fleet leaves for the village; after that
+    the mission is just the barter and the sail to sell. `mission_progress` already says so
+    in its own phases — "Leaving this phase ends cargo checking for the rest of the task" —
+    and being COMPANY-owned it survives a restart, so a run interrupted mid-voyage does not
+    re-plan itself back into gathering.
+
+    Standing in the village settles it too, as a backstop.
+
+    Live 2026-08-30 without it: a run started at Svear with the Birch Tree already aboard,
+    skipped the trim (no market in a village) and picked `gather:Amsterdam`, setting out to
+    fetch materials it was carrying — then could not leave either, and the guard stopped it
+    having done nothing at all.
+
+    The mechanism: a village reads `port=None`, so "a leg underfoot wins" cannot fire, every
+    distance collapses to 0.0, and `min()` returns whatever came first in the graph.
+    """
+    import types
+
+    from brain.mission_runner import MissionRunner
+
+    def _legs():
+        mk = lambda i, k: types.SimpleNamespace(id=i, kind=k, done=False, params={},
+                                                location=None, deps=())
+        return [mk("trim_before_gather", "sell_surplus"), mk("gather:Amsterdam", "gather"),
+                mk("gather:Barcelona", "gather"), mk("sell_surplus", "sell_surplus"),
+                mk("supply_verify", "supply_verify"), mk("sail_to_village", "sail_to_village"),
+                mk("barter", "barter"), mk("sail_to_sell", "sail_to_sell"), mk("sell", "sell")]
+
+    at_village = MissionRunner.__new__(MissionRunner)
+    at_village.subtasks = _legs()
+    at_village._departed_for_the_village(types.SimpleNamespace(state="village"))
+    assert [t.id for t in at_village.subtasks if not t.done] == [
+        "barter", "sail_to_sell", "sell"]
+
+    # ...and nowhere else settles anything: a port is where the approach still has work.
+    at_port = MissionRunner.__new__(MissionRunner)
+    at_port.subtasks = _legs()
+    at_port._departed_for_the_village(types.SimpleNamespace(state="port_overworld"))
+    assert all(not t.done for t in at_port.subtasks)
+
+    # nor once the barter itself is finished — the tail must not be swept up with it
+    done_bartering = MissionRunner.__new__(MissionRunner)
+    done_bartering.subtasks = _legs()
+    for t in done_bartering.subtasks:
+        if t.kind == "barter":
+            t.done = True
+    done_bartering._departed_for_the_village(types.SimpleNamespace(state="village"))
+    assert not done_bartering.subtasks[0].done, "nothing to settle once the barter is over"
+
+
+def test_the_phase_settles_it_even_at_sea():
+    """A run interrupted mid-voyage to the village must not re-plan into gathering.
+
+    This is what keys the rule to the DEPARTURE rather than the arrival: at sea the screen
+    says nothing about which leg the mission is on, but the phase does — and it is the phase
+    that outlives the process.
+    """
+    import types
+    from unittest.mock import patch
+
+    from brain.mission_runner import MissionRunner
+
+    mk = lambda i, k: types.SimpleNamespace(id=i, kind=k, done=False, params={},
+                                            location=None, deps=())
+    r = MissionRunner.__new__(MissionRunner)
+    r.subtasks = [mk("gather:Amsterdam", "gather"), mk("sail_to_village", "sail_to_village"),
+                  mk("barter", "barter"), mk("sell", "sell")]
+
+    with patch("brain.mission_progress.at_least", return_value=True):
+        r._departed_for_the_village(types.SimpleNamespace(state="sea"))
+    assert [t.id for t in r.subtasks if not t.done] == ["barter", "sell"]

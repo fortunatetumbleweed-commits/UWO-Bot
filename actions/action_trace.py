@@ -42,12 +42,51 @@ def start(name: str) -> Path:
     _dir = _SESSIONS / f"trace_{name}_{ts}"
     _dir.mkdir(parents=True, exist_ok=True)
     _idx = 0
-    logger.info(f"[action_trace] recording taps → {_dir}")
+    from capture.adb_capture import set_capture_sink
+    set_capture_sink(record_capture)
+    logger.info(f"[action_trace] recording every capture → {_dir}")
     return _dir
+
+
+_in_record = False
+
+
+def record_capture(frame) -> None:
+    """Save EVERY captured frame, before anything decides what it means.
+
+    Registered as the capture sink by `start`. The tap-triggered records below still add the
+    tap target and the decision metadata; this makes sure the frame itself is never lost when
+    the bot LOOKS and then chooses not to act — the case that left the 2026-08-30 Hutu Village
+    failure with no evidence at all.
+
+    NOTE: this records the captures the code makes today, which is 215 scattered call sites.
+    It is a floodlight, not the fix — capture belongs in perceive, one per tick, handed down.
+    """
+    global _idx, _in_record
+    if _dir is None or _in_record:
+        return                      # re-entry: record_tap/record_decision capture their own
+    try:
+        _in_record = True
+        fn = f"frame_{_idx:04d}.png"
+        frame.save(_dir / fn)
+        entry = {"idx": _idx, "kind": "capture", "x": -1, "y": -1, "label": "capture",
+                 "t": time.strftime("%H:%M:%S"), "frame": fn}
+        with (_dir / "actions.jsonl").open("a") as f:
+            f.write(json.dumps(entry) + "\n")
+        _idx += 1
+    except Exception as exc:
+        logger.debug(f"[action_trace] record_capture failed: {exc}")
+    finally:
+        _in_record = False
 
 
 def stop() -> Optional[Path]:
     global _dir
+    try:
+        from capture.adb_capture import set_capture_sink
+        set_capture_sink(None)
+    except Exception:
+        pass
     d = _dir
     _dir = None
     if d is not None:
@@ -67,10 +106,26 @@ def set_label(label: Optional[str]) -> None:
 
 
 def _capture_with_perception():
-    """Capture the pre-action frame and, when it matches the frame the bot JUST perceived
-    (coarse diff), attach that perceive's already-computed OmniParser / OCR / state — so the
-    viewer reuses it instead of re-running OmniParser (~2 s/frame).  The omni/ocr reads are
-    cache HITS on the perceive frame (no inference).  Returns (frame, perception|None)."""
+    """Capture the pre-action frame and attach the perception the bot ACTUALLY USED.
+
+    THE VIEWER MUST SHOW WHAT THE BOT SAW, NOT WHAT A SECOND LOOK SEES (user, 2026-09-01).
+    Re-parsing a frame in the report can SUCCEED WHERE THE LIVE RUN FAILED, and then the
+    misread you opened the report to find is the one thing it cannot show you. Every defect
+    chased through the viewer today was a misread; a report that quietly re-perceives is a
+    report that hides them. Reuse is the correctness argument here, and the ~5s/frame it
+    saves is the side benefit.
+
+    IS THE PERCEIVE STILL THE SCREEN? Ask the repository, not a pixel diff. This used
+    `classify_action_outcome(pf, frame).kind != "unchanged"`, and this game animates every
+    frame — flags, water, crowds — so two captures of one unchanged screen compare as
+    CHANGED. Measured: perception reached only 22 of 122 frames, and the other 100 were
+    re-perceived by the viewer. The repository answers by GENERATION instead: its observation
+    is valid exactly while nothing has acted, and `record` runs BEFORE the action, so a valid
+    observation IS the screen this action is about to be taken on.
+
+    Returns (frame, perception|None). The omni/ocr reads are cache HITS on the perceive
+    frame; nothing here may cost inference, because recording what happened must not change
+    what happens."""
     from capture.adb_capture import capture_screen
     frame = capture_screen()
     try:
@@ -78,9 +133,12 @@ def _capture_with_perception():
         pf, pr = _p._PERCEIVE_LAST_FRAME, _p._PERCEIVE_LAST_RESULT
         if pf is None or pr is None:
             return frame, None
-        from vision.frame_diff import classify_action_outcome
-        if classify_action_outcome(pf, frame).kind != "unchanged":
-            return frame, None                          # different screen — don't misattribute
+        from actions.perception import screen
+        held = screen().current_if_valid()
+        if held is None or held.frame is not pf:
+            # Either something has acted since the last look, or the perceive we are holding
+            # is not the repository's — in both cases this frame is not that one.
+            return frame, None
         from vision.omniparser import parse_fast_cached
         from actions.sail_actions import _ocr_frame
         omni = [e.to_dict() for e in parse_fast_cached(pf)]          # cache hit
@@ -97,10 +155,11 @@ def _capture_with_perception():
 def record_tap(x: int, y: int, kind: str = "tap") -> None:
     """Capture the PRE-action frame + the tap target. Called by the tap/back
     primitives when a session is active. Never raises."""
-    global _idx, _label
+    global _idx, _label, _in_record
     if _dir is None:
         return
     try:
+        _in_record = True
         frame, perception = _capture_with_perception()
         fn = f"frame_{_idx:04d}.png"
         frame.save(_dir / fn)
@@ -117,15 +176,17 @@ def record_tap(x: int, y: int, kind: str = "tap") -> None:
         logger.debug(f"[action_trace] record failed: {exc}")
     finally:
         _label = None
+        _in_record = False
 
 
 def record_decision(inputs: dict, output: dict, model: str, label: str = "decision") -> None:
     """Capture the current frame + a decision: its INPUTS, the action CHOSEN, and
     WHICH model made it. Shown on the viewer's Decision tab. Never raises."""
-    global _idx
+    global _idx, _in_record
     if _dir is None:
         return
     try:
+        _in_record = True
         frame, perception = _capture_with_perception()
         fn = f"frame_{_idx:04d}.png"
         frame.save(_dir / fn)
@@ -139,6 +200,8 @@ def record_decision(inputs: dict, output: dict, model: str, label: str = "decisi
         _idx += 1
     except Exception as exc:
         logger.debug(f"[action_trace] record_decision failed: {exc}")
+    finally:
+        _in_record = False
 
 
 def _save_marked(frame, x: int, y: int, fn: str) -> None:

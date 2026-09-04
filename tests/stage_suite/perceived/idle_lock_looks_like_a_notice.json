@@ -1,0 +1,10 @@
+{
+ "state": "idle_lock",
+ "port": null,
+ "detail": "idle_lock: 1/1 signals matched",
+ "raw": {
+  "location": "idle_lock",
+  "port": null,
+  "detail": "idle_lock: 1/1 signals matched"
+ }
+}

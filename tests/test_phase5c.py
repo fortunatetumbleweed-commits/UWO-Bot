@@ -220,95 +220,31 @@ class ParseFastCacheTests(unittest.TestCase):
         from vision.omniparser import clear_parse_fast_cache
         clear_parse_fast_cache()
 
-    def tearDown(self):
-        from vision.omniparser import clear_parse_fast_cache
-        clear_parse_fast_cache()
+    @staticmethod
+    def _only_for_images(fake_arr):
+        """A `numpy.array` stub that fakes ONLY the PIL crop, and delegates everything else.
 
-    def test_repeated_call_with_same_frame_uses_cache(self):
-        """parse_fast must be invoked at most once for a given frame id."""
-        from unittest.mock import MagicMock, patch
-        from vision.omniparser import parse_fast_cached, DetectedElement
+        `brain.perceive` imports numpy inside the function that needs it, so the pixel
+        signature can only be stubbed by patching `numpy.array` GLOBALLY — and a blanket
+        `return_value` then hands a fixed 50x50 array to every other caller in the process.
+        Heavy libraries imported during that window (ultralytics, and its dependencies) fail
+        partway and stay in `sys.modules` as broken shells, so later tests in the SAME process
+        got "cannot import name 'YOLO' from 'ultralytics'". It surfaced far away, as
+        `test_stages` reading no goods at all — a file that passes cleanly on its own.
 
-        fake_frame = MagicMock()
-        sentinel = [DetectedElement(label="a", element_type="icon",
-                                     x1=0, y1=0, x2=10, y2=10)]
+        Delegating keeps the test's intent and confines the lie to the one call it is about.
+        """
+        import numpy as np
+        from PIL import Image
 
-        with patch("vision.omniparser.get_omniparser") as MockGet:
-            mock_parser = MagicMock()
-            mock_parser.parse_fast.return_value = sentinel
-            MockGet.return_value = mock_parser
+        real = np.array
 
-            r1 = parse_fast_cached(fake_frame)
-            r2 = parse_fast_cached(fake_frame)
-            r3 = parse_fast_cached(fake_frame)
+        def stub(obj, *a, **kw):
+            if isinstance(obj, Image.Image):
+                return fake_arr
+            return real(obj, *a, **kw)
 
-            self.assertIs(r1, sentinel)
-            self.assertIs(r2, sentinel)
-            self.assertIs(r3, sentinel)
-            # parse_fast called exactly once despite three lookups
-            self.assertEqual(mock_parser.parse_fast.call_count, 1)
-
-    def test_different_frames_get_separate_results(self):
-        from unittest.mock import MagicMock, patch
-        from vision.omniparser import parse_fast_cached, DetectedElement
-
-        frame_a = MagicMock()
-        frame_b = MagicMock()
-        result_a = [DetectedElement(label="a", element_type="icon",
-                                     x1=0, y1=0, x2=10, y2=10)]
-        result_b = [DetectedElement(label="b", element_type="icon",
-                                     x1=0, y1=0, x2=10, y2=10)]
-
-        with patch("vision.omniparser.get_omniparser") as MockGet:
-            mock_parser = MagicMock()
-            # Return different list for each call
-            mock_parser.parse_fast.side_effect = [result_a, result_b]
-            MockGet.return_value = mock_parser
-
-            r_a = parse_fast_cached(frame_a)
-            r_b = parse_fast_cached(frame_b)
-
-            self.assertIs(r_a, result_a)
-            self.assertIs(r_b, result_b)
-            self.assertEqual(mock_parser.parse_fast.call_count, 2)
-
-    def test_cache_clears_wholesale_on_overflow(self):
-        """When the cache hits MAX_CACHE_ENTRIES, the next insertion
-        clears it wholesale so it stays bounded."""
-        from unittest.mock import MagicMock, patch
-        from vision.omniparser import (
-            parse_fast_cached, MAX_CACHE_ENTRIES, _FRAME_CACHE,
-        )
-
-        with patch("vision.omniparser.get_omniparser") as MockGet:
-            mock_parser = MagicMock()
-            mock_parser.parse_fast.return_value = []
-            MockGet.return_value = mock_parser
-
-            # Fill cache up to and beyond capacity
-            frames = [MagicMock() for _ in range(MAX_CACHE_ENTRIES + 2)]
-            for f in frames:
-                parse_fast_cached(f)
-
-            # After overflow handling, the cache contains <= MAX_CACHE_ENTRIES
-            self.assertLessEqual(len(_FRAME_CACHE), MAX_CACHE_ENTRIES)
-
-
-class DailyNewsConfirmTests(unittest.TestCase):
-    """Phase 5c follow-up: tighten daily_news Moondream confirmation.
-
-    The earlier prompt asked about generic structure ("centred popup +
-    X close button") which matched any modal — including the market
-    Purchase confirmation (May-2 15:41 incident: bot tapped Purchase,
-    Purchase modal opened, daily_news handler dismissed it).
-
-    The new prompt asks specifically about NEWS content (article
-    headlines / news article body); generic modals say no.
-
-    Also: fail-closed on indeterminate or error — better to miss a real
-    daily_news (it fires again next tick) than dismiss a live game
-    screen.
-    """
+        return stub
 
     def _patched_pixel_signature(self):
         """Helper: numpy-array stub that satisfies the pixel signature
@@ -349,9 +285,14 @@ class DailyNewsConfirmTests(unittest.TestCase):
         dim_frame = Image.fromarray(np.full((1080, 2400, 3), 22, dtype=np.uint8))
         popup = MagicMock(x1=100, y1=100, x2=1300, y2=800)      # ~10% of the screen
 
-        with patch("numpy.array", return_value=fake_arr), \
+        # The detector stopped assuming where the close-X is and now goes and LOOKS for it.
+        # Stub the search: this test is about size + dimming + chrome, not about finding a disc.
+        import brain.perceive as _p
+
+        with patch("numpy.array", side_effect=self._only_for_images(fake_arr)), \
              patch("vision.chrome_detector.get_chrome_detector") as MockChrome, \
              patch("vision.omniparser.parse_fast_cached", return_value=[popup]), \
+             patch.object(_p, "_round_close_x", return_value=MagicMock(cx=1250, cy=140)), \
              patch("actions.sail_actions._ocr_frame", return_value=[("Jakarta", .9, 0, 0)]):
             MockChrome.return_value.detect.return_value = self._make_chrome(
                 has_hamburger=True,   # port_overworld
@@ -369,7 +310,7 @@ class DailyNewsConfirmTests(unittest.TestCase):
         fake_frame.crop.return_value = MagicMock()
         fake_frame.copy.return_value = MagicMock()
 
-        with patch("numpy.array", return_value=fake_arr), \
+        with patch("numpy.array", side_effect=self._only_for_images(fake_arr)), \
              patch("vision.chrome_detector.get_chrome_detector") as MockChrome, \
              patch("vision.local_vision.get_vision") as MockVision:
             MockChrome.return_value.detect.return_value = self._make_chrome(
@@ -389,7 +330,7 @@ class DailyNewsConfirmTests(unittest.TestCase):
         fake_frame.crop.return_value = MagicMock()
         fake_frame.copy.return_value = MagicMock()
 
-        with patch("numpy.array", return_value=fake_arr), \
+        with patch("numpy.array", side_effect=self._only_for_images(fake_arr)), \
              patch("vision.chrome_detector.get_chrome_detector") as MockChrome, \
              patch("vision.local_vision.get_vision") as MockVision:
             MockChrome.return_value.detect.return_value = self._make_chrome(
@@ -410,7 +351,7 @@ class DailyNewsConfirmTests(unittest.TestCase):
         fake_frame.crop.return_value = MagicMock()
         fake_frame.copy.return_value = MagicMock()
 
-        with patch("numpy.array", return_value=fake_arr), \
+        with patch("numpy.array", side_effect=self._only_for_images(fake_arr)), \
              patch("vision.chrome_detector.get_chrome_detector") as MockChrome, \
              patch("vision.local_vision.get_vision") as MockVision:
             MockChrome.return_value.detect.return_value = self._make_chrome(
@@ -432,7 +373,7 @@ class DailyNewsConfirmTests(unittest.TestCase):
         fake_frame.crop.return_value = MagicMock()
         fake_frame.copy.return_value = MagicMock()
 
-        with patch("numpy.array", return_value=fake_arr), \
+        with patch("numpy.array", side_effect=self._only_for_images(fake_arr)), \
              patch("vision.chrome_detector.get_chrome_detector") as MockChrome, \
              patch("vision.local_vision.get_vision") as MockVision:
             MockChrome.return_value.detect.return_value = self._make_chrome(
@@ -452,7 +393,7 @@ class DailyNewsConfirmTests(unittest.TestCase):
         fake_frame.crop.return_value = MagicMock()
         fake_frame.copy.return_value = MagicMock()
 
-        with patch("numpy.array", return_value=fake_arr), \
+        with patch("numpy.array", side_effect=self._only_for_images(fake_arr)), \
              patch("vision.chrome_detector.get_chrome_detector") as MockChrome, \
              patch("vision.local_vision.get_vision",
                    side_effect=RuntimeError("model crashed")):

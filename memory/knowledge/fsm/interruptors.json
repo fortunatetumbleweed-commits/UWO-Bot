@@ -129,12 +129,12 @@
   },
   {
     "id": "abandon_basket_confirm",
-    "description": "Confirmation dialog shown when pressing Back with goods in the basket — asks whether to leave and lose the basket contents",
+    "description": "Confirmation raised by pressing Back with goods staged — the game says 'Moving to another menu will empty the cart. Continue?' with Cancel / Ok. Answering Ok completes the exit we asked for.",
     "atomic": true,
-    "detection": "dialog asking whether to leave/abandon while basket has items",
+    "detection": "dialog warning that leaving will empty the staged cart",
     "detection_keywords": [
-      "abandon",
-      "basket"
+      "empty",
+      "cart"
     ],
     "dismissal": "tap_ok",
     "resumes": "building"
@@ -631,6 +631,93 @@
     "dismissal": "tap_ok",
     "resumes": "current_state_unchanged",
     "learned_at": "2026-08-23T18:12:36.482803+00:00",
+    "learned_from": "qwen",
+    "correction_count": 0
+  },
+  {
+    "id": "san_village_notice_with_continue_option",
+    "description": "San Village notice with Continue option",
+    "atomic": true,
+    "detection_keywords": [
+      "San Village",
+      "Continue"
+    ],
+    "dismissal": "tap_ok",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-08-24T18:26:50.015836+00:00",
+    "learned_from": "qwen",
+    "correction_count": 0
+  },
+  {
+    "id": "insufficient_empty_space_notice_with_ok",
+    "description": "Insufficient Empty Space notice with OK button",
+    "atomic": true,
+    "detection_keywords": [
+      "Insufficient Empty Space",
+      "OK"
+    ],
+    "dismissal": "tap_ok",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-09-03T18:33:18.343735+00:00",
+    "learned_from": "qwen",
+    "correction_count": 0
+  },
+  {
+    "id": "barter_screen_with_item_count_insufficie",
+    "description": "Barter screen with item count, insufficient space notice, trade completion prompt, and a dialog box titled 'Complete the trade?'.",
+    "atomic": true,
+    "detection_keywords": [
+      "Barter",
+      "Insufficient Empty Space",
+      "Complete the trade?"
+    ],
+    "dismissal": "tap_ok_or_x",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-09-03T18:33:51.474015+00:00",
+    "learned_from": "qwen",
+    "correction_count": 0
+  },
+  {
+    "id": "purchase_cargo_iron_ore",
+    "description": "Purchase Cargo Iron Ore",
+    "atomic": true,
+    "detection_keywords": [
+      "Purchase",
+      "Cargo",
+      "Iron"
+    ],
+    "dismissal": "tap_ok",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-09-04T03:53:19.341339+00:00",
+    "learned_from": "qwen",
+    "correction_count": 0
+  },
+  {
+    "id": "purchase_dialog_for_iron_ore_with_iron_o",
+    "description": "Purchase dialog for Iron ore with Iron Ore and Lead Ore in stock, Buy and Sell buttons, and a confirmation message.",
+    "atomic": true,
+    "detection_keywords": [
+      "Purchase",
+      "Iron",
+      "Lead",
+      "Sell"
+    ],
+    "dismissal": "tap_ok",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-09-04T03:55:12.118339+00:00",
+    "learned_from": "qwen",
+    "correction_count": 0
+  },
+  {
+    "id": "daily_login_reward_popup_with_collect_bu",
+    "description": "Daily Login Reward popup with Collect button",
+    "atomic": true,
+    "detection_keywords": [
+      "Collect"
+    ],
+    "dismissal": "tap_ok",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-09-04T03:56:42.841326+00:00",
     "learned_from": "qwen",
     "correction_count": 0
   }

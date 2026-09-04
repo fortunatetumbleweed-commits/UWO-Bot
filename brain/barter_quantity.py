@@ -4,6 +4,7 @@ A barter round consumes each input material by its ratio and yields
 `output_per_round` of the good (amity-scaled). The feasible rounds are bounded by:
   • MATERIALS  — min over inputs of floor(on_hand / ratio)
   • ROUNDS     — the village's remaining daily rounds
+
   • SPACE      — only if we refuse overflow: cumulative net fill (output − inputs
     consumed) must fit the free hold.
 
@@ -16,6 +17,14 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 from typing import Mapping, Optional, Sequence, Tuple
+
+# The day's barter allowance at its BEST amity grade. The Base tab shows the total for the
+# CURRENT grade ('Daily Barter Progress N/7'), which rises as amity does.
+#
+# A GAME RULE, NOT A SCREEN FACT, so it lives in the task layer. It was defined in
+# `actions/village_check.py`, which meant the passive task runner could only learn the day's
+# ceiling by importing a UI module — the exact reach the layering forbids.
+MAX_DAILY_BARTER_ROUNDS = 7
 
 
 @dataclass

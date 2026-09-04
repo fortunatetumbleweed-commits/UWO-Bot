@@ -256,21 +256,56 @@ Incremental — the loops can be inverted one at a time, and the phase record al
 Steps 1–2 are worth doing on their own merits even if the rest waits: they remove the
 behaviour that undoes progress, and they unblock dialog handling.
 
-### Built so far (2026-08-23)
+### Built so far (updated 2026-08-25)
 
 | Step | Where | State |
 |---|---|---|
-| 1 — primitives report instead of forcing | `actions/sail_actions.py` | done for `open_world_map` (a PLACE is reported, a PANEL still exited) and `navigate_to_building`'s Home-escape (now via `screen_exit`) |
+| 1 — primitives report instead of forcing | `actions/sail_actions.py` | **done** for the six world-changers — see the fold table below |
 | 2 — the obstruction gate sees modals | `vision/region_detectors/dialog.py` | done — anchors must belong to one widget; the departure Notice reads as `kind=dialog` |
 | 3 — one handler for the four cases | `brain/unexpected.py` | done — `look()` classifies, `resolve()` acts; an ACTION_DIALOG without a decider REFUSES rather than guessing |
 | 4 — single-move state machine + the loop | `brain/nav_step.py`, `brain/task_loop.py` | done — `step_toward` executes ONE FSM edge; the loop re-asks the task after every correction |
 | 5 — the mission graph under the task runner | `brain/barter_task.py`, `brain/game_rules.py` | **flagged** — `UWO_TASK_LOOP=1` drives the barter phase with the loop; the graph remains the default until the loop is proven live |
+| 6 — the state machine's dispatcher | `brain/dispatcher.py` | done — `tick()` perceives, resolves an activity, runs it to completion, then takes the result to the task runner and converts the next goal into an intent. A transition happens in exactly ONE place: `dispatch`. |
+
+#### The folds (2026-08-25)
+
+| Function | What it used to do | Now |
+|---|---|---|
+| `depart_from_port_via_world_map` | walked to the harbour, hunted a Depart button, re-selected the destination 3× — six minutes after the fleet had ARRIVED | **deleted**; `commit_departure` + `tap_supply_departure` tap and report |
+| `navigate_to_building` | Back on a sub-menu / wrong building / world map, a learned-recovery plan, a Home-escape — 695 lines, 7 loops | `tap_building_entry` taps once; sub-menu, world map, sea and wrong building all report and return |
+| `exit_to_overworld` | escalated into `recover_to_port_overworld`, whose sea branch SAILS THE FLEET home | clears what covers the exit control (bounded at two), then reports |
+| `open_world_map` | pressed Back until the fleet left a village it had sailed to | reports a PLACE; still exits a PANEL, which costs nothing |
+| `select_world_map_tab` | claimed success without looking | verified by effect; retries the same point with a longer settle |
+| `_navigate_world_map_to_village` | polled `_wait_for_state_change` after Move | hands back; the goal owns the arrival verdict |
+| `_ensure_fleet_ready` | detected a blocker, climbed a four-rung resolution ladder and re-entered the harbour after EVERY rung, three times over | `read_fleet_readiness` reads; `resolve_fleet_blocker` climbs ONE rung and navigates nowhere; `SailToGoal` owns the retry and the walk back |
+
+`recover_to_port_overworld` now has **no primitive-level callers** — only `task_runner`,
+`planner`, `plan_actions` and `explore_actions`, which is where a recovery that may sail
+belongs.
 
 Cases 2 and 3 are separated STRUCTURALLY — a popup offering ACTIONS is a decision, one
 offering only a close-X is noise — rather than by "did we cause it?", which depends on
 bookkeeping the bot does not reliably keep.
 
-Permission to leave a settlement travels on the STEP (`may_leave_a_place`), set by the task.
+Permission to leave a settlement travels on the STEP (`m| 6 — the state machine's dispatcher | `brain/dispatcher.py` | done — `tick()` perceives, resolves an activity, runs it to completion, then takes the result to the task runner and converts the next goal into an intent. A transition happens in exactly ONE place: `dispatch`. |
+
+#### The folds (2026-08-25)
+
+| Function | What it used to do | Now |
+|---|---|---|
+| `depart_from_port_via_world_map` | walked to the harbour, hunted a Depart button, re-selected the destination 3× — six minutes after the fleet had ARRIVED | **deleted**; `commit_departure` + `tap_supply_departure` tap and report |
+| `navigate_to_building` | Back on a sub-menu / wrong building / world map, learned-recovery plan, Home-escape — 695 lines, 7 loops | `tap_building_entry` taps once; sub-menu, world map, sea and wrong building all report and return |
+| `exit_to_overworld` | escalated into `recover_to_port_overworld`, whose sea branch SAILS THE FLEET home | clears what covers the exit control (bounded), then reports |
+| `open_world_map` | pressed Back until the fleet left a village it had sailed to | reports a PLACE, still exits a PANEL (leaving a panel costs nothing) |
+| `select_world_map_tab` | claimed success without looking | verified by effect; retries the same point with a longer settle |
+| `_navigate_world_map_to_village` | polled `_wait_for_state_change` after Move | hands back; the goal owns the arrival verdict |
+| `_ensure_fleet_ready` | detected a blocker, climbed a four-rung resolution ladder and re-entered the harbour after EVERY rung, three times over | `read_fleet_readiness` reads; `resolve_fleet_blocker` climbs ONE rung and navigates nowhere; `SailToGoal` owns the retry and the walk back |
+
+`recover_to_port_overworld` now has **no primitive-level callers** — only `task_runner`,
+`planner`, `plan_actions` and `explore_actions`, which is where a recovery that may sail
+belongs.
+
+ay_leave_a_place`), set by the task.
 From a village, leaving is the only route to the world map; that it is *allowed* is the
 task's call, never the primitive's.
 

@@ -29,6 +29,10 @@ def _el(label, cx=1560, cy=708):
 class _Harness:
     """Fake market: tracks taps, bulk state, and whether the qty dialog is 'open'."""
 
+    # A real Trade Goods Info extent. The good's field lies inside it; the Cargo bar sits
+    # in the right panel, outside — which is what tells the two apart.
+    DIALOG_BBOX = (549, 107, 1855, 984)
+
     def __init__(self, goods, *, dialog_opens=True, keypad_ok=True, load_closes=True,
                  has_commit=True):
         self.goods = goods
@@ -54,7 +58,8 @@ class _Harness:
         # The dialog shows "<staged> / <owned>" for the good whose tile was tapped, and the
         # Cargo bar ("3,823/4,108") is on screen too — same shape, different meaning.
         owned = self._dialog_owned if getattr(self, "_dialog_owned", None) else 1644
-        return [_el("3,823 / 4,108"), _el(f"218 / {owned}")]
+        return [_el("3,823 / 4,108", cx=2132, cy=213),      # Cargo bar: right panel
+                _el(f"218 / {owned}")]                      # the good's field: in-dialog
 
     def read_page(self, _frame):
         return self.goods
@@ -68,6 +73,13 @@ class _Harness:
             return False
         self.typed.append(qty)
         return True
+
+    def overlay(self, _frame):
+        """What the scrim says. A modal is up exactly while the dialog is open."""
+        from vision.overlay import CLEAR, SCRIM, Overlay
+        if self.dialog:
+            return Overlay(kind="modal", state=SCRIM, bbox=self.DIALOG_BBOX)
+        return Overlay(kind="none", state=CLEAR)
 
     def find_button(self, _frame, *_labels, **_kw):
         if self.load_closes:
@@ -85,27 +97,56 @@ class _Harness:
                             omni_fn=self.omni, read_page_fn=self.read_page,
                             set_bulk_fn=self.set_bulk, type_qty_fn=self.type_qty,
                             commit_fn=self.commit, react_fn=self.react,
-                            find_button_fn=self.find_button, settle=0)
+                            find_button_fn=self.find_button, overlay_fn=self.overlay,
+                            settle=0)
 
 
 class FindQtyFieldTests(unittest.TestCase):
-    def test_matches_the_n_over_owned_field(self):
-        self.assertEqual(_find_qty_field([_el("744 / 1,644")]), (1560, 708))
+    """The field is found by WHERE it is — inside the dialog — not by matching a number
+    we already believe. Requiring the denominator to equal the sell grid's badge let a
+    grid misread veto the truth: live 2026-08-27 the grid read Candle 2148 (truly 148),
+    so the real `1/148` field was refused and the trim aborted claiming the dialog had
+    never opened, while it was plainly open on screen.
+    """
+
+    DIALOG = (549, 107, 1855, 984)          # a real Trade Goods Info extent
+
+    def test_returns_the_position_and_the_owned_total(self):
+        el = _el("744 / 1,644", cx=1560, cy=708)
+        self.assertEqual(_find_qty_field([el], dialog_bbox=self.DIALOG),
+                         (1560, 708, 1644))
+
+    def test_the_denominator_alone_is_enough(self):
+        """OmniParser reads the live `1/148` spinner as `/148` — the green slider splits
+        the leading digit off. On the SELL dialog the cap IS the whole holding, so the
+        denominator alone says we hold 148; the numerator is only what is dialled in."""
+        el = _el("/148", cx=1529, cy=720)
+        self.assertEqual(_find_qty_field([el], dialog_bbox=self.DIALOG),
+                         (1529, 720, 148))
 
     def test_ignores_other_dialog_text(self):
-        self.assertIsNone(_find_qty_field([_el("Load"), _el("Min"), _el("Sales Cost")]))
+        self.assertIsNone(_find_qty_field([_el("Load"), _el("Min"), _el("Sales Cost")],
+                                          dialog_bbox=self.DIALOG))
 
-    def test_prefers_the_field_whose_total_is_what_we_own(self):
-        """"N / M" is not unique on the sell page: the Cargo bar reads "3,823/4,108" and
-        sits ABOVE the goods, so a first-match scan finds IT. Tapping the Cargo bar opens
-        Set Load Ratio, not the keypad — the live 2026-08-21 failure."""
-        cargo = _el("3,823 / 4,108")
-        field = _el("218 / 1,681", cx=900, cy=500)
-        self.assertEqual(_find_qty_field([cargo, field], expect_total=1681), (900, 500))
+    def test_the_cargo_bar_is_outside_the_dialog_and_ignored(self):
+        """"N / M" is not unique on the sell page: the Cargo bar reads "3,040/4,952" and
+        sits in the right panel, so a first-match scan finds IT. Tapping it opens Set Load
+        Ratio, not the keypad — the live 2026-08-21 failure. It is OUTSIDE the dialog, so
+        scoping excludes it without anyone having to predict the good's total."""
+        cargo = _el("3,040 / 4,952", cx=2132, cy=213)      # right panel, outside
+        field = _el("218 / 1,681", cx=900, cy=500)         # inside
+        self.assertEqual(_find_qty_field([cargo, field], dialog_bbox=self.DIALOG),
+                         (900, 500, 1681))
 
     def test_refuses_the_cargo_bar_when_the_good_field_is_absent(self):
         """Better to report not-found than to tap the wrong control."""
-        self.assertIsNone(_find_qty_field([_el("3,823 / 4,108")], expect_total=1681))
+        cargo = _el("3,040 / 4,952", cx=2132, cy=213)
+        self.assertIsNone(_find_qty_field([cargo], dialog_bbox=self.DIALOG))
+
+    def test_no_dialog_means_no_search_at_all(self):
+        """Unscoped, the first match on this page is the Cargo bar."""
+        self.assertIsNone(_find_qty_field([_el("3,040 / 4,952", cx=2132, cy=213)],
+                                          dialog_bbox=None))
 
 
 class TrimTests(unittest.TestCase):
@@ -194,17 +235,21 @@ class PostLoadCheckTests(unittest.TestCase):
     dialog had closed, revealing the sell page whose Cargo bar reads "3,823/4,108". That
     matches the same "N / M" shape, so the check saw it and concluded the dialog was up.
 
-    While the dialog IS open it shows "<staged> / <owned>", so the owned count is what
-    distinguishes them. Load stages goods into the basket; it does not change what we own.
+    The count that used to distinguish them can itself be misread (Candle 2148 for 148,
+    live 2026-08-27), so the question is now answered by the SCRIM: it lifts when the
+    dialog closes, and with no modal up there is nothing to search at all.
     """
 
     def test_the_cargo_bar_alone_does_not_mean_the_dialog_is_open(self):
-        els = [_el("3,823 / 4,108")]
-        self.assertIsNone(_find_qty_field(els, expect_total=1681))
+        """The dialog closed, so no scrim, so no bbox — and no search happens."""
+        els = [_el("3,823 / 4,108", cx=2132, cy=213)]
+        self.assertIsNone(_find_qty_field(els, dialog_bbox=None))
 
     def test_the_dialog_is_still_detected_when_it_really_is_open(self):
-        els = [_el("3,823 / 4,108"), _el("981 / 1,681", cx=900, cy=500)]
-        self.assertEqual(_find_qty_field(els, expect_total=1681), (900, 500))
+        els = [_el("3,823 / 4,108", cx=2132, cy=213),
+               _el("981 / 1,681", cx=900, cy=500)]
+        self.assertEqual(_find_qty_field(els, dialog_bbox=_Harness.DIALOG_BBOX),
+                         (900, 500, 1681))
 
     def test_a_successful_load_reports_the_trim(self):
         """End to end: dialog opens, quantity types, Load closes it -> trimmed recorded."""

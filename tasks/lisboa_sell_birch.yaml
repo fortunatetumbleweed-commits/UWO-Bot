@@ -1,0 +1,13 @@
+name: "Lisboa — sell the Birch Tree"
+description: "The hold arrived at Lisboa with 3,622 Birch Tree; the sell pass skipped it because its price would not read. Sell it in place."
+
+start_port: Lisboa
+rounds: 1
+
+loop:
+  - action: sell_all
+    port: Lisboa
+    note: "Clear the hold; barter materials stay protected"
+
+report:
+  - profit_loss

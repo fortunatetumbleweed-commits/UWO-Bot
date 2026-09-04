@@ -95,7 +95,24 @@ def _looks_like_real_text(text: str) -> bool:
 # Centre-of-element matched against (left, top, right, bottom) all in [0, 1].
 
 # Top-left title region — port name, building title, sub-menu title, "World Map".
-_TITLE_REGION_NORM = (0.0, 0.0, 0.40, 0.10)
+# THE TITLE LIVES IN THE CORNER, and the corner is narrow. This reached 0.4 of the width —
+# 960px on a 2400px screen — which is far enough in to catch an NPC speech bubble and the
+# world map's own tab strip.
+#
+# Font size cannot separate them: live 2026-08-29 at Amsterdam the bubble "Herring fishing
+# and the Dutch are like the needle and thread!" rendered at h=132 while the port nameplate
+# 'Amsterdam' was h=44, so the largest-height rule took the bubble — and 'Herring' was then
+# fuzzy-matched to the port 'Peking', which sent the fleet away from the Iron it had come
+# for. The 2026-05-15 'Home' incident this height rule was written for had the same shape and
+# the opposite sizes, which is why height alone was never the discriminator.
+#
+# Position is. Measured across this session's frames, every real title is far left:
+#     'Sell' 104 · 'Market' 143 · 'World' 200 · 'Tripoli' 285 · 'Amsterdam' 329
+# and every interloper is past 780. But a MULTI-WORD name reaches further than any of those:
+# 'Las Palmas' and 'Port Royal' arrive as two elements and the second sits at cx=585, so a
+# bound tuned on single words truncated them to 'Las' and 'Port'. 0.28 (672px) holds the
+# second word and still stops well short of the bubble.
+_TITLE_REGION_NORM = (0.0, 0.0, 0.28, 0.1)
 
 # Building list panel on port_overworld — right edge, mid-screen down.
 # y_max 0.97 captures the very-bottom row (e.g. Fortune Teller at cy
@@ -297,6 +314,15 @@ def read_screen_title(
     return result
 
 
+# Every known port is at most three words ('Rio de Janeiro', 'Santiago de Cuba'), and none
+# contains an English function word. 'de' is deliberately absent — it is part of two names.
+_PORT_NAME_MAX_WORDS = 3
+_NEVER_IN_A_PORT_NAME = frozenset({
+    "and", "is", "the", "where", "was", "are", "this", "that", "with", "from",
+    "for", "you", "your", "it", "to", "in", "at", "on", "of", "a", "an", "as", "but",
+})
+
+
 def read_port_name(
     frame: Image.Image,
     *,
@@ -375,6 +401,24 @@ def read_port_name(
     if any(ch.isdigit() for ch in raw):
         logger.debug(f"[read_port_name] {raw!r} contains digits — not a port name, "
                      "returning None")
+        return None
+    # A PORT NAME IS A NAME, NOT A SENTENCE. Live 2026-08-26 at Barcelona this returned
+    # 'Espana and Portugal' and then 'is the place where' — fragments of an NPC's line of
+    # flavour text — and `sail_to` logged port='is the place where' as the fleet's position.
+    # Handing back prose is worse than handing back None, because None is recognisably an
+    # absence and prose looks like an answer.
+    #
+    # Every one of the 224 known ports is at most three words (Rio de Janeiro, Santiago de
+    # Cuba), and none contains an English function word. Note 'de' is NOT in the list: it is
+    # legitimately part of two real names.
+    words = raw.split()
+    if len(words) > _PORT_NAME_MAX_WORDS:
+        logger.debug(f"[read_port_name] {raw!r} is {len(words)} words — prose, not a port "
+                     "name; returning None")
+        return None
+    if any(w.strip(".,!?").lower() in _NEVER_IN_A_PORT_NAME for w in words):
+        logger.debug(f"[read_port_name] {raw!r} contains an English function word — prose, "
+                     "not a port name; returning None")
         return None
     logger.warning(
         f"[read_port_name] raw OCR {raw!r} did not match any known port "

@@ -279,7 +279,37 @@ def _looks_like_port_slug(s: str) -> bool:
 # Garbage like 'home -' or 'horizons!' is well below 0.6 against any
 # real port name.  0.6 is the standard difflib default for the same
 # reason.
+# HOW CLOSE A READ MUST BE BEFORE IT IS THE SAME NAME.
+#
+# This corrects CORRUPTION of a port name; it is not a nearest-neighbour search over a
+# world atlas. Every string on screen gets offered to it, and most of them are not ports —
+# so a weak match is evidence the read was never a port name at all, not evidence about
+# which port it is.
+#
+# Calibrated on the three reads this has actually seen:
+#     'Amsterdamads!' -> Amsterdam   0.818   genuine corruption, must survive
+#     'tac'           -> Tacoma      0.67    a fragment (also caught by the length rule)
+#     'Herring'       -> Peking      0.62    a TRADE GOOD, on a screen covered in them
+#
+# The last one cost a leg: the fleet stood in Amsterdam, which sources the Iron the mission
+# had just asked for, and left without buying because it believed it was in Peking (live
+# 2026-08-29). Returning None is cheap — the caller reads again — and a wrong port identity
+# is the input to deciding where the fleet is and where it sails next.
+# Corruption that ADDS text still CONTAINS the name, and that containment is the evidence.
+# Without it a match is only a nearest neighbour in an atlas.
 _CUTOFF = 0.6
+# A CLEAR WINNER, NOT JUST A BEST ONE. Corruption of a real name leaves it far ahead of the
+# field; a word that is not a port at all sits in a flat crowd of near-ties, and the top of
+# a noise distribution is not evidence.
+#
+#     'fdinhuroh'     -> Edinburgh 0.667  runner-up Diu     0.500   margin 0.167  genuine
+#     'amsterdamads!' -> Amsterdam 0.818  runner-up Las P.  0.522   margin 0.296  genuine
+#     'herring'       -> Peking    0.615  runner-up Kuching 0.571   margin 0.044  a GOOD
+#     'tac'           -> Tacoma    0.667  runner-up Aceh    0.571   margin 0.095  a fragment
+#
+# Substitution corruption ('Fdinhuroh') does not CONTAIN the name, so containment alone
+# rejected a read this has always corrected. The margin admits it and still refuses Herring.
+_MIN_MARGIN = 0.12
 
 
 # Generic UI titles that the game uses as the top-left label on
@@ -353,6 +383,29 @@ def _best_match(raw: str, candidates: list[str]) -> Tuple[Optional[str], float]:
     return best, best_ratio
 
 
+# A read shorter than this fraction of the candidate is a FRAGMENT, not a corrupted name —
+# unless the similarity is near-perfect anyway.
+_MIN_FRAGMENT_RATIO = 0.6
+_SHORT_READ_RATIO = 0.85
+
+
+def _strip(text: str) -> str:
+    """Casefolded and accent-free, for asking whether one name sits inside another."""
+    import unicodedata
+    return "".join(c for c in unicodedata.normalize("NFD", text or "")
+                   if unicodedata.category(c) != "Mn").casefold()
+
+
+def _match_margin(raw: str, match: str) -> float:
+    """How far the winner beats the next-best port. A flat field means no signal."""
+    import difflib
+    low = (raw or "").lower()
+    scores = sorted(difflib.SequenceMatcher(None, low, p.lower()).ratio()
+                    for p in _known_ports() if p != match)
+    return (difflib.SequenceMatcher(None, low, match.lower()).ratio()
+            - (scores[-1] if scores else 0.0))
+
+
 def correct_port_name(raw: str) -> Tuple[Optional[str], float]:
     """Canonicalise a noisy OCR read against the known port list.
 
@@ -381,6 +434,33 @@ def correct_port_name(raw: str) -> Tuple[Optional[str], float]:
         return None, 0.0
     candidates = _known_ports()
     match, ratio = _best_match(raw, candidates)
+    # A FRAGMENT MUST NOT BE STRETCHED ONTO A LONGER NAME. Live 2026-08-26 the fleet was at
+    # BARCELONA, OCR caught the three letters 'tac', and this matched 'Tacoma' at 0.67 — a
+    # port on the Pacific coast of North America. The caller then logged "Overworld
+    # confirmed: port name 'Tacoma' visible". A wrong port identity is not a cosmetic error;
+    # it is the input to deciding where the fleet is and where it must sail next.
+    #
+    # Short reads cannot simply be banned — Diu, Edo, Ezo and Goa are real ports. What is
+    # not plausible is a read barely half the length of the name it supposedly is. Real
+    # corruption ADDS characters ('Amsterdamads!' → Amsterdam), it does not halve them.
+    if match is not None and len(raw or "") < _MIN_FRAGMENT_RATIO * len(match) \
+            and ratio < _SHORT_READ_RATIO:
+        logger.debug(
+            f"[text_correction] port {raw!r} is too short to be {match!r} "
+            f"({len(raw or '')} vs {len(match)} chars, ratio {ratio:.2f}) — rejecting"
+        )
+        return None, ratio
+    # DOES THE READ ACTUALLY CONTAIN THE NAME? 'Amsterdamez familyl' does — OCR fused the
+    # neighbouring label onto it, and the port is still in there. 'Herring' contains nothing
+    # of 'Peking'; it is a different word that merely scores close, which is what every label
+    # on a busy screen does against a 224-port atlas.
+    contains = bool(match) and _strip(match) in _strip(raw or "")
+    if match is not None and not contains and _match_margin(raw, match) < _MIN_MARGIN:
+        logger.debug(
+            f"[text_correction] port {raw!r} -> {match!r} at {ratio:.2f} but the field is "
+            f"flat (margin {_match_margin(raw, match):.3f}) — not a port name"
+        )
+        return None, ratio
     if match is None or ratio < _CUTOFF:
         if raw:
             logger.debug(
@@ -440,6 +520,17 @@ def correct_village_name(raw: str) -> Tuple[Optional[str], float]:
     if not candidates:
         return None, 0.0
     match, ratio = _best_match(raw, candidates)
+    # DOES THE READ ACTUALLY CONTAIN THE NAME? 'Amsterdamez familyl' does — OCR fused the
+    # neighbouring label onto it, and the port is still in there. 'Herring' contains nothing
+    # of 'Peking'; it is a different word that merely scores close, which is what every label
+    # on a busy screen does against a 224-port atlas.
+    contains = bool(match) and _strip(match) in _strip(raw or "")
+    if match is not None and not contains and _match_margin(raw, match) < _MIN_MARGIN:
+        logger.debug(
+            f"[text_correction] port {raw!r} -> {match!r} at {ratio:.2f} but the field is "
+            f"flat (margin {_match_margin(raw, match):.3f}) — not a port name"
+        )
+        return None, ratio
     if match is None or ratio < _CUTOFF:
         if raw:
             logger.debug(
@@ -461,6 +552,17 @@ def correct_waters_name(raw: str) -> Tuple[Optional[str], float]:
     waters list.  Handles the `Lauless Watters → Lawless Waters` case.
     """
     match, ratio = _best_match(raw, list(_SEED_WATERS))
+    # DOES THE READ ACTUALLY CONTAIN THE NAME? 'Amsterdamez familyl' does — OCR fused the
+    # neighbouring label onto it, and the port is still in there. 'Herring' contains nothing
+    # of 'Peking'; it is a different word that merely scores close, which is what every label
+    # on a busy screen does against a 224-port atlas.
+    contains = bool(match) and _strip(match) in _strip(raw or "")
+    if match is not None and not contains and _match_margin(raw, match) < _MIN_MARGIN:
+        logger.debug(
+            f"[text_correction] port {raw!r} -> {match!r} at {ratio:.2f} but the field is "
+            f"flat (margin {_match_margin(raw, match):.3f}) — not a port name"
+        )
+        return None, ratio
     if match is None or ratio < _CUTOFF:
         if raw:
             logger.debug(

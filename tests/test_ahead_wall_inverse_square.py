@@ -46,6 +46,39 @@ class _FakeNav:
     __slots__ = ("sectors", "ship_heading_deg")
 
 
+def _sixteen(recorded, sec_cls):
+    """Spread an EIGHT-sector reading (45 deg) across the SIXTEEN-sector view (22.5 deg).
+
+    These fixtures predate the change to SECTOR_COUNT=16, and `_score_sectors` indexes 12 and
+    14, so an 8-tuple raised IndexError at hug_shore.py:1274. The FEATURE is fine — the live
+    view and `ALL_SECTORS` both say 16 — only the captures lagged (fixed 2026-08-31).
+
+    `recorded` maps OLD sector index -> (land_fraction, nearest_dist). Each lands at the same
+    bearing, i.e. new index 2i. The odd sectors between were never captured at 45-degree
+    resolution and are INTERPOLATED from their neighbours rather than filled with open water:
+    clear sea there would hand the policy escape routes the real situation did not offer, and
+    these cases are about every turn looking expensive.
+    """
+    def _lerp(a, b):
+        if a[1] is None or b[1] is None:
+            dist = a[1] if b[1] is None else b[1]
+        else:
+            dist = (a[1] + b[1]) / 2.0
+        return ((a[0] + b[0]) / 2.0, dist)
+
+    at = {2 * i: v for i, v in recorded.items()}
+    out = []
+    for i in range(16):
+        if i in at:
+            frac, dist = at[i]
+        else:
+            frac, dist = _lerp(at.get((i - 1) % 16, (0.0, 1.0)),
+                               at.get((i + 1) % 16, (0.0, 1.0)))
+        out.append(sec_cls(frac, dist, float(i * 22.5)))
+    return tuple(out)
+
+
+
 def test_wall_directly_ahead_exceeds_unit_cap():
     """Live collision t=1: frac=0.83 dist=0.10.  Old cost capped at
     0.83; new formula must exceed 2.0 so it dominates the turn
@@ -135,16 +168,16 @@ def test_pinched_passage_escalates_peel_to_beam_opposite():
 
     # Reconstruct live t=153 sectors exactly.
     nav = _Nav()
-    nav.sectors = (
-        _Sec(0.18, 0.21, 0.0),     # 0 — ahead, modest
-        _Sec(0.44, 0.07, 45.0),    # 1 — bow-right, close
-        _Sec(0.71, 0.06, 90.0),    # 2 — beam-right, very close
-        _Sec(0.46, 0.11, 135.0),   # 3 — astern-right
-        _Sec(0.01, 0.50, 180.0),   # 4 — back
-        _Sec(0.00, None, 225.0),   # 5 — astern-left, empty
-        _Sec(0.00, None, 270.0),   # 6 — beam-left, empty (peel target)
-        _Sec(0.12, 0.22, 315.0),   # 7 — bow-left, ISLAND
-    )
+    nav.sectors = _sixteen({
+        0: (0.18, 0.21),    # ahead, modest
+        1: (0.44, 0.07),    # bow-right, close
+        2: (0.71, 0.06),    # beam-right, very close
+        3: (0.46, 0.11),    # astern-right
+        4: (0.01, 0.50),    # back
+        5: (0.00, None),    # astern-left, empty
+        6: (0.00, None),    # beam-left, empty (peel target)
+        7: (0.12, 0.22),    # bow-left, ISLAND
+    }, _Sec)
     nav.ship_heading_deg = 305.4
 
     ideal = _ideal_sector(nav, side="starboard",
@@ -179,16 +212,16 @@ def test_escalation_does_not_fire_when_bow_opposite_clear():
     # Start from the t=153 pinch and clear out the bow-opposite sector
     # (no island).  Now escalation should NOT fire.
     nav = _Nav()
-    nav.sectors = (
-        _Sec(0.18, 0.21, 0.0),     # 0 — ahead, modest
-        _Sec(0.44, 0.07, 45.0),    # 1 — bow-right, close
-        _Sec(0.71, 0.06, 90.0),    # 2 — beam-right, very close
-        _Sec(0.46, 0.11, 135.0),
-        _Sec(0.01, 0.50, 180.0),
-        _Sec(0.00, None, 225.0),
-        _Sec(0.00, None, 270.0),
-        _Sec(0.00, None, 315.0),   # 7 — bow-left CLEAR (was 0.12/0.22 island)
-    )
+    nav.sectors = _sixteen({
+        0: (0.18, 0.21),    # ahead, modest
+        1: (0.44, 0.07),    # bow-right, close
+        2: (0.71, 0.06),    # beam-right, very close
+        3: (0.46, 0.11),
+        4: (0.01, 0.50),
+        5: (0.00, None),
+        6: (0.00, None),
+        7: (0.00, None),    # bow-left CLEAR (was 0.12/0.22 island)
+    }, _Sec)
     nav.ship_heading_deg = 305.4
 
     ideal = _ideal_sector(nav, side="starboard",
@@ -203,21 +236,37 @@ def test_live_t1_collision_regression():
     """End-to-end policy check: at the live t=1 collision conditions
     (sec 0 frac=0.83 dist=0.18, other sectors at typical hug shapes),
     the policy must NOT pick sec 0 (hold straight into wall)."""
-    # Approximate the t=1 sector configuration.
+    # The t=1 configuration, re-expressed for a SIXTEEN-sector view.
+    #
+    # This fixture was written against the old EIGHT-sector view at 45 degrees. The navigation
+    # view now yields SECTOR_COUNT=16 at 22.5 degrees (vision/minimap_navigation_view.py), and
+    # `_score_sectors` indexes 12 and 14 — so an 8-tuple raised IndexError at hug_shore.py:1274
+    # and these three tests had been failing since the change. The FEATURE is fine: the live
+    # view and `ALL_SECTORS` agree at 16. Only this fixture lagged (fixed 2026-08-31).
+    #
+    # The recorded readings sit at the same BEARINGS, which land on the even sectors (old i ->
+    # new 2i). The odd sectors between them were never captured at 45-degree resolution, so
+    # they are INTERPOLATED from their neighbours rather than invented as open water — filling
+    # them with clear sea would hand the policy escape routes the real situation did not offer,
+    # and the point of this case is that every turn looked expensive.
+    recorded = {                       # ship-relative bearing -> (land_fraction, nearest_dist)
+        0:  (0.83, 0.18),              # wall ahead
+        2:  (0.46, 0.15),              # bow-right    (45 deg)
+        4:  (0.06, 0.30),              # beam-right   (90 deg)
+        6:  (0.83, 0.15),              # astern-right (135 deg)
+        14: (0.54, 0.20),              # bow-left     (-45 deg)
+    }
     sectors = []
-    for i in range(8):
-        if i == 0:
-            sectors.append(_FakeSec(0.83, 0.18, 0.0))     # wall ahead
-        elif i == 1:
-            sectors.append(_FakeSec(0.46, 0.15, 45.0))    # bow-right
-        elif i == 2:
-            sectors.append(_FakeSec(0.06, 0.30, 90.0))    # beam-right
-        elif i == 3:
-            sectors.append(_FakeSec(0.83, 0.15, 135.0))   # astern-right
-        elif i == 7:
-            sectors.append(_FakeSec(0.54, 0.20, -45.0))   # bow-left
+    for i in range(16):
+        if i in recorded:
+            frac, dist = recorded[i]
+        elif i % 2 == 1:               # between two known readings: interpolate
+            lo = recorded.get((i - 1) % 16, (0.0, 1.0))
+            hi = recorded.get((i + 1) % 16, (0.0, 1.0))
+            frac, dist = ((lo[0] + hi[0]) / 2.0, (lo[1] + hi[1]) / 2.0)
         else:
-            sectors.append(_FakeSec(0.0, 1.0, float(i*45)))
+            frac, dist = (0.0, 1.0)    # even sectors the 8-sector capture showed as clear
+        sectors.append(_FakeSec(frac, dist, float(i * 22.5)))
     nav = _FakeNav()
     nav.sectors = tuple(sectors)
     nav.ship_heading_deg = 282.0

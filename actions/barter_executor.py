@@ -21,16 +21,113 @@ from loguru import logger
 
 # ── #24 Barter commit (verified) ───────────────────────────────────────────────
 
+def _have_counts(snap: dict) -> list:
+    """Each material's HELD count, in panel order. Positional, not by label: the OCR flickers
+    between 'Luxuries' and 'uxuries' on the same tile, so matching by name invents changes."""
+    mats = (snap or {}).get("materials")
+    out = []
+    for m in mats or ():
+        if isinstance(m, (list, tuple)):
+            out.append(m[1] if len(m) > 1 else None)
+        else:
+            out.append(getattr(m, "have", None))
+    return out
+
+
 def _barter_progressed(before: dict, after: dict) -> Tuple[bool, str]:
-    """A barter happened if amity moved (barter always shifts amity ±) or cargo rose
-    (output received)."""
+    """A barter happened if amity moved, cargo rose, OR MATERIALS WERE CONSUMED.
+
+    THE FIRST TWO WITNESSES BOTH SATURATE, AND THEY SATURATE ON SUCCESS. Amity stops moving at
+    the cap; cargo stops rising when the hold is full and the surplus is discarded. Reaching
+    either is an achievement, and between them they can make a real round invisible.
+
+    Live 2026-08-30 at Hutu Village, a fourth round with amity at 100,000/100,000 and cargo at
+    4,952/4,952:
+
+        amity=Friendly(100000, 100000)  materials=[('uxuries', 923, 219), ('Livestock', 1135, 219)]
+        amity=Friendly(100000, 100000)  materials=[('Luxuries', 704, 219), ('Livestock',  916, 219)]
+
+    Both counts fell by exactly 219 — the round plainly happened — but this returned "no
+    amity/cargo change", the caller added a panel hidden behind a discard dialog, and the
+    mission ended "the day's barter rounds are spent" with 3 of 6 rounds used and material for
+    four more aboard.
+
+    The materials were in the SAME snapshot all along (see `_read`, which records them). They
+    are the witness that cannot saturate: every round consumes them.
+    """
+    # THE STRIP FIRST: it counts rounds outright. A NEW TILE IS A ROUND, full stop — no
+    # delta that saturation can erase, and no whole-screen diffing, which cannot work here
+    # anyway (the panel is translucent, with sea and ships moving behind it).
+    r0, r1 = before.get("rounds"), after.get("rounds")
+    if isinstance(r0, list) and isinstance(r1, list) and len(r1) > len(r0):
+        return True, f"trade count {len(r0)}→{len(r1)} rounds{f' (+{r1[-1]})' if r1 else ''}"
     a0, a1 = before.get("amity"), after.get("amity")
     if a0 is not None and a1 is not None and a1 != a0:
         return True, f"amity {a0}→{a1}"
     c0, c1 = before.get("cargo"), after.get("cargo")
     if c0 is not None and c1 is not None and c1 > c0:
         return True, f"cargo {c0}→{c1}"
-    return False, "no amity/cargo change"
+    b, a = _have_counts(before), _have_counts(after)
+    if b and a and len(b) == len(a):
+        spent = [(x, y) for x, y in zip(b, a)
+                 if isinstance(x, int) and isinstance(y, int) and y < x]
+        if spent:
+            return True, "materials " + ", ".join(f"{x}→{y}" for x, y in spent)
+    return False, "no round, amity, cargo or material change"
+
+
+def _panel_is_open(panel) -> bool:
+    """Is the barter panel still on screen? A closed submenu reads as nothing selected.
+
+    The panel names the good and its output while it is up; once the game closes it, both
+    are gone. Amity alone does not count — it is drawn on the village screen behind.
+    """
+    if panel is None:
+        return False
+    good = (panel or {}).get("good") if isinstance(panel, dict) else getattr(panel, "good", None)
+    out = (panel or {}).get("out") if isinstance(panel, dict) else getattr(panel, "out", None)
+    return bool(good) or out is not None
+
+
+def _call_refresh(refresh_fn, panel) -> bool:
+    """Call `refresh_fn`, passing the good when it wants one.
+
+    `brain.barter_mission_live.refresh_stale_panel(good)` takes the good to reselect, and
+    `village.py` passes it bare as `refresh_fn`, so calling it with no arguments raised
+    TypeError — live 2026-08-27 that ended the run outright. The path had never been reached
+    before, which is exactly how a signature mismatch survives.
+    """
+    good = (panel or {}).get("good") if isinstance(panel, dict) else getattr(panel, "good", None)
+    try:
+        return bool(refresh_fn(good) if good else refresh_fn())
+    except TypeError:
+        try:
+            return bool(refresh_fn())
+        except Exception as exc:
+            logger.warning(f"[barter_commit] refresh_fn could not be called: {exc}")
+            return False
+    except Exception as exc:
+        logger.warning(f"[barter_commit] refresh failed: {exc}")
+        return False
+
+
+def _short_materials(panel) -> list:
+    """Materials the panel shows at zero — what a grey Exchange is usually waiting on.
+
+    Reads the numbers already parsed off the right panel rather than looking again: a
+    material at 0 is why the button is dead, and naming it turns "the day is over" into
+    "buy this much and take the remaining round".
+    """
+    out = []
+    mats = (panel or {}).get("materials") if isinstance(panel, dict) else getattr(panel, "materials", None)
+    for entry in (mats or []):
+        try:
+            name, have = entry[0], entry[1]
+        except (TypeError, IndexError):
+            continue
+        if have is not None and int(have) <= 0:
+            out.append(str(name))
+    return out
 
 
 def barter_commit_verified(
@@ -41,15 +138,28 @@ def barter_commit_verified(
     confirm_fn: Optional[Callable] = None,
     read_panel_fn: Optional[Callable] = None,
     read_cargo_fn: Optional[Callable] = None,
+    refresh_fn: Optional[Callable] = None,
+    before_state: Optional[dict] = None,
 ) -> dict:
     """One verified Exchange commit on the (already-open) barter panel with a good
     selected. Returns {ok, reason, before, after, tapped}.
 
+    `refresh_fn` closes and reopens the panel, reselecting the good, and returns whether it
+    worked. It is called ONCE when a commit changes nothing, because the usual cause is a
+    stale panel — see the note at the retry below. Omit it and the old behaviour stands.
+
     ok=False ⇒ the commit did NOT change amity/cargo; the caller escalates rather
     than blindly re-tapping."""
     if capture_fn is None:
-        from capture.adb_capture import capture_screen
-        capture_fn = capture_screen
+        # THE ROUND'S READS COME FROM ONE OBSERVATION. `_state()` is called twice per attempt
+        # — before the tap and after it — and each used to be a fresh capture and parse
+        # (~4.6 s), which is most of the three-identical-reads-per-round measured at Hutu
+        # Village on 2026-08-30. Through the repository the BEFORE is served from whatever the
+        # caller already looked at, and the AFTER captures because the commit's taps told the
+        # action layer the screen moved. The capture count becomes the number of things that
+        # actually changed the screen.
+        from actions.perception import screen
+        capture_fn = lambda: screen().get(why="barter commit before/after").frame
     if read_panel_fn is None:
         from actions.barter_reader import read_barter_panel
         read_panel_fn = read_barter_panel
@@ -67,17 +177,117 @@ def barter_commit_verified(
     def _state():
         frame = capture_fn()
         panel = read_panel_fn(frame)
+        # CARRY WHAT THE PANEL SAYS, not just what changed. `good`/`out` are how we know the
+        # submenu is still OPEN (the game closes it when the day's rounds run out), and
+        # `materials` names the one at 0 when Exchange is grey. Reducing the read to
+        # amity+cargo threw both away, so every question about WHY a commit did nothing had
+        # to be answered by guessing.
+        # AND THE STRIP. Each spent round leaves a tile carrying what it produced, so the
+        # strip counts the day's rounds outright — the only signal here that states the
+        # answer instead of implying it, and the only one that cannot saturate.
+        try:
+            from actions.barter_reader import read_trade_count
+            rounds = read_trade_count(frame)
+        except Exception as exc:
+            logger.debug(f"[barter_commit] could not read the Trade Count strip: {exc}")
+            rounds = None
         return {"amity": getattr(panel, "amity_points", None),
-                "cargo": read_cargo_fn(frame)}
+                "cargo": read_cargo_fn(frame),
+                "good": getattr(panel, "good", None),
+                "out": getattr(panel, "out", None),
+                "materials": getattr(panel, "materials", None),
+                "rounds": rounds}
 
-    before = _state()
-    tapped = commit_fn() or []               # tap yellow Exchange (never red-gem)
-    time.sleep(settle_secs)
-    confirm_fn(capture_fn)                    # OK the "Barter Calculations" result dialog
-    time.sleep(1.0)
-    after = _state()
+    carried = [before_state]      # list so the nested _attempt can consume it
 
+    def _attempt():
+        # THE PREVIOUS ROUND'S `after` IS THIS ROUND'S `before`. Between them only a dispatcher
+        # tick passes, and a tick that ACTS is a tick that would have changed the context away
+        # from "panel ready" — so when the caller hands us its last `after`, reading the same
+        # screen again buys nothing. `_state()` is the expensive call here: a capture, a panel
+        # parse, a cargo read and a strip read, ~5s, and it was being paid twice per round.
+        #
+        # Only the FIRST attempt may carry it. A retry follows a commit that changed nothing,
+        # which is exactly when the screen must be looked at afresh.
+        before = carried[0] if carried[0] is not None else _state()
+        carried[0] = None
+        tapped = commit_fn() or []           # tap yellow Exchange (never red-gem)
+        time.sleep(settle_secs)
+        confirm_fn(capture_fn)                # OK the "Barter Calculations" result dialog
+        time.sleep(1.0)
+        after = _state()
+        return before, after, tapped
+
+    before, after, tapped = _attempt()
     progressed, why = _barter_progressed(before, after)
+
+    # A GREY EXCHANGE MEANS ROUNDS REMAIN. This is the opposite of what it used to conclude.
+    #
+    # The two endings are told apart by the SCREEN, not inferred from the button (user,
+    # 2026-08-27):
+    #   * rounds USED UP  -> the game closes the barter submenu itself and drops the bot back
+    #     to the village top menu. The panel is gone; there is nothing to read.
+    #   * rounds REMAIN but the barter cannot proceed -> the panel stays open with Exchange
+    #     GREY, because a material is short or amity is too low. The right panel names it:
+    #     the short material shows 0 in RED.
+    #
+    # So reaching here — panel open, button dead — means a round is still available and
+    # something is missing. Live 2026-08-27 at Svear this reported "the day's barter rounds
+    # are spent" after 4 of 5 rounds, when Matchlock Gun had hit 0: the 5th round was there
+    # for the taking, 95 Matchlock away, and the mission stopped believing the day was over.
+    #
+    # `exhausted` stays False for that reason — the day is NOT done, and a caller that can
+    # restock may come back for the remaining round.
+    if not progressed and not tapped:
+        short = _short_materials(after)
+        why_grey = (f"material short: {', '.join(short)}" if short
+                    else "a material is short or amity is too low")
+        logger.info(f"[barter_commit] Exchange is grey with the panel still open — rounds "
+                    f"REMAIN today and {why_grey}. (Rounds running out closes the submenu "
+                    "instead; this is not that.)")
+        return {"ok": False, "exhausted": False, "blocked": True,
+                "reason": f"Exchange grey — {why_grey}", "short": short,
+                "before": before, "after": after, "tapped": tapped}
+
+    # A STALE PANEL TAKES THE TAP AND DOES NOTHING. Measured at Svear Village on 2026-08-26:
+    # the barter panel had been open since 09:22 with its refresh timer counting BACKWARDS
+    # (-1:45:13), and its own numbers had quietly degraded — trade quantity 448(+98) -> 336(-14),
+    # negotiation 9% -> 5%. Exchange raised the confirm dialog as normal, OK closed it, and
+    # nothing happened: amity stayed at Neutral 60,000 against a promised Favorable 61,840.
+    # Closing the panel and reopening it, with no other change, committed on the first try —
+    # amity 60,000 -> 61,615, materials 445/146/438 -> 340/93/333.
+    #
+    # "Don't re-tap" was right: re-tapping a stale panel never works. But escalating was
+    # wrong, because the remedy is to get a LIVE panel. That is this call's own precondition,
+    # the way an open Buildings tab is `tap_building_entry`'s, so it is fixed here — and only
+    # once, since a second failure means something other than staleness.
+    # IS THE PANEL EVEN THERE? Ask before blaming staleness.
+    #
+    # The two endings differ by the SCREEN (user, 2026-08-27): when the day's rounds run out
+    # the game CLOSES the barter submenu itself and drops the bot back to the village top
+    # menu. There is no panel left — so a commit that "changed nothing" changed nothing
+    # because there was nothing to commit ON, and reopening it is neither needed nor
+    # possible. That is COMPLETION.
+    #
+    # Live 2026-08-27 at Hutu Village: the rounds ran out, the submenu closed, the Exchange
+    # tap landed on the village menu behind it, and this read "no change" as a stale panel
+    # and went to refresh — down a path that then crashed on a signature mismatch it had
+    # never been reached to expose.
+    if not progressed and not _panel_is_open(after):
+        logger.info("[barter_commit] the barter submenu has CLOSED — the game shuts it when "
+                    "the day's rounds run out. That is completion, not a stale panel.")
+        return {"ok": False, "exhausted": True, "reason": "the day's barter rounds are spent",
+                "before": before, "after": after, "tapped": tapped}
+
+    if not progressed and refresh_fn is not None:
+        logger.warning(f"[barter_commit] no change ({why}) — the panel may be stale; "
+                       "refreshing it and committing once more")
+        if _call_refresh(refresh_fn, before):
+            before, after, tapped = _attempt()
+            progressed, why = _barter_progressed(before, after)
+        else:
+            logger.warning("[barter_commit] could not refresh the panel")
+
     if progressed:
         from memory.observed_facts import forget
         forget("hold")     # a round consumed materials — the remembered hold is now wrong

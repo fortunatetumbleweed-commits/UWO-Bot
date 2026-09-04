@@ -19,8 +19,11 @@ village cannot do without leaving:
 from __future__ import annotations
 
 import pytest
+import contextlib
 import unittest
 from unittest.mock import patch
+
+import actions.barter_panel as bp
 
 from brain import barter_command
 
@@ -47,14 +50,53 @@ def _state(rounds):
 @pytest.mark.live_entry_probe
 class EnterAtTheBarterStep(unittest.TestCase):
 
-    def _try(self, *, at_village, panel_ok=True, selected=True, rounds=3):
-        resumed = {}
+    @staticmethod
+    @contextlib.contextmanager
+    def _wiring(*, at_village, panel_ok=True, selected=True, rounds=3):
+        """Every stub the probe needs, in ONE place.
+
+        `test_the_phase_is_recorded_so_a_later_run_resumes` had its own copy that never
+        stubbed the dispatcher, so it drove real perception: 316 seconds for one test, and it
+        left enough process state behind to fail two others that pass alone. A second copy of
+        a wiring is a second chance to miss a stub.
+        """
+        import types
+
+        import brain.village_context as ctx
+
+        local = (ctx.BARTER_PANEL_READY if (panel_ok and selected)
+                 else ctx.VILLAGE_TOP_MENU)
+
+        def _perceive():
+            return types.SimpleNamespace(state="village", location="village",
+                                         port=None, frame=None, sub_menu=None,
+                                         scene_type="village")
+
         with patch.object(barter_command, "_at_a_village",
                           return_value=(at_village, "test")), \
-             patch("brain.barter_mission_live._open_barter_panel", return_value=panel_ok), \
-             patch("brain.barter_mission_live._select_trade_good", return_value=selected), \
-             patch("brain.barter_mission_live._read_panel_state",
-                   return_value=_state(rounds)), \
+             patch("brain.run_goal._refined_state", _perceive), \
+             patch("brain.village_context.classify", return_value=local), \
+             patch("actions.barter_panel._open_barter_panel", return_value=panel_ok), \
+             patch("actions.barter_panel._select_trade_good", return_value=selected), \
+             patch("actions.barter_panel._read_panel_state", return_value=_state(rounds)), \
+             patch("actions.barter_panel._exchange_still_live", return_value=True), \
+             patch("actions.barter_panel._no_panel_failure",
+                   return_value={"screen": "test", "reason": "stubbed"}), \
+             patch("time.sleep", lambda *_a, **_k: None):
+            yield
+
+    def _try(self, *, at_village, panel_ok=True, selected=True, rounds=3):
+        """Drive the probe through the real dispatcher, stubbing only the SCREEN.
+
+        The probe stopped opening the panel itself: it returns a `ReadBarterPanel` work order
+        and `VillageActivity` does the opening, selecting and reading, one step per tick. So
+        the test stubs what the dispatcher perceives and what the panel functions return, and
+        the path between them is the real one — including the activity's own refusal to act on
+        a panel showing somebody else's good.
+        """
+        resumed = {}
+        with self._wiring(at_village=at_village, panel_ok=panel_ok, selected=selected,
+                          rounds=rounds), \
              patch.object(barter_command, "_resume_at_village",
                           side_effect=lambda c, p: resumed.update(p) or {"ok": True}), \
              patch("brain.mission_progress.start"), \
@@ -82,10 +124,7 @@ class EnterAtTheBarterStep(unittest.TestCase):
         self.assertIsNone(self._try(at_village=True, rounds=0)[0])
 
     def test_the_phase_is_recorded_so_a_later_run_resumes(self):
-        with patch.object(barter_command, "_at_a_village", return_value=(True, "test")), \
-             patch("brain.barter_mission_live._open_barter_panel", return_value=True), \
-             patch("brain.barter_mission_live._select_trade_good", return_value=True), \
-             patch("brain.barter_mission_live._read_panel_state", return_value=_state(2)), \
+        with self._wiring(at_village=True, rounds=2), \
              patch.object(barter_command, "_resume_at_village", return_value={"ok": True}), \
              patch("brain.mission_progress.start") as start, \
              patch("brain.mission_progress.advance") as adv:

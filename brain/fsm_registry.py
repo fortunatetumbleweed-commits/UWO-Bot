@@ -274,13 +274,25 @@ class FSMRegistry:
                 node = next_node
             self._recovery_paths[state_id] = path
 
-        reachable = len(self._recovery_paths)
-        total     = len(self.states)
-        if reachable < total:
-            unreachable = [s for s in self.states if s not in self._recovery_paths]
+        # A STATE WHOSE EXIT LEADS SOMEWHERE UNKNOWN IS NOT UNREACHABLE BY MISTAKE.
+        # `loading` and `idle_lock` both declare `"to": null`: their action is known and their
+        # destination is not, so it is discovered by re-perceiving rather than routed to. BFS
+        # cannot build a path through an edge with no far end, and that is the design, not a
+        # gap. Reporting them as missing recovery paths reads as a defect to every future
+        # reader — and buries any state that IS unreachable by mistake among them.
+        unrouted = [s for s in self.states if s not in self._recovery_paths]
+        by_design = [s for s in unrouted
+                     if any(t.to is None for t in self.states[s].exits)]
+        missing = [s for s in unrouted if s not in by_design]
+        if by_design:
+            logger.info(
+                f"  [FSM] {len(by_design)} state(s) resolve by re-perceiving rather than "
+                f"routing (exit destination declared unknown): {by_design}"
+            )
+        if missing:
             logger.warning(
-                f"  [FSM] {total - reachable} state(s) have no recovery path to "
-                f"port_overworld: {unreachable}"
+                f"  [FSM] {len(missing)} state(s) have no recovery path to "
+                f"port_overworld: {missing}"
             )
 
     # ── Public API ────────────────────────────────────────────────────────────

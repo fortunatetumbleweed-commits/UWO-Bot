@@ -28,12 +28,62 @@ from memory.logger import setup_logging
 setup_logging()
 
 args = sys.argv[1:]
+
+# ── saved missions ────────────────────────────────────────────────────────────
+# A barter mission IS one line of natural language, so a saved one is just that line
+# under a name. No second format, no execution path of its own — `--task` looks the
+# line up and everything downstream runs exactly as if it had been typed.
+from pathlib import Path as _Path
+_MISSIONS = _Path(__file__).resolve().parent / "tasks" / "barter"
+
+
+def _saved(name: str) -> str:
+    f = _MISSIONS / f"{name}.txt"
+    if not f.exists():
+        have = sorted(p.stem for p in _MISSIONS.glob("*.txt")) if _MISSIONS.exists() else []
+        print(f"no saved mission {name!r}." + (f" saved: {', '.join(have)}" if have else ""))
+        sys.exit(1)
+    return f.read_text().strip()
+
+
+def _opt(flag: str):
+    for a in args:
+        if a.startswith(flag + "="):
+            return a.split("=", 1)[1]
+    return None
+
+
+if "--list" in args:
+    for f in sorted(_MISSIONS.glob("*.txt")) if _MISSIONS.exists() else []:
+        print(f"  {f.stem:24} {f.read_text().strip()}")
+    sys.exit(0)
+
 command = next((a for a in args if not a.startswith("--")), None)
+
+_save_as = _opt("--save")
+if _save_as:
+    if not command:
+        print('--save=<name> needs the command too: '
+              'python run_barter.py --save=hutu_groundnut "barter Groundnut at ..."')
+        sys.exit(1)
+    _MISSIONS.mkdir(parents=True, exist_ok=True)
+    (_MISSIONS / f"{_save_as}.txt").write_text(command.strip() + "\n")
+    print(f"saved {_save_as!r}: {command.strip()}")
+    sys.exit(0)
+
+_task = _opt("--task")
+if _task:
+    command = _saved(_task)
+    print(f"[{_task}] {command}")
+
 if not command:
     print('Usage: python run_barter.py "barter <good> at <village>'
           '[, then take the route <name> | and sail to <port>]"'
           ' [--dry-run] [--no-trace] [--clear-surplus] [--from=<port>]'
           ' [--capacity=N --cargo=N] [--cushion=0.15]')
+    print('   or: python run_barter.py --task=<name>          # run a saved mission')
+    print('       python run_barter.py --save=<name> "<cmd>"  # save one')
+    print('       python run_barter.py --list                 # list them')
     sys.exit(1)
 
 dry_run = "--dry-run" in args

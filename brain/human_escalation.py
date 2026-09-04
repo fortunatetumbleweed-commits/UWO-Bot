@@ -1111,6 +1111,11 @@ def _build_corrected_result(
         flow_step  = cs.get("flow_step") or None,
         confidence = "high",
         corrected  = True,
+        # A CORRECTION IS ABOUT THE SAME SCREEN. Carrying the original's frame keeps the
+        # verdict and the pixels it describes together; dropping it here would put whoever
+        # acts on the correction back to capturing a fresh screen and acting on a different
+        # one.
+        frame      = original.frame,
     )
 
 

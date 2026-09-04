@@ -970,7 +970,68 @@ def _tap_dialog_ok(frame) -> bool:
 
 # ── Primary recovery function ─────────────────────────────────────────────────
 
+def _caller_of_record() -> str:
+    """The first frame outside this module — who actually asked for a recovery."""
+    import inspect
+    here = __file__
+    for fr in inspect.stack()[2:]:
+        if fr.filename != here:
+            mod = fr.filename.rsplit("/", 1)[-1]
+            return f"{mod}:{fr.lineno} in {fr.function}()"
+    return "unknown"
+
+
 def recover_to_port_overworld(
+    home_port: Optional[str] = None,
+    timeout: float = 300.0,
+    _after_escalation: bool = False,
+) -> "brain.perceive.PerceiveResult":
+    """Logged wrapper — see `_recover_to_port_overworld` for the implementation.
+
+    EVERY CALL IS RECORDED, with its caller, its duration and where it ended up. This
+    function owns an internal loop and accepts only `port_overworld` as success, so it can
+    FORCE a destination and outlive the world it was launched in. Live 2026-08-27 that
+    killed a run: the fleet had committed a departure, perception read `sea` at confidence
+    1.00 — correct, it was sailing to Tripoli — and this reported "Failed to reach
+    port_overworld" and aborted the task. The paired ENTER/EXIT lines exist so every call
+    can be reviewed after a run and the ~40 call sites retired on evidence rather than
+    guesswork. Grep `[recovery-call]`.
+    """
+    import time as _t
+    caller = _caller_of_record()
+    started = _t.time()
+    # DEPRECATED, AND LOUD ABOUT IT. Nothing should call this. A screen the bot cannot read
+    # is a STATE with an activity that takes one exit and finishes (`unrecognized_chromed`,
+    # `transient`, `idle_lock`); the dispatcher then perceives and routes. This function is
+    # the sub-loop that architecture replaces: it owns a 20-attempt loop, treats one
+    # destination as the only success, and with a `home_port` — which all nine call sites
+    # pass — reaches `_recover_from_sea`, which SAILS THE FLEET (user, 2026-08-27).
+    #
+    # The one live caller was `sail_to._handle_unknown` via `planner.plan_to`, removed
+    # 2026-08-27; `plan_to` now has no callers at all. The remaining sites have never been
+    # observed firing. They are left in place and made LOUD rather than deleted blind: if one
+    # fires, this line names it and it can be retired on evidence. Check after every run with
+    # `python tools/recovery_calls.py`.
+    logger.warning(f"[recovery-call] DEPRECATED recover_to_port_overworld CALLED ← {caller} "
+                   f"(home_port={home_port!r}, timeout={timeout}) — nothing should call this; "
+                   "an unreadable screen is a state with an activity, not a destination to "
+                   "force. Report this caller.")
+    try:
+        result = _recover_to_port_overworld(home_port, timeout, _after_escalation)
+    except BaseException as exc:
+        logger.error(f"[recovery-call] EXIT  raised {type(exc).__name__} after "
+                     f"{_t.time() - started:.1f}s ← {caller}")
+        raise
+    where = getattr(result, "state", None)
+    ok = where == "port_overworld"
+    logger.log("INFO" if ok else "WARNING",
+               f"[recovery-call] EXIT  {'reached' if ok else 'DID NOT reach'} "
+               f"port_overworld — ended at {where!r} after {_t.time() - started:.1f}s "
+               f"← {caller}")
+    return result
+
+
+def _recover_to_port_overworld(
     home_port: Optional[str] = None,
     timeout: float = 300.0,
     _after_escalation: bool = False,

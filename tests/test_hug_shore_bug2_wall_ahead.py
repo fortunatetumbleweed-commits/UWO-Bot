@@ -17,6 +17,7 @@ from brain.goals.hug_shore import (
     WALL_AHEAD_EXIT_FRAC,
 )
 from brain import observation as _obs
+import pytest
 
 
 _SECTOR_BEARINGS = (
@@ -62,6 +63,7 @@ def _new_goal(side="starboard"):
     return HugShoreGoal(side=side, max_ticks=20, driver_mode="vfh")
 
 
+@pytest.mark.simulation  # simulated goal-loop run: `tick()` executes the real action code against whatever frame the fixtures supply
 def test_starboard_commit_to_sec7_when_wall_ahead():
     """Heavy shore directly ahead → commit to sec 7 (left turn)."""
     nav = _build_nav([
@@ -88,6 +90,7 @@ def test_starboard_commit_to_sec7_when_wall_ahead():
     )
 
 
+@pytest.mark.simulation  # simulated goal-loop run: `tick()` executes the real action code against whatever frame the fixtures supply
 def test_port_commit_to_sec1_when_wall_ahead():
     """Mirror: port hugger commits to sec 1 (right turn) for wall-ahead."""
     nav = _build_nav([
@@ -107,6 +110,7 @@ def test_port_commit_to_sec1_when_wall_ahead():
     assert "right" in result.action or result.action == "wait"
 
 
+@pytest.mark.simulation  # simulated goal-loop run: `tick()` executes the real action code against whatever frame the fixtures supply
 def test_commit_persists_until_ahead_clears():
     """The discipline is 'commit and stay' — once committed, the bot
     holds its direction through multiple ticks while ahead remains
@@ -138,6 +142,7 @@ def test_commit_persists_until_ahead_clears():
     assert goal._wall_ahead_commit == 7
 
 
+@pytest.mark.simulation  # simulated goal-loop run: `tick()` executes the real action code against whatever frame the fixtures supply
 def test_commit_releases_when_ahead_clears():
     """When the bot escapes (ahead.frac drops below WALL_AHEAD_EXIT_FRAC),
     the commit is released — VFH+ takes over for normal hugging."""
@@ -157,6 +162,7 @@ def test_commit_releases_when_ahead_clears():
     )
 
 
+@pytest.mark.simulation  # simulated goal-loop run: `tick()` executes the real action code against whatever frame the fixtures supply
 def test_no_commit_below_entry_threshold():
     """Ahead with modest shore (frac < AHEAD_WALL_FRAC) — Bug rule
     doesn't fire; VFH+ decides normally."""
@@ -176,6 +182,7 @@ def test_no_commit_below_entry_threshold():
     assert goal._wall_ahead_commit is None
 
 
+@pytest.mark.simulation  # simulated goal-loop run: `tick()` executes the real action code against whatever frame the fixtures supply
 def test_hysteresis_between_entry_and_exit():
     """ahead.frac in (WALL_AHEAD_EXIT_FRAC, AHEAD_WALL_FRAC) preserves
     the committed state if entered, doesn't enter if not yet committed.

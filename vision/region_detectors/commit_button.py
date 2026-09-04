@@ -31,7 +31,36 @@ from vision.ocr import read_text
 # cost-left+verb-right). A goods TILE's yellow price-bar / "Specialties" banner is
 # only a partial highlight (~0.21) on a squarish tile (aspect ~1.8) — NOT a button.
 # Require both a strong yellow fill and a wide aspect to reject those highlights.
-YELLOW_MIN_FRAC = 0.28
+# How much of a commit button must read as gold. Set from MEASUREMENT of both classes rather
+# than from the one button it was first tuned on (2026-09-02):
+#
+#     Purchase, DISABLED, cost 0 (Tripoli)      0.0207
+#     goods tile 'Shea Butter' (Madeira)        0.2100   ← the false positive to exclude
+#     ------------------------------- the gap -------------------------------
+#     Purchase, ENABLED, 185,250 (Madeira)      0.2798
+#     OK on the cart dialog                     0.3212
+#
+# At 0.28 the cut sat at the very TOP of the enabled range and rejected a lit, priced
+# Purchase button by 0.000213 — two ten-thousandths. The buy never committed, the round was
+# retried against an already-staged cart, and the mission died on the confirm dialog that
+# dangling cart raised.
+#
+# It reads pale because the pill is two-toned: a DARK BROWN cost panel inset on the left
+# ('🪙 185,250') beside a pale cream-gold action half ('Purchase'). Averaged over the whole
+# control the gold is diluted, and the dialog's OK — one flat saturated pill — scores higher.
+# So the number was never about "how gold is gold"; it was about which button was measured.
+#
+# 0.25 sits between the tile and the palest enabled button. The margin is NARROW — 0.04 below,
+# 0.03 above — and that is worth saying plainly rather than presenting a tuned number as a
+# principled one. A first attempt at 0.15 admitted the Shea Butter TILE, which is the very
+# false positive the aspect test and this threshold were both written for; the docstring
+# already recorded a tile at 0.21 and I had measured a frame that happened to have none.
+#
+# The durable fix is structural, not chromatic: a commit control sits in the bottom strip and
+# carries a commit VERB beside a numeric cost, and a goods tile carries a GOODS NAME. Colour
+# should confirm that it is ENABLED (0.28 vs 0.02 is an enormous, reliable gap) rather than
+# carry the identification on its own. Left as the next step rather than done here.
+YELLOW_MIN_FRAC = 0.25
 MIN_ASPECT      = 2.3      # width/height; buttons ≥2.8, tiles ~1.8
 
 # The cost sits at the button's LEFT as `<currency-icon> <cost>`. The icon tells
@@ -143,8 +172,16 @@ def _detect_from_text(elements, arr, frame, min_yellow) -> List[CommitButton]:
     H = arr.shape[0]
     def _txt(e):
         return (getattr(e, "content", "") or getattr(e, "label", "") or "").strip()
+    # TEXT *OR* BUTTON, because the parse returns the control either way and both are the
+    # control — the search box lesson (4b94a86), applied here rather than left to the one
+    # place it was found. Live 2026-09-02 the commit came back split, the cost '185,250' as a
+    # BUTTON and the verb 'Purchase' as TEXT, and a text-only pool could never pair them.
+    #
+    # This was NOT what broke that run — the threshold above was — and saying so matters:
+    # the fallback is for the frames where OmniParser drops the pill's bbox entirely, and it
+    # could not have covered for a threshold that rejects the pill when the bbox IS there.
     texts = [e for e in elements
-             if getattr(e, "element_type", "") == "text"
+             if getattr(e, "element_type", "") in ("text", "button")
              and getattr(e, "cy", 0) > 0.85 * H]
     out: List[CommitButton] = []
     for v in texts:

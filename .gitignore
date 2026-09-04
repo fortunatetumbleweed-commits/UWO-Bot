@@ -42,6 +42,16 @@ debug_*.png
 *.png
 !vision/assets/**/*.png
 !data/reference/**/*.png
+# Stage frames are REAL CAPTURES and stay OUT of the repo (user, 2026-08-31). They were
+# tracked from 2026-08-26 so they would survive a prune of data/sessions/ ("kept and will not
+# be affected or forgotten") — that concern still stands, and is met by keeping them in a
+# durable folder outside the repo rather than by committing 34 MB of PNGs into history.
+#
+# Tests that use them skip when absent:
+#     if not os.path.exists(STAGE): self.skipTest("stage frame not available")
+# so a checkout without frames runs clean — but note the cost of that: the evidence goes
+# missing QUIETLY. Pull the frames you need out of a recorded session under data/sessions/.
+tests/stage_suite/frames/*.png
 memory/logs/
 memory/discoveries/*.json
 
@@ -65,3 +75,9 @@ models/
 
 # README is ignored by the user global gitignore; keep it for this repo
 !README.md
+
+# Reference frames for screen-identity tests are FIXTURES, not captures — a blanket *.png
+# rule would drop them and the tests would break on a fresh checkout. Keep this set small:
+# only frames that pin a behaviour worth regressing on.
+!data/test_frames/
+!data/test_frames/**

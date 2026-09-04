@@ -2,6 +2,7 @@
 shared perceive-act-perceive dialog handler (react_after_commit)."""
 import types
 import unittest
+from unittest import mock
 
 from actions.sell_goods import select_sellable, sell_goods
 
@@ -55,6 +56,20 @@ class SelectSellableTests(unittest.TestCase):
 
 
 class SellFlowTests(unittest.TestCase):
+    """The sell LOOP, with the page reader injected.
+
+    Reaching the Sell page is a precondition of the flow, not part of it: `ensure_sell_tab`
+    does a real capture-and-verify, and these tests hand `sell_goods` a stub reader and a
+    string for a frame. Declaring the precondition here keeps them about selling. The switch
+    itself, and what happens when it FAILS, are covered in
+    `test_a_clear_that_never_saw_the_hold_is_not_finished`.
+    """
+
+    def setUp(self):
+        patcher = mock.patch("actions.buy_materials.ensure_sell_tab", return_value=True)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def test_perceive_act_perceive_loads_selected_then_sells(self):
         taps = []
         commit = types.SimpleNamespace(verb="Sell", cost="900000", currency="ducat",

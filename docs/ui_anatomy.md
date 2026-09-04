@@ -120,3 +120,54 @@ Check-Barter-Effect control on that screen — and the mission hung.
 
 A village's left menu is `barter / explore / gifting / loot / recruit crew`; `barter` +
 `gifting` together appear on no port screen.
+
+## Port-overworld tab strip (right panel)
+
+Above the minimap: `[scroll] Tasks | [house] Buildings | [person] Players | [pin] location`.
+
+- The **first three are mutually exclusive** — exactly one selected.
+- The **location pin is INDEPENDENT**: it toggles the in-port minimap, so it can be lit at
+  the same time as a selected tab, and it is often the warmest icon in the strip. Measured
+  live 2026-08-24 (warmth = R−B): `Tasks 17.7 | Buildings 46.5 (selected) | Players 22.0 |
+  pin 49.4`. Read the mutually exclusive group alone; "warmest wins" picks the toggle.
+- The **building list only renders on the Buildings tab.** A Tasks panel is full of quest
+  text, so an "is the list empty?" check passes it — and quest lines contain building words
+  ("move to market in ..."). Match building labels as NAMES, not substrings of sentences.
+- A tab strip is a **row** of ≥3 similar, evenly spaced icons at one height. A popup's
+  close-X can land in the same band; it is not a tab.
+
+## Identify by association, not by dimension
+
+**What an element IS should be decided by what it SAYS and what screen it is on — never by
+how big its box happens to be** (user, 2026-08-24).
+
+OmniParser boxes the same rows differently between captures. The San Village menu came back
+as one full-row box plus four tight rows in one capture, and three full-row boxes plus two
+tight rows seconds later. The left-menu detector judged reward widgets by "median member is
+full-width ≥ 260px"; the median went 121 → 367 on that alone, the real menu
+(Explore/Gifting/Loot/Recruit Crew/Barter) was discarded as a reward widget, and the bot
+reported "no Barter item in the left menu" with the menu plainly on screen.
+
+The labels did not change between those captures. They never do.
+
+- **Reward / status widgets name themselves** — "Achievement Reward", "Weekly Reward",
+  "Village Status", "Amity Effect". Reject them per ELEMENT, so one reward box sharing the
+  menu's left edge cannot condemn the whole column.
+- **Menu rows name commands** — Barter, Explore, Gifting, Purchase, Sell, Harbor, Market…
+  A cluster naming several of these IS the menu; no measurement required.
+
+### Screen-identity cues (association, not geometry)
+
+Each of these says WHICH KIND of screen you are on, which in turn says what may exist there:
+
+| Cue | What it means |
+|---|---|
+| **Mini-map** present | an OVERWORLD (port overworld or sea) |
+| **Globe icon** | in PORT |
+| **Right panel TRANSLUCENT** | overworld |
+| **Right panel SOLID** | a chromed screen (building / sub-menu) |
+| **Left menu under the title** | a chromed screen — villages are the exception (no top-right icon bar) |
+| **Reward / status widgets** | screens that carry an info panel (Market, Village Info) |
+
+Use these to decide what a screen IS before parsing its parts, rather than inferring identity
+from the sizes of whatever OmniParser happened to return.

@@ -63,6 +63,10 @@ _TITLE_ZONE_HEIGHT_NORM = 120.0 / 1080.0
 # row labels.  Same threshold the top-left detector uses.
 _TITLE_MIN_HEIGHT_NORM = 28.0 / 1080.0
 
+# A title's words share a row. Wide enough for a split title's halves to differ slightly in
+# centre, tight enough to exclude the row of tab icons beneath it.
+_TITLE_ROW_TOL = 30
+
 # X-close icon search constraints.  Icon-typed element, small, at the
 # top-right of the title row.
 _X_ICON_MAX_WIDTH_NORM = 70.0 / 2400.0
@@ -216,6 +220,25 @@ def _detect_panel(
     )
     title_el = title_candidates[0]
 
+    # A TITLE IS A ROW, NOT AN ELEMENT. OmniParser splits a two-word title as readily as it
+    # merges one, and the largest-area pick then keeps whichever half got the bigger box:
+    # 'City Info' came back as 'Info' because the 'Info' box spans the whole title bar
+    # (1678-2233) while 'City' sits inside it with a box of its own. Reading the ROW puts the
+    # words back in order (memory: a-box-bigger-than-its-thing).
+    row = sorted(
+        (e for e in title_candidates if abs(e.cy - title_el.cy) <= _TITLE_ROW_TOL),
+        key=lambda e: e.cx,
+    )
+    words, seen = [], set()
+    for e in row:
+        w = (e.label or "").strip()
+        if w and w.lower() not in seen:
+            words.append(w)
+            seen.add(w.lower())
+    title_text = " ".join(words)
+    title_box = (min(e.x1 for e in row), min(e.y1 for e in row),
+                 max(e.x2 for e in row), max(e.y2 for e in row))
+
     is_overlay = False
     if scan_x_close:
         is_overlay = _has_x_close_near_title(
@@ -228,8 +251,8 @@ def _detect_panel(
     )
 
     return Panel(
-        title=title_el.label.strip(),
-        title_bbox=(title_el.x1, title_el.y1, title_el.x2, title_el.y2),
+        title=title_text,
+        title_bbox=title_box,
         bbox=region,
         is_overlay=is_overlay,
         items=items,
