@@ -22,12 +22,25 @@ Safety, in order of importance:
 
 THE LAST ROUND (user, 2026-09-04). Leftover materials are the best thing to dump, but only
 once no further round can use them: dumping them earlier spends a whole round's product to
-save a few units of space. The gate is read from the dialog itself — probing names every
-tile, and the recipe says what a round needs, so "can the hold still fund a full round?"
-needs no second screen read and no panel visible through the scrim.
+save a few units of space. Dumping mid-session could be made to pay, but it is much more
+complicated, so it is deliberately not attempted — the rule is the last round or nothing.
 
   * NOT the last round -> materials are protected exactly like the output good.
-  * The last round     -> they are dead weight, and go FIRST, ahead of spare supply.
+  * The last round     -> ALL of them go, first, ahead of spare supply.
+
+`last_round_reason` names the three ways a round is known to be the last. Any one of them
+is enough, and each is read from this dialog plus the round count:
+
+  1. **the overflow exceeds every material aboard** — even dumping the lot cannot clear it,
+     so there is nothing left to hold back for;
+  2. **a material can no longer fund a round** — a round needs every input, so the one that
+     runs short ends the bartering;
+  3. **the day's last round has been played** — seven, per _MAX_DAILY_ROUNDS.
+
+READ THE CARGO TILES, NEVER THE PANEL BEHIND. At frame 15 the Trade Material panel still
+reads 182/170 Avocado and 201/170 Cassava, both GREEN, while the cargo holds 12 and 31 —
+exactly 170 less, one round's consumption. The panel is a background window that has not
+refreshed, so trusting it would report a funded round that does not exist.
 
 Both halves matter. This module previously offered materials as dump candidates on EVERY
 round, so a mid-barter overflow could throw away the inputs for every remaining round; that
@@ -236,24 +249,61 @@ def _needs_map(needs_per_round) -> dict:
     return {_norm(m): int(q) for m, q in (needs_per_round or {}).items() if int(q or 0) > 0}
 
 
-def is_last_round(found: list, needs_per_round) -> Optional[bool]:
-    """Can the materials still aboard fund one more FULL round? None when unknowable.
+# Seven, not eight: the strip draws eight slots but the last is only reachable by PAYING
+# for it, so seven is the ceiling for a day we actually play (brain.activities.village).
+MAX_DAILY_ROUNDS = 7
 
-    Read entirely from the overflow dialog: `found` is the probe, which names every tile,
-    and `needs_per_round` is the recipe. The exchange has already taken this round's inputs
-    by the time this dialog appears, so the quantities here are the LEFTOVERS — at Camas
-    (frames 15-17) 12 Avocado and 31 Cassava against a round needing 130 and 150.
 
-    None means the recipe is unknown, in which case materials cannot be told apart from any
-    other cargo and nothing here should claim otherwise."""
+def _held_materials(found: list, needs_per_round) -> dict:
+    """{normalised material name: units of it aboard}, materials only."""
     needs = _needs_map(needs_per_round)
-    if not needs:
-        return None
     held: dict = {}
     for f in found or []:
         key = _norm(f.get("name"))
-        held[key] = held.get(key, 0) + int(f.get("qty") or 0)
-    return not all(held.get(m, 0) >= q for m, q in needs.items())
+        if key in needs:
+            held[key] = held.get(key, 0) + int(f.get("qty") or 0)
+    return held
+
+
+def last_round_reason(found: list, needs_per_round, *, pending: Optional[int] = None,
+                      rounds_done: Optional[int] = None,
+                      max_rounds: int = MAX_DAILY_ROUNDS) -> Optional[str]:
+    """Why no further round can use these materials, or None if one still can.
+
+    Read from the overflow dialog itself: `found` is the probe, which names every tile, and
+    `needs_per_round` is the recipe. The exchange has already taken this round's inputs by
+    the time this dialog appears, so these quantities are the LEFTOVERS — at Camas (frames
+    15-17) 12 Avocado and 31 Cassava against a round needing 170 of each.
+
+    Returns a reason rather than a bool because this is the judgement that can cost a whole
+    round's product, and a log saying WHICH condition fired is what makes it reviewable.
+    None when the recipe is unknown: materials cannot then be told apart from any other
+    cargo, and nothing here should pretend otherwise."""
+    needs = _needs_map(needs_per_round)
+    if not needs:
+        return None
+
+    if rounds_done is not None and int(rounds_done) >= int(max_rounds):
+        return f"the day's last round ({rounds_done} of {max_rounds}) has been played"
+
+    held = _held_materials(found, needs_per_round)
+    short = [m for m, q in needs.items() if held.get(m, 0) < q]
+    if short:
+        have = ", ".join(f"{m} {held.get(m, 0)}/{needs[m]}" for m in short)
+        return f"a round needs every input and {have} is short"
+
+    total = sum(held.values())
+    if pending is not None and int(pending) > total:
+        return (f"the {pending} pending exceed every material aboard ({total}), so dumping "
+                "the lot still cannot clear it")
+    return None
+
+
+def is_last_round(found: list, needs_per_round, **kw) -> Optional[bool]:
+    """`last_round_reason` as a bool. None when the recipe is unknown."""
+    if not _needs_map(needs_per_round):
+        return None
+    return last_round_reason(found, needs_per_round, **kw) is not None
 
 
 def build_cargo(found: list, *, output_good: str, reserves: dict,
@@ -274,8 +324,9 @@ def build_cargo(found: list, *, output_good: str, reserves: dict,
 
     MATERIALS are treated the same way until the last round: excluded, so a round's worth of
     space is never bought with a round's worth of product. On the last round they invert and
-    become the cheapest thing aboard. `last_round` overrides the reading when a caller knows
-    better; None derives it from `needs_per_round`."""
+    become the cheapest thing aboard — see `plan_for_overflow`, which dumps them WHOLE rather
+    than trimming them to the overflow. `last_round` overrides the reading when a caller
+    knows better; None derives it from `needs_per_round`."""
     from brain.jettison_planner import CargoItem
     needs = _needs_map(needs_per_round)
     if last_round is None:
@@ -303,16 +354,42 @@ def build_cargo(found: list, *, output_good: str, reserves: dict,
 
 def plan_for_overflow(state: OverflowState, found: list, *, output_good: str,
                       reserves: dict, needs_per_round=None,
-                      last_round: Optional[bool] = None):
-    """(dump_plan, shortfall) for this dialog, via the canonical jettison policy."""
-    from brain.jettison_planner import plan_jettison
-    cargo = build_cargo(found, output_good=output_good, reserves=reserves,
-                        needs_per_round=needs_per_round, last_round=last_round)
+                      last_round: Optional[bool] = None, rounds_done: Optional[int] = None):
+    """(dump_plan, shortfall) for this dialog, via the canonical jettison policy.
+
+    On the last round the materials are dumped WHOLE — every unit of every one — and only
+    the remainder is taken from spare supply (user, 2026-09-04: "in these cases dump all the
+    materials"). Two reasons beyond the policy itself: the Discard dialog already defaults to
+    the full stack, so a whole-stack dump is one tap and never touches the keypad, and the
+    leftovers cannot be bartered again on this trip anyway.
+
+    The cost is real and worth stating: when the overflow is SMALLER than the materials, the
+    surplus dumped is material that could have been sold instead. It is small against the
+    product it sits beside — barter output ran ~300x its inputs at Hutu — but it is not zero.
+    """
+    from brain.jettison_planner import DumpAction, plan_jettison
+    if last_round is None:
+        last_round = is_last_round(found, needs_per_round, pending=state.pending,
+                                   rounds_done=rounds_done)
     need = state.pending or 0
-    return plan_jettison(need, cargo, reserves)
+
+    plan: list = []
+    if last_round:
+        needs = _needs_map(needs_per_round)
+        for f in found or []:
+            qty = int(f.get("qty") or 0)
+            if _norm(f.get("name")) in needs and qty > 0:
+                plan.append(DumpAction(f["name"], qty, None))
+                need -= qty
+
+    cargo = build_cargo(found, output_good=output_good, reserves=reserves,
+                        needs_per_round=needs_per_round, last_round=False)
+    rest, shortfall = plan_jettison(max(0, need), cargo, reserves)
+    return plan + rest, shortfall
 
 
 def clear_overflow(*, output_good: str, reserves: dict, needs_per_round=None,
+                   rounds_done: Optional[int] = None,
                    capture_fn=None, tap_fn=None, omni_fn=None, ui_mod=None,
                    type_qty_fn=None, max_discards: int = 8) -> dict:
     """Clear an open overflow dialog: probe → plan → discard exactly → Receive.
@@ -342,14 +419,17 @@ def clear_overflow(*, output_good: str, reserves: dict, needs_per_round=None,
                 "reason": "nothing pending — received"}
 
     found = probe_tiles(capture_fn, tap_fn, state, omni_fn=omni_fn, ui=ui_mod)
-    # Decided BEFORE anything is discarded, and logged, because it is the one judgement here
-    # that can cost a whole round's product if it is wrong in either direction.
-    last = is_last_round(found, needs_per_round)
-    logger.info("[overflow] the recipe is unknown — materials cannot be identified"
-                if last is None else
-                ("[overflow] LAST ROUND — the materials left cannot fund another, so they "
-                 "are dumpable" if last else
-                 "[overflow] a further round is still funded — materials are protected"))
+    # Decided BEFORE anything is discarded, and logged WITH ITS REASON, because it is the
+    # one judgement here that can cost a whole round's product if it is wrong either way.
+    if not _needs_map(needs_per_round):
+        last, why = None, "the recipe is unknown — materials cannot be identified"
+    else:
+        why = last_round_reason(found, needs_per_round, pending=pending_before,
+                                rounds_done=rounds_done)
+        last = why is not None
+        why = (f"LAST ROUND — {why}; dumping every material"
+               if last else "a further round is still funded — materials are protected")
+    logger.info(f"[overflow] {why}")
     plan, shortfall = plan_for_overflow(state, found, output_good=output_good,
                                         reserves=reserves,
                                         needs_per_round=needs_per_round, last_round=last)

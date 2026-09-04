@@ -11,7 +11,8 @@ import unittest
 
 from actions.overflow_dialog import (CargoTile, OverflowState, build_cargo,
                                      is_discard_dialog, is_last_round, is_overflow_dialog,
-                                     plan_for_overflow, read_discard, read_overflow)
+                                     last_round_reason, plan_for_overflow, read_discard,
+                                     read_overflow)
 from brain.supply_planner import supply_needed_each
 
 
@@ -268,3 +269,121 @@ class MaterialsAreProtectedUntilTheLastRound(unittest.TestCase):
             cargo = build_cargo(found, output_good="Camas", reserves={"water": 1, "food": 1},
                                 needs_per_round=CAMAS_RECIPE)
             self.assertNotIn("Camas", [c.name for c in cargo])
+
+
+# ── The three ways a round is known to be the last (user, 2026-09-04) ─────────
+#
+# Camas needs 170 of each material per round — frames 2 and 7: 862/170 Avocado and 881/170
+# Cassava, dropping by exactly 170 when a round runs.
+#
+# THE PANEL BEHIND THE DIALOG IS STALE, which is why every one of these reads the cargo
+# tiles instead. At frame 15 the Trade Material panel still shows 182/170 and 201/170, both
+# GREEN, while the cargo holds 12 and 31 — exactly 170 less. Trusting the panel would report
+# a funded round that had already been spent.
+
+REAL_NEEDS = {"Avocado": 170, "Cassava": 170}
+FRAME_15 = [{"name": "Cassava", "qty": 31, "tile": CargoTile(31)},
+            {"name": "Avocado", "qty": 12, "tile": CargoTile(12)},
+            {"name": "Camas", "qty": 3613, "tile": CargoTile(3613)},
+            {"name": "Water", "qty": 226, "tile": CargoTile(226)},
+            {"name": "Food", "qty": 226, "tile": CargoTile(226)}]
+
+
+class ThreeWaysToBeTheLastRound(unittest.TestCase):
+
+    def test_ONE_the_overflow_exceeds_every_material_aboard(self):
+        """Dumping the lot still cannot clear it, so there is nothing to hold back for.
+        Materials fund a round here — 200 each against a need of 170 — and it is still the
+        last round, which is the whole point of this condition being separate."""
+        found = [{"name": "Avocado", "qty": 200}, {"name": "Cassava", "qty": 200}]
+        why = last_round_reason(found, REAL_NEEDS, pending=900)
+        self.assertIsNotNone(why)
+        self.assertIn("400", why)
+        self.assertIsNone(last_round_reason(found, REAL_NEEDS, pending=300))
+
+    def test_TWO_a_material_can_no_longer_fund_a_round(self):
+        """A round needs EVERY input, so the one that runs short ends the bartering. Frame
+        15 exactly: 12 Avocado and 31 Cassava against 170 each."""
+        why = last_round_reason(FRAME_15, REAL_NEEDS, pending=143)
+        self.assertIsNotNone(why)
+        self.assertIn("short", why)
+
+    def test_TWO_one_short_input_is_enough_even_beside_a_full_one(self):
+        found = [{"name": "Avocado", "qty": 5000}, {"name": "Cassava", "qty": 169}]
+        self.assertIsNotNone(last_round_reason(found, REAL_NEEDS, pending=10))
+
+    def test_THREE_the_days_seventh_round_has_been_played(self):
+        """Seven is the ceiling — the eighth slot is only reachable by paying. Materials for
+        many more rounds aboard and the overflow small, and it is STILL the last round."""
+        found = [{"name": "Avocado", "qty": 5000}, {"name": "Cassava", "qty": 5000}]
+        self.assertIsNone(last_round_reason(found, REAL_NEEDS, pending=10, rounds_done=6))
+        why = last_round_reason(found, REAL_NEEDS, pending=10, rounds_done=7)
+        self.assertIsNotNone(why)
+        self.assertIn("7", why)
+
+    def test_none_of_the_three_means_the_materials_are_protected(self):
+        found = [{"name": "Avocado", "qty": 900}, {"name": "Cassava", "qty": 900}]
+        self.assertIsNone(last_round_reason(found, REAL_NEEDS, pending=100, rounds_done=3))
+
+    def test_an_unknown_recipe_stays_None_on_every_condition(self):
+        self.assertIsNone(last_round_reason(FRAME_15, None, pending=99999, rounds_done=7))
+        self.assertIsNone(is_last_round(FRAME_15, None, pending=99999, rounds_done=7))
+
+
+class TheLastRoundDumpsEveryMaterial(unittest.TestCase):
+    """"In these cases dump all the materials" (user, 2026-09-04).
+
+    Whole stacks, not amounts trimmed to the overflow. The Discard dialog already defaults
+    to the full stack, so this is one tap per material and never opens the keypad."""
+
+    def _plan(self, found, days=6.0, **kw):
+        r = supply_needed_each(days)
+        return plan_for_overflow(OverflowState(pending=kw.pop("pending", 143),
+                                               cargo_used=4108, cargo_capacity=4108),
+                                 found, output_good="Camas",
+                                 reserves={"water": r, "food": r},
+                                 needs_per_round=REAL_NEEDS, **kw)
+
+    def test_frame_15_reproduces_the_human_play(self):
+        """Avocado 12 and Cassava 31 whole, then 100 of spare supply — all 143 received."""
+        plan, shortfall = self._plan(FRAME_15)
+        dumped = {d.name: d.qty for d in plan}
+        self.assertEqual(dumped["Cassava"], 31)
+        self.assertEqual(dumped["Avocado"], 12)
+        self.assertEqual(dumped["Water"] + dumped["Food"], 100)
+        self.assertEqual(shortfall, 0)
+
+    def test_a_material_is_dumped_WHOLE_even_when_less_would_do(self):
+        """The overflow is 20 and 400 units of material go overboard. Deliberate: whole
+        stacks are one tap each, and the surplus cannot be bartered again this trip."""
+        found = [{"name": "Avocado", "qty": 200}, {"name": "Cassava", "qty": 200},
+                 {"name": "Camas", "qty": 3613}]
+        plan, shortfall = self._plan(found, pending=20, rounds_done=7)
+        self.assertEqual({d.name: d.qty for d in plan}, {"Avocado": 200, "Cassava": 200})
+        self.assertEqual(shortfall, 0)
+
+    def test_supply_is_still_trimmed_to_what_is_needed(self):
+        """Dump-all is a rule about MATERIALS. Supply is the fleet's safety margin and is
+        still cut to the exact remainder, never a whole stack."""
+        plan, _ = self._plan(FRAME_15)
+        for d in plan:
+            if d.resource:
+                self.assertLess(d.qty, 226)
+
+    def test_the_output_is_never_dumped_on_any_condition(self):
+        for kw in ({"rounds_done": 7}, {"pending": 99999}, {}):
+            plan, _ = self._plan(FRAME_15, **kw)
+            self.assertNotIn("Camas", [d.name for d in plan])
+
+    def test_materials_still_come_before_spare_supply(self):
+        plan, _ = self._plan(FRAME_15)
+        first_supply = next(i for i, d in enumerate(plan) if d.resource)
+        mats = [i for i, d in enumerate(plan) if d.name in ("Avocado", "Cassava")]
+        self.assertTrue(all(i < first_supply for i in mats))
+
+    def test_a_mid_round_overflow_dumps_no_material_at_all(self):
+        found = [{"name": "Avocado", "qty": 900}, {"name": "Cassava", "qty": 900},
+                 {"name": "Camas", "qty": 3613}, {"name": "Water", "qty": 226},
+                 {"name": "Food", "qty": 226}]
+        plan, _ = self._plan(found, pending=100, rounds_done=3)
+        self.assertEqual([d.name for d in plan], ["Water", "Food"])
