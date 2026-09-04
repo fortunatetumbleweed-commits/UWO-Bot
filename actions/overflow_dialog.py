@@ -17,7 +17,21 @@ Safety, in order of importance:
   2. **Never drop water/food below the leg's reserve** — brain.jettison_planner owns that
      rule; this module only supplies it with what is actually aboard.
   3. **Never dump the barter output** we just came to collect.
-  4. The Discard dialog defaults to ALL — always set the quantity explicitly.
+  4. **Never dump MATERIALS that can still fund a round** — see THE LAST ROUND below.
+  5. The Discard dialog defaults to ALL — always set the quantity explicitly.
+
+THE LAST ROUND (user, 2026-09-04). Leftover materials are the best thing to dump, but only
+once no further round can use them: dumping them earlier spends a whole round's product to
+save a few units of space. The gate is read from the dialog itself — probing names every
+tile, and the recipe says what a round needs, so "can the hold still fund a full round?"
+needs no second screen read and no panel visible through the scrim.
+
+  * NOT the last round -> materials are protected exactly like the output good.
+  * The last round     -> they are dead weight, and go FIRST, ahead of spare supply.
+
+Both halves matter. This module previously offered materials as dump candidates on EVERY
+round, so a mid-barter overflow could throw away the inputs for every remaining round; that
+became far more likely when plan_barter_rounds started planning deliberately into overflow.
 
 All geometry is derived from detected elements (see actions/ui), because this dialog
 moves with the camera-cutout offset like everything else.
@@ -211,7 +225,39 @@ def probe_tiles(capture_fn, tap_fn, state: OverflowState, *, omni_fn, ui,
     return found
 
 
-def build_cargo(found: list, *, output_good: str, reserves: dict) -> list:
+# A material that can no longer fund a round is worth less to us than any other cargo: it
+# cannot be used, and carrying it home is what the fleet was doing wrong. `plan_jettison`
+# sorts trade goods by unit_value ascending, so this is what puts materials at the front.
+_DEAD_WEIGHT = -1.0
+
+
+def _needs_map(needs_per_round) -> dict:
+    """{normalised material name: units one round consumes}."""
+    return {_norm(m): int(q) for m, q in (needs_per_round or {}).items() if int(q or 0) > 0}
+
+
+def is_last_round(found: list, needs_per_round) -> Optional[bool]:
+    """Can the materials still aboard fund one more FULL round? None when unknowable.
+
+    Read entirely from the overflow dialog: `found` is the probe, which names every tile,
+    and `needs_per_round` is the recipe. The exchange has already taken this round's inputs
+    by the time this dialog appears, so the quantities here are the LEFTOVERS — at Camas
+    (frames 15-17) 12 Avocado and 31 Cassava against a round needing 130 and 150.
+
+    None means the recipe is unknown, in which case materials cannot be told apart from any
+    other cargo and nothing here should claim otherwise."""
+    needs = _needs_map(needs_per_round)
+    if not needs:
+        return None
+    held: dict = {}
+    for f in found or []:
+        key = _norm(f.get("name"))
+        held[key] = held.get(key, 0) + int(f.get("qty") or 0)
+    return not all(held.get(m, 0) >= q for m, q in needs.items())
+
+
+def build_cargo(found: list, *, output_good: str, reserves: dict,
+                needs_per_round=None, last_round: Optional[bool] = None) -> list:
     """Turn probed tiles into `jettison_planner.CargoItem`s.
 
     Two classifications carry all the safety: supplies get a `resource` so the planner
@@ -224,8 +270,16 @@ def build_cargo(found: list, *, output_good: str, reserves: dict) -> list:
     to throw away 100 of the 3,613 Camas while 122 units of spare supply sat untouched;
     the human dumped 50 food + 50 water instead. Excluding it is also what makes the
     planner's `shortfall` mean the right thing — "even after everything dumpable, the
-    output itself must be sacrificed" — rather than silently sacrificing it first."""
+    output itself must be sacrificed" — rather than silently sacrificing it first.
+
+    MATERIALS are treated the same way until the last round: excluded, so a round's worth of
+    space is never bought with a round's worth of product. On the last round they invert and
+    become the cheapest thing aboard. `last_round` overrides the reading when a caller knows
+    better; None derives it from `needs_per_round`."""
     from brain.jettison_planner import CargoItem
+    needs = _needs_map(needs_per_round)
+    if last_round is None:
+        last_round = is_last_round(found, needs_per_round)
     out = []
     for f in found:
         name, low = f["name"], _norm(f["name"])
@@ -233,20 +287,32 @@ def build_cargo(found: list, *, output_good: str, reserves: dict) -> list:
             logger.info(f"[overflow] {name} is the barter output — not a dump candidate")
             continue
         resource = low if low in reserves else None
+        if resource is None and low in needs:
+            if not last_round:
+                logger.info(f"[overflow] {name} is a MATERIAL and a round can still use it "
+                            "— not a dump candidate")
+                continue
+            logger.info(f"[overflow] {name} is a leftover MATERIAL on the last round "
+                        "— dumping it first")
+            out.append(CargoItem(name=name, qty=f["qty"], unit_value=_DEAD_WEIGHT,
+                                 resource=None))
+            continue
         out.append(CargoItem(name=name, qty=f["qty"], unit_value=0.0, resource=resource))
     return out
 
 
 def plan_for_overflow(state: OverflowState, found: list, *, output_good: str,
-                      reserves: dict):
+                      reserves: dict, needs_per_round=None,
+                      last_round: Optional[bool] = None):
     """(dump_plan, shortfall) for this dialog, via the canonical jettison policy."""
     from brain.jettison_planner import plan_jettison
-    cargo = build_cargo(found, output_good=output_good, reserves=reserves)
+    cargo = build_cargo(found, output_good=output_good, reserves=reserves,
+                        needs_per_round=needs_per_round, last_round=last_round)
     need = state.pending or 0
     return plan_jettison(need, cargo, reserves)
 
 
-def clear_overflow(*, output_good: str, reserves: dict,
+def clear_overflow(*, output_good: str, reserves: dict, needs_per_round=None,
                    capture_fn=None, tap_fn=None, omni_fn=None, ui_mod=None,
                    type_qty_fn=None, max_discards: int = 8) -> dict:
     """Clear an open overflow dialog: probe → plan → discard exactly → Receive.
@@ -276,8 +342,17 @@ def clear_overflow(*, output_good: str, reserves: dict,
                 "reason": "nothing pending — received"}
 
     found = probe_tiles(capture_fn, tap_fn, state, omni_fn=omni_fn, ui=ui_mod)
+    # Decided BEFORE anything is discarded, and logged, because it is the one judgement here
+    # that can cost a whole round's product if it is wrong in either direction.
+    last = is_last_round(found, needs_per_round)
+    logger.info("[overflow] the recipe is unknown — materials cannot be identified"
+                if last is None else
+                ("[overflow] LAST ROUND — the materials left cannot fund another, so they "
+                 "are dumpable" if last else
+                 "[overflow] a further round is still funded — materials are protected"))
     plan, shortfall = plan_for_overflow(state, found, output_good=output_good,
-                                        reserves=reserves)
+                                        reserves=reserves,
+                                        needs_per_round=needs_per_round, last_round=last)
     logger.info(f"[overflow] pending {pending_before} → plan "
                 f"{[(d.name, d.qty) for d in plan]} shortfall={shortfall}")
     by_name = {_norm(f["name"]): f["tile"] for f in found}

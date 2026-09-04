@@ -403,7 +403,7 @@ class VillageActivity:
     def _on_overflow(self, goal: Barter) -> ActivityResult:
         """Units held PENDING because the hold is full. Dismissing this loses them."""
         pending = (self._overflow or _read_overflow)()
-        (self._jettison or _default_jettison(goal.good))(pending)
+        (self._jettison or _default_jettison(goal.good, self._recipe_for(goal.good)))(pending)
         return ActivityResult(WORKING, {"rounds_committed": self._committed, "did": f"jettisoned for {pending} pending"},
                               detail=str(goal))
 
@@ -649,16 +649,20 @@ def _default_commit(before_state=None) -> dict:
     return barter_commit_verified(refresh_fn=refresh_stale_panel, before_state=before_state)
 
 
-def _default_jettison(good: str):
+def _default_jettison(good: str, needs_per_round=None):
     """THE ORDER OF SACRIFICE, decided in advance so nothing is escalated mid-round
     (user, 2026-08-26): dump the non-barter goods first; if that is not enough, spend supply
     down to a six-day floor; abandon barter goods only after both. Barter goods fetch very
-    high profit, so the only real constraint is that the fleet must not run out of supply."""
+    high profit, so the only real constraint is that the fleet must not run out of supply.
+
+    `needs_per_round` is the recipe, and it is what lets the overflow module tell a MATERIAL
+    from any other trade good. Without it materials are dumped on any round, which can throw
+    away the inputs for every round still to come (user, 2026-09-04)."""
     def jettison(pending: int) -> dict:
         from actions.overflow_dialog import clear_overflow
         from brain.supply_planner import supply_needed_each, VILLAGE_LEG_RESERVE_DAYS
         reserve = supply_needed_each(VILLAGE_LEG_RESERVE_DAYS)
-        res = clear_overflow(output_good=good,
+        res = clear_overflow(output_good=good, needs_per_round=needs_per_round,
                              reserves={"water": reserve, "food": reserve})
         if res.get("sacrificed"):
             logger.warning(f"[village] {res['sacrificed']} unit(s) of {good} given up — the "

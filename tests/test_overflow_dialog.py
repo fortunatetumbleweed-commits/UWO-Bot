@@ -10,7 +10,7 @@ import types
 import unittest
 
 from actions.overflow_dialog import (CargoTile, OverflowState, build_cargo,
-                                     is_discard_dialog, is_overflow_dialog,
+                                     is_discard_dialog, is_last_round, is_overflow_dialog,
                                      plan_for_overflow, read_discard, read_overflow)
 from brain.supply_planner import supply_needed_each
 
@@ -146,3 +146,125 @@ class PlanningTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ── THE LAST ROUND: when leftover materials may be dumped (user, 2026-09-04) ──
+#
+# Frames 15-17 of the walkthrough are the whole mechanic. Tapping the 12-unit Avocado tile
+# opens Discard Goods (frame 16, spinner defaulted to 12/12); OK dumps it and the overflow
+# dialog UPDATES IN PLACE (frame 17) — pending 143 -> 131, the Avocado tile gone, Camas
+# 3,613 -> 3,625, cargo still 4,108/4,108. Freeing N units receives N more, one for one.
+#
+# That is only correct at the END. A round needs 130 Avocado and 150 Cassava, so the 12 and
+# 31 aboard at frame 15 are leftovers that no round can use — dead weight worth converting.
+# Dump the same materials one round earlier and the space bought costs a whole round of
+# product, which at Hutu prices ran to ~40,600 ducats a unit.
+
+CAMAS_RECIPE = {"Avocado": 130, "Cassava": 150}
+
+
+def _mid_round():
+    """The same overflow, but with materials for several more rounds still aboard."""
+    return [{"name": "Cassava", "qty": 900, "tile": CargoTile(900)},
+            {"name": "Avocado", "qty": 800, "tile": CargoTile(800)},
+            {"name": "Camas", "qty": 3613, "tile": CargoTile(3613)},
+            {"name": "Water", "qty": 226, "tile": CargoTile(226)},
+            {"name": "Food", "qty": 226, "tile": CargoTile(226)}]
+
+
+class TheLastRoundGate(unittest.TestCase):
+
+    def test_frame_15_leftovers_cannot_fund_a_round(self):
+        """12 Avocado and 31 Cassava against 130 and 150 — the recorded last round."""
+        self.assertIs(is_last_round(_probed(), CAMAS_RECIPE), True)
+
+    def test_materials_for_more_rounds_are_not_the_last_round(self):
+        self.assertIs(is_last_round(_mid_round(), CAMAS_RECIPE), False)
+
+    def test_ONE_material_running_short_ends_it(self):
+        """A round needs every input, so the binding one decides. 800 Avocado is plenty and
+        140 Cassava is ten short, and that is the end of the bartering."""
+        found = [{"name": "Avocado", "qty": 800, "tile": CargoTile(800)},
+                 {"name": "Cassava", "qty": 140, "tile": CargoTile(140)}]
+        self.assertIs(is_last_round(found, CAMAS_RECIPE), True)
+
+    def test_exactly_enough_is_not_the_last_round(self):
+        found = [{"name": "Avocado", "qty": 130, "tile": CargoTile(130)},
+                 {"name": "Cassava", "qty": 150, "tile": CargoTile(150)}]
+        self.assertIs(is_last_round(found, CAMAS_RECIPE), False)
+
+    def test_an_unknown_recipe_is_None_not_False(self):
+        """Without the recipe a material cannot be told from any other cargo. Saying False
+        would quietly claim 'a round is still funded' on no evidence."""
+        self.assertIsNone(is_last_round(_probed(), None))
+        self.assertIsNone(is_last_round(_probed(), {}))
+
+
+class MaterialsAreProtectedUntilTheLastRound(unittest.TestCase):
+
+    def _plan(self, found, days=6.0):
+        r = supply_needed_each(days)
+        return plan_for_overflow(OverflowState(pending=143, cargo_used=4108,
+                                               cargo_capacity=4108),
+                                 found, output_good="Camas",
+                                 reserves={"water": r, "food": r},
+                                 needs_per_round=CAMAS_RECIPE)
+
+    def test_a_MID_round_overflow_never_touches_the_materials(self):
+        """THE BUG THIS FIXES. Materials were dump candidates on EVERY round, so this plan
+        used to open by throwing away the inputs for every round still to come.
+
+        It costs something to protect them, and the cost is the point. Only 122 units of
+        spare supply exist, so 21 of the 143 pending Camas are given up rather than cleared.
+        That is the right way round: 21 units of output against 800 Avocado and 900 Cassava
+        — five more rounds, thousands of units of product."""
+        plan, shortfall = self._plan(_mid_round())
+        names = [d.name for d in plan]
+        self.assertNotIn("Cassava", names)
+        self.assertNotIn("Avocado", names)
+        self.assertNotIn("Camas", names)
+        self.assertTrue(all(d.resource for d in plan), "only spare supply should be spent")
+        self.assertEqual(sum(d.qty for d in plan), 122)
+        self.assertEqual(shortfall, 21)
+
+    def test_the_LAST_round_dumps_them_the_way_the_human_did(self):
+        """Frames 15-20: Avocado 12 and Cassava 31 first, then 100 of spare supply."""
+        plan, shortfall = self._plan(_probed())
+        dumped = {d.name: d.qty for d in plan}
+        self.assertEqual(dumped["Cassava"], 31)
+        self.assertEqual(dumped["Avocado"], 12)
+        self.assertEqual(dumped["Water"] + dumped["Food"], 100)
+        self.assertEqual(shortfall, 0)
+
+    def test_materials_are_dumped_BEFORE_spare_supply(self):
+        """Supply is the fleet's safety margin and a material on the last round is worth
+        nothing, so the order is not arbitrary — the materials must come first."""
+        plan, _ = self._plan(_probed())
+        first_supply = next(i for i, d in enumerate(plan) if d.resource)
+        materials = [i for i, d in enumerate(plan) if d.name in ("Avocado", "Cassava")]
+        self.assertTrue(all(i < first_supply for i in materials))
+
+    def test_protecting_them_can_cost_a_shortfall_and_that_is_correct(self):
+        """A protected material may leave the overflow uncleared, and losing some output now
+        is the right trade against losing every remaining round's output."""
+        r = supply_needed_each(9.0)
+        plan, shortfall = plan_for_overflow(
+            OverflowState(pending=143, cargo_used=4108, cargo_capacity=4108),
+            _mid_round(), output_good="Camas", reserves={"water": r, "food": r},
+            needs_per_round=CAMAS_RECIPE)
+        self.assertGreater(shortfall, 0)
+        self.assertNotIn("Avocado", [d.name for d in plan])
+
+    def test_without_a_recipe_the_old_behaviour_stands(self):
+        """No recipe, no material identification — unchanged, and the caller is told."""
+        r = supply_needed_each(6.0)
+        plan, _ = plan_for_overflow(
+            OverflowState(pending=143, cargo_used=4108, cargo_capacity=4108),
+            _probed(), output_good="Camas", reserves={"water": r, "food": r})
+        self.assertIn("Cassava", [d.name for d in plan])
+
+    def test_the_output_is_still_never_a_candidate_on_the_last_round(self):
+        for found in (_probed(), _mid_round()):
+            cargo = build_cargo(found, output_good="Camas", reserves={"water": 1, "food": 1},
+                                needs_per_round=CAMAS_RECIPE)
+            self.assertNotIn("Camas", [c.name for c in cargo])
