@@ -175,24 +175,38 @@ def _mid_round():
 
 class TheLastRoundGate(unittest.TestCase):
 
-    def test_frame_15_leftovers_cannot_fund_a_round(self):
-        """12 Avocado and 31 Cassava against 130 and 150 — the recorded last round."""
-        self.assertIs(is_last_round(_probed(), CAMAS_RECIPE), True)
+    def test_frame_15_is_the_last_round_BY_THE_OVERFLOW_not_the_leftovers(self):
+        """12 Avocado and 31 Cassava are well above the viability floor, so the material
+        test does NOT fire here — 143 pending against 43 held is what ends it.
+
+        Worth pinning, because it is easy to assume the leftovers are what settle frame 15.
+        They are not: a stepped-down exchange could still use 12 and 31."""
+        self.assertIs(is_last_round(_probed(), CAMAS_RECIPE, pending=143), True)
+        self.assertIs(is_last_round(_probed(), CAMAS_RECIPE, pending=20), False)
 
     def test_materials_for_more_rounds_are_not_the_last_round(self):
         self.assertIs(is_last_round(_mid_round(), CAMAS_RECIPE), False)
 
-    def test_ONE_material_running_short_ends_it(self):
-        """A round needs every input, so the binding one decides. 800 Avocado is plenty and
-        140 Cassava is ten short, and that is the end of the bartering."""
+    def test_a_material_SHORT_OF_FULL_SIZE_is_not_spent(self):
+        """140 against a full-size need of 150 is not the end: the exchange steps down and
+        runs as a real round. Testing against the full-size need would dump the inputs to
+        every remaining round."""
         found = [{"name": "Avocado", "qty": 800, "tile": CargoTile(800)},
                  {"name": "Cassava", "qty": 140, "tile": CargoTile(140)}]
-        self.assertIs(is_last_round(found, CAMAS_RECIPE), True)
+        self.assertIs(is_last_round(found, CAMAS_RECIPE, pending=20), False)
 
     def test_exactly_enough_is_not_the_last_round(self):
         found = [{"name": "Avocado", "qty": 130, "tile": CargoTile(130)},
                  {"name": "Cassava", "qty": 150, "tile": CargoTile(150)}]
-        self.assertIs(is_last_round(found, CAMAS_RECIPE), False)
+        self.assertIs(is_last_round(found, CAMAS_RECIPE, pending=20), False)
+
+    def test_THE_HUTU_LEFTOVERS(self):
+        """The run that prompted all of this: 1 Raisin and 500 Pig sailed home unconverted.
+        The minimum any exchange needs of Raisin is 2, so one unit can reach no round at all
+        — and the 500 Pig beside it are dead the moment the Raisin is."""
+        found = [{"name": "Raisin", "qty": 1, "tile": CargoTile(1)},
+                 {"name": "Pig", "qty": 500, "tile": CargoTile(500)}]
+        self.assertIs(is_last_round(found, {"Raisin": 217, "Pig": 217}, pending=20), True)
 
     def test_an_unknown_recipe_is_None_not_False(self):
         """Without the recipe a material cannot be told from any other cargo. Saying False
@@ -301,16 +315,33 @@ class ThreeWaysToBeTheLastRound(unittest.TestCase):
         self.assertIn("400", why)
         self.assertIsNone(last_round_reason(found, REAL_NEEDS, pending=300))
 
-    def test_TWO_a_material_can_no_longer_fund_a_round(self):
-        """A round needs EVERY input, so the one that runs short ends the bartering. Frame
-        15 exactly: 12 Avocado and 31 Cassava against 170 each."""
-        why = last_round_reason(FRAME_15, REAL_NEEDS, pending=143)
-        self.assertIsNotNone(why)
-        self.assertIn("short", why)
+    def test_TWO_a_material_is_down_to_almost_nothing(self):
+        """The floor is the MINIMUM-size exchange, not the full-size one. The panel's X/Y is
+        have/need at the current stepper (1-200), so a material short of the full need can
+        still run a stepped-down round — 169 of 170 is not the end of anything.
 
-    def test_TWO_one_short_input_is_enough_even_beside_a_full_one(self):
-        found = [{"name": "Avocado", "qty": 5000}, {"name": "Cassava", "qty": 169}]
-        self.assertIsNotNone(last_round_reason(found, REAL_NEEDS, pending=10))
+        Hutu is: 1 Raisin left, under the 2 an exchange needs of it."""
+        plenty = [{"name": "Avocado", "qty": 5000}, {"name": "Cassava", "qty": 169}]
+        self.assertIsNone(last_round_reason(plenty, REAL_NEEDS, pending=10))
+
+        spent = [{"name": "Avocado", "qty": 5000}, {"name": "Cassava", "qty": 1}]
+        why = last_round_reason(spent, REAL_NEEDS, pending=10)
+        self.assertIsNotNone(why)
+        self.assertIn("Cassava 1", why)
+
+    def test_TWO_the_floor_is_where_the_yield_stops_being_worth_a_daily_count(self):
+        """At 3 it is still bartering; at 2 the round left is too small to be worth the
+        count it costs."""
+        def at(q):
+            return last_round_reason([{"name": "Avocado", "qty": 5000},
+                                      {"name": "Cassava", "qty": q}], REAL_NEEDS, pending=10)
+        self.assertIsNone(at(3))
+        self.assertIsNotNone(at(2))
+
+    def test_TWO_frame_15_is_NOT_settled_by_this_condition(self):
+        """12 and 31 are both above the floor. Frame 15 is condition ONE."""
+        self.assertIsNone(last_round_reason(FRAME_15, REAL_NEEDS, pending=20))
+        self.assertIsNotNone(last_round_reason(FRAME_15, REAL_NEEDS, pending=143))
 
     def test_THREE_the_days_seventh_round_has_been_played(self):
         """Seven is the ceiling — the eighth slot is only reachable by paying. Materials for

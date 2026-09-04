@@ -33,8 +33,8 @@ is enough, and each is read from this dialog plus the round count:
 
   1. **the overflow exceeds every material aboard** — even dumping the lot cannot clear it,
      so there is nothing left to hold back for;
-  2. **a material can no longer fund a round** — a round needs every input, so the one that
-     runs short ends the bartering;
+  2. **a material is down to almost nothing** — below MIN_VIABLE_MATERIAL, so not even a
+     minimum-size exchange can use it;
   3. **the day's last round has been played** — seven, per _MAX_DAILY_ROUNDS.
 
 READ THE CARGO TILES, NEVER THE PANEL BEHIND. At frame 15 the Trade Material panel still
@@ -253,6 +253,23 @@ def _needs_map(needs_per_round) -> dict:
 # for it, so seven is the ceiling for a day we actually play (brain.activities.village).
 MAX_DAILY_ROUNDS = 7
 
+# THE FLOOR IS THE MINIMUM-SIZE EXCHANGE, NOT THE FULL-SIZE ONE (user, 2026-09-04).
+#
+# The panel's `X/Y` is have/need AT THE CURRENT STEPPER VALUE (1-200), so a material short of
+# the full-size need is NOT dead — the exchange can be stepped down and still run as a real
+# round costing a real daily count (walkthrough notes, Melanesian round 2 at ~9.9%). Testing
+# against the full-size need would therefore call it the last round while several usable
+# rounds remained, and dump their inputs.
+#
+# What actually ends it is having so little of one material that no exchange can use it:
+# "some barters may still go forward if one material is just 2, but most cannot — at Hutu
+# there was 1 Raisin and 500 Pig left and it could not reach another round, as the minimum
+# needed for Raisin is 2. And when it is less than 3 you cannot get many anyway."
+#
+# So 3 is a floor on VIABILITY, not on arithmetic: at or below it, the round that remains is
+# too small to be worth the daily count even where the game would allow it.
+MIN_VIABLE_MATERIAL = 3
+
 
 def _held_materials(found: list, needs_per_round) -> dict:
     """{normalised material name: units of it aboard}, materials only."""
@@ -275,6 +292,9 @@ def last_round_reason(found: list, needs_per_round, *, pending: Optional[int] = 
     the time this dialog appears, so these quantities are the LEFTOVERS — at Camas (frames
     15-17) 12 Avocado and 31 Cassava against a round needing 170 of each.
 
+    `needs_per_round` is the FULL-SIZE need and is used to identify the materials, NOT as the
+    floor — see MIN_VIABLE_MATERIAL for why the floor is much lower.
+
     Returns a reason rather than a bool because this is the judgement that can cost a whole
     round's product, and a log saying WHICH condition fired is what makes it reviewable.
     None when the recipe is unknown: materials cannot then be told apart from any other
@@ -287,10 +307,12 @@ def last_round_reason(found: list, needs_per_round, *, pending: Optional[int] = 
         return f"the day's last round ({rounds_done} of {max_rounds}) has been played"
 
     held = _held_materials(found, needs_per_round)
-    short = [m for m, q in needs.items() if held.get(m, 0) < q]
-    if short:
-        have = ", ".join(f"{m} {held.get(m, 0)}/{needs[m]}" for m in short)
-        return f"a round needs every input and {have} is short"
+    shown = {_norm(m): str(m) for m in (needs_per_round or {})}   # the recipe's own casing
+    spent = [m for m in needs if held.get(m, 0) < MIN_VIABLE_MATERIAL]
+    if spent:
+        have = ", ".join(f"{shown.get(m, m)} {held.get(m, 0)}" for m in spent)
+        return (f"{have} left, under the {MIN_VIABLE_MATERIAL} any exchange needs, and a "
+                "round needs every input")
 
     total = sum(held.values())
     if pending is not None and int(pending) > total:
