@@ -551,7 +551,33 @@ def ensure_sell_tab(capture_fn, tap_fn, settle: float = 1.2) -> bool:
         tap_fn(*ok)
         time.sleep(settle)
         frame = capture_fn()
-    return bool(_on_sell_tab(frame))
+        return bool(_on_sell_tab(frame))
+
+    # NOTHING EXPLAINS THE UNCHANGED SCREEN, SO THE TAP WAS SIMPLY DROPPED — try once more.
+    #
+    # This game drops roughly one tap in twenty: measured 3 of 62 in a single mission, all
+    # with nothing to distinguish them from the 59 that landed. One re-tap takes ~5% to
+    # ~0.25%, which is the same arithmetic the dispatcher's own retry rests on.
+    #
+    # Live 2026-09-04, the SAME point, minutes apart and both from `_sell_menu_item`:
+    #     Faro    frame 66  tap (65,274) -> frames 67, 68, 69 all still the Purchase page
+    #     Madeira frame 170 tap (65,274) -> frame 171 on the Sell page
+    # Identical coordinates and identical sequence; one landed and one did not.
+    #
+    # Faro's cost the mission: with no Sell tab the owned counts were unreadable all leg, so
+    # the ledger could not mark Pig met, and the buy loop took four whole shelves — 2,736
+    # against a goal of 1,260. The surplus filled the hold, Raisin came home 391 short and
+    # the barter lost a round.
+    #
+    # ONCE, and only on a re-read of the position: the menu may have redrawn, and a stale
+    # point is what tapped dead space between 'Purchase' and 'Sell' at Luanda. Bounded here
+    # rather than looped, because past one retry the screen is refusing rather than dropping.
+    pos = _sell_menu_item(frame) or pos
+    logger.info(f"[market] the Sell tab did not open and nothing asked us anything — "
+                f"the tap was dropped; tapping {pos} once more")
+    tap_fn(*pos)
+    time.sleep(settle)
+    return bool(_on_sell_tab(capture_fn()))
 
 
 def _cart_confirm_ok(frame):

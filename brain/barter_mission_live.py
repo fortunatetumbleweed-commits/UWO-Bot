@@ -330,39 +330,38 @@ def make_live_executors(opp=None) -> dict:
         #
         # Getting to the market is an INTENT the loop dispatches; the tab tap, the shelf
         # rounds and the gem refresh are the activity's business and no longer appear here.
-        result = run_goal(Hold(dict(orders)))
-        if result is None:
-            return {"ok": False, "reason": f"could not reach the market at {port}"}
-        observed = dict(result.observed)
-
-        # TRIM BEFORE LEAVING THIS PORT, not after every gather has run (user, 2026-09-04:
-        # "we need to trim it earlier if there are too many for some materials").
+        # TRIM BEFORE BUYING, NOT AFTER (user, 2026-09-04: "at 171 it saw there are too many
+        # pigs, trim there"). Space is what a purchase needs, so a trim that runs after the
+        # buying is a trim that could not help it.
         #
         # `buy_to_goal` buys by the shelf, so a leg routinely overshoots — and the graph's
-        # `sell_surplus` node depends on ALL the gathers, so the overshoot rode to the NEXT
-        # port and took the space that port's material needed.
+        # `sell_surplus` node depends on ALL the gathers, so the surplus rode to the NEXT
+        # port and took the room that port's material needed. Live 2026-09-04: Faro bought
+        # 2,736 Pig against a goal of 1,260; the fleet reached Madeira at 4,847/4,952 with
+        # 105 free slots; Raisin came home 391 short and the barter lost a round. Frame 171
+        # is the moment it could have been fixed — the Sell grid open at Madeira, the hold
+        # in plain view, before a single Raisin had been bought.
         #
-        # Live 2026-09-04: Faro bought 2,736 Pig against a goal of 1,260, the fleet reached
-        # Madeira at 4,847/4,952 with 105 slots free, and Raisin came home at 869 of 1,260 —
-        # capping the barter at four rounds. The trim that would have released 1,476 slots
-        # was scheduled to run after Madeira.
-        #
-        # Here the fleet is still standing in the market it just bought from, which is the
-        # one place a sale can happen, so this costs no sailing and no extra walk. The
-        # end-of-gathering trim stays: this bounds what each leg hands to the next, and that
-        # one catches whatever the last leg overshot.
+        # Both goals are MARKET goals, so this is one visit and one walk: TrimHold enters the
+        # market, Hold finds itself already there. The end-of-gathering `sell_surplus` node
+        # stays — it is what catches the LAST leg, which has no next port to trim before.
         keep_qty = task.params.get("keep_qty") or {}
         trimmed = None
         if keep_qty:
             from brain.activities.market import TrimHold
             trim = run_goal(TrimHold(dict(keep_qty)))
             if trim is None:
-                logger.warning(f"[mission.gather] {port}: could not trim before leaving — "
-                               "the surplus sails on")
+                logger.warning(f"[mission.gather] {port}: could not trim before buying — "
+                               "buying into whatever room is left")
             else:
                 trimmed = dict(trim.observed).get("trimmed")
-                logger.info(f"[mission.gather] {port}: trimmed to plan {trimmed}")
+                logger.info(f"[mission.gather] {port}: trimmed to plan before buying "
+                            f"{trimmed}")
 
+        result = run_goal(Hold(dict(orders)))
+        if result is None:
+            return {"ok": False, "reason": f"could not reach the market at {port}"}
+        observed = dict(result.observed)
         _exit_market_to_overworld()   # clean hand-off: leave port_overworld for the next leg
         return {"ok": bool(result.ok), "port": port,
                 "bought_total": observed.get("bought_total"),

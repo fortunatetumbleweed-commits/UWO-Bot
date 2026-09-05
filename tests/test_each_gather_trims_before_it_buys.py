@@ -1,4 +1,4 @@
-"""A gather leg trims its own overshoot before handing the hold to the next leg.
+"""A gather leg trims BEFORE it buys, so the purchase has room to land in.
 
 Live 2026-09-04 (session trace_barter_cmd_2026-09-04T17-35-01):
 
@@ -15,8 +15,13 @@ hold arrives over-stocked"), but `sell_surplus` depends on ALL the gathers:
     trim_before_gather -> {gather:Faro, gather:Madeira} -> sell_surplus -> ... -> village
 
 so the trim that would have released those 1,476 slots was scheduled to run after Madeira.
-Trimming per-leg costs nothing: the fleet is still standing in the market it just bought
-from, which is the only place a sale can happen.
+Frame 171 is the moment it could have been fixed: the Sell grid open at Madeira, the hold in
+plain view, before a single Raisin had been bought (user, 2026-09-04 — "at 171 it saw there
+are too many pigs, trim there"). Space is what a purchase needs, so a trim that runs after
+the buying is a trim that could not help it.
+
+Both goals are MARKET goals, so this is one visit and one walk: TrimHold enters the market
+and Hold finds itself already there.
 """
 from __future__ import annotations
 

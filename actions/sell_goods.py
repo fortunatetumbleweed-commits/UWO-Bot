@@ -453,6 +453,7 @@ def sell_down_to(port: str, keep: Mapping[str, int], *,
                  overlay_fn: Optional[Callable] = None,
                  react_fn: Optional[Callable] = None,
                  find_button_fn: Optional[Callable] = None,
+                 ensure_sell_tab_fn: Optional[Callable] = None,
                  settle: float = 1.2) -> dict:
     """Trim each good in `keep` down to that many units, selling the excess.
 
@@ -513,7 +514,38 @@ def sell_down_to(port: str, keep: Mapping[str, int], *,
     # nothing is, we leave without a single tap. Live 2026-08-22 the old order toggled
     # Put In Bulk OFF and straight back ON around a trim that then reported
     # "trimmed {} (nothing to trim)" — two taps and 20 seconds to change nothing.
-    goods = {_name(g).lower(): g for g in (read_page_fn(capture_fn()) or [])}
+    # SWITCH TO THE SELL TAB, AND CONFIRM IT. `sell_goods` has always done this and
+    # `_read_owned_via_sell` refuses without it; the TRIM path alone just read whatever grid
+    # was on screen. Live 2026-09-04 at Madeira it read the PURCHASE page (frame 277 of
+    # trace_barter_cmd_2026-09-04T17-35-01 — title "Purchase", the shop's stock in the middle,
+    # the fleet's 3,237 Pig sitting in the panel on the right):
+    #
+    #     [Madeira] nothing over-stocked — leaving the market untouched (hold {})
+    #     trim skipped at Madeira: Raisin: not on the sell page
+    #     trim skipped at Madeira: Pig: not on the sell page
+    #
+    # It then sailed to the village with the whole 1,476-unit Pig surplus aboard.
+    _ensure_tab = ensure_sell_tab_fn
+    if _ensure_tab is None:
+        from actions.buy_materials import ensure_sell_tab as _ensure_tab
+    try:
+        on_sell = _ensure_tab(capture_fn, tap_fn, settle)
+    except Exception as exc:
+        logger.debug(f"[sell_down_to] sell-tab switch raised: {exc}")
+        on_sell = False
+    if not on_sell:
+        return _abort("could not reach the Sell grid — refusing to report the hold as "
+                      "trimmed", [f"{n}: the Sell grid was never reached" for n in keep])
+
+    # None IS NOT AN EMPTY HOLD. `_sell_page` returns None for "I was not looking at the
+    # hold" and [] for "I was, and it holds nothing" — a distinction it documents at length,
+    # having been given it on 2026-09-01 for exactly this failure. `or []` threw it away one
+    # call later, so a wrong-page read became "nothing to trim" and the leg reported ok.
+    page = read_page_fn(capture_fn())
+    if page is None:
+        return _abort("the Sell grid could not be read — refusing to report the hold as "
+                      "trimmed", [f"{n}: the Sell grid could not be read" for n in keep])
+    goods = {_name(g).lower(): g for g in page}
     owned_now = {n: int(g.owned_qty) for n, g in goods.items()
                  if getattr(g, "owned_qty", None) is not None}
     over_stocked, skipped = [], []

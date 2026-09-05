@@ -131,11 +131,33 @@ class TheStagedCartRaisesAConfirmAndItIsAnswered(unittest.TestCase):
         self.assertTrue(ok)
         self.assertIn((1200, 700), taps, "the confirm our own tap raised must be completed")
 
-    def test_without_a_confirm_it_still_refuses(self):
-        # Three checks either way: before the tap, after it, and the final verify.
+    def test_no_confirm_means_the_tap_was_DROPPED_so_it_tries_once_more(self):
+        """This asserted a single tap — "no dialog found means no extra tap".
+
+        The rule that was protecting is that a dialog nobody can NAME is never answered, and
+        a re-tap of the same menu item does not touch a dialog at all. Meanwhile the game
+        drops about one tap in twenty, and a dropped Sell tap has no other recovery.
+
+        Live 2026-09-04, the same point minutes apart: Faro frame 66 tapped (65,274) and
+        frames 67, 68, 69 were all still the Purchase page; Madeira frame 170 tapped (65,274)
+        and frame 171 was the Sell page. Identical coordinates, identical sequence. Faro's
+        cost the mission 1,476 units of surplus Pig and a barter round.
+        """
         ok, taps = self._run(on_sell=[False, False, False], cart_ok=None)
-        self.assertFalse(ok)
-        self.assertEqual(taps, [(65, 274)], "no dialog found means no extra tap")
+        self.assertFalse(ok, "two dropped taps is a refusal, not a success")
+        self.assertEqual(taps, [(65, 274), (65, 274)], "a dropped tap gets exactly one retry")
+
+    def test_the_retry_is_the_MENU_ITEM_and_never_a_blind_dialog_OK(self):
+        """The property the original test defended, stated directly: with no nameable dialog
+        the only thing tapped is the Sell menu item itself."""
+        _, taps = self._run(on_sell=[False, False, False], cart_ok=None)
+        self.assertEqual(set(taps), {(65, 274)})
+
+    def test_it_does_not_keep_tapping(self):
+        """Bounded, not looped. Past one retry the screen is refusing rather than dropping,
+        and more taps are the Lisboa failure at a different address."""
+        _, taps = self._run(on_sell=[False, False, False], cart_ok=None)
+        self.assertLessEqual(len(taps), 2)
 
     def test_an_already_open_sell_page_asks_nothing(self):
         ok, taps = self._run(on_sell=[True], cart_ok=(1200, 700))
