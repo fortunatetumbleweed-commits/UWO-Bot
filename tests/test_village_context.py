@@ -131,3 +131,50 @@ class TheFieldNamesMatchTheRealObjects(unittest.TestCase):
         from brain.barter_quantity import PanelBarterState
         from brain.village_context import _panel_is_up
         self.assertFalse(_panel_is_up(PanelBarterState(rounds_remaining=3)))
+
+
+class AnUnreadableNameIsNotAnEmptyPanel(unittest.TestCase):
+    """Live 2026-09-05 at Berber, an endless loop.
+
+    Argan Oil's name would not OCR on any frame. `_select_trade_good` selected the tile and
+    answered "selected Argan Oil" — via the live-Exchange rule one layer down — and the very
+    next tick this classifier called the panel BARTER_PANEL_NO_GOOD again, so the activity
+    re-selected, and re-selected, six taps a minute with no rounds committed.
+
+    The game says "Select Trade Good." when nothing is chosen, and that prompt is tested
+    FIRST. Reaching the name check means the game did not say it: a good IS selected and only
+    our reading of its name is missing. The Exchange button then answers whether it can be
+    bartered, which is the same authority `village._why_it_stopped` already cites for the end
+    of a barter.
+    """
+
+    def _panel(self, good):
+        import types
+        return types.SimpleNamespace(
+            selected_good=good, output_quantity=751,
+            materials=[types.SimpleNamespace(label="Medicine", have=588, need=73),
+                       types.SimpleNamespace(label="Food", have=595, need=126)])
+
+    def test_an_unnamed_panel_with_a_live_exchange_is_READY(self):
+        self.assertEqual(classify("", elements=[], panel=self._panel(None),
+                                  exchange_live=True), BARTER_PANEL_READY)
+
+    def test_an_unnamed_panel_with_a_GREYED_exchange_is_still_NO_GOOD(self):
+        """Nothing tradable is selected, so asking for a good again is right."""
+        self.assertEqual(classify("", elements=[], panel=self._panel(None),
+                                  exchange_live=False), BARTER_PANEL_NO_GOOD)
+
+    def test_the_games_own_prompt_still_wins(self):
+        """'Select Trade Good.' is positive evidence that nothing is chosen, and it is
+        checked before any of this."""
+        import types as _t
+        prompt = [_t.SimpleNamespace(label="Select Trade Good.", cx=1600, cy=480,
+                                     x1=1500, y1=460, x2=1700, y2=500,
+                                     element_type="text")]
+        self.assertEqual(classify("", elements=prompt,
+                                  panel=self._panel(None), exchange_live=True),
+                         BARTER_PANEL_NO_GOOD)
+
+    def test_a_named_panel_is_unaffected(self):
+        self.assertEqual(classify("", elements=[], panel=self._panel("Argan Oil"),
+                                  exchange_live=True), BARTER_PANEL_READY)

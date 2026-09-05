@@ -102,13 +102,26 @@ def classify(frame, *, elements=None, panel=None, exchange_live=None) -> str:
         return BARTER_PANEL_NO_GOOD
 
     if _panel_is_up(panel):
-        if not selected_good(panel):
-            return BARTER_PANEL_NO_GOOD
         if exchange_live is None:
             # THE FRAME WE WERE GIVEN, not another capture. Re-shooting here asks the panel
             # a question about a screen the caller has not seen (per-frame perception
             # sharing), and costs a capture+parse on every village tick.
             exchange_live = _read_exchange_live(frame)
+        if not selected_good(panel):
+            # AN UNREADABLE NAME IS NOT AN EMPTY PANEL, and a live Exchange proves it.
+            #
+            # The game says "Select Trade Good." when nothing is chosen, and that prompt is
+            # tested ABOVE — so reaching here means the game did NOT say it. All that is
+            # missing is our reading of the name, and the button is the game's own verdict on
+            # whether the selected good can be traded (`village._why_it_stopped`: "a greyed
+            # Exchange means done... a live Exchange means there is more to do").
+            #
+            # Live 2026-09-05 at Berber this looped without end. Argan Oil's name would not
+            # OCR on any frame, so `_select_trade_good` selected it, answered "selected Argan
+            # Oil" — via the same Exchange rule, one layer down — and then the very next tick
+            # classified the panel as NO_GOOD again and threw the selection away. Six taps a
+            # minute, no rounds, for as long as it was left running.
+            return BARTER_PANEL_READY if exchange_live else BARTER_PANEL_NO_GOOD
         return BARTER_PANEL_READY if exchange_live else BARTER_PANEL_BLOCKED
 
     # No panel. Are we still in the village at all? The left menu says so — and this is the
