@@ -913,10 +913,24 @@ def buy_to_goal(port: str, goal: Mapping[str, int], *, max_rounds: int = 6,
         return frame, goods, els, cleared_any
 
     def _do_refresh(attempt, verify_good):
-        """Blue-gem refresh to restock a sold-out shelf; append to rounds. Returns ok."""
+        """Blue-gem refresh to restock a sold-out shelf; append to rounds. Returns ok.
+
+        SAY WHY WHEN IT DOES NOT HAPPEN. A False here BREAKS the buy loop, and it used to do
+        so in silence: `refresh_market`'s refusals all return without logging, so the run
+        jumped from "not met — short: Mutton 595/1015" straight to "no further progress" with
+        nothing in between. Live 2026-09-05 at Antalya that hid a one-frame OCR miss on the
+        restock timer — the shelf was sold out, the control was on screen at 3 blue gems, and
+        the leg ended three barter rounds short. It took a frame-by-frame diff to find, and
+        the reason was a string the function already had in hand.
+        """
         r = refresh_fn(capture_fn=capture_fn, tap_fn=tap_fn, verify_good=verify_good, port=port)
         rounds.append({"attempt": attempt, "refresh": r})
-        return bool(r.get("ok"))
+        if not r.get("ok"):
+            logger.warning(f"[buy_to_goal] no refresh for {verify_good!r} — "
+                           f"{r.get('reason', '(no reason given)')}; the shelf stays empty "
+                           "and this leg stops here")
+            return False
+        return True
 
     goal_total = sum(goal.values())
     bought_total = 0              # best-known OWNED count of the good (from the tracked tile)
