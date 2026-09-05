@@ -1744,16 +1744,17 @@ def read_cargo_good(frame, good_name, elements=None, min_score=0.70, min_margin=
 def _read_cargo_used_cap(frame):
     """(used, capacity) from the 'N/M' cargo-load counter in the cart panel (RIGHT side), or None.
     Reliable OCR, unlike per-good available_qty."""
-    import re
     from actions.sail_actions import _ocr_frame
+    from utils.digits import parse_pair
     best = None
     for w, _c, x, y in _ocr_frame(frame, min_conf=0.3):
-        m = re.search(r"([\d,]{2,})\s*/\s*([\d,]{2,})", w)
-        if m and x > 1850:                       # cart panel, not Trade Points (left)
-            try:
-                cur, cap = int(m.group(1).replace(",", "")), int(m.group(2).replace(",", ""))
-            except ValueError:
-                continue
+        # THE SEPARATOR IS WHATEVER THE READER SAW, not always a comma. This matched on
+        # `[\d,]`, which a period breaks: '3.129/4,952' (live frame 236, 2026-09-05) could
+        # only match '129/4,952', so the hold read 129 of 3,129 and the leg stopped two
+        # barter rounds short. See utils.digits.
+        pair = parse_pair(w)
+        if pair and x > 1850:                    # cart panel, not Trade Points (left)
+            cur, cap = pair
             if cap >= 500 and (best is None or cap > best[1]):   # largest cap = cargo hold
                 best = (cur, cap)
     return best

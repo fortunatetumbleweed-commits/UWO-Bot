@@ -28,6 +28,7 @@ from loguru import logger
 from PIL import Image
 
 from memory.market_kb import MarketGood, MarketSnapshot
+from utils.digits import SEPARATORS as _SEP
 
 
 # ── Grid geometry (2400 × 1080 landscape) ─────────────────────────────────────
@@ -413,11 +414,11 @@ def _parse_tile_from_button(button, text_els, tab: str,
         rel_y = int((e.cy - button.y1) * _TILE_H / tile_h)   # scale to _TILE_H frame
         # SELL-tile tokens, matched by SHAPE before the buy-oriented _classify_token (which drops
         # comma'd "price (profit)" as skip and mistakes the owned-qty badge for a price):
-        m = re.match(r"^([\d,]+)\s*\(\s*([-+]?[\d,]+)\s*\)$", text)
+        m = re.match(r"^(\d[\d,.']*)\s*\(\s*([-+]?\d[\d,.']*)\s*\)$", text)
         if m:                                     # "price (profit/unit)" — sell price + profit
-            pv = int(m.group(1).replace(",", ""))
+            pv = int(m.group(1).translate(_SEP))
             if price is None or pv > price:
-                price, profit = pv, int(m.group(2).replace(",", ""))
+                price, profit = pv, int(m.group(2).translate(_SEP))
             continue
         if tab != "purchase" and re.fullmatch(r"\d{1,4}", text) and 80 < rel_y < 150:
             owned_qty = int(text)                 # units of this good in cargo (upper-middle badge)

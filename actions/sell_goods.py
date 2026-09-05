@@ -17,6 +17,7 @@ import time
 from typing import Callable, Mapping, Optional, Sequence
 
 from loguru import logger
+from utils.digits import SEPARATORS as _SEP
 
 
 def _name(g):
@@ -389,7 +390,7 @@ def sell_goods(port: str, goal: str = "profit", keep: Optional[Sequence[str]] = 
 # WITHOUT tapping Sell — nothing has left the hold at that point. This is what stops the
 # bulk-still-ON case (tile tap silently loads the full stack) from selling everything.
 
-_QTY_PAIR_RE = re.compile(r"^\s*(\d[\d,]*)?\s*/\s*(\d[\d,]*)\s*$")
+_QTY_PAIR_RE = re.compile(r"^\s*(\d[\d,.\']*)?\s*/\s*(\d[\d,.\']*)\s*$")
 
 
 def _find_qty_field(elements, dialog_bbox=None) -> Optional[tuple]:
@@ -433,7 +434,7 @@ def _find_qty_field(elements, dialog_bbox=None) -> Optional[tuple]:
         x0, y0, x1, y1 = dialog_bbox
         if not (x0 <= cx <= x1 and y0 <= cy <= y1):
             continue              # the Cargo bar and anything else behind the scrim
-        total = int(m.group(2).replace(",", ""))
+        total = int(m.group(2).translate(_SEP))
         if best is None:
             best = (cx, cy, total)
     if best is None:

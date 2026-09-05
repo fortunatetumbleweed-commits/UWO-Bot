@@ -58,17 +58,18 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
 from loguru import logger
+from utils.digits import SEPARATORS as _SEP
 
-_INT_RE = re.compile(r"^[\d,]+$")
-_PAIR_RE = re.compile(r"^\s*([\d,]+)\s*/\s*([\d,]+)")
-_USED_CAP_RE = re.compile(r"([\d,]+)\s*/\s*([\d,]+)\s*\((\d+)%\)")
+_INT_RE = re.compile(r"^\d[\d,.\']*$")
+_PAIR_RE = re.compile(r"^\s*(\d[\d,.\']*)\s*/\s*(\d[\d,.\']*)")
+_USED_CAP_RE = re.compile(r"(\d[\d,.\']*)\s*/\s*(\d[\d,.\']*)\s*\((\d+)%\)")
 
 OVERFLOW_TITLE = "insufficient empty space"
 DISCARD_TITLE = "discard goods"
 
 
 def _int(s: str) -> Optional[int]:
-    s = (s or "").strip().replace(",", "")
+    s = (s or "").strip().translate(_SEP)
     return int(s) if s.isdigit() else None
 
 

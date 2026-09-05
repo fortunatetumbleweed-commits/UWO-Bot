@@ -384,7 +384,8 @@
       "Svear Village"
     ],
     "output_per_round": {
-      "Neutral": 448
+      "Neutral": 448,
+      "Friendly": 604
     },
     "preconditions": {
       "amity_min": null,

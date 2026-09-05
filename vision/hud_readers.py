@@ -13,13 +13,16 @@ from __future__ import annotations
 
 import re
 from typing import Optional, Tuple
+from utils.digits import SEPARATORS as _SEP
 
-_INT_RE = re.compile(r"^\s*[\d,]+\s*$")
-_PAIR_RE = re.compile(r"(\d[\d,]*)\s*/\s*(\d[\d,]*)")
+_INT_RE = re.compile(r"^\s*\d[\d,.\']*\s*$")
+_PAIR_RE = re.compile(r"(\d[\d,.\']*)\s*/\s*(\d[\d,.\']*)")
 
 
 def _to_int(s: str) -> Optional[int]:
-    s = (s or "").strip().replace(",", "")
+    # THE SEPARATOR IS WHATEVER THE READER SAW. `_to_int_sep` below has said so since
+    # it was written, and this one did not — same module, same numbers.
+    s = (s or "").strip().translate(_SEP)
     return int(s) if s.isdigit() else None
 
 

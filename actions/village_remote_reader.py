@@ -22,8 +22,9 @@ from __future__ import annotations
 
 import re
 from typing import Optional, Sequence
+from utils.digits import SEPARATORS as _SEP
 
-_INT_RE = re.compile(r"^\d[\d,]*$")
+_INT_RE = re.compile(r"^\d[\d,.\']*$")
 # Words that appear in the Trade List / Source panels but are not a good or a port.
 _BARTER_CHROME = {"spices", "wares", "jewelry", "fabrics", "food", "textile", "metal",
                   "trade list", "closeout", "barter", "explore", "base", "village info",
@@ -31,7 +32,7 @@ _BARTER_CHROME = {"spices", "wares", "jewelry", "fabrics", "food", "textile", "m
 
 
 def _to_int(s: str) -> Optional[int]:
-    s = (s or "").strip().replace(",", "")
+    s = (s or "").strip().translate(_SEP)
     return int(s) if s.isdigit() else None
 
 

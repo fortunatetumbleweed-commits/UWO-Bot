@@ -1,7 +1,26 @@
 {
   "fleet_capacity": {
-    "at": 1788627450.81642,
+    "at": 1788644655.639389,
     "value": 4952
+  },
+  "mission_progress": {
+    "at": 1788644663.767314,
+    "value": {
+      "good": "Birch Tree",
+      "phase": "bartering",
+      "recipe": {
+        "good": "Birch Tree",
+        "materials": {
+          "Candle": 88,
+          "Iron": 88,
+          "Matchlock Gun": 44
+        },
+        "obtain": 604
+      },
+      "rounds": 7,
+      "rounds_remaining": 7,
+      "village": "Svear Village"
+    }
   },
   "settlement": {
     "at": 1788536028.878461,

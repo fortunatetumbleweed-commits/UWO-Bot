@@ -36,6 +36,7 @@ from PIL import Image
 from actions.adb_actions import tap, press_back
 from capture.adb_capture import capture_screen
 from config.settings import MARKET_COORDS, MARKET_CONTENT_REGION
+from utils.digits import SEPARATORS as _SEP
 
 # KB dialog confirmation helper — avoids repeating `from brain.kb import control`
 # at every call site. Returns the keyword tuple for a dialog confirmation check.
@@ -363,10 +364,10 @@ def _read_cargo_capacity(frame: Image.Image) -> Tuple[int, int]:
     from vision.ocr import _get_reader
 
     def _parse_slash_number(text: str) -> Optional[Tuple[int, int]]:
-        m = re.search(r'([\d,]+)\s*/\s*([\d,]+)', text)
+        m = re.search(r"(\d[\d,.']*)\s*/\s*(\d[\d,.']*)", text)
         if m:
-            used  = int(m.group(1).replace(',', ''))
-            total = int(m.group(2).replace(',', ''))
+            used  = int(m.group(1).translate(_SEP))
+            total = int(m.group(2).translate(_SEP))
             if 100 <= total <= 200_000:
                 return used, total
         return None
@@ -521,10 +522,10 @@ class SellResult:
 def _parse_number(s: str) -> Optional[int]:
     """Parse a number string that may have commas, +/- signs."""
     import re
-    m = re.search(r'[\d,]+', s.replace("+", "").replace("-", ""))
+    m = re.search(r"\d[\d,.']*", s.replace("+", "").replace("-", ""))
     if m:
         try:
-            return int(m.group().replace(",", ""))
+            return int(m.group().translate(_SEP))
         except ValueError:
             pass
     return None
