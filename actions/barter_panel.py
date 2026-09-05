@@ -300,7 +300,8 @@ def _select_trade_good(good: str, recipe: Optional[Mapping[str, int]] = None) ->
             # The tap above told the repository the screen moved, so this captures. That is
             # the ONLY reason to capture here, and now it is the repository's decision rather
             # than this loop's habit.
-            reading = read_barter_panel(screen().get(why="barter tile read-back").frame)
+            read_frame = screen().get(why="barter tile read-back").frame
+            reading = read_barter_panel(read_frame)
             if reading is None:
                 break
             if _panel_signature(reading) != last_sig:
@@ -316,6 +317,39 @@ def _select_trade_good(good: str, recipe: Optional[Mapping[str, int]] = None) ->
         if _panel_matches(reading, good, recipe):
             logger.info(f"[mission.barter] selected {good!r} via the {label!r} tile")
             return True
+
+        # THE LIVE EXCHANGE BUTTON IS THE GAME'S OWN VERDICT, and it settles the case our
+        # reading cannot (user, 2026-09-05: "if the bot sees the yellow Exchange button, it
+        # should just tap it to barter, that is the deciding factor, it does not really need
+        # any other info to stop it").
+        #
+        # `village._why_it_stopped` already says this for the END of a barter — "a greyed
+        # Exchange means done even when the materials look sufficient; a live Exchange means
+        # there is more to do even when they do not". The same authority answers the START.
+        #
+        # Live 2026-09-05 at Berber, the first tile WAS Argan Oil and this rejected it:
+        #
+        #     good=None out=751 materials=[('Medicine', 588, 73), ('Food', 595, 126)]
+        #
+        # `out=751` is Argan Oil's own yield and those two rows are this mission's own cargo
+        # at its own ratios — 588 Myrrh and 595 Mutton, gathered and trimmed over three ports.
+        # Only the NAME failed to OCR, and `_panel_matches` could not fall back to the recipe
+        # because the panel labels its rows by CATEGORY ('Medicine', 'Food'), never by
+        # material. So a tile carrying our materials was called "not Argan Oil", and a
+        # finished gather died with everything it needed aboard.
+        #
+        # ONLY WHEN OUR OWN READING IS INCONCLUSIVE. A panel that NAMES another good has
+        # positively identified itself, and the next tile is the right move; the game would
+        # happily light Exchange for a good we did not come for if we had its materials too.
+        # An unreadable name is the one case where we have no verdict of our own, and there
+        # the game's is better than nothing.
+        named = (getattr(reading, "selected_good", None) or "").strip()
+        if not named and _exchange_still_live(read_frame):
+            logger.info(f"[mission.barter] the {label!r} tile did not read back a name, but "
+                        "Exchange is LIVE — the game says this tile can be bartered, and "
+                        "that outranks a name we could not read")
+            return True
+
         logger.info(f"[mission.barter] the {label!r} tile is "
                     f"{reading.selected_good!r}, not {good!r} — trying the next")
         return False
