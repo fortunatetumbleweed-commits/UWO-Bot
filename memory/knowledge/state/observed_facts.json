@@ -1,13 +1,13 @@
 {
   "fleet_capacity": {
-    "at": 1788644655.639389,
+    "at": 1788651696.5640051,
     "value": 4952
   },
   "mission_progress": {
-    "at": 1788648472.0922089,
+    "at": 1788651704.872266,
     "value": {
       "good": "Bambara Groundnut",
-      "phase": "gathering",
+      "phase": "bartering",
       "recipe": {
         "good": "Bambara Groundnut",
         "materials": {

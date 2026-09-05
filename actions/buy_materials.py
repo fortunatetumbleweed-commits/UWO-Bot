@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import re
 import time
 from typing import Callable, Mapping, Optional
 
@@ -318,6 +319,28 @@ react_after_commit = _react_after_purchase
 # real money). See vision/region_detectors/market_restock.py + memory
 # project_unified_purchase_goal_design.
 
+# How long a nearly-expired restock timer is worth waiting out after a refresh that did not
+# confirm. Long enough for the race below, short enough that a leg never parks on a shelf.
+_WAIT_OUT_RESTOCK_S = 90
+
+
+def _timer_seconds(text) -> Optional[int]:
+    """`'00.00:11'` -> 11. The restock clock, with OCR's separators taken as read.
+
+    The glyphs come back inconsistently — '00:18.26', '00.28.40', '00.00:11' are all real
+    readings of the same field — so the SEPARATORS carry no meaning and only the digit groups
+    do: h:m:s, or m:s. Same rule as utils.digits: on these screens a separator is a separator.
+    """
+    groups = re.findall(r"\d+", str(text or ""))
+    if not groups or len(groups) > 3:
+        return None
+    parts = [int(g) for g in groups][-3:]
+    while len(parts) < 3:
+        parts.insert(0, 0)
+    h, m, sec = parts
+    return h * 3600 + m * 60 + sec
+
+
 def refresh_market(capture_fn=None, tap_fn=None, *, ocr_fn=None, settle: float = 1.2,
                    verify_good: Optional[str] = None, port: Optional[str] = None,
                    read_market_fn=None, omni_fn=None) -> dict:
@@ -382,6 +405,35 @@ def refresh_market(capture_fn=None, tap_fn=None, *, ocr_fn=None, settle: float =
         ok = _timer_went_up(btn.timer, after.timer if after else None)
         signal = f"timer {btn.timer}→{after.timer if after else '??'}"
     logger.info(f"[refresh] verify: accepted={accepted} {signal} → refreshed={ok}")
+
+    # A SHELF ABOUT TO RESTOCK ITSELF IS NOT A REFUSED SHELF (user, 2026-09-05: "it tapped at
+    # the refresh, but the market was refreshing at the time, so there is no blue gem dialog").
+    #
+    # Live at Madeira the ↻ went in with the timer reading 00.00:11. The game was already
+    # turning the market over, so no Replenish-Stock dialog appeared, nothing could be
+    # confirmed, and an unconfirmed refresh BREAKS the buy loop — the Raisin leg stopped at
+    # 868 of 1,260 eleven seconds before the shelf refilled for free.
+    #
+    # The timer still does not GATE the refresh (user, 2026-09-05: "right now the timer
+    # should not be used at all... it should not interfere with the refresh") — the tap has
+    # already happened. It only answers the question that arises AFTERWARDS: having failed to
+    # confirm, is this shelf dead, or about to refill by itself?
+    if not ok:
+        left = _timer_seconds(btn.timer)
+        if left is not None and 0 <= left <= _WAIT_OUT_RESTOCK_S:
+            logger.info(f"[refresh] not confirmed, but the restock timer read {btn.timer} "
+                        f"({left}s) — waiting it out rather than calling the shelf empty")
+            time.sleep(left + settle + 2.0)
+            frame4 = capture_fn()
+            again = _good_in_stock(frame4, verify_good, port, read_market_fn, omni_fn) \
+                if verify_good else None
+            if again:
+                logger.info(f"[refresh] the shelf restocked on its own timer — "
+                            f"tile[{verify_good}] is active again, no gem spent")
+                return {"ok": True, "currency": None,
+                        "reason": f"the restock timer came round ({btn.timer})"}
+            logger.info(f"[refresh] still empty after waiting out {btn.timer}")
+
     return {"ok": ok, "currency": "blue_gem",
             "reason": f"refresh {'ok' if ok else 'NOT confirmed'} ({signal})"}
 
