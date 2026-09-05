@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import types
 import unittest
+import weakref
 from unittest import mock
 
 import actions.action_trace as T
@@ -128,3 +129,96 @@ class TheTraceAttachesTheObservationTheBotActedOn(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class EveryParseIsRecordedAsItIsMade(unittest.TestCase):
+    """`_FRAME_CACHE` is a CACHE — 4 entries, cleared wholesale on overflow — so it answers
+    "did I just parse this?", not "what did the run see?". Over the Berber barter it had
+    dropped nearly every parse before the recorder asked: 27 parses, and a report reading
+    "66 frames: 1 live, 65 unread".
+    """
+
+    def setUp(self):
+        T._PARSES.clear()
+        self._dir, T._dir = T._dir, "a-session"      # pretend a session is recording
+
+    def tearDown(self):
+        T._dir = self._dir
+        T._PARSES.clear()
+
+    def test_a_parse_outlives_the_four_entry_cache(self):
+        frame = _Elem("parsed-frame")
+        T.record_parse(frame, [_Elem("Exchange")])
+        with mock.patch.dict("sys.modules", {
+            "vision.omniparser": types.SimpleNamespace(_FRAME_CACHE={}),   # cache cleared
+            "actions.sail_actions": types.SimpleNamespace(_OCR_CACHE={}, _ocr_frame=None),
+        }):
+            reads = T._cached_reads(frame)
+        self.assertIsNotNone(reads, "the run parsed this frame; the cache forgetting is not our answer")
+        self.assertEqual(reads["omni"], [{"name": "Exchange"}])
+
+    def test_it_does_not_hold_the_frame_alive(self):
+        """Holding 64 frames of 2400x1080 is half a gigabyte — which is why the cache is 4."""
+        import gc
+
+        frame = _Elem("big-frame")
+        T.record_parse(frame, [_Elem("Exchange")])
+        ref = weakref.ref(frame)
+        del frame
+        gc.collect()
+        self.assertIsNone(ref(), "the registry must pin nothing")
+
+    def test_a_recycled_id_does_not_serve_another_frames_parse(self):
+        frame = _Elem("first")
+        T.record_parse(frame, [_Elem("Wrong")])
+        stale_id = id(frame)
+        impostor = _Elem("second")
+        T._PARSES[id(impostor)] = T._PARSES.pop(stale_id)   # force the address collision
+        self.assertIsNone(T._parse_for(impostor), "an address match is not the frame")
+
+    def test_the_registry_is_bounded(self):
+        frames = [_Elem(f"f{i}") for i in range(T._MAX_PARSES + 10)]
+        for f in frames:
+            T.record_parse(f, [_Elem("e")])
+        self.assertLessEqual(len(T._PARSES), T._MAX_PARSES)
+        self.assertIsNotNone(T._parse_for(frames[-1]), "the newest must survive")
+
+    def test_nothing_is_recorded_outside_a_session(self):
+        T._dir = None
+        T.record_parse(_Elem("f"), [_Elem("e")])
+        self.assertEqual(len(T._PARSES), 0, "no session, no recording, no cost")
+
+
+class TheSinkIsInstalledForTheSession(unittest.TestCase):
+    """The registry is only useful if something fills it. `start` installs the sink the same
+    way it installs the capture sink; `stop` takes it back off."""
+
+    def test_start_installs_it_and_stop_removes_it(self):
+        import vision.omniparser as omni
+
+        with mock.patch.object(T, "_SESSIONS", T.Path("/tmp/uwo-trace-test")):
+            try:
+                T.start("sink-check")
+                self.assertIs(omni._PARSE_SINK, T.record_parse)
+
+                # A parse announced from inside OmniParser reaches the registry.
+                frame = _Elem("parsed-in-flight")
+                omni._announce_parse(frame, [_Elem("Exchange")])
+                recorded = T._parse_for(frame)
+                self.assertIsNotNone(recorded, "a parse made mid-run must reach the registry")
+                self.assertEqual([e.name for e in recorded], ["Exchange"])
+            finally:
+                T.stop()
+        self.assertIsNone(omni._PARSE_SINK, "a finished session must stop listening")
+
+    def test_a_sink_failure_never_breaks_the_parse(self):
+        import vision.omniparser as omni
+
+        def explode(frame, elements):
+            raise RuntimeError("recorder is broken")
+
+        omni.set_parse_sink(explode)
+        try:
+            omni._announce_parse(_Elem("f"), [])      # must not raise
+        finally:
+            omni.set_parse_sink(None)
