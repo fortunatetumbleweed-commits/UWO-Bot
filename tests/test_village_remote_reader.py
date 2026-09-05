@@ -41,8 +41,14 @@ class BarterRatiosTests(unittest.TestCase):
 
 class MaterialSourcesTests(unittest.TestCase):
     def test_reads_all_source_ports_in_order(self):
+        """'Malé', not 'Male': every line is now resolved against the world-map catalogue,
+        and what comes back is the CANONICAL spelling — the panel renders accent-free, and
+        the name downstream sails to has to match the catalogue rather than the read.
+
+        Nothing else about this panel changes: all eight are real ports, so all eight
+        survive the check in the order they were read."""
         self.assertEqual(read_material_sources(_SOURCE_ELS), [
-            "Male", "Atuona", "Guam", "Las Palmas", "Samarai",
+            "Malé", "Atuona", "Guam", "Las Palmas", "Samarai",
             "Santo Domingo", "Sofala", "Whanganui",
         ])
 

@@ -557,6 +557,14 @@ def _report_and_save(village, merged, dry_run):
     # partial READ, not a recipe change), and keep a per-village input list.
     from memory.barter_kb import (BarterRecipe, RecipeInput, Village, load_recipe,
                                   save_recipe, save_village, _slug)
+
+    # WHERE EACH MATERIAL IS SOLD, learned by tapping its location pin (user, 2026-09-04).
+    # The trade list marks every material row with one; its Source panel names the ports.
+    # Without this the tool taught the KB a recipe nobody could gather for — the mission
+    # needs source ports to plan its legs BEFORE it sails, so a good whose materials are
+    # new to the KB could never be missioned at all.
+    learned = {} if dry_run else _learn_sources(merged)
+
     written = 0
     for t in merged:
         if not t.materials:
@@ -567,8 +575,13 @@ def _report_and_save(village, merged, dry_run):
         seen, inputs = set(), []
         for material, need in t.materials.items():
             old = prior.get(material.strip().lower())
+            # A FRESH READ WINS, and an empty one keeps what the KB had — the pin may not
+            # have opened, and a material we failed to look up is not a material with no
+            # sources.
+            ports = (learned.get(material.strip().lower())
+                     or list(old.source_ports if old else []))
             inputs.append(RecipeInput(material=material, ratio=int(need),
-                                      source_ports=list(old.source_ports if old else [])))
+                                      source_ports=list(ports)))
             seen.add(material.strip().lower())
         for key, old in prior.items():
             if key not in seen:
@@ -588,6 +601,57 @@ def _report_and_save(village, merged, dry_run):
         written += 1
     save_village(Village(name=village))
     print(f"\nKB updated: {written} recipe(s) for {village}")
+
+
+def _learn_sources(merged) -> dict:
+    """{material (lowercased): [ports]} — tap each material's pin, read its Source panel.
+
+    ONE PASS OVER THE MATERIALS, and only the ones we do not already know. Each is a tap,
+    a read and a Back, so the cost is real and there is no reason to pay it twice.
+
+    Every name goes through the port catalogue on the way out — see
+    `village_remote_reader.resolve_source_port`. The panel lists producing villages and
+    section headings beside the ports, and reading it unchecked is what put 'Production' and
+    'Smelting Handbook: Uncut Ore' in the KB as places to sail to.
+
+    Best-effort throughout: a pin that will not open leaves its material unlearned, which is
+    the state it was already in.
+    """
+    from actions import ui
+    from actions.village_check import _kb_sources, material_pins
+    from actions.village_remote_reader import read_material_sources_frame
+    from capture.adb_capture import capture_screen
+    from vision.omniparser import parse_fast_cached
+
+    wanted = {m.strip().lower() for t in merged for m in (t.materials or {})}
+    known = set(_kb_sources())
+    todo = sorted(wanted - known)
+    if not todo:
+        logger.info("[learn] every material already has source ports — no pins to tap")
+        return {}
+    logger.info(f"[learn] looking up source ports for {len(todo)} material(s): {todo}")
+
+    out = {}
+    for material in todo:
+        elements = parse_fast_cached(capture_screen())
+        pins = {k.strip().lower(): v for k, v in material_pins(elements).items()}
+        pin = pins.get(material)
+        if pin is None:
+            logger.warning(f"[learn] {material!r}: no location pin on screen — not looked up")
+            continue
+        ui.tap_at(*pin, dwell="dialog", why=f"source pin for {material}")
+        try:
+            ports = read_material_sources_frame(capture_screen())
+        except Exception as exc:                       # noqa: BLE001 — one material, not the run
+            logger.warning(f"[learn] {material!r}: source panel unreadable ({exc})")
+            ports = []
+        if ports:
+            out[material] = ports
+            logger.info(f"[learn] {material}: sold at {ports}")
+        else:
+            logger.warning(f"[learn] {material!r}: the Source panel named no known port")
+        ui.back(why=f"done with {material}'s sources")
+    return out
 
 
 if __name__ == "__main__":

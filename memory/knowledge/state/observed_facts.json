@@ -3,25 +3,6 @@
     "at": 1788563330.3966029,
     "value": 4952
   },
-  "mission_progress": {
-    "at": 1788574921.667639,
-    "value": {
-      "good": "Argan Oil",
-      "phase": "planning",
-      "recipe": {
-        "good": "Argan Oil",
-        "materials": {
-          "Almond": 146,
-          "Mutton": 146,
-          "Myrrh": 73
-        },
-        "obtain": 651
-      },
-      "rounds": 7,
-      "rounds_remaining": 7,
-      "village": "Berber Village"
-    }
-  },
   "settlement": {
     "at": 1788536028.878461,
     "value": "Lisboa"
