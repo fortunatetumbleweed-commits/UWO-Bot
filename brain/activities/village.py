@@ -438,7 +438,25 @@ class VillageActivity:
         if showing:
             return None if _same_good(showing, goal.good) else str(showing)
         if getattr(panel, "materials", None):
-            return "unreadable"          # populated, unnamed — confirm by selecting
+            # A REPEAT READ MEASURES THE READER, NOT THE PANEL. "unreadable" asks to confirm
+            # BY SELECTING — but once we have selected, confirming means re-tapping the same
+            # tile and re-reading the same label that already failed. That cannot produce
+            # evidence it did not produce the first time; it only spends taps.
+            #
+            # Live 2026-09-05 at Berber: Argan Oil's name does not OCR on this panel on ANY
+            # frame. `_select_trade_good` picked its tile correctly and accepted it on the
+            # game's own live Exchange, and this then called the result "unreadable" and sent
+            # it back to select again — six taps a minute, no rounds, then BLOCKED at the
+            # attempt cap with every material aboard.
+            #
+            # The wrong-good protection is NOT weakened, because it does not live here: it
+            # lives at the selection point, where there is still a choice to make.
+            # `_try` matches the recipe first and REJECTS a tile that names another good,
+            # falling back to the live Exchange only when our own reading is inconclusive.
+            # After that there is nothing left for this check to decide.
+            if self._selects:
+                return None
+            return "unreadable"          # populated, unnamed, and NOT ours to explain yet
         return None
 
     def _reading(self):
