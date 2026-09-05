@@ -1241,6 +1241,28 @@ def buy_to_goal(port: str, goal: Mapping[str, int], *, max_rounds: int = 6,
                                 "stopping; sell surplus to free space")
                     rounds.append({"attempt": attempt, "cargo_full": True})
                     break
+                # A VISIBLY STOCKED SHELF IS NOT A STOCK PROBLEM, SO IT IS NOT WORTH A GEM
+                # (user, 2026-09-04: "blue gem should only be used when the tile is greyed
+                # out and stock is 0; on 259 it should not use blue gem to refresh as it is
+                # still available").
+                #
+                # The speculative refresh below exists for a shelf the READER missed. When
+                # the reader can see the shelf and it is stocked, buying nothing means the
+                # hold could not take it — and no amount of restocking fixes that. Live
+                # 2026-09-04 at Madeira, frame 259: Raisin 217 on the tile, fully active,
+                # 105 free slots, and the hold full of the Pig surplus. The buy raised
+                # "The Cargo Hold's Trade Goods slot will be exceeded by 52 slots"; the loop
+                # read the 0 as a possible sold-out and spent a gem at 205 and rising, then
+                # discovered the hold was full one round later anyway.
+                stocked = [m for m in buyable
+                           if (goods_after.get(m.lower()) is not None
+                               and tile_in_stock(goods_after[m.lower()]))]
+                if stocked:
+                    logger.info(f"[buy_to_goal] bought 0 while {stocked[0]!r} is still in "
+                                "stock — the shelf is not the problem, the room is; stopping "
+                                "rather than spending a gem that cannot help")
+                    rounds.append({"attempt": attempt, "cargo_full": True})
+                    break
                 # Maybe the reader just missed a sold-out shelf → refresh ONCE and retry next round.
                 if attempt >= max_rounds - 1 or not _do_refresh(attempt, buyable[0]):
                     break

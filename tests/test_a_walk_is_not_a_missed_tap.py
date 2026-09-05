@@ -152,16 +152,23 @@ class ADroppedBackIsRetriedToo(unittest.TestCase):
         self.assertIn("EXIT_BUILDING", _RETRY_ONCE_IF_UNCHANGED)
 
 
-class AVillageIsStillPressedOnlyOnce(unittest.TestCase):
-    """The retry must not reach the paths that press Back once ON PURPOSE.
+class TheRetryReachesAVillageButNotTheDangerousPlaces(unittest.TestCase):
+    """Where a second Back LANDS decides whether there may be one.
 
-    From a building, a second Back lands on the port overworld and `_NEVER_BACK_FROM` stops
-    it there. From a VILLAGE it lands at SEA — and `test_depart_village_for_the_tail` records
-    the cost: "the old loop pressed Back up to four times at a screen that never moved...
-    that is how the fleet lost the village twice". At the main menu Back means "Exit Game?",
-    where two presses once left the bot one positive tap from quitting.
+    From a building it lands on the port overworld and `_NEVER_BACK_FROM` stops it there.
+    From a VILLAGE it lands at SEA, which this class used to treat as disqualifying —
+    `test_depart_village_for_the_tail` records "the old loop pressed Back up to four times at
+    a screen that never moved... that is how the fleet lost the village twice".
 
-    Extending the retry to EXIT_BUILDING broke four of those tests before this scoping."""
+    VILLAGE IS ALLOWED NOW (user, 2026-09-04). The cost was misread, not the risk: an
+    EXIT_BUILDING at a village is dispatched when leaving IS the goal, so "lost the village"
+    and "left the village" are the same event. Live at San a single swallowed Back stranded a
+    finished barter — four rounds, 4,455 Bambara Groundnut aboard — because nothing pressed
+    again. One extra press, only on an observed-unchanged screen, is not that old loop.
+
+    What stays out is where a second Back means something ELSE: the main menu, where it is
+    "Exit Game?" and two presses once left the bot one positive tap from quitting, and the
+    overworlds, which are not screens to back out of at all."""
 
     def _backs(self, state_name):
         import types
@@ -176,12 +183,25 @@ class AVillageIsStillPressedOnlyOnce(unittest.TestCase):
             d.step()
         return len(sent)
 
-    def test_a_village_is_pressed_once(self):
-        self.assertEqual(self._backs("village"), 1,
-                         "a second Back at a village lands at SEA and loses the village")
+    def test_a_village_gets_its_one_retry(self):
+        self.assertEqual(self._backs("village"), 2,
+                         "a swallowed Back at a village strands a finished barter")
 
     def test_a_building_gets_its_one_retry(self):
         self.assertEqual(self._backs("building:market"), 2)
+
+    def test_the_main_menu_is_still_pressed_only_once(self):
+        """Back there is "Exit Game?"."""
+        self.assertEqual(self._backs("main_menu"), 1)
+
+    def test_an_overworld_is_still_pressed_only_once(self):
+        for state in ("port_overworld", "sea"):
+            with self.subTest(state):
+                self.assertEqual(self._backs(state), 1)
+
+    def test_the_retry_never_scales_with_the_looks(self):
+        """Six looks, two presses. The bound is what separates this from the old loop."""
+        self.assertLessEqual(self._backs("village"), 2)
 
     def test_a_sub_menu_does_too(self):
         self.assertEqual(self._backs("sub_menu:purchase"), 2)
