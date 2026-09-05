@@ -213,8 +213,26 @@ _RETRY_ONCE_IF_UNCHANGED = frozenset({"ENTER_BUILDING", "EXIT_BUILDING"})
 #
 # The retry only fires on an OBSERVED-unchanged screen, so a Back that worked is never
 # followed by another — but the blast radius when that observation is wrong is a lost village
-# on one side and a re-entered market on the other, and only one of those is worth risking.
-_RETRY_EXIT_FROM = ("building", "sub_menu")
+# on one side and a re-entered market on the other.
+#
+# VILLAGE IS HERE NOW (user, 2026-09-04), and what changed is the reading of that cost. A
+# second Back at a village lands at SEA, which is only a loss while there is still work in the
+# village. EXIT_BUILDING is dispatched when leaving IS the goal — the barter is over and the
+# tail leg is next — so "lost the village" and "left the village" are the same event, and the
+# guard was protecting nothing at the only moment it fires.
+#
+# What it cost live 2026-09-04 at San: four rounds committed, 4,455 Bambara Groundnut aboard,
+# and one swallowed Back stranded the lot. Back was pressed at 19:11:47 and never again;
+# three unchanged ticks later the mission failed with the fleet standing in the village.
+#
+#     19:12:03  EXIT_BUILDING ... already dispatched — letting it land
+#     19:12:12  EXIT_BUILDING ... already dispatched — letting it land
+#     19:12:21  NOTHING CHANGED for 3 ticks (state='village')
+#
+# The old note is still right about the ORIGINAL failure it records: that loop pressed Back
+# "up to four times at a screen that never moved". This is one extra press, gated on an
+# unchanged observation, and still bounded by the same stall guard — not that loop returning.
+_RETRY_EXIT_FROM = ("building", "sub_menu", "village")
 
 # When the family classifier's answer stands on its own. Measured on the frames that
 # defeated the label test: 0.9998, 0.958, 0.996 — it is either sure or it is not.

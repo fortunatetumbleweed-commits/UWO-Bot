@@ -341,6 +341,30 @@ def refresh_market(capture_fn=None, tap_fn=None, *, ocr_fn=None, settle: float =
             "reason": f"refresh {'ok' if ok else 'NOT confirmed'} ({signal})"}
 
 
+def _qty_of(goods: Mapping, name: str) -> Optional[int]:
+    """A good's shelf quantity from a grid reading, or None when it was not read."""
+    g = (goods or {}).get((name or "").lower())
+    q = getattr(g, "available_qty", None) if g is not None else None
+    return int(q) if isinstance(q, int) else None
+
+
+def _shelf_drop(before: Mapping, after: Mapping, name: str) -> int:
+    """How far one good's shelf fell across a buy — 0 when it cannot be said.
+
+    Only meaningful for a SINGLE-good round; with two goods bought together the drop of one
+    says nothing about the other, which is the same reason the tracked cargo tile cannot be
+    credited to both (see the ledger call in `buy_to_goal`).
+
+    A shelf that RISES has been refreshed rather than bought from, and a missing reading is
+    not a drop of zero — both return 0 so the ledger keeps its "amount unknown" meaning
+    rather than being told a fiction.
+    """
+    b, a = _qty_of(before, name), _qty_of(after, name)
+    if b is None or a is None:
+        return 0
+    return max(0, b - a)
+
+
 def tile_in_stock(good_obj) -> bool:
     """Is this Purchase tile ACTIVE — i.e. can it be bought right now?
 
@@ -1015,7 +1039,34 @@ def buy_to_goal(port: str, goal: Mapping[str, int], *, max_rounds: int = 6,
                 # bought-amount-unknown, which routes the loop to the sell grid — the only
                 # panel where a per-good quantity is legible.
                 if len(buyable) == 1:
-                    ledger.bought(buyable[0], int(got or 0))
+                    # THE SHELF'S OWN QUANTITY IS READABLE WHEN THE OWNED COUNT IS NOT, and
+                    # with ONE good in the order its drop IS what we bought.
+                    #
+                    # Live 2026-09-04 at Faro the Sell tab would not confirm, so every round
+                    # logged `owned=UNREADABLE ... 0/2520` while the grid said plainly:
+                    #
+                    #     'Pig' owned was unreadable on the page; its tile reads 684
+                    #     [Faro] load Pig — tap tile @ (1007, 555)
+                    #     'Pig' owned was unreadable on the page; its tile reads 0
+                    #
+                    # 684 to 0 is 684 bought, and nothing about it depends on the panel that
+                    # failed. Without it the ledger recorded "amount unknown", `buyable_now`
+                    # could never mark Pig met, and the loop bought FOUR shelves — 2,736
+                    # against a goal of 1,260 — stopping only on the summed runaway guard.
+                    # The 1,476 surplus then filled the hold, left 105 free slots, and cost
+                    # the mission its Raisin and a barter round.
+                    #
+                    # Strictly a fallback: a measured `got` is a real per-tile delta and
+                    # always wins. This only speaks where the alternative is silence.
+                    amount = int(got or 0)
+                    if amount <= 0:
+                        amount = _shelf_drop(goods, goods_after, buyable[0])
+                        if amount:
+                            logger.info(f"[buy_to_goal] owned unreadable, but {buyable[0]!r}'s "
+                                        f"shelf went {_qty_of(goods, buyable[0])} → "
+                                        f"{_qty_of(goods_after, buyable[0])} — crediting "
+                                        f"{amount} bought")
+                    ledger.bought(buyable[0], amount)
                 else:
                     logger.info(f"[buy_to_goal] {len(buyable)} goods bought together "
                                 f"({', '.join(buyable)}) — one tracked tile cannot say how "

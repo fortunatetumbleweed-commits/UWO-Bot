@@ -334,10 +334,39 @@ def make_live_executors(opp=None) -> dict:
         if result is None:
             return {"ok": False, "reason": f"could not reach the market at {port}"}
         observed = dict(result.observed)
+
+        # TRIM BEFORE LEAVING THIS PORT, not after every gather has run (user, 2026-09-04:
+        # "we need to trim it earlier if there are too many for some materials").
+        #
+        # `buy_to_goal` buys by the shelf, so a leg routinely overshoots — and the graph's
+        # `sell_surplus` node depends on ALL the gathers, so the overshoot rode to the NEXT
+        # port and took the space that port's material needed.
+        #
+        # Live 2026-09-04: Faro bought 2,736 Pig against a goal of 1,260, the fleet reached
+        # Madeira at 4,847/4,952 with 105 slots free, and Raisin came home at 869 of 1,260 —
+        # capping the barter at four rounds. The trim that would have released 1,476 slots
+        # was scheduled to run after Madeira.
+        #
+        # Here the fleet is still standing in the market it just bought from, which is the
+        # one place a sale can happen, so this costs no sailing and no extra walk. The
+        # end-of-gathering trim stays: this bounds what each leg hands to the next, and that
+        # one catches whatever the last leg overshot.
+        keep_qty = task.params.get("keep_qty") or {}
+        trimmed = None
+        if keep_qty:
+            from brain.activities.market import TrimHold
+            trim = run_goal(TrimHold(dict(keep_qty)))
+            if trim is None:
+                logger.warning(f"[mission.gather] {port}: could not trim before leaving — "
+                               "the surplus sails on")
+            else:
+                trimmed = dict(trim.observed).get("trimmed")
+                logger.info(f"[mission.gather] {port}: trimmed to plan {trimmed}")
+
         _exit_market_to_overworld()   # clean hand-off: leave port_overworld for the next leg
         return {"ok": bool(result.ok), "port": port,
                 "bought_total": observed.get("bought_total"),
-                "met": observed.get("met"),
+                "met": observed.get("met"), "trimmed": trimmed,
                 "reason": observed.get("stopped_because") or result.detail}
 
     @_facade
