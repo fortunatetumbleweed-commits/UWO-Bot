@@ -755,5 +755,125 @@
       "event": null
     },
     "notes": ""
+  },
+  "argan_oil": {
+    "good": "Argan Oil",
+    "season": "",
+    "inputs": [
+      {
+        "material": "Myrrh",
+        "ratio": 73,
+        "source_ports": []
+      },
+      {
+        "material": "Mutton",
+        "ratio": 146,
+        "source_ports": []
+      },
+      {
+        "material": "Almond",
+        "ratio": 146,
+        "source_ports": [
+          "Lisboa",
+          "Málaga",
+          "Palma",
+          "Valencia"
+        ]
+      }
+    ],
+    "village_inputs": {
+      "berber_village": [
+        {
+          "material": "Myrrh",
+          "ratio": 73,
+          "source_ports": []
+        },
+        {
+          "material": "Mutton",
+          "ratio": 146,
+          "source_ports": []
+        },
+        {
+          "material": "Almond",
+          "ratio": 146,
+          "source_ports": []
+        }
+      ]
+    },
+    "villages": [
+      "Berber Village"
+    ],
+    "output_per_round": {},
+    "preconditions": {
+      "amity_min": null,
+      "trade_level_min": null,
+      "negotiation_expertise_min": null,
+      "guild": null,
+      "event": null
+    },
+    "notes": ""
+  },
+  "momordica_balsamina": {
+    "good": "Momordica Balsamina",
+    "season": "",
+    "inputs": [
+      {
+        "material": "Tobacco",
+        "ratio": 146,
+        "source_ports": [
+          "Havana",
+          "Port Royal",
+          "Santo Domingo"
+        ]
+      },
+      {
+        "material": "Peanut",
+        "ratio": 73,
+        "source_ports": [
+          "Port Royal",
+          "Santiago de Cuba",
+          "Southside"
+        ]
+      },
+      {
+        "material": "Chicle",
+        "ratio": 146,
+        "source_ports": [
+          "Mérida",
+          "Veracruz"
+        ]
+      }
+    ],
+    "village_inputs": {
+      "berber_village": [
+        {
+          "material": "Tobacco",
+          "ratio": 146,
+          "source_ports": []
+        },
+        {
+          "material": "Peanut",
+          "ratio": 73,
+          "source_ports": []
+        },
+        {
+          "material": "Chicle",
+          "ratio": 146,
+          "source_ports": []
+        }
+      ]
+    },
+    "villages": [
+      "Berber Village"
+    ],
+    "output_per_round": {},
+    "preconditions": {
+      "amity_min": null,
+      "trade_level_min": null,
+      "negotiation_expertise_min": null,
+      "guild": null,
+      "event": null
+    },
+    "notes": ""
   }
 }

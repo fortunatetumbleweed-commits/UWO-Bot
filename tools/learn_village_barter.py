@@ -623,34 +623,78 @@ def _learn_sources(merged) -> dict:
     from capture.adb_capture import capture_screen
     from vision.omniparser import parse_fast_cached
 
+    import time
+    from actions.village_check import trade_list_elements
+
     wanted = {m.strip().lower() for t in merged for m in (t.materials or {})}
     known = set(_kb_sources())
-    todo = sorted(wanted - known)
+    todo = set(wanted) - known
     if not todo:
         logger.info("[learn] every material already has source ports — no pins to tap")
         return {}
-    logger.info(f"[learn] looking up source ports for {len(todo)} material(s): {todo}")
+    logger.info(f"[learn] looking up source ports for {len(todo)} material(s): {sorted(todo)}")
+
+    # THE LIST IS TALLER THAN THE SCREEN, SO THE LOOKUP MUST WALK IT.
+    #
+    # This read pins from whatever screen the scroll passes happened to end on, and a pin
+    # only exists for a row that is currently drawn. Live 2026-09-04 at Berber that learned
+    # Almond and Chicle and reported "no location pin on screen" for Mutton and Myrrh — both
+    # Argan Oil materials, both simply below the fold. The mission stayed unplannable for
+    # want of two rows nobody had scrolled to.
+    #
+    # So: rewind to the top and sweep, exactly as the reading passes do, taking every wanted
+    # pin on each screen before moving on. Bounded by MAX_SCREENS, and it stops the moment
+    # the list has nothing left we came for.
+    for _ in range(REWIND_SWIPES):
+        vp = _list_viewport(list(trade_list_elements(capture_screen())))
+        if vp is None:
+            break
+        from tools.village_scroll_report import _scrollbar, bar_position
+        at_top, _ = bar_position(_scrollbar(capture_screen(), vp), vp)
+        if at_top:
+            break
+        _safe_scroll(vp, -SCROLL_DY, "rewind the trade list before looking up sources")
+        time.sleep(0.6)
 
     out = {}
-    for material in todo:
-        elements = parse_fast_cached(capture_screen())
-        pins = {k.strip().lower(): v for k, v in material_pins(elements).items()}
-        pin = pins.get(material)
-        if pin is None:
-            logger.warning(f"[learn] {material!r}: no location pin on screen — not looked up")
-            continue
-        ui.tap_at(*pin, dwell="dialog", why=f"source pin for {material}")
-        try:
-            ports = read_material_sources_frame(capture_screen())
-        except Exception as exc:                       # noqa: BLE001 — one material, not the run
-            logger.warning(f"[learn] {material!r}: source panel unreadable ({exc})")
-            ports = []
-        if ports:
-            out[material] = ports
-            logger.info(f"[learn] {material}: sold at {ports}")
-        else:
-            logger.warning(f"[learn] {material!r}: the Source panel named no known port")
-        ui.back(why=f"done with {material}'s sources")
+    for _screen in range(MAX_SCREENS):
+        if not todo:
+            break
+        frame = capture_screen()
+        pins = {k.strip().lower(): v
+                for k, v in material_pins(parse_fast_cached(frame)).items()}
+        here = [m for m in sorted(todo) if m in pins]
+        for material in here:
+            ui.tap_at(*pins[material], dwell="dialog", why=f"source pin for {material}")
+            try:
+                ports = read_material_sources_frame(capture_screen())
+            except Exception as exc:                   # noqa: BLE001 — one material, not the run
+                logger.warning(f"[learn] {material!r}: source panel unreadable ({exc})")
+                ports = []
+            if ports:
+                out[material] = ports
+                logger.info(f"[learn] {material}: sold at {ports}")
+            else:
+                logger.warning(f"[learn] {material!r}: the Source panel named no known port")
+            # LOOKED UP IS LOOKED UP. A material whose panel named nothing is not retried on
+            # the next screen — the answer was empty, not missing, and re-tapping the same
+            # pin costs a tap and a Back to learn the same nothing.
+            todo.discard(material)
+            ui.back(why=f"done with {material}'s sources")
+            time.sleep(0.4)
+        if not todo:
+            break
+        vp = _list_viewport(list(trade_list_elements(capture_screen())))
+        if vp is None:
+            logger.warning("[learn] the trade list viewport could not be measured — "
+                           f"stopping the source sweep with {sorted(todo)} unlooked-up")
+            break
+        _safe_scroll(vp, SCROLL_DY, "next screen of the trade list")
+        time.sleep(0.6)
+
+    if todo:
+        logger.warning(f"[learn] no location pin found for {sorted(todo)} — left unsourced, "
+                       "which is the state they were already in")
     return out
 
 

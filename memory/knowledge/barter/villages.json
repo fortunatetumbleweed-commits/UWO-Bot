@@ -77,5 +77,16 @@
     "barter_rounds_remaining": null,
     "eligible_goods": [],
     "locked_goods": []
+  },
+  "berber_village": {
+    "name": "Berber Village",
+    "lat": null,
+    "lon": null,
+    "amity": null,
+    "amity_points": null,
+    "barter_rounds_total": null,
+    "barter_rounds_remaining": null,
+    "eligible_goods": [],
+    "locked_goods": []
   }
 }
