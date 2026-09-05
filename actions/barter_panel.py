@@ -364,6 +364,35 @@ def _select_trade_good(good: str, recipe: Optional[Mapping[str, int]] = None) ->
 _STRIP_PITCH_TOL_FRACTION = 0.35
 
 
+# A goods thumbnail is a square of roughly 130px. Small enough to admit a box the parser has
+# clipped, large enough to exclude the quantity/status glyphs that sit inside and beneath it.
+_TILE_MIN_PX = 60
+
+
+def _is_tile_body(e) -> bool:
+    """Whether `e` is a goods thumbnail — the only part of a tile that selects.
+
+    An `icon` in the band still qualifies on type alone, exactly as before and without
+    needing a box. What is NEW is the second clause: a thumbnail-sized box of any class.
+    OmniParser returned San Village's two thumbnails as BUTTONS carrying their stock
+    quantity, so the icon-typed search found none, and the caller fell through to anchoring
+    on the status chip BELOW the tile — an inert control it then tapped forty times.
+    """
+    if not (350 < (getattr(e, "cy", 0) or 0) < 480):
+        return False
+    if getattr(e, "element_type", "") == "icon":
+        return True
+    x1, x2 = getattr(e, "x1", None), getattr(e, "x2", None)
+    y1, y2 = getattr(e, "y1", None), getattr(e, "y2", None)
+    if None in (x1, x2, y1, y2):
+        return False                     # no box, no size test — not a body we can trust
+    return (x2 - x1) >= _TILE_MIN_PX and (y2 - y1) >= _TILE_MIN_PX
+
+# How far up from the thumbnail's bottom edge to aim, as a fraction of its height. Bounded
+# below by the lock banner across the middle and above by the chips beneath the tile.
+_TAP_ABOVE_BOTTOM_FRACTION = 0.28
+
+
 def _tradable_tiles(elements) -> list:
     """The goods tiles: an icon with a CATEGORY label directly beneath it.
 
@@ -372,13 +401,26 @@ def _tradable_tiles(elements) -> list:
     are found by pairing each category label with the icon above it, so nothing here is a
     fixed coordinate.
     """
-    icons = [e for e in elements
-             if getattr(e, "element_type", "") == "icon" and 350 < e.cy < 480]
+    # THE TILE BODY IS NOT ALWAYS AN `icon` ELEMENT, and requiring one is what made the tap
+    # land on nothing. At San Village 2026-09-04 OmniParser returned BOTH thumbnails as
+    # BUTTONS carrying their stock quantity — `button '91' (357,356)-(490,495)` — so `icons`
+    # came back empty, the anchor fell through to the status chip below, and the bot tapped
+    # the inert 'Abundant' badge at (424,509) once every eight seconds. The user watching it:
+    # "it indeed tapped but there was no response."
+    #
+    # What identifies the body is WHERE IT IS AND HOW BIG IT IS — a thumbnail-sized box in the
+    # icon band, in the label's column — not which class the parser happened to assign it.
+    # The cx pairing below is what keeps the left menu out: 'Loot' also lands in this band,
+    # at cx=179 against the strip's 423+, and is rejected on column.
+    icons = [e for e in elements if _is_tile_body(e)]
     labels = [e for e in elements
               if (getattr(e, "label", "") or "").strip() and 530 < e.cy < 580]
+    # 'Recommended' was missing, and a tile whose chip says it — with no icon element emitted —
+    # was dropped ENTIRELY rather than mis-aimed: San's Medicine tile never reached the strip,
+    # which is why the log said "1 tradable tile" about a panel showing two.
     status = [e for e in elements
               if (getattr(e, "label", "") or "").strip().lower()
-              in ("insufficient", "depleted", "sufficient", "abundant")]
+              in ("insufficient", "depleted", "sufficient", "abundant", "recommended")]
     out = []
     for lab in labels:
         icon = min(icons, key=lambda e: abs(e.cx - lab.cx), default=None)
@@ -430,6 +472,18 @@ def _aim_below_the_banner(tiles: list) -> list:
     The row decides, not each icon. Tiles share one vertical extent, and an individual box
     can come back short when something overlaps it — on that same frame the info tip clipped
     tile 4's icon, whose own box would have put the tap at y=442, back inside the banner.
+
+    ONLY THE THUMBNAIL SELECTS (user, 2026-09-04: "only tapping at the icon works, not on
+    the text"). The chips beneath it are their own controls — measured at San Village the
+    thumbnail spans y 361-486, the stock chip 491-527 and the category chip 532-570 — and a
+    tap on one of those does nothing at all, silently.
+
+    So the aim is bounded on BOTH sides, and 15% from the bottom was too little clearance:
+    it put the tap on the tile's bottom border beside the stock quantity. 28% sits below the
+    banner (which ends ~63% down) and well inside the artwork:
+
+        San   thumbnail 356-495, banner none      -> 456, clear of the '11' glyph
+        Svear thumbnail 366-514, banner 420-460   -> 473, below the banner
     """
     bottoms = [t["y2"] for t in tiles if t.get("y2") is not None]
     tops = [t["y1"] for t in tiles if t.get("y1") is not None]
@@ -437,8 +491,11 @@ def _aim_below_the_banner(tiles: list) -> list:
         if bottoms and tops:
             y1 = sorted(tops)[len(tops) // 2]
             y2 = sorted(bottoms)[len(bottoms) // 2]
-            t["tap_y"] = int(y2 - (y2 - y1) * 0.15)
+            t["tap_y"] = int(y2 - (y2 - y1) * _TAP_ABOVE_BOTTOM_FRACTION)
         else:
+            # NO ROW GEOMETRY AT ALL. `t["cy"]` is the tile's own anchor, which is the
+            # thumbnail whenever one was found — never the status chip, which is what this
+            # fell through to at San and tapped 40 times to no effect.
             t["tap_y"] = t["cy"]
     return tiles
 
