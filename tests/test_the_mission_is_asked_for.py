@@ -164,13 +164,28 @@ class EachLegKindBecomesItsOwnOrder(unittest.TestCase):
 
 class ItReportsRatherThanRetries(unittest.TestCase):
     def test_a_blocked_leg_stops_the_mission_with_a_reason(self):
-        """What to do about a port that will not sell needs the plan, which is not here."""
-        r = _runner([SubTask("t", "sell_surplus", "", params={"clear": True, "keep_qty": {}})])
+        """What to do about a port that will not sell needs the plan, which is not here.
+
+        NARROWED 2026-09-05: this used a `sell_surplus` leg, and trimming is SUPPORT —
+        see `test_a_blocked_trim_is_stepped_over` below and
+        `tests/test_a_refused_trim_is_not_the_mission.py`. The rule itself is unchanged for
+        every leg that IS the mission, which is what this now uses.
+        """
+        r = _runner([SubTask("s", "sell", "", params={})])
         r.next_goal(None, _st())
         self.assertIsNone(r.next_goal(ActivityResult(BLOCKED, {}, detail="shelves full"),
                                       _st()))
         self.assertEqual(r.status, FAILED)
         self.assertIn("shelves full", r.reason)
+
+    def test_a_blocked_trim_is_stepped_over(self):
+        """Live 2026-09-05: a dropped Sell tap at Madeira failed a mission one port from
+        Hutu, over an over-stock of 108 Pig. A full hold is the barter's problem, and the
+        overflow dialog is how it solves it."""
+        r = _runner([SubTask("t", "sell_surplus", "", params={"clear": True, "keep_qty": {}})])
+        r.next_goal(None, _st())
+        r.next_goal(ActivityResult(BLOCKED, {}, detail="could not reach the Sell grid"), _st())
+        self.assertNotEqual(r.status, FAILED)
 
     def test_working_and_routing_do_not_end_a_leg(self):
         r = _runner([SubTask("t", "sell_surplus", "", params={"clear": True, "keep_qty": {}})])

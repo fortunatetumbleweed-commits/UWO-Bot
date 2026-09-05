@@ -5,7 +5,7 @@
     "inputs": [
       {
         "material": "Raisin",
-        "ratio": 279,
+        "ratio": 219,
         "source_ports": [
           "Bordeaux",
           "Madeira",
@@ -14,7 +14,7 @@
       },
       {
         "material": "Pig",
-        "ratio": 279,
+        "ratio": 219,
         "source_ports": [
           "Faro",
           "Gijon",
@@ -27,7 +27,7 @@
       "hutu_village": [
         {
           "material": "Raisin",
-          "ratio": 279,
+          "ratio": 219,
           "source_ports": [
             "Bordeaux",
             "Madeira",
@@ -36,7 +36,7 @@
         },
         {
           "material": "Pig",
-          "ratio": 279,
+          "ratio": 219,
           "source_ports": [
             "Faro",
             "Gijon",
@@ -72,7 +72,8 @@
       "Hutu Village"
     ],
     "output_per_round": {
-      "Neutral": 829
+      "Neutral": 829,
+      "Friendly": 967
     },
     "preconditions": {
       "amity_min": null,

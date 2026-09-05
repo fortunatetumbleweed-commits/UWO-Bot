@@ -347,6 +347,26 @@ class MissionRunner:
             self.completed.append(leg.id)
             logger.info(f"[mission_runner] {leg.id} done")
             return
+        # TRIMMING IS SUPPORT, NOT A LEG OF THE MISSION (CLAUDE.md: "the task is gather,
+        # barter, sell; trim, supply and capacity are SUPPORT — opportunistic when the place
+        # affords them, never mandatory legs"). It frees space, and a hold that stays full is
+        # something the barter already handles: the overflow dialog trades space for product.
+        #
+        # Live 2026-09-05 at Madeira the Sell tab did not open — the game drops roughly one
+        # tap in twenty — so the trim REFUSED rather than reporting a hold it never saw,
+        # which is correct. That refusal then failed the whole mission: the fleet sat one
+        # port from Hutu with both materials aboard, and the run ended having bartered
+        # nothing. The trim was over-stock by 108 Pig.
+        #
+        # So a refused trim is reported and stepped over. Every other leg still fails the
+        # mission, because gather, barter and sell ARE the mission.
+        if leg.kind == "sell_surplus":
+            self.completed.append(leg.id)
+            leg.done = True
+            logger.warning(f"[mission_runner] {leg.id} refused ({runner.reason or 'failed'}) "
+                           "— trimming is support, so the mission carries on without it")
+            return
+
         # A LEG THAT REFUSED IS THE MISSION'S PROBLEM, not the leg's. Reported rather than
         # retried here: what to do about a port that will not sell needs the plan.
         self.status = FAILED

@@ -4,22 +4,21 @@
     "value": 4952
   },
   "mission_progress": {
-    "at": 1788644663.767314,
+    "at": 1788648472.0922089,
     "value": {
-      "good": "Birch Tree",
-      "phase": "bartering",
+      "good": "Bambara Groundnut",
+      "phase": "gathering",
       "recipe": {
-        "good": "Birch Tree",
+        "good": "Bambara Groundnut",
         "materials": {
-          "Candle": 88,
-          "Iron": 88,
-          "Matchlock Gun": 44
+          "Pig": 219,
+          "Raisin": 219
         },
-        "obtain": 604
+        "obtain": 967
       },
-      "rounds": 7,
+      "rounds": 5,
       "rounds_remaining": 7,
-      "village": "Svear Village"
+      "village": "Hutu Village"
     }
   },
   "settlement": {

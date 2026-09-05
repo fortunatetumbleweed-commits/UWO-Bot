@@ -959,11 +959,26 @@ def buy_to_goal(port: str, goal: Mapping[str, int], *, max_rounds: int = 6,
         # loop must not stall waiting for a tile read it already has the answer to. This is
         # the ONLY case where a total may stand in: with two goods it is exactly the
         # attribution that failed at Barcelona (Iron's +324 credited to Matchlock Gun too).
-        if len(goal) == 1:
-            only, want = next(iter(goal.items()))
+        #
+        # AND ONLY WHILE THE LEDGER CANNOT ANSWER. `total_seen` is the TRACKED TILE's
+        # absolute count, not the arrivals this premise describes, so when the tracker
+        # follows the wrong tile it is another good's number entirely. Live 2026-09-05 at
+        # Madeira, ordering Raisin alone with 1,368 Pig already aboard:
+        #
+        #   bought 217 Raisin — believed 651        (three shelves, every amount READ)
+        #   round 4/60: owned=1368 (+717)           (Pig's count, and no 717 shelf exists)
+        #   goal met — Raisin ~1368/1260
+        #
+        # It reported `met` and `state: 'short'` in the same result, and the mission sailed
+        # on believing Raisin gathered. A ledger with nothing pending has read every purchase
+        # it made and IS the answer; overriding it with a tile that may have wandered is how
+        # a leg reports a hold it does not have.
+        only_good = next(iter(goal)) if len(goal) == 1 else None
+        if only_good is not None and ledger.amount_unknown(only_good):
+            only, want = only_good, goal[only_good]
             if total_seen >= int(want):
-                return True, (f"{only} ~{total_seen}/{want} — the only good in the order, "
-                              "so the cargo total is its count")
+                return True, (f"{only} ~{total_seen}/{want} — the only good in the order and "
+                              "its amounts are unread, so the cargo total is its count")
         return met, why
 
     # COLD pre-check via the SELL tab (no buying): how many do we ALREADY own?  Read from the Sell
