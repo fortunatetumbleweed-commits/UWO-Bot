@@ -770,7 +770,7 @@
       },
       {
         "material": "Mutton",
-        "ratio": 146,
+        "ratio": 126,
         "source_ports": [
           "Antalya",
           "Hormuz",
@@ -781,7 +781,7 @@
       },
       {
         "material": "Almond",
-        "ratio": 146,
+        "ratio": 126,
         "source_ports": [
           "Lisboa",
           "Málaga",
@@ -802,7 +802,7 @@
         },
         {
           "material": "Mutton",
-          "ratio": 146,
+          "ratio": 126,
           "source_ports": [
             "Antalya",
             "Hormuz",
@@ -813,7 +813,7 @@
         },
         {
           "material": "Almond",
-          "ratio": 146,
+          "ratio": 126,
           "source_ports": [
             "Lisboa",
             "Málaga",
@@ -827,7 +827,7 @@
       "Berber Village"
     ],
     "output_per_round": {
-      "Neutral": 651
+      "Neutral": 751
     },
     "preconditions": {
       "amity_min": null,

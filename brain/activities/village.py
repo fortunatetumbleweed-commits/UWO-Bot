@@ -565,9 +565,15 @@ _MAX_SELECT_ATTEMPTS = 2
 
 
 def _same_good(a: str, b: str) -> bool:
-    """Loose match — the panel's OCR of a name need not be byte-identical to the plan's."""
-    norm = lambda t: "".join(ch for ch in str(t).lower() if ch.isalnum())
-    return norm(a) == norm(b) or norm(a) in norm(b) or norm(b) in norm(a)
+    """Loose match — the panel's OCR of a name need not be byte-identical to the plan's.
+
+    Loose about SPELLING, strict about WORDS. This stripped to alphanumerics and asked
+    whether either contained the other, so 'almond' matched 'almondoil' — and the game is
+    full of such pairs (Almond / Almond Oil, Duck / Duck Meat, Olive / Olive Oil). The same
+    test in `_find_material_tile` bought 1,020 of the wrong good at Lisboa on 2026-09-05.
+    """
+    from utils.fuzzy import same_good_name
+    return same_good_name(a, b)
 
 
 def _what_it_saw() -> dict:

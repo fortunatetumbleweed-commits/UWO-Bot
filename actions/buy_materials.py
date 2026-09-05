@@ -51,19 +51,39 @@ def _find_material_tile(elements, material: str):
     """(cx, cy) of the goods-grid tile whose label matches `material` (OmniParser
     button in the left/centre grid, cx < ~1600). None if not on screen (out of
     stock / wrong tab)."""
-    m = material.lower()
-    best = None
+    # THE EXTRA WORD IS THE WHOLE DIFFERENCE. This was `m in lab or lab in m`, and the game
+    # is full of names that are prefixes of one another — Almond / Almond Oil, Duck / Duck
+    # Meat, Olive / Olive Oil (user, 2026-09-05).
+    #
+    # Live 2026-09-05 at Lisboa, with BOTH tiles on screen and both read correctly:
+    #
+    #     button 'Almond'      @ (1450, 557)
+    #     button 'Almond Oil'  @ ( 570, 798)   <- what the substring test returned, twice
+    #
+    # It bought ~1,020 Almond Oil for ~194,000 ducats and two blue gems, drained Lisboa's
+    # Almond Oil shelf twice, and carried zero Almond. Nothing downstream could catch it: the
+    # ledger, the goal counter and every log line say the name we ASKED for, never the name
+    # on the tile that was tapped. The goal then read 1020/1015 — met — and the mission would
+    # have gathered the other two materials and failed at the barter panel.
+    #
+    # EXACT FIRST, then per-word fuzzy. `same_good_name` requires the same number of words,
+    # so a prefix can never stand in for the good itself, while a tile that OCRs as 'Almend'
+    # still matches.
+    from utils.fuzzy import same_good_name
+    exact, fuzzy = None, None
     for e in elements:
-        lab = (getattr(e, "label", "") or "").strip().lower()
-        if not lab or getattr(e, "cx", None) is None:
+        lab = (getattr(e, "label", "") or "").strip()
+        if not lab or getattr(e, "cx", None) is None or getattr(e, "cx") >= 1600:
             continue
-        if getattr(e, "cx") >= 1600:
-            continue
-        et = (getattr(e, "element_type", "") or "")
-        if m in lab or lab in m:
-            if et == "button" or best is None:
-                best = (int(e.cx), int(e.cy))
-    return best
+        is_button = (getattr(e, "element_type", "") or "") == "button"
+        pos = (int(e.cx), int(e.cy))
+        if lab.lower().split() == material.lower().split():
+            if is_button or exact is None:
+                exact = pos
+        elif same_good_name(material, lab):
+            if is_button or fuzzy is None:
+                fuzzy = pos
+    return exact or fuzzy
 
 
 def _find_purchase_commit(frame, elements):

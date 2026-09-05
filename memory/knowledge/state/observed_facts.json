@@ -4,18 +4,18 @@
     "value": 4952
   },
   "mission_progress": {
-    "at": 1788585567.6988769,
+    "at": 1788621264.626425,
     "value": {
       "good": "Argan Oil",
       "phase": "gathering",
       "recipe": {
         "good": "Argan Oil",
         "materials": {
-          "Almond": 146,
-          "Mutton": 146,
+          "Almond": 126,
+          "Mutton": 126,
           "Myrrh": 73
         },
-        "obtain": 651
+        "obtain": 751
       },
       "rounds": 7,
       "rounds_remaining": 7,
