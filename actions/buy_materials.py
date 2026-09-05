@@ -250,6 +250,31 @@ def _react_after_purchase(capture_fn, tap_fn) -> bool:
                 logger.info("[buy] negotiation popup — No")
                 tap_fn(*pos)
                 continue
+        # THE OVERLOAD NOTICE, WHICH SAYS NONE OF THE WORDS BELOW (user, 2026-09-04: "for
+        # this one you can tap the Ok button").
+        #
+        #   "The Cargo Hold's Trade Goods slot will be exceeded by 52 slots.
+        #    Purchase the Trade Goods?"                              [Cancel] [OK]
+        #
+        # No "confirm", no "result", no "balance" — so this loop broke on its first pass and
+        # left the dialog standing. `purchase_goods` then returned ok with purchased=False,
+        # and the caller walked out of the market through the chromed title with the Notice
+        # still up. Live 2026-09-04 at Madeira (frame 272) that abandoned the purchase
+        # entirely: 105 slots were free and nothing was bought.
+        #
+        # It is a plain acknowledgement — the game hands back what fits and the rest is not
+        # taken — and it spends no gems, so OK is the answer. Matched on BOTH phrases, never
+        # on the bare word "notice", because a Notice is a shape and not a meaning.
+        if "exceeded by" in txt and "purchase the trade goods" in txt:
+            pos = find_text_button(tokens, "ok", min_ratio=0.85)
+            if pos:
+                logger.info("[buy] trade-goods overload Notice — OK (the hold takes what "
+                            "fits)")
+                tap_fn(*pos)
+                confirmed = True
+                continue
+            logger.warning("[buy] overload Notice is up but its OK could not be found — "
+                           "leaving it rather than tapping blind")
         if "confirm" in txt or "result" in txt or "balance" in txt:  # buy OR sell
             pos = find_text_button(tokens, "ok", min_ratio=0.85)
             if pos:
