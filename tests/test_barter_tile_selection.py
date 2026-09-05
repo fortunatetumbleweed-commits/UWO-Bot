@@ -47,6 +47,12 @@ class _Label:
         self.y1, self.y2 = cy - 12, cy + 12
 
 
+class _Status(_Label):
+    """The stock chip, one row above the category — 'Abundant', 'Excessive', anything."""
+    def __init__(self, cx, label):
+        super().__init__(cx, label, cy=509)
+
+
 def _panel_elements():
     """The Svear strip: four columns at cx 424/560/693/828."""
     out = []
@@ -279,3 +285,119 @@ class TheRowDecidesTheTapHeight(unittest.TestCase):
             els += [_Icon(cx, y1=366, y2=514), _Label(cx, cat)]
         heights = {t["tap_y"] for t in bp._tradable_tiles(els)}
         self.assertEqual(len(heights), 1, f"the row should agree on one height: {heights}")
+
+
+class TheBerberPanelOfTwoGoods(unittest.TestCase):
+    """Two goods and a 'Negotiate' button — the panel that cost a three-port gather.
+
+    Live 2026-09-05, both tiles present and correctly read:
+
+        button cy=509 cx=423 'Excessive'     button cy=509 cx=557 'Abundant'
+        button cy=552 cx=424 'Seasoning'     button cy=552 cx=558 'Spices'
+
+    `_tradable_tiles` returned [('Spices','Abundant'), ('Negotiate','')] — it dropped Argan
+    Oil and admitted a button 1,400px away in the detail panel, which the mission then tapped
+    twice. Two independent faults, one per test class below.
+    """
+
+    def _els(self):
+        return [_Icon(424), _Status(424, "Excessive"), _Label(424, "Seasoning"),
+                _Icon(558), _Status(558, "Abundant"), _Label(558, "Spices"),
+                _Icon(1960), _Label(1960, "Negotiate")]
+
+    def test_both_goods_are_offered(self):
+        self.assertEqual([t["category"] for t in bp._tradable_tiles(self._els())],
+                         ["Seasoning", "Spices"])
+
+    def test_the_negotiate_button_is_not_a_good(self):
+        """It costs amity per attempt; it was tapped twice before the run was stopped."""
+        self.assertNotIn("Negotiate",
+                         [t["category"] for t in bp._tradable_tiles(self._els())])
+
+    def test_a_pair_is_still_a_row(self):
+        """`_strip_row` bailed below three tiles, so on a two-good panel the guard that
+        exists to reject 'Negotiate' never ran at all."""
+        tiles = bp._tradable_tiles(self._els())
+        self.assertTrue(all(t["cx"] < 900 for t in tiles), [t["cx"] for t in tiles])
+
+
+class AnUnknownStatusWordKeepsItsTile(unittest.TestCase):
+    """The chip's WORD gates nothing (user, 2026-09-05: "we should not care about these words
+    at all"). It was matched against a fixed vocabulary, and a tile whose chip said anything
+    else was dropped whenever no icon was emitted for it — twice in two days: 'Recommended'
+    on 09-04 (San's Medicine tile) and 'Excessive' on 09-05 (ARGAN OIL)."""
+
+    def test_a_status_nobody_has_seen_before_still_yields_a_tile(self):
+        els = [_Status(424, "Excessive"), _Label(424, "Seasoning"),
+               _Status(558, "Wildly Overstocked"), _Label(558, "Spices")]
+        self.assertEqual([t["category"] for t in bp._tradable_tiles(els)],
+                         ["Seasoning", "Spices"])
+
+    def test_the_word_still_comes_along_as_a_hint(self):
+        els = [_Icon(424), _Status(424, "Excessive"), _Label(424, "Seasoning")]
+        self.assertEqual(bp._tradable_tiles(els)[0]["status"], "Excessive")
+
+
+class ThePitchIsWhicheverSpacingExplainsTheMostTiles(unittest.TestCase):
+    """Neither the median nor the minimum gap describes the strip."""
+
+    def test_a_single_far_stray_does_not_become_the_rule(self):
+        """gaps [134, 1402] — the MEDIAN is 1402, which kept the stray and dropped a good."""
+        els = [_Icon(424), _Label(424, "Seasoning"), _Icon(558), _Label(558, "Spices"),
+               _Icon(1960), _Label(1960, "Negotiate")]
+        self.assertEqual([t["cx"] for t in bp._tradable_tiles(els)], [424, 558])
+
+    def test_two_close_strays_do_not_become_the_rule(self):
+        """gaps include 56 between two strays — the MINIMUM would shatter a real strip."""
+        els = []
+        for cx in (424, 560, 696, 832):
+            els += [_Icon(cx), _Label(cx, f"C{cx}")]
+        els += [_Icon(1906), _Label(1906, "Price Negotiation"),
+                _Icon(1962), _Label(1962, "Negotiate")]
+        self.assertEqual([t["cx"] for t in bp._tradable_tiles(els)], [424, 560, 696, 832])
+
+
+class TheStripIsBoundedByItsOwnBanner(unittest.TestCase):
+    """user, 2026-09-05: "why is Negotiation ever considered? it is far from the tiles, the
+    tiles are under the Tradeable Trade Goods banner, the negotiate button is in the right
+    panel".
+
+    Everything else here filters by HEIGHT alone, so any element at the right height anywhere
+    across a 2,400px screen was a candidate. `_strip_row` rejects a stray by SPACING; this
+    asks whether it is in the panel at all.
+    """
+
+    BANNER = type("_Banner", (), {"element_type": "text", "label": "Tradable Trade Goods",
+                                  "cx": 524, "cy": 321, "x1": 365, "x2": 683,
+                                  "y1": 303, "y2": 339})()
+
+    def _strip(self, extra=()):
+        els = [self.BANNER]
+        for cx in (424, 560, 693, 828):
+            els += [_Icon(cx), _Label(cx, f"C{cx}")]
+        return bp._tradable_tiles(els + list(extra))
+
+    def test_the_detail_panel_is_outside_the_strip(self):
+        tiles = self._strip([_Icon(1960), _Label(1960, "Negotiate")])
+        self.assertEqual([t["cx"] for t in tiles], [424, 560, 693, 828])
+
+    def test_the_left_menu_is_outside_it_too(self):
+        tiles = self._strip([_Icon(177), _Label(177, "Recruit Crew")])
+        self.assertEqual([t["cx"] for t in tiles], [424, 560, 693, 828])
+
+    def test_a_four_good_strip_fits_inside_the_allowance(self):
+        """The banner's own box is narrower than the strip it heads — this bounds the PANEL,
+        not the heading."""
+        self.assertEqual(len(self._strip()), 4)
+
+    def test_no_banner_drops_nothing(self):
+        """An unreadable heading is not evidence about where the tiles are."""
+        els = []
+        for cx in (424, 560):
+            els += [_Icon(cx), _Label(cx, f"C{cx}")]
+        self.assertEqual(len(bp._tradable_tiles(els)), 2)
+
+    def test_it_never_empties_the_strip(self):
+        """If the bound would remove everything, the read is wrong and the tiles stand."""
+        els = [self.BANNER, _Icon(1960), _Label(1960, "Negotiate")]
+        self.assertEqual(len(bp._tradable_tiles(els)), 1)

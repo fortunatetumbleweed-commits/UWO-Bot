@@ -449,12 +449,19 @@ def _tradable_tiles(elements) -> list:
     icons = [e for e in elements if _is_tile_body(e)]
     labels = [e for e in elements
               if (getattr(e, "label", "") or "").strip() and 530 < e.cy < 580]
-    # 'Recommended' was missing, and a tile whose chip says it — with no icon element emitted —
-    # was dropped ENTIRELY rather than mis-aimed: San's Medicine tile never reached the strip,
-    # which is why the log said "1 tradable tile" about a panel showing two.
+    # THE WORD ON THE CHIP GATES NOTHING (user, 2026-09-05: "we should not care about these
+    # words at all"). This matched a fixed vocabulary, and a tile whose chip carried anything
+    # else was dropped ENTIRELY whenever no icon was emitted for it.
+    #
+    # Twice in two days: 'Recommended' was missing on 2026-09-04 and San's Medicine tile never
+    # reached the strip; 'Excessive' was missing on 2026-09-05 and ARGAN OIL never reached it,
+    # so a three-port gather failed at the panel with everything it needed aboard.
+    #
+    # It is an OPEN SET, and every word added to it is another the game may replace tomorrow.
+    # What makes a chip a chip is WHERE IT SITS — one row under the thumbnails, above the
+    # category — so position identifies it and the word is carried only as a hint.
     status = [e for e in elements
-              if (getattr(e, "label", "") or "").strip().lower()
-              in ("insufficient", "depleted", "sufficient", "abundant", "recommended")]
+              if (getattr(e, "label", "") or "").strip() and 485 < e.cy < 535]
     out = []
     for lab in labels:
         icon = min(icons, key=lambda e: abs(e.cx - lab.cx), default=None)
@@ -489,7 +496,7 @@ def _tradable_tiles(elements) -> list:
     # hint, and for a good absent from _GOOD_CATEGORY it is None, which left the order
     # entirely to chance.
     out.sort(key=lambda t: t["cx"])
-    return _aim_below_the_banner(_strip_row(out))
+    return _aim_below_the_banner(_strip_row(_under_the_banner(out, elements)))
 
 
 def _aim_below_the_banner(tiles: list) -> list:
@@ -534,6 +541,53 @@ def _aim_below_the_banner(tiles: list) -> list:
     return tiles
 
 
+# The widest a real gap between neighbouring tiles gets. Measured across every panel seen:
+# 135, 135, 136 (Svear), 136 (Berber), 135 (San). 'Negotiate' sat 1,401 away.
+_STRIP_MAX_PITCH_PX = 260
+
+# The goods panel, measured from the banner's own left edge. A four-good strip reaches cx 829
+# against a banner starting at 365, so ~600px covers every panel seen; the detail panel's
+# controls sit at 1,900+. The slack absorbs a tile drawn a little left of its heading.
+_BANNER_LEFT_SLACK_PX = 60
+_BANNER_PANEL_WIDTH_PX = 700
+
+
+def _under_the_banner(tiles: list, elements) -> list:
+    """Keep only the tiles that sit under the 'Tradable Trade Goods' banner.
+
+    THE STRIP HAS A HEADING, AND IT SAYS WHERE THE STRIP IS (user, 2026-09-05: "why is
+    Negotiation ever considered? it is far from the tiles, the tiles are under the Tradeable
+    Trade Goods banner, the negotiate button is in the right panel").
+
+    Everything above filters by HEIGHT alone — icons in one band, labels in another — with no
+    horizontal bound at all, so any element at the right height anywhere across a 2,400px
+    screen is a candidate. That is how the detail panel's 'Negotiate' at cx=1960 became a
+    goods tile at Berber on 2026-09-05 and was tapped twice.
+
+    `_strip_row` can reject it statistically, by spacing, and does. This asks the structural
+    question instead: is it in the panel at all? The banner is drawn at the strip's own left
+    edge, and the goods run rightwards from there — so a candidate LEFT of it is the left menu
+    and one far to its right is another panel.
+
+    The width allowance is generous on purpose: the banner's own box is narrower than the
+    strip it heads (365-683 against tiles reaching cx 829 on a four-good panel), so this
+    bounds the panel, not the heading. Absent the banner nothing is dropped — an unreadable
+    heading is not evidence about where the tiles are.
+    """
+    banner = next((e for e in elements
+                   if "tradable" in (getattr(e, "label", "") or "").strip().lower()), None)
+    if banner is None or getattr(banner, "x1", None) is None:
+        return tiles
+    left = banner.x1 - _BANNER_LEFT_SLACK_PX
+    right = banner.x1 + _BANNER_PANEL_WIDTH_PX
+    kept = [t for t in tiles if left <= t["cx"] <= right]
+    if len(kept) != len(tiles):
+        logger.info(f"[mission.barter] ignoring "
+                    f"{[t['category'] for t in tiles if t not in kept]} — outside the "
+                    f"'Tradable Trade Goods' panel (cx {left}-{right})")
+    return kept or tiles
+
+
 def _strip_row(tiles: list) -> list:
     """Keep only the tiles that form THE STRIP — one evenly-spaced row.
 
@@ -549,21 +603,50 @@ def _strip_row(tiles: list) -> list:
     `sail_actions._tab_strip_candidates`: a row is a row because it is evenly spaced, not
     because it is near the top.
     """
-    if len(tiles) < 3:
+    if len(tiles) < 2:
         return tiles
+    if len(tiles) == 2:
+        # A PAIR IS STILL A ROW. This bailed below three, so on a two-good panel the guard
+        # never ran — and at Berber on 2026-09-05 'Negotiate', 1,400px away in the detail
+        # panel, was accepted as a goods tile and TAPPED, twice. Neighbours in the strip sit
+        # about one tile apart; nothing else on the panel is that close.
+        span = tiles[1]["cx"] - tiles[0]["cx"]
+        return tiles if span <= _STRIP_MAX_PITCH_PX else tiles[:1]
     gaps = [b["cx"] - a["cx"] for a, b in zip(tiles, tiles[1:])]
-    typical = sorted(gaps)[len(gaps) // 2]           # the median gap IS the strip's pitch
-    if typical <= 0:
+    # THE PITCH IS WHICHEVER SPACING EXPLAINS THE MOST TILES. Neither the median nor the
+    # minimum gap does: both describe the gaps, and what we want is the one that describes
+    # the STRIP.
+    #
+    #   median — three candidates and one stray give gaps [134, 1402], and the median is
+    #            1402, so the stray's spacing becomes the rule and the real pair reads as the
+    #            outlier. Live 2026-09-05 at Berber that cut Argan Oil out of its own strip
+    #            and left 'Negotiate' in it, which the mission then tapped twice.
+    #   minimum — two strays 56px apart make 56 the pitch, and a four-tile strip at 135
+    #            becomes four runs of one.
+    #
+    # So try each observed gap as a candidate and keep the run it produces, longest wins.
+    # Ties go to the TIGHTER pitch, because the goods strip is the closest-packed row on the
+    # panel and everything else is further off.
+    def _run_for(pitch):
+        tol = max(_STRIP_PITCH_TOL_FRACTION * pitch, 12)
+        runs, current = [], [tiles[0]]
+        for gap, tile in zip(gaps, tiles[1:]):
+            if abs(gap - pitch) <= tol:
+                current.append(tile)
+            else:
+                runs.append(current)
+                current = [tile]
+        runs.append(current)
+        return max(runs, key=len)
+
+    candidates = sorted({g for g in gaps if g > 0})
+    if not candidates:
         return tiles
-    runs, current = [], [tiles[0]]
-    for gap, tile in zip(gaps, tiles[1:]):
-        if abs(gap - typical) <= max(_STRIP_PITCH_TOL_FRACTION * typical, 12):
-            current.append(tile)
-        else:
-            runs.append(current)
-            current = [tile]
-    runs.append(current)
-    best = max(runs, key=len)
+    best, typical = None, candidates[0]
+    for pitch in candidates:
+        run = _run_for(pitch)
+        if best is None or len(run) > len(best):
+            best, typical = run, pitch
     if len(best) < len(tiles):
         dropped = [t["category"] for t in tiles if t not in best]
         logger.info(f"[mission.barter] ignoring {dropped} — outside the goods strip "
