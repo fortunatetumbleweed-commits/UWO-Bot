@@ -763,12 +763,21 @@
       {
         "material": "Myrrh",
         "ratio": 73,
-        "source_ports": []
+        "source_ports": [
+          "Alexandria",
+          "Benghazi"
+        ]
       },
       {
         "material": "Mutton",
         "ratio": 146,
-        "source_ports": []
+        "source_ports": [
+          "Antalya",
+          "Hormuz",
+          "Jeddah",
+          "Narvik",
+          "Reykjavík"
+        ]
       },
       {
         "material": "Almond",
@@ -786,24 +795,40 @@
         {
           "material": "Myrrh",
           "ratio": 73,
-          "source_ports": []
+          "source_ports": [
+            "Alexandria",
+            "Benghazi"
+          ]
         },
         {
           "material": "Mutton",
           "ratio": 146,
-          "source_ports": []
+          "source_ports": [
+            "Antalya",
+            "Hormuz",
+            "Jeddah",
+            "Narvik",
+            "Reykjavík"
+          ]
         },
         {
           "material": "Almond",
           "ratio": 146,
-          "source_ports": []
+          "source_ports": [
+            "Lisboa",
+            "Málaga",
+            "Palma",
+            "Valencia"
+          ]
         }
       ]
     },
     "villages": [
       "Berber Village"
     ],
-    "output_per_round": {},
+    "output_per_round": {
+      "Neutral": 651
+    },
     "preconditions": {
       "amity_min": null,
       "trade_level_min": null,
@@ -849,17 +874,28 @@
         {
           "material": "Tobacco",
           "ratio": 146,
-          "source_ports": []
+          "source_ports": [
+            "Havana",
+            "Port Royal",
+            "Santo Domingo"
+          ]
         },
         {
           "material": "Peanut",
           "ratio": 73,
-          "source_ports": []
+          "source_ports": [
+            "Port Royal",
+            "Santiago de Cuba",
+            "Southside"
+          ]
         },
         {
           "material": "Chicle",
           "ratio": 146,
-          "source_ports": []
+          "source_ports": [
+            "Mérida",
+            "Veracruz"
+          ]
         }
       ]
     },

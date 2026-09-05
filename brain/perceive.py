@@ -2412,78 +2412,6 @@ _NOOP_SKIP_THRESHOLD = 3     # skip subsequent attempts after this many
 # A DIALOG THAT KEEPS COMING BACK GETS ITS OWN BUTTON PRESSED (user, 2026-09-02).
 #
 # An obstruction nobody recognises is normally left alone — the bot reports it and carries on
-# — and that is right for a popup sitting harmlessly over a world. It is wrong for a MODAL,
-# which answers nothing until it is answered, and blocks every attempt to do something else.
-#
-# Live 2026-09-02 at Madeira: a staged cart made Back raise "Moving to another menu will empty
-# the cart. Continue?". No interruptor matched, the Claude consult could not run (no API key),
-# so nothing answered it — and Back, the only thing the bot kept trying, is that dialog's
-# CANCEL. It raised and cancelled the same dialog four times and the mission died on it. The
-# market top menu was one OK away, and from there the buy could have been retried.
-#
-# So: seen this many times with nothing able to answer it, press its own positive button.
-# CLAUDE.md reserves the positive-button search for exactly this case — "something unexpected
-# interrupted a goal the bot was PURSUING and had already COMMITTED an action toward" — and
-# gold is what makes it identifiable: measured on that dialog, OK is 0.32 yellow and Cancel
-# is 0.000, so the colour picks the answer with nothing left to guess.
-_UNANSWERED_SIGHTINGS = 0
-_ANSWER_IT_ANYWAY_AFTER = 2
-
-# How far BELOW the obstruction's own bbox its buttons may sit. The detector's box covers the
-# title and body and stops above the button row — on that dialog it ended at y=676 with OK at
-# y=826 — so a strictly-inside search finds nothing to press. Scoped rather than frame-wide
-# because the market's own gold Purchase button is also on screen, and pressing THAT would
-# spend money the task never asked to spend.
-_BUTTONS_BELOW_BBOX_PX = 260
-
-
-def _answer_it_anyway(frame, bbox) -> bool:
-    """Press the positive button of an obstruction nothing could answer. True if pressed.
-
-    LAST RESORT, and deliberately narrow:
-
-      * only the GOLD button — `detect_commit_buttons` measures the yellow background that
-        makes a positive button positive in this game, so Cancel (0.000) can never be
-        chosen over OK (0.32). Wording is not consulted; POSITIVE_LABELS matching on words
-        is what once tapped 'Trade Info' and a panel title.
-      * only NEAR THIS OBSTRUCTION — inside its bbox, or within `_BUTTONS_BELOW_BBOX_PX`
-        beneath it, because the box stops above the button row. Frame-wide, the market's own
-        gold Purchase button is a candidate, and pressing it spends money nobody asked to
-        spend.
-      * only after the caller has seen the thing repeatedly with no answer, so a popup that
-        would have cleared itself never reaches here.
-
-    It reports what it pressed rather than what it achieved: the next perceive says whether
-    the screen moved, which is the same contract every other action here follows.
-    """
-    try:
-        from vision.omniparser import parse_fast_cached
-        from vision.region_detectors.commit_button import detect_commit_buttons
-        from actions.ui import tap_at
-    except Exception as exc:
-        logger.debug(f"[perceive] answer-anyway unavailable: {exc}")
-        return False
-
-    buttons = detect_commit_buttons(parse_fast_cached(frame), frame)
-    if bbox is not None:
-        x1, y1, x2, y2 = bbox
-        buttons = [b for b in buttons
-                   if x1 <= b.cx <= x2 and y1 <= b.cy <= y2 + _BUTTONS_BELOW_BBOX_PX]
-    if not buttons:
-        logger.warning("[perceive] a dialog keeps coming back and has no gold button to "
-                       "press — leaving it for the caller rather than tapping blind")
-        return False
-
-    best = max(buttons, key=lambda b: getattr(b, "yellow_frac", 0.0))
-    logger.warning(
-        f"[perceive] this obstruction has come back {_UNANSWERED_SIGHTINGS}x with nothing "
-        f"able to answer it — pressing its own positive button "
-        f"{getattr(best, 'verb', '') or '(gold)'!r} @ ({best.cx},{best.cy}) "
-        f"[yellow={getattr(best, 'yellow_frac', 0)}]")
-    tap_at(best.cx, best.cy, why="answering a dialog nothing else could clear")
-    return True
-
-
 def _signature_for_dismissal(tokens) -> str:
     """Cheap signature of the OCR tokens — used to decide if a dismissal
     actually changed the screen."""
@@ -2518,7 +2446,6 @@ def dismiss_interruptors(frame=None):
     the screen: a recovery acts on the world underneath, and causing transitions belongs
     to the dispatcher alone.
     """
-    global _UNANSWERED_SIGHTINGS
     from capture.adb_capture import capture_screen as _cap
     from actions.sail_actions import _ocr_frame
     from vision.obstruction_classifier import KIND_NONE
@@ -2553,13 +2480,31 @@ def dismiss_interruptors(frame=None):
                     "— not firing it: a recovery acts on the world, and perception does not "
                     "act. It is the dispatcher's to run, as a goal or a dialog answer."
                 )
-            if obstruction is not None and obstruction.kind != KIND_NONE:
-                _UNANSWERED_SIGHTINGS += 1
-                if _UNANSWERED_SIGHTINGS >= _ANSWER_IT_ANYWAY_AFTER:
-                    if _answer_it_anyway(frame, obstruction_bbox):
-                        _UNANSWERED_SIGHTINGS = 0
-                        frame = _cap()          # it changed; the next round sees the change
-                        continue
+            # AN UNANSWERABLE OBSTRUCTION IS THE DISPATCHER'S, NOT OURS (user, 2026-09-04).
+            #
+            # This used to press the obstruction's own gold button after seeing it twice.
+            # The rule stated twenty lines above is why it no longer does: dismissing an
+            # interruptor restores the world that was already there, and that is perception's
+            # to do — but PRESSING A BUTTON IS NOT ALWAYS A DISMISSAL, and there is no way to
+            # tell from a bbox and a colour which one it will be.
+            #
+            # Live 2026-09-05 at London it was not. The port overworld's quest/trend ticker
+            # was flagged `kind='popup'`, its yellow banners scored as gold buttons
+            # (0.47-0.67), and the yellowest — 'Major Trend Oc__' — was pressed. That is not
+            # a film over a world: it NAVIGATED, from the port overworld to the world map
+            # with the Trade Event Schedule open. Perception moved the fleet, which is the
+            # one thing this module may not do, and the mission stalled on a leg that wanted
+            # a market.
+            #
+            # THE DISPATCHER ALREADY ANSWERS DIALOGS, and better: `_offer_dialog` requires a
+            # real DialogModel — a brown title bar and a card — then asks
+            # `game_rules.answer_dialog`, which knows the named rules and refuses to spend
+            # red gems. Measured on the two frames, that is exactly the discrimination this
+            # needed: the Madeira cart confirm IS a dialog, the London ticker is not.
+            #
+            # The Madeira case this was written for is not reopened. It is covered twice
+            # over — by that dispatcher path, and by `ensure_sell_tab._cart_confirm_ok`,
+            # which names that dialog outright.
             break
 
         # Fix D: pre-screen any interruptors whose dismissal has been a
@@ -2579,8 +2524,6 @@ def dismiss_interruptors(frame=None):
                     "OCR signature."
                 )
                 continue
-            # Something knows this one, so the escalation above is not warranted.
-            _UNANSWERED_SIGHTINGS = 0
             logger.info(f"[perceive] Interruptor detected: {iid!r} — dismissing")
             pre_sig = _signature_for_dismissal(tokens)
             _dismiss_interruptor(iid, frame, obstruction_bbox=obstruction_bbox)
