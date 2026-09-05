@@ -3,18 +3,6 @@
     "at": 1788627450.81642,
     "value": 4952
   },
-  "mission_progress": {
-    "at": 1788637916.3425658,
-    "value": {
-      "committed_total": 5,
-      "good": "Argan Oil",
-      "phase": "bartering",
-      "recipe": null,
-      "rounds": 4,
-      "rounds_remaining": null,
-      "village": "Berber Village"
-    }
-  },
   "settlement": {
     "at": 1788536028.878461,
     "value": "Lisboa"

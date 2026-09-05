@@ -120,6 +120,33 @@ def set_label(label: Optional[str]) -> None:
     _label = label
 
 
+def _cached_reads(f) -> Optional[dict]:
+    """`f`'s omni + ocr, TAKEN ONLY FROM CACHES — never pays for inference.
+
+    Recording what the bot saw must not change what the run costs, so every read here is a
+    hit or a miss, never a parse. Identity, not resemblance: both caches are keyed by
+    `id(frame)` and store the frame alongside, because CPython reuses an address the moment
+    an image is freed — a bare id served one screen's OCR for another (live 2026-08-21).
+
+    OCR is attached only if it too was cached. `omni` present with `ocr` empty means the run
+    parsed this frame but never read text from it, which is a fact about the run.
+    """
+    try:
+        from vision.omniparser import _FRAME_CACHE
+        cached = _FRAME_CACHE.get(id(f))
+        if cached is None or cached[0] is not f:
+            return None                  # parsed elsewhere or not at all — do not re-run
+        from actions.sail_actions import _OCR_CACHE, _ocr_frame
+        entry = _OCR_CACHE.get(id(f))
+        ocr = ([{"text": t, "conf": round(float(c), 2), "cx": int(cx), "cy": int(cy)}
+                for t, c, cx, cy in _ocr_frame(f, 0.3)]          # cache hit, proven above
+               if entry is not None and entry[0] is f else [])
+        return {"omni": [e.to_dict() for e in cached[1]], "ocr": ocr}
+    except Exception as exc:
+        logger.debug(f"[action_trace] cached reads unavailable: {exc}")
+        return None
+
+
 def _perception_for(frame):
     """The perception the bot ACTUALLY USED for `frame`, or None if this is not that frame.
 
@@ -144,15 +171,10 @@ def _perception_for(frame):
             return None
         from brain import perceive as _p
         pr = _p._PERCEIVE_LAST_RESULT if _p._PERCEIVE_LAST_FRAME is frame else None
-        from vision.omniparser import _FRAME_CACHE
-        cached = _FRAME_CACHE.get(id(frame))
-        if cached is None or cached[0] is not frame:
+        reads = _cached_reads(frame)
+        if reads is None:
             return None                      # parsed elsewhere or not at all — do not re-run
-        omni = [e.to_dict() for e in cached[1]]
-        from actions.sail_actions import _ocr_frame
-        ocr = [{"text": t, "conf": round(float(c), 2), "cx": int(cx), "cy": int(cy)}
-               for t, c, cx, cy in _ocr_frame(frame, 0.3)]           # cache hit
-        return {"omni": omni, "ocr": ocr,
+        return {**reads,
                 "state": getattr(pr, "state", None),
                 "detail": getattr(pr, "detail", None)}
     except Exception as exc:
@@ -184,22 +206,37 @@ def _capture_with_perception():
     from capture.adb_capture import capture_screen
     frame = capture_screen()
     try:
-        from brain import perceive as _p
-        pf, pr = _p._PERCEIVE_LAST_FRAME, _p._PERCEIVE_LAST_RESULT
-        if pf is None or pr is None:
-            return frame, None
         from actions.perception import screen
         held = screen().current_if_valid()
-        if held is None or held.frame is not pf:
-            # Either something has acted since the last look, or the perceive we are holding
-            # is not the repository's — in both cases this frame is not that one.
+        if held is None:
+            # Something has acted since the last look. There is no observation that describes
+            # the screen this action is about to be taken on, and inventing one is the whole
+            # thing this recorder must not do.
             return frame, None
-        from vision.omniparser import parse_fast_cached
-        from actions.sail_actions import _ocr_frame
-        omni = [e.to_dict() for e in parse_fast_cached(pf)]          # cache hit
-        ocr = [{"text": t, "conf": round(float(c), 2), "cx": int(cx), "cy": int(cy)}
-               for t, c, cx, cy in _ocr_frame(pf, 0.3)]              # cache hit
-        return frame, {"omni": omni, "ocr": ocr,
+
+        # THE OBSERVATION THE BOT ACTED ON IS NOT ALWAYS THE DISPATCHER'S (live 2026-09-05).
+        #
+        # This used to require the held observation to BE `_PERCEIVE_LAST_FRAME`, so any look
+        # taken after the tick's perceive disqualified the frame. In a barter that is nearly
+        # every frame: the panel reader takes its own observations and each supersedes the
+        # perceive. Measured over the Berber run — 27 observations, only 8 of them `perceive`;
+        # the rest were the tile read-back, the goods row and the commit before/after. The
+        # report came out "66 frames: 1 live, 65 unread", and 65 of those frames HAD a parse
+        # sitting in the cache that the run itself had paid for and used.
+        #
+        # The repository's validity is generation-based: a held observation is valid exactly
+        # while nothing has acted, and `record` runs BEFORE the action. So a valid observation
+        # IS the screen this action is about to be taken on, whichever collaborator looked.
+        reads = _cached_reads(held.frame)
+        if reads is None:
+            return frame, None
+
+        # `state`/`detail` are the DISPATCHER's classification, and they describe the frame it
+        # classified. Attaching them to somebody else's observation would caption the picture
+        # with another frame's verdict, so they go on only when it is the same look.
+        from brain import perceive as _p
+        pr = _p._PERCEIVE_LAST_RESULT if _p._PERCEIVE_LAST_FRAME is held.frame else None
+        return frame, {**reads,
                        "state": getattr(pr, "state", None),
                        "detail": getattr(pr, "detail", None)}
     except Exception as exc:
