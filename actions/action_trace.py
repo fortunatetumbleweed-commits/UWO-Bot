@@ -73,6 +73,21 @@ def record_capture(frame) -> None:
                  "t": time.strftime("%H:%M:%S"), "frame": fn}
         with (_dir / "actions.jsonl").open("a") as f:
             f.write(json.dumps(entry) + "\n")
+        # ATTACH WHAT THE BOT SAW, ON EVERY FRAME AND NOT JUST THE TAPS (user, 2026-09-05).
+        #
+        # `record_tap` has done this since 2026-09-01; a plain capture did not, and plain
+        # captures are most of a session — 375 of the 401 frames in the Berber run carried no
+        # perception, so the viewer either showed nothing or re-parsed them, which is the one
+        # thing the tap path exists to avoid. A misread cannot be investigated from a report
+        # that re-reads the frame correctly.
+        #
+        # Free when it fires: the elements come out of OmniParser's own frame cache, so this
+        # never runs inference and never changes the run it is describing. When the frame was
+        # not the one perceived, nothing is written and the viewer parses it on demand as
+        # before.
+        perception = _perception_for(frame)
+        if perception is not None:
+            (_dir / f"frame_{_idx:04d}.json").write_text(json.dumps(perception))
         _idx += 1
     except Exception as exc:
         logger.debug(f"[action_trace] record_capture failed: {exc}")
@@ -103,6 +118,46 @@ def set_label(label: Optional[str]) -> None:
     the next tap and then cleared."""
     global _label
     _label = label
+
+
+def _perception_for(frame):
+    """The perception the bot ACTUALLY USED for `frame`, or None if this is not that frame.
+
+    The tap path captures its own frame and then asks the same question (see
+    `_capture_with_perception`, whose reasoning applies here in full: a report that quietly
+    re-perceives cannot show you the misread you opened it to find). This is the variant for
+    a frame we are HANDED rather than one we take.
+
+    Identity, never resemblance. The repository's held observation is valid exactly while
+    nothing has acted, and the frame it holds must BE this object — `is`, not a pixel
+    comparison — because the game animates every frame and two captures of one unchanged
+    screen differ. If it is not the same object, this frame was never perceived and the
+    honest answer is None.
+
+    Costs nothing: both reads below are cache hits on a frame the bot has already parsed. A
+    recorder that paid for inference would change the run it exists to describe.
+    """
+    try:
+        from actions.perception import screen
+        held = screen().current_if_valid()
+        if held is None or held.frame is not frame:
+            return None
+        from brain import perceive as _p
+        pr = _p._PERCEIVE_LAST_RESULT if _p._PERCEIVE_LAST_FRAME is frame else None
+        from vision.omniparser import _FRAME_CACHE
+        cached = _FRAME_CACHE.get(id(frame))
+        if cached is None or cached[0] is not frame:
+            return None                      # parsed elsewhere or not at all — do not re-run
+        omni = [e.to_dict() for e in cached[1]]
+        from actions.sail_actions import _ocr_frame
+        ocr = [{"text": t, "conf": round(float(c), 2), "cx": int(cx), "cy": int(cy)}
+               for t, c, cx, cy in _ocr_frame(frame, 0.3)]           # cache hit
+        return {"omni": omni, "ocr": ocr,
+                "state": getattr(pr, "state", None),
+                "detail": getattr(pr, "detail", None)}
+    except Exception as exc:
+        logger.debug(f"[action_trace] perception attach skipped: {exc}")
+        return None
 
 
 def _capture_with_perception():

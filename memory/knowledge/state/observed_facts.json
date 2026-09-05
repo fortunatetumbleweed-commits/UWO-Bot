@@ -1,13 +1,13 @@
 {
   "fleet_capacity": {
-    "at": 1788563330.3966029,
+    "at": 1788627450.81642,
     "value": 4952
   },
   "mission_progress": {
-    "at": 1788621264.626425,
+    "at": 1788627461.7242398,
     "value": {
       "good": "Argan Oil",
-      "phase": "gathering",
+      "phase": "bartering",
       "recipe": {
         "good": "Argan Oil",
         "materials": {
