@@ -357,3 +357,41 @@ class AnUnnamedPanelWeSelectedOurselvesIsNotReSelected(unittest.TestCase):
                       panels=[_panel(good="Naverslojd")])
         a._selects = 1                          # we have already selected once
         self.assertEqual(a._wrong_good(self.ARGAN), "Naverslojd")
+
+
+class ABarterThatCommittedRoundsAndStoppedIsSuccess(unittest.TestCase):
+    """Live 2026-09-05 at Berber. The fifth round consumed the last Mutton AND the last of
+    the day's five barters. Exchange greyed, no tile could light it, and the activity
+    reported "'Argan Oil' is not on offer today" — as a FAILURE.
+
+    The mission ended on that verdict with ~3,900 units of Argan Oil aboard. It never
+    sailed to London and never sold. The good was manifestly on offer: it had just been
+    bartered five times in four minutes.
+    """
+
+    ARGAN = Barter("Argan Oil", "Berber Village")
+
+    def _spent(self, committed):
+        """A village that will not select: the materials are gone and the day is spent."""
+        a = _activity(context=C.BARTER_PANEL_NO_GOOD, selected=False, refused=True)
+        # The count belongs to THIS barter, so the goal key must match or work() resets it.
+        a._goal_key = (self.ARGAN.good, self.ARGAN.village)
+        a._committed = committed
+        return a
+
+    def test_it_does_not_call_a_finished_barter_a_failure(self):
+        res = self._spent(5).work(self.ARGAN, _state())
+        self.assertEqual(res.status, FINISHED,
+                         "five committed rounds then a grey Exchange is a barter that WORKED")
+        self.assertEqual(res.observed["rounds_committed"], 5)
+
+    def test_it_does_not_claim_the_good_was_never_on_offer(self):
+        res = self._spent(5).work(self.ARGAN, _state())
+        self.assertNotIn("not on offer", res.observed["stopped_because"],
+                         "it was on offer — we bartered it five times")
+
+    def test_with_no_rounds_committed_it_IS_still_not_on_offer(self):
+        """The original reading is right when nothing was ever bartered — untouched."""
+        res = self._spent(0).work(self.ARGAN, _state())
+        self.assertEqual(res.status, BLOCKED)
+        self.assertIn("not on offer", res.observed["stopped_because"])

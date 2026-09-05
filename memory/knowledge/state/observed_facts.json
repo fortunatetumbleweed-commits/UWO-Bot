@@ -4,21 +4,14 @@
     "value": 4952
   },
   "mission_progress": {
-    "at": 1788637030.060852,
+    "at": 1788637916.3425658,
     "value": {
+      "committed_total": 5,
       "good": "Argan Oil",
-      "phase": "gathering",
-      "recipe": {
-        "good": "Argan Oil",
-        "materials": {
-          "Almond": 126,
-          "Mutton": 126,
-          "Myrrh": 73
-        },
-        "obtain": 751
-      },
-      "rounds": 7,
-      "rounds_remaining": 7,
+      "phase": "bartering",
+      "recipe": null,
+      "rounds": 4,
+      "rounds_remaining": null,
       "village": "Berber Village"
     }
   },

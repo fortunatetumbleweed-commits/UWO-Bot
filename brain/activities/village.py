@@ -300,6 +300,23 @@ class VillageActivity:
                                   {"rounds_committed": self._committed, "good": goal.good},
                                   detail="the Barter panel's goods row could not be read")
         if not picked:
+            # "NOT ON OFFER TODAY" IS ONE EXPLANATION OF "NO TILE LIT EXCHANGE", AND AFTER A
+            # ROUND HAS BEEN COMMITTED IT IS THE ONE EXPLANATION WE CAN RULE OUT.
+            #
+            # The others: the day's barters are spent, or the materials are gone. Guiding
+            # Principle #3 — enumerate the causes, do not hardcode one.
+            #
+            # Live 2026-09-05 at Berber, having just bartered Argan Oil FIVE TIMES in four
+            # minutes: the fifth round consumed the last Mutton and used the last of the
+            # day's five barters, Exchange greyed, no tile could light it, and this reported
+            # "'Argan Oil' is not on offer today" as a FAILURE. The mission ended there —
+            # ~3,900 units aboard, never sailed, never sold.
+            #
+            # A barter that committed rounds and then stopped is a barter that WORKED. That
+            # is what `_why_it_stopped` is for, and it is already the rule on the ready path:
+            # "three situations the task treats differently, and none is a failure".
+            if self._committed:
+                return self._done(goal, self._why_it_stopped({}, self._panel()))
             return self._done(goal, f"{goal.good!r} is not on offer today", ok=False)
         return ActivityResult(WORKING, {"rounds_committed": self._committed, "did": f"selected {goal.good}"}, detail=str(goal))
 
