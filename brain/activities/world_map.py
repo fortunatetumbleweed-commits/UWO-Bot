@@ -496,6 +496,58 @@ class WorldMapActivity:
         self._switch_to_barter()
         return ActivityResult(WORKING, {"did": "read the base tab"}, detail=str(goal))
 
+    def _write_back(self, goal, trades) -> None:
+        """Persist what a COMPLETE remote read learned, exactly as the on-site check does.
+
+        The remote path never did. `village_check.write_back_invariants` is called when the
+        fleet reads a village it is standing in; a read taken from the world map produced the
+        same knowledge and threw it away — so `_run_mission_for`'s `load_recipe`, whose own
+        comment says "written back by the check moments ago", found nothing.
+
+        Live 2026-09-04, the first mission for a good the KB had never seen: Berber Village
+        read cleanly (Argan Oil, 651 from 73 Myrrh + 146 Mutton + 146 Almond), the plan was
+        built from it — 7 rounds, 2,940 units of material — and the run then died on
+
+            FAILED at step plan: no recipe for 'Argan Oil' even after the check wrote back
+
+        with recipes.json still holding the same thirteen goods it started with. Every run
+        against an unknown good would have failed the same way, and every run against a known
+        one hid it, because the KB already had what the write-back would have added.
+
+        ONLY ON A COMPLETE READ. A partial list is refused above and must not be persisted
+        either — materials are invariant, so a short read is a reading failure, and writing it
+        would teach the KB a recipe with an ingredient missing.
+
+        Never fatal: this is bookkeeping about a reading that has already succeeded, so a
+        failure here is logged and the check still stands.
+        """
+        try:
+            from actions.village_check import write_back_invariants
+            write_back_invariants(self._as_check(goal, trades))
+        except Exception as exc:                       # noqa: BLE001 — bookkeeping only
+            logger.warning(f"[world_map] {goal.village}: could not write the check back to "
+                           f"the KB ({exc}) — the mission still has this reading")
+
+    def _as_check(self, goal, trades):
+        """The duck `write_back_invariants` reads: trades, village and the Base tab."""
+        from types import SimpleNamespace
+        base = dict(self._base or {})
+        used, total = base.get("barters_used"), base.get("barters_total")
+        remaining = None
+        if used is not None and total is not None:
+            remaining = max(0, int(total) - int(used))
+        return SimpleNamespace(
+            village=goal.village, trades=list(trades),
+            # SOURCE PORTS ARE NOT SOMETHING A REMOTE READ CAN KNOW — they are learned at
+            # markets, not from the village panel. Empty is honest, and `write_back_invariants`
+            # already falls back to whatever the KB holds rather than clearing it.
+            sources={},
+            amity_grade=base.get("amity_grade"),
+            # `write_back_invariants` reads amity_points as a SEQUENCE — `(pts or (None,))[0]`.
+            amity_points=((base.get("amity_points"),)
+                          if base.get("amity_points") is not None else None),
+            barters_used=used, barters_total=total, rounds_remaining=remaining)
+
     def _on_village_info_barter(self, goal) -> ActivityResult:
         """ONE SCREEN OF THE TRADE LIST PER TICK, then one scroll.
 
@@ -535,6 +587,7 @@ class WorldMapActivity:
             trades = self._merge_screens()
             logger.info(f"[world_map] {goal.village}: read complete after "
                         f"{len(self._screens)} screen(s)")
+            self._write_back(goal, trades)
             return ActivityResult(FINISHED,
                                   {"village": goal.village, "trades": trades,
                                    "base": dict(self._base),

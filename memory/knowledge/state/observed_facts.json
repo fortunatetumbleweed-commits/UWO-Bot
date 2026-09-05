@@ -4,22 +4,22 @@
     "value": 4952
   },
   "mission_progress": {
-    "at": 1788567095.7521842,
+    "at": 1788574921.667639,
     "value": {
-      "committed_total": 4,
-      "good": "Bambara Groundnut",
-      "phase": "sailing_route",
+      "good": "Argan Oil",
+      "phase": "planning",
       "recipe": {
-        "good": "Bambara Groundnut",
+        "good": "Argan Oil",
         "materials": {
-          "Pig": 219,
-          "Raisin": 219
+          "Almond": 146,
+          "Mutton": 146,
+          "Myrrh": 73
         },
-        "obtain": 1122
+        "obtain": 651
       },
-      "rounds": 5,
+      "rounds": 7,
       "rounds_remaining": 7,
-      "village": "San Village"
+      "village": "Berber Village"
     }
   },
   "settlement": {
