@@ -76,3 +76,50 @@ class AnUnreadPanelIsNotAVerdict(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class NoSINGLEPartIsRequired(unittest.TestCase):
+    """user, 2026-09-05: "the exact string is not that important, it is an indicator of the
+    existence of the tile. so it is better to not fail just because a word is not found".
+
+    The icon, the chip and the label all say the same thing — a good is offered in this
+    column — and none of them reads reliably. Requiring any ONE of them specifically is how
+    tiles kept disappearing:
+
+        the ICON   — the failure this file was written for (Hutu, 2026-08-30)
+        the CHIP's WORD — 'Recommended' 09-04 lost San's Medicine tile, 'Excessive' 09-05
+                          lost ARGAN OIL and cost a three-port gather
+        the LABEL  — tested here, and the mirror of both
+
+    What is still required is CORROBORATION, because one word at the right height is not a
+    tile: the detail panel carries text at the category's height too.
+    """
+
+    def _cats(self, els):
+        from actions.barter_panel import _tradable_tiles
+        return [t["category"] for t in _tradable_tiles(els)]
+
+    def test_a_tile_whose_LABEL_failed_to_read_is_still_a_tile(self):
+        els = [_El("icon", 424, 425, kind="icon", y1=356, y2=497), _El("Abundant", 424, 510),
+               _El("Medicine", 558, 552), _El("Abundant", 558, 510)]
+        self.assertEqual(len(self._cats(els)), 2, "a missing category word removed a good")
+
+    def test_a_thumbnail_alone_is_enough(self):
+        """`_is_tile_body` has already checked its band, size and shape."""
+        els = [_El("icon", 424, 425, kind="icon", y1=356, y2=497),
+               _El("icon", 558, 425, kind="icon", y1=356, y2=497)]
+        self.assertEqual(len(self._cats(els)), 2)
+
+    def test_chip_plus_label_is_enough(self):
+        """The Hutu capture: three labels, three chips, not one icon."""
+        els = [_El("Luxuries", 424, 552), _El("Abundant", 424, 510),
+               _El("Medicine", 558, 552), _El("Anything At All", 558, 510)]
+        self.assertEqual(self._cats(els), ["Luxuries", "Medicine"])
+
+    def test_a_lone_word_is_still_not_a_tile(self):
+        for stray in ("Negotiate", "Check Barter Effect", "Stock Info"):
+            with self.subTest(stray):
+                self.assertEqual(self._cats([_El(stray, 1700, 552)]), [])
+
+    def test_a_lone_chip_is_not_a_tile_either(self):
+        self.assertEqual(self._cats([_El("Abundant", 1700, 510)]), [])

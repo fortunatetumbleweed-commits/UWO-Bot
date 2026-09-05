@@ -446,55 +446,50 @@ def _tradable_tiles(elements) -> list:
     # icon band, in the label's column — not which class the parser happened to assign it.
     # The cx pairing below is what keeps the left menu out: 'Loot' also lands in this band,
     # at cx=179 against the strip's 423+, and is rejected on column.
+    # A COLUMN IS A TILE IF ANY OF ITS PARTS IS SEEN (user, 2026-09-05: "the exact string is
+    # not that important, it is an indicator of the existence of the tile. so it is better to
+    # not fail just because a word is not found").
+    #
+    # This walked the CATEGORY LABELS and hung an icon and a chip off each, so a tile whose
+    # label failed to OCR was dropped however plainly its thumbnail was drawn — the mirror of
+    # the bug that lost Argan Oil, where an unrecognised chip WORD did the dropping.
+    #
+    # Each of the three says the same thing — "a good is offered in this column" — and none is
+    # reliably present: OmniParser gave three labels and two icons at Hutu on 2026-08-30, and
+    # none at all on the frame that mattered. So group everything by COLUMN and let any part
+    # stand for the tile. What the parts still supply is DETAIL: the icon its extent, so the
+    # tap lands on the thumbnail; the chip and label their words, as hints that order the
+    # walk and never gate it.
     icons = [e for e in elements if _is_tile_body(e)]
+    chips = [e for e in elements
+             if (getattr(e, "label", "") or "").strip() and 485 < e.cy < 530]
     labels = [e for e in elements
-              if (getattr(e, "label", "") or "").strip() and 530 < e.cy < 580]
-    # THE WORD ON THE CHIP GATES NOTHING (user, 2026-09-05: "we should not care about these
-    # words at all"). This matched a fixed vocabulary, and a tile whose chip carried anything
-    # else was dropped ENTIRELY whenever no icon was emitted for it.
-    #
-    # Twice in two days: 'Recommended' was missing on 2026-09-04 and San's Medicine tile never
-    # reached the strip; 'Excessive' was missing on 2026-09-05 and ARGAN OIL never reached it,
-    # so a three-port gather failed at the panel with everything it needed aboard.
-    #
-    # It is an OPEN SET, and every word added to it is another the game may replace tomorrow.
-    # What makes a chip a chip is WHERE IT SITS — one row under the thumbnails, above the
-    # category — so position identifies it and the word is carried only as a hint.
-    status = [e for e in elements
-              if (getattr(e, "label", "") or "").strip() and 485 < e.cy < 535]
+              if (getattr(e, "label", "") or "").strip() and 530 <= e.cy < 580]
+
+    columns: dict = {}
+    for part, kind in ([(e, "icon") for e in icons] + [(e, "chip") for e in chips]
+                       + [(e, "label") for e in labels]):
+        key = next((k for k in columns if abs(k - part.cx) <= _COLUMN_TOL_PX), part.cx)
+        columns.setdefault(key, {}).setdefault(kind, part)
+
     out = []
-    for lab in labels:
-        icon = min(icons, key=lambda e: abs(e.cx - lab.cx), default=None)
-        if icon is not None and abs(icon.cx - lab.cx) > 80:
-            icon = None
-        st = min(status, key=lambda e: abs(e.cx - lab.cx), default=None)
-        if st is not None and abs(st.cx - lab.cx) > 80:
-            st = None
-        # THE CATEGORY LABEL PROVES THE TILE; THE ICON ONLY REFINES IT. Requiring an icon
-        # DROPPED the tile when OmniParser did not emit one — and it often does not: measured
-        # live 2026-08-30 at Hutu Village, three tiles on screen produced three category
-        # labels, three status chips, and only TWO icon elements. On the frame that mattered
-        # it produced none at all, so this returned [], and the caller reported "'Bambara
-        # Groundnut' is not on offer today" about a panel offering it, with six barter rounds
-        # unspent and both materials aboard.
+    for cx, parts in columns.items():
+        icon, chip, label = parts.get("icon"), parts.get("chip"), parts.get("label")
+        # TWO STACKED PARTS, OR A THUMBNAIL. One word at the right height is not a tile — the
+        # detail panel carries text at the category's height too, and a lone 'Negotiate' is
+        # what this used to reject with "a label with nothing under it is not a tile".
         #
-        # The row already decides the tap height (see `_aim_below_the_banner`, which takes the
-        # MEDIAN extent precisely because a single box comes back short when something
-        # overlaps it). A missing box is the same problem one step further on, and the same
-        # answer serves: keep the tile, let the row place it.
-        if icon is None and st is None:
-            continue                      # a label with nothing under it is not a tile
-        anchor = icon if icon is not None else st
-        out.append({"cx": lab.cx, "cy": anchor.cy,
-                    "y1": getattr(icon, "y1", None) if icon is not None else None,
-                    "y2": getattr(icon, "y2", None) if icon is not None else None,
-                    "category": (lab.label or "").strip(),
-                    "status": (st.label or "").strip() if st is not None else ""})
-    # LEFT TO RIGHT, as they are drawn. Built from OmniParser's element order these came out
-    # arbitrary — at Svear on 2026-08-26 the strip was walked 2nd, 4th, 1st, 3rd, so the good
-    # the mission wanted was tried third instead of first. The category hint below is only a
-    # hint, and for a good absent from _GOOD_CATEGORY it is None, which left the order
-    # entirely to chance.
+        # What that rule got wrong was WHICH part had to be present, not that corroboration
+        # was needed: it demanded the label specifically, so a tile whose label failed to OCR
+        # vanished. Any two of the three prove the column, and a thumbnail alone is enough by
+        # itself because `_is_tile_body` has already checked its band, its size and its shape.
+        if not icon and len([x for x in (chip, label) if x]) < 2:
+            continue
+        anchor = icon or chip or label
+        out.append({"cx": (label or icon or chip).cx, "cy": anchor.cy,
+                    "y1": getattr(icon, "y1", None), "y2": getattr(icon, "y2", None),
+                    "category": (getattr(label, "label", "") or "").strip(),
+                    "status": (getattr(chip, "label", "") or "").strip()})
     out.sort(key=lambda t: t["cx"])
     return _aim_below_the_banner(_strip_row(_under_the_banner(out, elements)))
 
@@ -550,6 +545,11 @@ _STRIP_MAX_PITCH_PX = 260
 # controls sit at 1,900+. The slack absorbs a tile drawn a little left of its heading.
 _BANNER_LEFT_SLACK_PX = 60
 _BANNER_PANEL_WIDTH_PX = 700
+
+# How far apart two parts may sit and still belong to the same tile column. Measured: a
+# thumbnail, its chip and its label share a cx to within a pixel or two; neighbouring
+# columns are ~135 apart.
+_COLUMN_TOL_PX = 80
 
 
 def _under_the_banner(tiles: list, elements) -> list:
