@@ -987,6 +987,42 @@ def buy_to_goal(port: str, goal: Mapping[str, int], *, max_rounds: int = 6,
         goods, els = _read(frame)
         return frame, goods, els, cleared_any
 
+    def _still_worth_a_gem(goods_seen) -> Optional[str]:
+        """A good that justifies spending a gem HERE, or None. Never raises.
+
+        A REFRESH IS MARKET-WIDE, so the good that justifies it need NOT be the one whose
+        shelf just emptied. Barcelona stocks Iron AND Matchlock Gun: with Iron met and
+        Matchlock short, restocking is exactly right — it refills Matchlock too. Narrowing
+        this to "the emptied good must be the short one" would stop the refresh there and
+        leave the leg short, which is the failure this file already carries twice.
+
+        What it rules out is the other case: nothing this market sells is still wanted.
+        Live 2026-09-05 at Faro, order {Pig 1719, Raisin 1719} with Pig MET at 1828 and
+        Raisin not stocked at Faro at all:
+
+            not met — short: Raisin 0/1719
+            [refresh] tap the refresh icon (timer was 00.28.43)      <- gem spent
+            [refresh] verify: accepted=True tile[Pig] active=True    <- restocked PIG
+            leg finished
+
+        It restocked the good it already had enough of, for a gem, and ended the leg. The
+        price escalates with use — by the 14th refresh that evening the dialog read 345 blue
+        gems — so this is not a rounding error.
+
+        UNKNOWN COUNTS AS STILL WANTED: an unread amount is not a reason to stop buying, and
+        `material_states` already distinguishes it from `met`.
+        """
+        try:
+            for material, state in material_states(ledger, goal).items():
+                if state["state"] == "met":
+                    continue
+                if (goods_seen or {}).get(material.lower()) is not None:
+                    return material
+        except Exception as exc:                 # a guard must not break the loop it guards
+            logger.debug(f"[buy_to_goal] could not weigh the refresh: {exc}")
+            return "unreadable"                  # cannot rule it out — behave as before
+        return None
+
     def _do_refresh(attempt, verify_good):
         """Blue-gem refresh to restock a sold-out shelf; append to rounds. Returns ok.
 
@@ -1372,6 +1408,16 @@ def buy_to_goal(port: str, goal: Mapping[str, int], *, max_rounds: int = 6,
                 # shelf SOLD OUT (tile grayed) → restock with a blue-gem refresh (if a round remains),
                 # regardless of whether we bought some this round.  Only count it toward "cargo full"
                 # if this round made NO progress.
+                #
+                # BUT ONLY IF THIS MARKET STILL SELLS SOMETHING WE WANT. The shelf emptying
+                # says a restock is POSSIBLE; it does not say it is worth a gem.
+                wanted_here = _still_worth_a_gem(goods_after)
+                if wanted_here is None:
+                    logger.info("[buy_to_goal] the shelf is empty, but nothing this market "
+                                "sells is still wanted — stopping rather than spending a gem "
+                                "to restock goods we already have enough of")
+                    rounds.append({"attempt": attempt, "nothing_wanted_here": True})
+                    break
                 if attempt >= max_rounds - 1 or not _do_refresh(attempt, emptied[0]):
                     break
                 refreshed_last = not made_progress
