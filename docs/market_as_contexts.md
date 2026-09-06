@@ -150,6 +150,52 @@ village.
 **Cost of this instance:** the mission failed one leg from San Village with 1,828 Pig and
 1,540 Raisin aboard — everything needed for all six planned rounds.
 
+### FC-2 — a purchase that never happened, recorded as if it had (live 2026-09-05, Madeira)
+
+Session `data/sessions/trace_barter_cmd_2026-09-05T21-02-24`, log `/tmp/san_run2.log`,
+frames 68 and 75. Found by the user watching the screen: *"it is not hitting Purchase button,
+but hitting the Purchase submenu, and also did a refresh when the card has raisin to be
+bought."*
+
+```
+21:11:20  tap (1009, 554)        load Raisin — the goods tile        (frame 66)
+21:11:29  tap (1959, 997)        "tap Purchase" cost=63360           (frame 68)
+21:11:57  [ledger] bought Raisin, amount unreadable — pending
+21:12:04  tap (1399, 160)        the refresh icon                    (frame 75)
+21:12:11  tap (1309, 827)        Replenish-Stock OK
+21:12:20  no refresh for 'Raisin' — refresh NOT confirmed
+```
+
+**Frame 75 proves the purchase never happened.** Taken immediately before the refresh tap, it
+still shows **Raisin 110 staged in the cart** with its remove-X, the purchase bar still
+carrying a price (58,410), and cargo Raisin unchanged at **1,540**. Nothing had left the cart.
+
+**The purchase bar is TWO controls and the tap lands on the seam.** Its left half is the price
+field (`63,360`), its right half the `Purchase` label; (1959,997) falls just inside the PRICE
+half. The same coordinate has committed purchases on earlier cycles, so this is a FRAGILE aim
+rather than a wrong one — the same shape as the route row landing on a divider in
+`memory/the-rail-belongs-to-the-lit-tab`. Aim at the label's own element, not the bar's middle.
+
+**Then three things compounded, and each is the sub-loop's doing:**
+
+1. **A purchase was RECORDED without proof.** CLAUDE.md's rule is that the RESULT DIALOG is
+   what says a transaction happened. No dialog appeared — nothing had been bought — and the
+   ledger recorded `bought Raisin, amount unreadable` anyway. The bot then believed it held
+   an unknown extra quantity it did not have.
+2. **It refreshed the market with the cart still staged.** The cart is PANEL data and dies
+   when the market restocks, so a refresh here discards the staged goods. Nothing asked "is
+   there anything staged?" before spending a gem.
+3. **No re-tap of a commit that plainly did not land** — the cart still holding the goods IS
+   the observation that says so, and it is on the same frame the loop had in hand.
+
+**What the refactor must show:** as contexts, a staged cart is a state — `goods_staged` — and
+committing is the only thing reachable from it. A commit that leaves the cart staged is not a
+completed purchase, and the ledger records only what a `result_dialog` context confirms. The
+anchor is FC-2 replayed from its frames: the cart empties, or the run does not claim it did.
+
+**Cost of this instance:** a wasted refresh gem, a ledger that over-counted Raisin, and a leg
+that ended believing it had bought something.
+
 ## The line to keep: who caused the dialog
 
 CLAUDE.md already draws it by cause, and the context model gives it a home:
