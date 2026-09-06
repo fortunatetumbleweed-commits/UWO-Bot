@@ -105,9 +105,22 @@ _SLOT_OVERRUN = ("will be exceeded by", "exceeded by")
 # The restock card prices itself in gems and says what it does not affect.
 _RESTOCK_MARKS = ("replenish stock", "does not affect market price", "remaining:")
 
-# The result card is the PROOF a transaction happened (CLAUDE.md). It is the only market card
-# carrying a money total.
-_RESULT_ROWS = ("total amount", "profit/loss", "profit / loss")
+# The result card is the PROOF a transaction happened (CLAUDE.md), and the ONLY context
+# allowed to write the ledger — which is what makes FC-2 unreachable, so telling it from the
+# confirm card matters more than most.
+#
+# THE DIFFERENCE IS A CHOICE VERSUS AN ACKNOWLEDGEMENT, not a phrase. Frames 93 and 97 of
+# trace_barter_cmd_2026-09-05T21-38-09 are the pair:
+#
+#   Confirm Sales   Cancel + OK   "Total Sales  95,727"
+#   Result          OK alone      "Total Amount 95,727"  + "Balance 68,380,908,293"
+#
+# One word apart. Keying on the word worked and would have broken the moment the game said
+# "Total Sales" on a result card — the same shape of mistake as `_OVERFLOW_WORDS`. So the
+# test is the SHAPE: nothing to decide (no Cancel) and the company's money AFTER the fact.
+# `Balance` is the strongest single marker, because only a completed transaction has one.
+_RESULT_ROWS = ("balance", "mate trade exp", "obtained trade point")
+_RESULT_MONEY = ("total amount", "profit/loss", "profit / loss")
 
 _NEGOTIATION_MARKS = ("negotiation", "negotiate", "nego. chance")
 
@@ -175,7 +188,7 @@ def _which_card(card: str, dialog, elements=()) -> Optional[str]:
         return CARGO_FULL_NOTICE
     if _any(card, _RESTOCK_MARKS):
         return RESTOCK_PROMPT
-    if _any(card, _RESULT_ROWS):
+    if _is_result(card, dialog):
         return RESULT_DIALOG
     if _any(card, _NEGOTIATION_MARKS):
         return NEGOTIATION
@@ -228,6 +241,29 @@ def _looks_like_a_card(text: str) -> bool:
     is then decided the same way as always.
     """
     return _any(text, _UNCLAIMED) or (_any(text, _RECEIVED_STRIP) and _any(text, _CARGO_STRIP))
+
+
+def _is_result(card: str, dialog) -> bool:
+    """The card reporting a FINISHED transaction, as opposed to one proposing it.
+
+    Structure first: a result offers nothing to decide, so a `Cancel` rules it out however
+    the rows are worded. Then its own rows — `Balance` above all, which is the company's
+    money AFTER and exists on no card that has not yet happened.
+    """
+    if _offers_a_choice(dialog):
+        return False                              # a choice means it has NOT happened yet
+    if _any(card, _RESULT_ROWS):
+        return True
+    # A money total on a card with nothing to cancel. Weaker, and last, because the confirm
+    # card carries a total too — it just also carries a Cancel.
+    return _any(card, _RESULT_MONEY)
+
+
+def _offers_a_choice(dialog) -> bool:
+    """Cancel (or No) alongside a positive — the card is asking, not reporting."""
+    labels = {(getattr(a, "label", "") or "").strip().lower()
+              for a in (getattr(dialog, "actions", None) or ())}
+    return bool(labels & {"cancel", "no", "decline"})
 
 
 def _has_choice(dialog) -> bool:
