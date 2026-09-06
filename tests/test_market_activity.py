@@ -81,24 +81,39 @@ class TheThreeGoalsShareOneActivity(unittest.TestCase):
         res = act.work(Hold({"Iron": 242}), _State())
         self.assertEqual(res.observed["stopped_because"], "shelf empty or hold full")
 
-    def test_freeing_the_hold_sells_everything_not_kept(self):
-        seen = {}
-        def _sell(port, **kw):
-            seen.update(kw)
-            return {"sold": ["Pig", "Raisin"], "reason": "nothing left"}
-        res = _activity(sell_fn=_sell).work(FreeHold(("Water", "Food", "Iron")), _State())
-        self.assertEqual(seen["goal"], "clear")
-        self.assertEqual(seen["keep"], ["Water", "Food", "Iron"])
-        self.assertEqual(res.observed["sold"], ["Pig", "Raisin"])
+    # THE SELL GOALS NOW GO THROUGH CONTEXTS, one action per tick, so there is no injected
+    # flow to inspect — the question these asked ("is the goal's protection honoured?") is
+    # asked of `market_sell.selection_for`, which is the piece that still decides it.
+    #
+    # Converted 2026-09-06. The old versions asserted that `sell_goods` was CALLED with
+    # goal="clear" / exclude=[...]; that call no longer happens, and asserting on it would
+    # pin the market to the flow this work removes.
+
+    def test_freeing_the_hold_keeps_only_what_the_goal_protects(self):
+        import types
+
+        from brain.activities.market_sell import selection_for
+
+        goods = [types.SimpleNamespace(name=n, owned_qty=10, profit_per_unit=5,
+                                       tap_x=0, tap_y=0)
+                 for n in ("Pig", "Raisin", "Water", "Food", "Iron")]
+        chosen = {getattr(g, "name") for g in
+                  selection_for(FreeHold(("Water", "Food", "Iron")), goods)}
+        self.assertEqual(chosen, {"Pig", "Raisin"})
 
     def test_selling_for_profit_protects_the_exclusions(self):
-        seen = {}
-        def _sell(port, **kw):
-            seen.update(kw)
-            return {"sold": ["Birch Tree"]}
-        _activity(sell_fn=_sell).work(SellHold(("Water", "Food")), _State())
-        self.assertEqual(seen["exclude"], ["Water", "Food"])
-        self.assertNotIn("goal", seen, "profit is the default; do not force 'clear'")
+        import types
+
+        from brain.activities.market_sell import selection_for
+
+        goods = [types.SimpleNamespace(name=n, owned_qty=10, profit_per_unit=5,
+                                       tap_x=0, tap_y=0)
+                 for n in ("Birch Tree", "Water", "Food")]
+        chosen = {getattr(g, "name") for g in
+                  selection_for(SellHold(("Water", "Food")), goods)}
+        self.assertNotIn("Water", chosen)
+        self.assertNotIn("Food", chosen)
+        self.assertIn("Birch Tree", chosen)
 
     def test_an_unknown_goal_is_refused_rather_than_guessed_at(self):
         res = _activity().work("do something clever", _State())

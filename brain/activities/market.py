@@ -24,7 +24,7 @@ from typing import Any, Mapping, Optional, Sequence
 from loguru import logger
 
 from brain import owned_state
-from brain.dispatcher import ActivityResult, BLOCKED, FINISHED, UNRECOGNISED
+from brain.dispatcher import ActivityResult, BLOCKED, FINISHED, UNRECOGNISED, WORKING
 
 
 # ── The goals ────────────────────────────────────────────────────────────────
@@ -127,12 +127,23 @@ class MarketActivity:
     GOALS: tuple = ()          # filled in below, once the goal classes exist
 
     def __init__(self, *, buy_fn=None, sell_fn=None, sell_down_fn=None,
-                 show_grid_fn=None, port_fn=None) -> None:
+                 show_grid_fn=None, port_fn=None, context_fn=None, capture_fn=None,
+                 tap_fn=None, omni_fn=None, sell_page_fn=None) -> None:
         self._buy = buy_fn
         self._sell = sell_fn
         self._sell_down = sell_down_fn
         self._show_grid = show_grid_fn
         self._port = port_fn
+        # The context path. Injectable for the same reason the village's are: the defaults
+        # capture and parse, and a test that reaches for the device is a slow test.
+        self._context_fn = context_fn
+        self._capture = capture_fn
+        self._tap = tap_fn
+        self._omni = omni_fn
+        self._sell_page = sell_page_fn
+        from brain.market_state import MarketState
+        self._state = MarketState()
+        self._tick_frame = None
 
     # ── the one entry point ──────────────────────────────────────────────────
     def work(self, goal: Any, state: Any) -> ActivityResult:
@@ -144,15 +155,144 @@ class MarketActivity:
                                   detail=f"not in a market ({where!r})")
 
         port = self._port_name(state)
+
+        # THE FRAME BELONGS TO THE TICK, not to whoever asks for it next. Same reason the
+        # village keeps one: several readers per tick would otherwise each capture, and each
+        # would be answering about a DIFFERENT screen from the one the dispatcher routed on.
+        self._tick_frame = getattr(state, "frame", None)
+
+        # SELLING GOES THROUGH THE CONTEXTS — one action per tick, the dispatcher perceives
+        # between them, and nothing is swallowed. Buying still calls the old flow; it is the
+        # next conversion, and mixing the two for one goal would give the market two owners.
+        if isinstance(goal, (FreeHold, SellHold)):
+            return self._tick(goal, port)
+
         if isinstance(goal, Hold):
             return self._buy_toward(goal, port)
-        if isinstance(goal, FreeHold):
-            return self._sell_off(goal.keep, port, clear=True)
-        if isinstance(goal, SellHold):
-            return self._sell_off(goal.exclude, port, clear=False)
         if isinstance(goal, TrimHold):
             return self._trim_to(goal, port)
         return ActivityResult(BLOCKED, {}, detail=f"the market cannot serve {goal!r}")
+
+    # ── the context path ─────────────────────────────────────────────────────
+    def _tick(self, goal: Any, port: str) -> ActivityResult:
+        """Classify, do ONE thing, hand back. Never a flow.
+
+        An unrecognised screen is handed to the dispatcher rather than acted on — that is
+        what stops a dialog being tapped through by something that never knew it was there
+        (FC-1, FC-3 in `docs/market_as_contexts.md`).
+        """
+        import brain.market_context as ctx
+
+        self._state = self._state.for_goal((type(goal).__name__, port))
+        where = self._classify()
+
+        handler = self._HANDLERS.get(where)
+        if handler is None:
+            # MISS, or a context this goal has no business acting on. Hand back: the
+            # dispatcher owns the screen and will clear it or route it.
+            return ActivityResult(UNRECOGNISED, {"context": where, "port": port},
+                                  detail=f"the market has no move for {where!r}")
+        logger.info(f"[market] {where} -> {handler.__name__}")
+        return handler(self, goal, port)
+
+    def _on_sell_page(self, goal: Any, port: str) -> ActivityResult:
+        from brain.activities.market_sell import on_sell_page
+
+        out = on_sell_page(self._state, goal, frame=self._frame(),
+                           capture_fn=self._capture_fn(), tap_fn=self._tap_fn(),
+                           omni_fn=self._omni_fn())
+        did = out.get("do")
+        if did == "blocked":
+            return ActivityResult(BLOCKED, {"sold": list(self._state.sold), "port": port},
+                                  detail=out.get("why", "the sell page refused"))
+        if did == "finished":
+            owned_state.changed(owned_state.FLEET, owned_state.BUILDING)
+            return ActivityResult(FINISHED,
+                                  {"sold": list(self._state.sold), "port": port,
+                                   "stopped_because": out.get("why", "nothing left to sell")},
+                                  detail=f"sell at {port}")
+        return ActivityResult(WORKING, {"sold": list(self._state.sold), "port": port,
+                                        "did": did}, detail=f"sell at {port}")
+
+    def _on_market_landing(self, goal: Any, port: str) -> ActivityResult:
+        """Neither grid is up. Open the one this goal needs — and only that."""
+        from actions.buy_materials import ensure_sell_tab
+        ensure_sell_tab(self._capture_fn(), self._tap_fn())
+        self._state.did("opened the sell tab")
+        return ActivityResult(WORKING, {"port": port, "did": "opened the sell tab"},
+                              detail=f"sell at {port}")
+
+    def _on_our_dialog(self, goal: Any, port: str) -> ActivityResult:
+        """OUR OWN card — complete it with ONE tap and hand back.
+
+        Never a loop. `commit_via_positive_taps` presses until the cycle closes, and that is
+        how FC-3 happened at San Village: iteration 1 pressed OK, the overflow card appeared,
+        iteration 2 pressed its Receive, and the handler that owns overflow never ran.
+        """
+        from brain.commit_actions import tap_one_positive
+        tap_one_positive(goal_keywords=["ok", "confirm"])
+        self._state.did("answered a dialog")
+        return ActivityResult(WORKING, {"port": port, "did": "answered a dialog"},
+                              detail=f"sell at {port}")
+
+    def _on_result(self, goal: Any, port: str) -> ActivityResult:
+        """THE PROOF a transaction happened — and the ONLY place the ledger is written.
+
+        FC-2 recorded a purchase that never happened: no result card, no goods, an entry
+        anyway. Writing only from here makes that unreachable, because this context exists
+        only when the game says the trade is done.
+        """
+        from brain.commit_actions import tap_one_positive
+        sold = self._read_result_goods()
+        for name in sold:
+            if name not in self._state.sold:
+                self._state.sold.append(name)
+        tap_one_positive(goal_keywords=["ok", "confirm"])
+        self._state.did("cleared the result dialog")
+        return ActivityResult(WORKING, {"sold": list(self._state.sold), "port": port,
+                                        "did": "cleared the result dialog"},
+                              detail=f"sell at {port}")
+
+    def _read_result_goods(self) -> list:
+        """What the result card says actually sold. Best effort; never raises into a tick."""
+        try:
+            from actions.sell_goods import _sell_page
+            goods = _sell_page(self._frame())
+            return [str(getattr(g, "name", "")) for g in (goods or ())
+                    if getattr(g, "name", None)]
+        except Exception as exc:
+            logger.debug(f"[market] could not read the result card: {exc}")
+            return []
+
+    # ── the readings, all injectable ─────────────────────────────────────────
+    def _classify(self) -> str:
+        if self._context_fn is not None:
+            return self._context_fn(self._frame())
+        import brain.market_context as ctx
+        return ctx.classify(self._frame())
+
+    def _frame(self):
+        if self._tick_frame is not None:
+            return self._tick_frame
+        return self._capture_fn()()
+
+    def _capture_fn(self):
+        if self._capture is not None:
+            return self._capture
+        from capture.adb_capture import capture_screen
+        return capture_screen
+
+    def _tap_fn(self):
+        if self._tap is not None:
+            return self._tap
+        from actions.adb_actions import tap
+        return tap
+
+    def _omni_fn(self):
+        if self._omni is not None:
+            return self._omni
+        from vision.omniparser import parse_fast_cached
+        return parse_fast_cached
 
     # ── the three operations ─────────────────────────────────────────────────
     def _buy_toward(self, goal: Hold, port: str) -> ActivityResult:
@@ -283,6 +423,27 @@ class MarketActivity:
 
 
 MarketActivity.GOALS = (Hold, FreeHold, TrimHold, SellHold)
+
+# ── the handler table ────────────────────────────────────────────────────────
+#
+# Classify the context, look up the handler, do ONE thing, hand back. The same shape as
+# `WorldMapActivity._HANDLERS` and `VillageActivity._HANDLERS`, and the reason a dialog can
+# no longer be tapped through by code that never knew it was there.
+#
+# A context with NO entry is handed back on purpose. `quantity_dialog`, `trade_goods_info`,
+# `restock_prompt`, `overflow_prompt` and `discard_notice` belong to flows this activity does
+# not drive yet (buying, and the barter's overflow, which is the village's). Answering them
+# here would be this activity acting on a screen it has no business deciding about — the
+# thing `MISS` exists to prevent.
+import brain.market_context as _ctx  # noqa: E402  (after the class, like the village's)
+
+MarketActivity._HANDLERS = {
+    _ctx.SELL_PAGE:       MarketActivity._on_sell_page,
+    _ctx.MARKET_LANDING:  MarketActivity._on_market_landing,
+    _ctx.CONFIRM_DIALOG:  MarketActivity._on_our_dialog,
+    _ctx.RESULT_DIALOG:   MarketActivity._on_result,
+    _ctx.NEGOTIATION:     MarketActivity._on_our_dialog,
+}
 
 
 def _default_show_purchase_grid() -> None:

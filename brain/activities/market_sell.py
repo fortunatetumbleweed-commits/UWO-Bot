@@ -79,6 +79,14 @@ def on_sell_page(state, goal, *, frame, capture_fn, tap_fn, omni_fn) -> dict:
         # to "is the basket loaded?". Nothing is remembered about it; it is read every tick.
         state.landed("stage")
         logger.info(f"[market] the basket is loaded — committing")
+        # THE HOLD IS ABOUT TO CHANGE. Drop the remembered one before the tap, never after:
+        # a cached hold served between the tap and the next read is a stale answer to the
+        # question the whole leg turns on.
+        try:
+            from memory.observed_facts import forget
+            forget("hold")
+        except Exception as exc:                  # never fail a sale over bookkeeping
+            logger.debug(f"[market] could not forget the hold: {exc}")
         tap_fn(commit.cx, commit.cy)
         state.did("tapped Sell", page_signature(goods))
         return {"do": "committed"}
@@ -108,7 +116,17 @@ def on_sell_page(state, goal, *, frame, capture_fn, tap_fn, omni_fn) -> dict:
         _scroll()
         state.did("scrolled", page_signature(goods))
         return {"do": "scrolled", "page": state.scrolled_pages + 1}
-    return {"do": "finished", "why": "nothing left to sell"}
+    # SELLING IS WHAT EARNS THE POINTS, so this is the natural moment to claim the award —
+    # and it is best-effort: a claim that fails never fails the sale.
+    award = None
+    try:
+        from actions.market_actions import get_trade_point_award
+        award = get_trade_point_award(capture_fn=capture_fn, tap_fn=tap_fn, omni_fn=omni_fn)
+        if (award or {}).get("claimed"):
+            logger.info(f"[market] trade-point award claimed: {award.get('reason')}")
+    except Exception as exc:
+        logger.debug(f"[market] trade-point award check skipped: {exc}")
+    return {"do": "finished", "why": "nothing left to sell", "trade_point_award": award}
 
 
 def _scroll() -> None:
