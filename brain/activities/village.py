@@ -433,6 +433,27 @@ class VillageActivity:
         tap_one_positive(goal_keywords=["ok", "confirm"])
         return ActivityResult(WORKING, {"rounds_committed": self._committed, "did": "cleared the result dialog"}, detail=str(goal))
 
+    def _on_discard_notice(self, goal: Barter) -> ActivityResult:
+        """"Complete the trade? N has not been claimed yet." — answer it, do not dump here.
+
+        REACHING THIS CARD MEANS THE CHANCE TO MAKE ROOM HAS PASSED. It opens only after
+        `Receive` has been pressed on the overflow card, and by then the game has already
+        decided what fits. `_on_overflow` is where space is freed, and it now gets its tick
+        first (FC-3: it never used to, because the context could not be classified).
+
+        So the answer is the positive one, for the reasons `docs/dialogs_are_windows.md`
+        already set out: Cancel returns to "Insufficient Empty Space", whose `Receive` cannot
+        succeed with a full hold, which raises this card again — it LOOPS. And the goods are
+        lost either way; OK acknowledges that, it does not cause it. Same rule as flow
+        completeness: Back/Cancel is refusing to play, not progress.
+        """
+        from brain.commit_actions import tap_one_positive
+        tap_one_positive(goal_keywords=["ok", "confirm"])
+        return ActivityResult(WORKING,
+                              {"rounds_committed": self._committed,
+                               "did": "acknowledged the discard notice"},
+                              detail=str(goal))
+
     def _on_overflow(self, goal: Barter) -> ActivityResult:
         """Units held PENDING because the hold is full. Dismissing this loses them."""
         pending = (self._overflow or _read_overflow)()
@@ -606,6 +627,7 @@ VillageActivity._HANDLERS = {
     _ctx.EXCHANGE_CONFIRM:      VillageActivity._on_confirm,
     _ctx.BARTER_RESULT:         VillageActivity._on_result,
     _ctx.OVERFLOW_PROMPT:       VillageActivity._on_overflow,
+    _ctx.DISCARD_NOTICE:        VillageActivity._on_discard_notice,
 }
 assert set(VillageActivity._HANDLERS) == set(VillageActivity.CONTEXT_STATES), \
     "every declared context state needs a handler, and vice versa"

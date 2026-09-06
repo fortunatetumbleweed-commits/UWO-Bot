@@ -79,25 +79,9 @@ CONTEXT_STATES = (
 # names a STRIP or a COLUMN HEADING — furniture the game draws to structure the card — and
 # it is required alongside another such heading, never alone.
 
-# The overflow card is the only one with BOTH strips: what the game is trying to hand over,
-# and what the hold already has. Frame 214 of trace_barter_cmd_2026-09-05T21-38-09.
-_RECEIVED_STRIP = ("received trade goods",)
-_CARGO_STRIP = ("cargo",)
-
-# The discard notice is a second, smaller card that opens OVER the overflow one and asks
-# whether to complete the trade without the unclaimed goods.
-#
-# NOT "will be discarded" — BOTH cards say it, and using it here classified the overflow card
-# as the notice on the very first frame it was tested against (frame 214):
-#
-#   overflow: "Cannot receive item ... Unreceived trade goods will be discarded."
-#   notice:   "Complete the trade? N X has not been claimed yet. Unclaimed trade goods
-#              will be discarded."
-#
-# The QUESTION is what separates them, and only the notice asks one. Which is the module's
-# own rule turned on itself: a shared phrase is not a discriminator, and the structure is —
-# the overflow card offers `Receive`, the notice offers a choice.
-_UNCLAIMED = ("has not been claimed", "complete the trade")
+# The overflow card and the discard notice that opens over it are asked of
+# `vision.region_detectors.overflow_cards`, which owns the pair — the same two cards appear
+# in the barter flow, and one implementation per question is the rule.
 
 # The hold cannot take the purchase — a NOTICE, not a dialog with a choice worth making.
 _SLOT_OVERRUN = ("will be exceeded by", "exceeded by")
@@ -180,9 +164,10 @@ def _which_card(card: str, dialog, elements=()) -> Optional[str]:
     """
     # The discard notice sits over the overflow card — test it FIRST or the overflow's own
     # strips claim the frame and the wrong handler answers a live choice.
-    if _any(card, _UNCLAIMED):
+    from vision.region_detectors.overflow_cards import is_discard_notice, is_overflow_card
+    if is_discard_notice(card):
         return DISCARD_NOTICE
-    if _any(card, _RECEIVED_STRIP) and _any(card, _CARGO_STRIP):
+    if is_overflow_card(card):
         return OVERFLOW_PROMPT
     if _any(card, _SLOT_OVERRUN):
         return CARGO_FULL_NOTICE
@@ -240,7 +225,8 @@ def _looks_like_a_card(text: str) -> bool:
     is worst at. The furniture below is unambiguous enough to say "a card is up"; WHICH card
     is then decided the same way as always.
     """
-    return _any(text, _UNCLAIMED) or (_any(text, _RECEIVED_STRIP) and _any(text, _CARGO_STRIP))
+    from vision.region_detectors.overflow_cards import is_discard_notice, is_overflow_card
+    return is_discard_notice(text) or is_overflow_card(text)
 
 
 def _is_result(card: str, dialog) -> bool:
