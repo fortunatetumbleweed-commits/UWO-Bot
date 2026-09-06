@@ -147,3 +147,48 @@ class TheSignatureIsTheEvidence(unittest.TestCase):
     def test_it_ignores_ordering(self):
         a, b = _good("Pig"), _good("Raisin")
         self.assertEqual(page_signature([a, b]), page_signature([b, a]))
+
+
+class AnEmptyHoldDoesNotScroll(unittest.TestCase):
+    """Live 2026-09-06 at Antwerp, the first run of this path. The trim read `[]` on every
+    tick and scrolled anyway; four ticks later the mission called it a stall.
+
+    An empty page has nothing BELOW it. `[]` is the hold being empty, which is a finished
+    clear — not a page of kept goods with more underneath.
+    """
+
+    def test_an_empty_page_finishes_immediately(self):
+        s = MarketState()
+        run = _Sell([])
+        out = run.run(s, _Goal())
+        self.assertEqual(out["do"], "finished")
+        self.assertIn("empty", out["why"])
+        self.assertEqual(run.taps, [], "nothing to scroll to, so no scroll")
+
+    def test_None_is_still_not_empty(self):
+        """The distinction that must survive the fix: not looked at, versus looked at and
+        empty. Collapsing them is what sailed a full hold to Tripoli."""
+        out = _Sell(None).run(MarketState(), _Goal())
+        self.assertEqual(out["do"], "blocked")
+
+
+class AScrollThatChangedNothingIsTheBottom(unittest.TestCase):
+    """The old flow scrolled once and re-read in the same breath. Across ticks the same
+    judgement is the signature — already what this module uses to spot a tap that did not
+    land."""
+
+    def test_an_unchanged_page_after_a_scroll_finishes(self):
+        s = MarketState()
+        run = _Sell([_good("Water")])
+        first = run.run(s, _Goal(exclude=("Water",)))
+        self.assertEqual(first["do"], "scrolled")
+        second = run.run(s, _Goal(exclude=("Water",)))
+        self.assertEqual(second["do"], "finished")
+        self.assertIn("does not scroll", second["why"])
+        self.assertEqual(run.taps, ["scroll"], "exactly one scroll, not four")
+
+    def test_a_page_that_DID_change_keeps_scrolling(self):
+        s = MarketState()
+        _Sell([_good("Water", qty=10)]).run(s, _Goal(exclude=("Water",)))
+        out = _Sell([_good("Water", qty=20)]).run(s, _Goal(exclude=("Water",)))
+        self.assertEqual(out["do"], "scrolled", "new content below — keep going")

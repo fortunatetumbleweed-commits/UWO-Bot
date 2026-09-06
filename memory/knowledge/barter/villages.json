@@ -65,10 +65,7 @@
     "lat": null,
     "lon": null,
     "amity": "Friendly",
-    "amity_points": [
-      98914,
-      100000
-    ],
+    "amity_points": null,
     "barter_rounds_total": 7,
     "barter_rounds_remaining": 7,
     "eligible_goods": [

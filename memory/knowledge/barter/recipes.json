@@ -256,7 +256,7 @@
     "inputs": [
       {
         "material": "Iron",
-        "ratio": 88,
+        "ratio": 102,
         "source_ports": [
           "Amsterdam",
           "Chinook Village",
@@ -278,7 +278,7 @@
       },
       {
         "material": "Matchlock Gun",
-        "ratio": 44,
+        "ratio": 51,
         "source_ports": [
           "Barcelona",
           "Chinook",
@@ -320,7 +320,7 @@
       "svear_village": [
         {
           "material": "Iron",
-          "ratio": 88,
+          "ratio": 102,
           "source_ports": [
             "Amsterdam",
             "Chinook Village",
@@ -342,7 +342,7 @@
         },
         {
           "material": "Matchlock Gun",
-          "ratio": 44,
+          "ratio": 51,
           "source_ports": [
             "Barcelona",
             "Chinook",
@@ -386,7 +386,7 @@
     ],
     "output_per_round": {
       "Neutral": 448,
-      "Friendly": 604
+      "Friendly": 524
     },
     "preconditions": {
       "amity_min": null,

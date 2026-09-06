@@ -4,21 +4,22 @@
     "value": 4952
   },
   "mission_progress": {
-    "at": 1788662966.3889012,
+    "at": 1788719351.743839,
     "value": {
-      "good": "Bambara Groundnut",
-      "phase": "bartering",
+      "good": "Birch Tree",
+      "phase": "gathering",
       "recipe": {
-        "good": "Bambara Groundnut",
+        "good": "Birch Tree",
         "materials": {
-          "Pig": 249,
-          "Raisin": 249
+          "Candle": 88,
+          "Iron": 102,
+          "Matchlock Gun": 51
         },
-        "obtain": 898
+        "obtain": 524
       },
-      "rounds": 6,
+      "rounds": 7,
       "rounds_remaining": 7,
-      "village": "San Village"
+      "village": "Svear Village"
     }
   },
   "settlement": {
