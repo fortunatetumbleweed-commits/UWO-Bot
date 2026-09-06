@@ -252,8 +252,27 @@ class MissionRunner:
                 return goal
 
             if self._runner.status != DONE:              # the step gave up
+                # ...WHICH IS NOT ALWAYS THE END OF THE MISSION. `_finish_leg` STEPS OVER a
+                # refused trim — trimming is support, not a leg — and leaves the mission
+                # RUNNING. Returning None here anyway threw that decision away: the runner
+                # said "carry on without it" and then reported it had nothing to ask for.
+                #
+                # Live 2026-09-06 at Tripoli, with every material aboard and the barter one
+                # sail away:
+                #
+                #     sell_surplus refused (trim to Candle 709, Iron 822, Matchlock Gun 411)
+                #       — trimming is support, so the mission carries on without it
+                #     MissionRunner has nothing more to ask for after 37 step(s)
+                #       — status running
+                #
+                # `status running` with no work order is the shape of this bug: a FAILED
+                # mission is meant to stop, a RUNNING one is meant to be asked again. So ask
+                # the same question the DONE path below already asks.
                 self._finish_leg()
-                return None
+                if self.status != RUNNING:
+                    return None
+                result = None
+                continue
             if self._steps:                              # more of THIS leg to do
                 self._runner = self._steps.pop(0)
             else:
