@@ -136,27 +136,26 @@ def on_sell_page(state, goal, *, frame, capture_fn, tap_fn, omni_fn) -> dict:
         state.did("staged", page_signature(goods))
         return {"do": "staged", "goods": [str(getattr(g, "name", "")) for g in wanted]}
 
-    # NOTHING SELLABLE IN VIEW. One 3x3 page is not the hold — but two things end it here,
-    # and getting either wrong is what turned this into four ticks of scrolling at Antwerp.
+    # NOTHING SELLABLE IN VIEW IS NOT AN EMPTY HOLD. The grid shows one 3x3 page, so before
+    # believing it: SCROLL, and look again.
     #
-    # AN EMPTY PAGE HAS NOTHING BELOW IT. `[]` is the hold itself being empty, not a page of
-    # kept goods with more underneath. Live 2026-09-06 the trim at Antwerp read `[]` on every
-    # tick and scrolled anyway, and the mission called it a stall before the scroll budget
-    # ran out. (`None` is still different, and is refused above: not looked at, not empty.)
-    if not goods:
-        return {"do": "finished", "why": "the hold is empty"}
-
-    # A SCROLL THAT CHANGED NOTHING MEANS WE ARE AT THE BOTTOM. The old flow scrolled once
-    # and re-read in the same breath; across ticks the same judgement is the signature, which
-    # is already what this module uses to notice a tap that did not land.
-    here = page_signature(goods)
-    if state.last_intent == "scrolled" and state.last_signature == here:
-        return {"do": "finished", "why": "the list does not scroll any further"}
+    # THE RULE IS THE OLD ONE, UNCHANGED — only WHO looks has moved. The sub-loop scrolled,
+    # captured and compared; now the handler scrolls and hands back, the DISPATCHER captures,
+    # and the next tick compares. Same test, same outcome, one tick later:
+    #
+    #     scroll -> look -> still nothing sellable -> the clear is finished
+    #
+    # And the test is SELLABILITY, not whether the page changed. An empty hold needs no
+    # special case: it yields nothing sellable, scrolls once, still yields nothing, finishes.
+    if state.last_intent == "scrolled":
+        logger.info(f"[market] nothing sellable after scrolling to page "
+                    f"{state.scrolled_pages + 1} — the clear is finished")
+        return {"do": "finished", "why": "nothing left to sell"}
 
     if state.scrolled_pages < _MAX_SELL_SCROLLS:
         state.scrolled_pages += 1
         _scroll()
-        state.did("scrolled", here)
+        state.did("scrolled", page_signature(goods))
         return {"do": "scrolled", "page": state.scrolled_pages + 1}
     # SELLING IS WHAT EARNS THE POINTS, so this is the natural moment to claim the award —
     # and it is best-effort: a claim that fails never fails the sale.

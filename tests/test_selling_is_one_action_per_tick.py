@@ -149,46 +149,50 @@ class TheSignatureIsTheEvidence(unittest.TestCase):
         self.assertEqual(page_signature([a, b]), page_signature([b, a]))
 
 
-class AnEmptyHoldDoesNotScroll(unittest.TestCase):
-    """Live 2026-09-06 at Antwerp, the first run of this path. The trim read `[]` on every
-    tick and scrolled anyway; four ticks later the mission called it a stall.
+class TheScrollRuleIsTheOLD_RuleOneTickLater(unittest.TestCase):
+    """Live 2026-09-06 at Antwerp, the first run of this path: the trim scrolled on four
+    consecutive ticks and the mission called it a stall.
 
-    An empty page has nothing BELOW it. `[]` is the hold being empty, which is a finished
-    clear — not a page of kept goods with more underneath.
+    The control flow was right — the dispatcher perceived between every scroll, twelve
+    seconds apart, nothing swallowed. The handler's DECISION was wrong, and so was my first
+    fix: I invented two rules (an empty page finishes; an unchanged page finishes) where the
+    original had one.
+
+    The original (user, 2026-09-06: "the comparison rule should remain the same, just being
+    called differently"):
+
+        scroll -> look -> STILL nothing sellable -> the clear is finished
+
+    The sub-loop scrolled, captured and compared. Now the handler scrolls and hands back, the
+    dispatcher captures, and the next tick compares. Same test, one tick later. And the test
+    is SELLABILITY, not whether the page changed.
     """
 
-    def test_an_empty_page_finishes_immediately(self):
-        s = MarketState()
-        run = _Sell([])
-        out = run.run(s, _Goal())
-        self.assertEqual(out["do"], "finished")
-        self.assertIn("empty", out["why"])
-        self.assertEqual(run.taps, [], "nothing to scroll to, so no scroll")
-
-    def test_None_is_still_not_empty(self):
-        """The distinction that must survive the fix: not looked at, versus looked at and
-        empty. Collapsing them is what sailed a full hold to Tripoli."""
-        out = _Sell(None).run(MarketState(), _Goal())
-        self.assertEqual(out["do"], "blocked")
-
-
-class AScrollThatChangedNothingIsTheBottom(unittest.TestCase):
-    """The old flow scrolled once and re-read in the same breath. Across ticks the same
-    judgement is the signature — already what this module uses to spot a tap that did not
-    land."""
-
-    def test_an_unchanged_page_after_a_scroll_finishes(self):
+    def test_it_scrolls_once_then_finishes(self):
         s = MarketState()
         run = _Sell([_good("Water")])
         first = run.run(s, _Goal(exclude=("Water",)))
         self.assertEqual(first["do"], "scrolled")
         second = run.run(s, _Goal(exclude=("Water",)))
         self.assertEqual(second["do"], "finished")
-        self.assertIn("does not scroll", second["why"])
-        self.assertEqual(run.taps, ["scroll"], "exactly one scroll, not four")
+        self.assertEqual(run.taps, ["scroll"], "one scroll, not four")
 
-    def test_a_page_that_DID_change_keeps_scrolling(self):
+    def test_an_empty_hold_needs_no_special_case(self):
+        """It yields nothing sellable, scrolls once, still yields nothing, finishes — which
+        is exactly what the old flow did, without knowing the hold was empty."""
         s = MarketState()
-        _Sell([_good("Water", qty=10)]).run(s, _Goal(exclude=("Water",)))
-        out = _Sell([_good("Water", qty=20)]).run(s, _Goal(exclude=("Water",)))
-        self.assertEqual(out["do"], "scrolled", "new content below — keep going")
+        run = _Sell([])
+        self.assertEqual(run.run(s, _Goal())["do"], "scrolled")
+        self.assertEqual(run.run(s, _Goal())["do"], "finished")
+
+    def test_a_scroll_that_REVEALS_something_sellable_stages_it(self):
+        """The other half of the old rule: if the scroll brought sellable goods into view,
+        the clear carries on."""
+        s = MarketState()
+        _Sell([_good("Water")]).run(s, _Goal(exclude=("Water",)))      # scrolls
+        out = _Sell([_good("Pig")]).run(s, _Goal(exclude=("Water",)))  # something appeared
+        self.assertEqual(out["do"], "staged")
+
+    def test_None_is_still_not_empty(self):
+        """The distinction that must survive: not looked at, versus looked at and empty."""
+        self.assertEqual(_Sell(None).run(MarketState(), _Goal())["do"], "blocked")
