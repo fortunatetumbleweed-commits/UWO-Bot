@@ -609,3 +609,57 @@ not become 47 perceives, because a round's staging taps are one decision.
   would have made that failure impossible. If the goal is "sell everything except a keep
   list", one tap plus removals may be strictly better than N tile taps — and it is far fewer
   chances for a swallowed tap.
+
+## The audit of the port (2026-09-06)
+
+The negotiation stall at Barcelona was not one missing handler. It was evidence that
+`_react_after_purchase` — four `if`s inside a `for _ in range(4)` — held **several unrelated
+rules in one place**, and that collapsing it into "tap one positive" had dropped whichever of
+them were not the positive tap. So the port was audited rule by rule rather than patched.
+
+What a chain like that costs is exactly this: the rules are invisible. Nothing named them,
+nothing tested them, and a reader porting the code sees one loop with a plausible summary.
+
+| rule in the old chain | ported? |
+|---|---|
+| `"negotiat"` → tap **No** | missed → `_on_negotiation` (found by the live stall) |
+| `"exceeded by"` + `"purchase the trade goods"` → tap **OK** | **missed → `_on_cargo_full_notice`** |
+| `confirm` / `result` / `balance` → tap **OK** | ported |
+
+And from `buy_to_goal`:
+
+| rule | ported? |
+|---|---|
+| seed the ledger from the Sell grid before buying | ported (`_seed_ledger`) |
+| already own ≥ goal → never enter the buy round | ported, as `material_states` on tick one |
+| **bought 0 while the good is still IN STOCK → the hold is full, stop** | **missed → `_stocked_but_unmoved`** |
+
+The last one deserves its own line, because the tick form is *simpler than the original*. The
+old loop needed `refreshed_last` to tell "bought 0 because the shelf is empty" from "bought 0
+with a stocked shelf" — a flag carried across iterations. On the new path those are already
+two different branches (an empty shelf goes to the refresh branch, a stocked one to the stage
+branch), so the flag has nothing left to distinguish and is gone. **A rule that needed
+history on the old path needs none here** — which is the argument for the pattern stated in
+the one place it can be checked.
+
+### A handler must act on the DISPATCHER's frame
+
+Three dialog handlers called `tap_one_positive()` with no `capture_fn`, so each took a fresh
+screenshot. That is the per-frame perception sharing rule, but the real cost is worse than the
+2-3s: **the handler then acts on a screen the dispatcher never perceived**, which is the
+swallowing this whole design exists to remove, reintroduced one layer down. Every positive tap
+now takes `capture_fn=lambda: self._frame()`.
+
+### What the audit did NOT find
+
+Worth recording, because a clean result is evidence too:
+
+- **The keypad is not on these paths.** `sell_goods` and `purchase_goods` run with *Put In
+  Bulk* ON, where a tile tap loads the whole stack. Only `sell_down_to` turns it off and walks
+  tile → Trade Goods Info → keypad → Load, and `TrimHold` still runs the old flow. So
+  `QUANTITY_DIALOG` and `TRADE_GOODS_INFO` having no handler is correct, not a gap — they hand
+  back, which is the honest answer for a card this goal did not raise.
+- **`OVERFLOW_PROMPT` / `DISCARD_NOTICE` likewise.** They are the barter's cards;
+  `_react_after_purchase` never handled them either.
+- **`RESTOCK_PROMPT` has no handler because `refresh_market` answers its own dialog** — a
+  remaining sub-loop, listed as such rather than hidden.

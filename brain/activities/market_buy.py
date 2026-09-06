@@ -70,6 +70,37 @@ def credit_the_shelf_drop(state, before: tuple, after: Mapping) -> list:
     return credited
 
 
+def _stocked_but_unmoved(state, orders: Mapping, goods: Mapping) -> Optional[str]:
+    """A wanted good that is ACTIVE and READABLE, whose shelf did not move across a purchase.
+
+    THE ROOM IS THE PROBLEM, NOT THE SHELF (user, 2026-09-04: *"blue gem should only be used
+    when the tile is greyed out and stock is 0; on 259 it should not use blue gem to refresh
+    as it is still available"*). Buying nothing from a shelf the reader can SEE is stocked
+    means the hold could not take it, and no amount of restocking fixes that.
+
+    Live 2026-09-04 at Madeira, frame 259: Raisin 217 on the tile, fully active, 105 free
+    slots, and the hold full of the Pig surplus. The buy raised *"The Cargo Hold's Trade Goods
+    slot will be exceeded by 52 slots"*; the loop read the 0 as a possible sold-out, spent a
+    gem at 205 and rising, then discovered the hold was full one round later anyway.
+
+    UNREAD IS NOT UNMOVED. A shelf missing from either reading yields no claim — the same
+    rule `credit_the_shelf_drop` follows, and the reason this cannot fire on a bad parse.
+    """
+    from actions.buy_materials import tile_in_stock
+    was, now = dict(state.last_signature or ()), dict(shelf_signature(goods))
+    for material in orders or {}:
+        key = str(material).lower()
+        good = (goods or {}).get(key)
+        if good is None or not tile_in_stock(good):
+            continue                              # sold out — that IS a stock problem
+        before, after = was.get(key), now.get(key)
+        if before is None or after is None or before < 0 or after < 0:
+            continue                              # unread on one side — no claim to make
+        if before == after:
+            return str(material)
+    return None
+
+
 def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn) -> dict:
     """One action on the purchase grid.
 
@@ -101,20 +132,28 @@ def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn) -
         tap_fn(commit.cx, commit.cy)
         return {"do": "committed", "cost": staged_cost}
 
+    orders = dict(getattr(goal, "orders", {}) or {})
+
     # A PURCHASE JUST COMPLETED? The shelf will have dropped. Credit it before deciding
     # anything else, or the goal test runs on a ledger that has not heard about the last buy.
     if state.last_intent == "tapped Purchase" and state.last_signature:
         credited = credit_the_shelf_drop(state, state.last_signature, goods)
+        stuck = None if credited else _stocked_but_unmoved(state, orders, goods)
         state.did(None)
         if credited:
             logger.info(f"[market] the shelf dropped {credited} — credited to the ledger")
+        elif stuck:
+            logger.info(f"[market] bought 0 while {stuck!r} is still in stock — the shelf is "
+                        "not the problem, the room is; stopping rather than spending a gem "
+                        "that cannot help")
+            return {"do": "finished", "why": f"bought 0 while {stuck!r} is still in stock — "
+                                             "the hold has no room", "cargo_full": True}
 
     if state.ledger is not None:
         states = material_states(state.ledger, dict(getattr(goal, "orders", {}) or {}))
         if states and all(s["state"] == "met" for s in states.values()):
             return {"do": "finished", "why": "goal met", "materials": states}
 
-    orders = dict(getattr(goal, "orders", {}) or {})
     buyable = buyable_now(orders, goods, state.ledger, True)
     if buyable:
         if state.last_intent == "staged" and state.last_signature == shelf_signature(goods):

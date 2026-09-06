@@ -367,10 +367,38 @@ class MarketActivity:
         iteration 2 pressed its Receive, and the handler that owns overflow never ran.
         """
         from brain.commit_actions import tap_one_positive
-        tap_one_positive(goal_keywords=["ok", "confirm"])
+        tap_one_positive(goal_keywords=["ok", "confirm"],
+                         capture_fn=lambda: self._frame(),
+                         tap_fn=self._tap_fn())
         self._state.did("answered a dialog")
         return ActivityResult(WORKING, {"port": port, "did": "answered a dialog"},
                               detail=f"sell at {port}")
+
+    def _on_cargo_full_notice(self, goal: Any, port: str) -> ActivityResult:
+        """"The Cargo Hold's Trade Goods slot will be exceeded by N slots. Purchase?" — OK.
+
+        A PLAIN ACKNOWLEDGEMENT, NOT A REFUSAL. The game hands back what fits and the rest is
+        not taken; it spends no gems, so OK is the answer (user, 2026-09-04: "for this one you
+        can tap the Ok button"). Cancelling abandons a purchase the hold has room for.
+
+        Ported from `_react_after_purchase`, which matched BOTH phrases and never the bare
+        word "notice" — a Notice is a shape, not a meaning. Missing it once already cost a
+        whole purchase: live 2026-09-04 at Madeira (frame 272) the dialog was left standing,
+        `purchase_goods` returned ok with purchased=False, and the caller walked out of the
+        market through the chromed title with 105 slots free and nothing bought.
+        """
+        from brain.commit_actions import tap_one_positive
+        if not tap_one_positive(goal_keywords=["ok"], capture_fn=lambda: self._frame(),
+                                tap_fn=self._tap_fn()):
+            logger.warning("[market] the overload Notice is up but its OK could not be "
+                           "found — handing back rather than tapping blind")
+            return ActivityResult(UNRECOGNISED, self._observed(port),
+                                  detail="an overload Notice with no readable OK")
+        logger.info("[market] trade-goods overload Notice — OK (the hold takes what fits)")
+        self._state.did("acknowledged the overload notice")
+        return ActivityResult(WORKING, {**self._observed(port),
+                                        "did": "acknowledged the overload notice"},
+                              detail=f"buy at {port}")
 
     def _on_negotiation(self, goal: Any, port: str) -> ActivityResult:
         """The haggle prompt — DECLINED, which is not the positive option.
@@ -417,7 +445,9 @@ class MarketActivity:
         for name in sold:
             if name not in self._state.sold:
                 self._state.sold.append(name)
-        tap_one_positive(goal_keywords=["ok", "confirm"])
+        tap_one_positive(goal_keywords=["ok", "confirm"],
+                         capture_fn=lambda: self._frame(),
+                         tap_fn=self._tap_fn())
         self._state.did("cleared the result dialog")
         return ActivityResult(WORKING, {"sold": list(self._state.sold), "port": port,
                                         "did": "cleared the result dialog"},
@@ -614,6 +644,7 @@ MarketActivity._HANDLERS = {
     _ctx.CONFIRM_DIALOG:  MarketActivity._on_our_dialog,
     _ctx.RESULT_DIALOG:   MarketActivity._on_result,
     _ctx.NEGOTIATION:     MarketActivity._on_negotiation,
+    _ctx.CARGO_FULL_NOTICE: MarketActivity._on_cargo_full_notice,
 }
 
 
