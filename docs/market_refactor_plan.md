@@ -79,10 +79,29 @@ NOT REFRESHABLE"*), and `buy_materials.py:1164` keeps it out of the batch. So
 asks. Whether a sell-side gate exists is UNKNOWN — worth answering from recorded frames
 before step 5 rather than assuming either way.
 
-**Accepted for now** (user, 2026-09-05): the tile batch stays as one action needing one
-perceive after it. The residual risk is inherent to batching — a read that misses a NEW badge
-type makes every tap in that batch blind — and the mitigation is that the batch is bounded
-and the next tick sees the result, not that the read is perfect.
+## RISK-1 — a batched tap acts on a stale or incomplete read
+
+**Accepted, and judged low** (user, 2026-09-05/06).
+
+*The risk:* a batch is chosen from ONE observation, so anything that observation got wrong is
+acted on without recourse — a restricted tile whose badge was missed, a NEW badge type nobody
+has met, a grid that re-flowed between the read and the taps.
+
+*Why it is low, and what it buys:* the batch exists only for SPEED. It is not load-bearing,
+and there are two mitigations, either sufficient on its own:
+
+1. **Drop it.** Stage one tile per tick. Costs a perceive per tile (~2-3s) and nothing else —
+   no correctness argument is lost.
+2. **Let the next perceive handle it.** A batch is still *act once, then verify*: the
+   dispatcher looks after the batch and sees whatever actually happened, badge or no badge.
+   An unexpected result is a context like any other, and the handler that owns it decides.
+
+Mitigation 2 is the architecture doing its job, so the batch is kept for now. If a live run
+shows a mis-tap from a missed badge, take mitigation 1 — it is a one-line change and the
+speed was never the point.
+
+*What is NOT covered:* mitigation 2 makes a bad batch VISIBLE, not free. A tap on a gated
+tile may still raise a notice that costs a tick to clear. That is the accepted cost.
 
 ### Functions that move unchanged
 
