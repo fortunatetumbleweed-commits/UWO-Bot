@@ -806,6 +806,42 @@ class Dispatcher:
             logger.debug(f"[dispatch] could not look for a dialog: {exc}")
             return None
 
+    def _words_inside(self, dialog: Any, state: Any) -> list:
+        """Every label the dialog's own bounds contain — the rules decide, we OBSERVE.
+
+        `body_text` is the detector's INTERPRETATION: the text between the title bar and the
+        topmost action button, taken from the cluster it thinks is the card. When the card is
+        not shaped like a card that reading loses the very words a rule needs.
+
+        Live 2026-09-06, the Attempt Negotiation screen. It is not a centred modal at all —
+        the mate's portrait and "Want me to try negotiating?" sit LEFT, the three choices
+        RIGHT — so the detector bounded it at (33,121)-(2239,1080), essentially the frame, and
+        `body_text` came back `['Purchase', '3,330/4,952', '162']`: page furniture, with
+        'Attempt Negotiation' and 'Remaining negotiation attempts' both present on screen and
+        both dropped. `game_rules` was then asked to rule on a card it could not read, said
+        so honestly, and bootstrap died at step 1 on a screen left over from a previous run.
+
+        THE COST OF WIDENING IT. On a well-bounded dialog this is exactly the card's text. On
+        a mis-bounded one it is closer to the whole frame, so a rule could in principle match
+        something behind the card. That is bounded by keeping rule phrase-sets narrow and
+        specific — `DialogRule` requires ALL phrases — and it is the better failure: a rule
+        that occasionally sees too much beats a decision layer that is handed nothing and
+        wedges the run. Deciding stays in `game_rules`; this only widens what it is shown.
+        """
+        bbox = getattr(dialog, "bbox", None)
+        frame = getattr(state, "frame", None)
+        if bbox is None or frame is None:
+            return []
+        x1, y1, x2, y2 = bbox
+        try:
+            from vision.omniparser import parse_fast_cached
+            return [str(e.label).strip() for e in parse_fast_cached(frame)
+                    if (e.label or "").strip()
+                    and x1 <= e.cx <= x2 and y1 <= e.cy <= y2]
+        except Exception as exc:              # noqa: BLE001 — a poorer read, not a broken one
+            logger.debug(f"[dispatch] could not read inside the dialog: {exc}")
+            return []
+
     def _offer_dialog(self, activity: Activity, dialog: Any, state: Any):
         """Give the activity first refusal on the dialog; fall back to the safe exit.
 
@@ -875,6 +911,7 @@ class Dispatcher:
         text = list(getattr(dialog, "body_text", ()) or ())
         if getattr(dialog, "title_bar", None) is not None and dialog.title_bar.text:
             text.append(dialog.title_bar.text)
+        text.extend(self._words_inside(dialog, state))
         choice = answer_dialog(options, text)
         if choice is None:
             logger.warning(f"[dispatch] nothing owns this {kind} dialog and the game rules "

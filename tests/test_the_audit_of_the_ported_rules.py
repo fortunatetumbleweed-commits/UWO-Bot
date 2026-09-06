@@ -136,3 +136,52 @@ class TheNegotiationIsDeclinedEvenWithNoOwner(unittest.TestCase):
         self.assertEqual(answer_dialog(["Cancel", "OK"],
                                        ["The Cargo Hold's Trade Goods slot will be exceeded "
                                         "by 52 slots. Purchase the trade goods?"]), "OK")
+
+
+class TheRulesAreShownWhatTheDialogContains(unittest.TestCase):
+    """`body_text` is the detector's INTERPRETATION, and it can lose the deciding words.
+
+    Live 2026-09-06: the Attempt Negotiation screen is not a centred modal — portrait and
+    "Want me to try negotiating?" LEFT, three choices RIGHT — so the detector bounded it at
+    (33,121)-(2239,1080) and `body_text` came back `['Purchase', '3,330/4,952', '162']`.
+    'Attempt Negotiation' and 'Remaining negotiation attempts' were both on screen and both
+    dropped, so `game_rules` was asked to rule on a card it could not read.
+    """
+
+    def _dialog_and_state(self):
+        from brain.dispatcher import Dispatcher
+        el = lambda t, x, y: types.SimpleNamespace(label=t, cx=x, cy=y)
+        seen = [el("Attempt Negotiation", 1200, 221), el("Purchase", 300, 400),
+                el("Remaining negotiation attempts", 1200, 297), el("", 5, 5),
+                el("somewhere else entirely", 4000, 4000)]
+        dialog = types.SimpleNamespace(bbox=(33, 121, 2239, 1080),
+                                       body_text=("Purchase", "3,330/4,952", "162"),
+                                       title_bar=None)
+        return Dispatcher, dialog, types.SimpleNamespace(frame=object()), seen
+
+    def test_it_reads_the_labels_the_bounds_contain(self):
+        Dispatcher, dialog, state, seen = self._dialog_and_state()
+        with mock.patch("vision.omniparser.parse_fast_cached", return_value=seen):
+            words = Dispatcher._words_inside(None, dialog, state)
+        self.assertIn("Attempt Negotiation", words)
+        self.assertNotIn("somewhere else entirely", words, "outside the bounds")
+        self.assertNotIn("", words, "blank labels are not text")
+
+    def test_the_negotiation_is_then_answered_instead_of_wedging_the_run(self):
+        from brain.game_rules import answer_dialog
+        Dispatcher, dialog, state, seen = self._dialog_and_state()
+        with mock.patch("vision.omniparser.parse_fast_cached", return_value=seen):
+            text = list(dialog.body_text) + Dispatcher._words_inside(None, dialog, state)
+        self.assertEqual(answer_dialog(["No", "Use 1 chance", "Use all remaining chances"],
+                                       text), "No")
+
+    def test_body_text_alone_could_NOT_answer_it(self):
+        """The assertion that makes the one above mean something."""
+        from brain.game_rules import answer_dialog
+        _, dialog, _, _ = self._dialog_and_state()
+        self.assertIsNone(answer_dialog(["No"], list(dialog.body_text)))
+
+    def test_a_frame_or_bbox_it_cannot_read_yields_nothing_rather_than_raising(self):
+        from brain.dispatcher import Dispatcher
+        self.assertEqual(Dispatcher._words_inside(
+            None, types.SimpleNamespace(bbox=None), types.SimpleNamespace(frame=object())), [])
