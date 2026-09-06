@@ -868,6 +868,18 @@ class Dispatcher:
         who = getattr(activity, "name", None) or "no activity"
         handler = getattr(activity, "on_dialog", None) if activity is not None else None
         if handler is not None:
+            # THE ACTIVITY MUST SEE THIS TICK'S SCREEN, NOT THE LAST ONE. `on_dialog` runs
+            # BEFORE `work()`, which is where an activity normally receives the tick's frame,
+            # so without this it classifies whatever the previous tick left behind.
+            #
+            # Live 2026-09-06 at Tripoli: the market's `on_dialog` read the PURCHASE PAGE from
+            # the previous tick, concluded "a page is not a dialog", and returned None without
+            # a word — so its own negotiation handler never ran, the card fell through to
+            # `game_rules`, and the leg failed with "a confirmation dialog will not close".
+            # The market classifies that frame as `negotiation` correctly when it is given it.
+            seen = getattr(activity, "on_tick_frame", None)
+            if seen is not None:
+                seen(getattr(state, "frame", None))
             result = handler(dialog, self.goal)
             if result is not None and result.status != UNRECOGNISED:
                 logger.info(f"[dispatch] {who} answered the {kind} dialog -> "

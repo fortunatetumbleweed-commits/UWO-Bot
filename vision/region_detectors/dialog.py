@@ -486,6 +486,12 @@ def _find_x_close(
     return None
 
 
+# Tallest a dialog action button may be, as a fraction of frame height. Measured: `No`
+# 43px, `Ok` 73px on a 1080-tall frame (4% and 7%). 12% is loose enough to ride a
+# re-layout and tight enough to reject a 314px parse artefact.
+_MAX_ACTION_H = 0.12
+
+
 def _find_action_buttons(
     elements: Sequence[DetectedElement], fw: int, fh: int, frame=None,
 ) -> List[DialogAction]:
@@ -520,6 +526,23 @@ def _find_action_buttons(
         if not (0.20 * fw <= e.cx <= 0.80 * fw):
             continue
         if not (0.45 * fh <= e.cy <= 0.95 * fh):
+            continue
+        # A BOX BIGGER THAN ITS THING IS NOT THE THING. A caller taps an action at its
+        # CENTRE, so an oversized box does not merely describe the button loosely — it aims
+        # somewhere the button is not.
+        #
+        # Live 2026-09-06 at Tripoli. OmniParser returned the negotiation card's `No` as a
+        # 725x314 `button` spanning (1488,367)-(2213,681); the real control is the 63x43 text
+        # at (1771,617)-(1834,660). `game_rules` chose 'No' correctly, the dispatcher tapped
+        # the big box's centre (1850,524) — about 110px above the button — three times, and
+        # the leg failed with "a confirmation dialog will not close". The very next frame
+        # parsed the same card correctly, so this is parse noise, not a layout.
+        #
+        # Measured buttons: `No` 63x43, a Result card's `Ok` 217x73. Nothing legitimate comes
+        # close to 130px tall, and rejecting the bad box is what lets the card reach a reader
+        # that CAN place it — `market._on_negotiation` finds this same 'No' by OCR at
+        # (1803,639).
+        if (e.y2 - e.y1) > _MAX_ACTION_H * fh:
             continue
         out.append(DialogAction(
             label=e.label.strip(),

@@ -493,6 +493,14 @@ class MarketActivity:
         import brain.market_context as ctx
         return ctx.classify(self._frame())
 
+    def on_tick_frame(self, frame) -> None:
+        """The dispatcher's frame for THIS tick, handed over before `on_dialog`.
+
+        `work()` sets this itself; `on_dialog` runs earlier in the same tick and would
+        otherwise classify the previous screen. Same frame either way — one capture per tick.
+        """
+        self._tick_frame = frame
+
     def _frame(self):
         if self._tick_frame is not None:
             return self._tick_frame
