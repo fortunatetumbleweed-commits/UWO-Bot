@@ -24,6 +24,15 @@ So the shape of every test here is:
     what does the card CONTAIN?     -> strips, action labels, a gem cost, a numeric field
     only then, what does it SAY?    -> to RANK candidates, never as the gate
 
+IT DOES NOT ASK WHETHER WE ARE STILL IN THE MARKET, and does not need to (user, 2026-09-06):
+*"when in a building, unless the bot explicitly tap back or home, it won't exit the building,
+so we can assume it is still market unless it hit home or back at the building top menu."*
+A building is a place the bot OCCUPIES until it leaves, and leaving is an action it takes —
+so occupancy is known, not observed, and re-deriving it here would be a second opinion on a
+question the dispatcher's routing already answers. When this cannot name a screen it returns
+MISS and hands back; if neither layer recognises something, the fix is to teach the right one
+to recognise it.
+
 `elements`, `dialog` and `tab` are injectable because the defaults capture and parse, and a
 unit test that reaches for the device is a slow test.
 """
@@ -42,6 +51,7 @@ QUANTITY_DIALOG = "quantity_dialog"
 CONFIRM_DIALOG = "confirm_dialog"
 RESULT_DIALOG = "result_dialog"
 NEGOTIATION = "negotiation"
+TRADE_GOODS_INFO = "trade_goods_info"
 RESTOCK_PROMPT = "restock_prompt"
 OVERFLOW_PROMPT = "overflow_prompt"
 DISCARD_NOTICE = "discard_notice"
@@ -55,6 +65,7 @@ CONTEXT_STATES = (
     CONFIRM_DIALOG,
     RESULT_DIALOG,
     NEGOTIATION,
+    TRADE_GOODS_INFO,
     RESTOCK_PROMPT,
     OVERFLOW_PROMPT,
     DISCARD_NOTICE,
@@ -100,6 +111,14 @@ _RESULT_ROWS = ("total amount", "profit/loss", "profit / loss")
 
 _NEGOTIATION_MARKS = ("negotiation", "negotiate", "nego. chance")
 
+# The card a tile tap opens: the good's description, its price history, and a stepper.
+_INFO_ROWS = ("description", "max price", "min price")
+
+# The amount keypad opens OVER the Trade Goods Info card, and is recognised BY ITS KEYS —
+# see `vision.region_detectors.keypad`, which owns the question because the same card is used
+# throughout the game. Not by its "Enter Number" title: a caption is the weakest evidence
+# here, and the keys are language-independent.
+
 
 def classify(frame, *, elements=None, dialog=None, tab=None) -> str:
     """The market-scoped state, or MISS.
@@ -122,7 +141,7 @@ def classify(frame, *, elements=None, dialog=None, tab=None) -> str:
 
     card = _card_text(dialog, text)
     if dialog is not None or _looks_like_a_card(text):
-        found = _which_card(card, dialog)
+        found = _which_card(card, dialog, elements)
         if found is not None:
             return found
 
@@ -140,7 +159,7 @@ def classify(frame, *, elements=None, dialog=None, tab=None) -> str:
     return MISS
 
 
-def _which_card(card: str, dialog) -> Optional[str]:
+def _which_card(card: str, dialog, elements=()) -> Optional[str]:
     """Which of the market's cards this is, by what it CONTAINS. None = not one of ours.
 
     Order is by specificity, not by likelihood: the discard notice opens OVER the overflow
@@ -160,8 +179,12 @@ def _which_card(card: str, dialog) -> Optional[str]:
         return RESULT_DIALOG
     if _any(card, _NEGOTIATION_MARKS):
         return NEGOTIATION
-    if _has_quantity_field(card, dialog):
+    if _has_keypad(elements):
+        # INNERMOST WINS. The keypad opens OVER the Trade Goods Info card, so both are on
+        # screen and only the keypad is live.
         return QUANTITY_DIALOG
+    if _any(card, _INFO_ROWS):
+        return TRADE_GOODS_INFO
     if _has_choice(dialog):
         # A card with a real choice and none of the above furniture. Deliberately last: it is
         # the shape every one of the others also has, so reaching it means nothing more
@@ -213,20 +236,18 @@ def _has_choice(dialog) -> bool:
     return bool(labels & {"ok", "okay", "yes", "confirm", "cancel", "no"})
 
 
-def _has_quantity_field(card: str, dialog) -> bool:
-    """The amount prompt: a card whose body carries an `n / owned` pair.
+def _has_keypad(elements) -> bool:
+    """The amount keypad is up — asked of the detector that owns it, game-wide.
 
-    Asked of `sell_goods._QTY_PAIR_RE`, which is also what READS the field — so the state and
-    the action cannot disagree about whether there is one.
+    Read from the FRAME's elements, not the card's text: `detect_dialog` models one card, and
+    the keypad opens OVER the Trade Goods Info card, so the modelled one may be the other.
     """
     try:
-        from actions.sell_goods import _QTY_PAIR_RE
-    except Exception:                             # pragma: no cover - import guard
+        from vision.region_detectors.keypad import keypad_is_up
+        return keypad_is_up(elements)
+    except Exception as exc:                      # a classifier must never raise into a tick
+        logger.debug(f"[market-context] keypad check skipped: {exc}")
         return False
-    for part in card.split("|"):
-        if _QTY_PAIR_RE.match(part.strip()):
-            return True
-    return False
 
 
 def _active_tab(frame, text: str) -> Optional[str]:
