@@ -3,6 +3,13 @@
     "at": 1788662959.151065,
     "value": 4952
   },
+  "hold": {
+    "at": 1788727254.072132,
+    "value": {
+      "iron": 666,
+      "matchlock gun": 324
+    }
+  },
   "mission_progress": {
     "at": 1788720533.205996,
     "value": {
@@ -23,7 +30,7 @@
     }
   },
   "settlement": {
-    "at": 1788536028.878461,
-    "value": "Lisboa"
+    "at": 1788727058.1937652,
+    "value": "Barcelona"
   }
 }

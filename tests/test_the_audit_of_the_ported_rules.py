@@ -185,3 +185,41 @@ class TheRulesAreShownWhatTheDialogContains(unittest.TestCase):
         from brain.dispatcher import Dispatcher
         self.assertEqual(Dispatcher._words_inside(
             None, types.SimpleNamespace(bbox=None), types.SimpleNamespace(frame=object())), [])
+
+
+class AHandlerMayNotClaimATapItDidNotMake(unittest.TestCase):
+    """`_offer_dialog` returns the moment an activity claims a dialog, so a false claim ends
+    the dispatcher's turn on it and its own fallbacks never run.
+
+    Live 2026-09-06 at Barcelona, five times over:
+
+        [market] the result_dialog dialog is ours — answering it
+        [commit] iter 0: no positive button found — settled after 0 tap(s)
+        [dispatch] market answered the informational dialog -> working
+                   {'did': 'cleared the result dialog'}
+
+    The card carried only a close X — top-right at (1528,327)-(1579,380) — which the
+    dispatcher had been closing at (1553,354) all morning. The market intercepted, tapped
+    nothing, said it had cleared it, and the task stopped with NOTHING CHANGED for 3 ticks.
+
+    The goods HAD been read and recorded before the tap, which is why it went unnoticed: the
+    ledger was right and only the screen was stuck.
+    """
+
+    def _market(self, pressed):
+        act = MarketActivity(context_fn=lambda f: ctx.RESULT_DIALOG,
+                             capture_fn=lambda: object(), tap_fn=lambda x, y: None,
+                             omni_fn=lambda f: [])
+        state = types.SimpleNamespace(state="building:market", port="Barcelona",
+                                      frame=object())
+        with mock.patch("brain.commit_actions.tap_one_positive", return_value=pressed), \
+             mock.patch.object(MarketActivity, "_read_result_goods", return_value=[]):
+            return act.work(Hold(orders={"Iron": 500}), state)
+
+    def test_no_button_pressed_means_the_dialog_is_HANDED_BACK(self):
+        self.assertEqual(self._market(False).status, UNRECOGNISED)
+
+    def test_a_pressed_button_still_reports_the_dialog_answered(self):
+        res = self._market(True)
+        self.assertEqual(res.status, WORKING)
+        self.assertEqual(res.observed["did"], "cleared the result dialog")

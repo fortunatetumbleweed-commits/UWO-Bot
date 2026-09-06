@@ -88,7 +88,11 @@ class _Bare:
 def _dispatcher(activity):
     from brain.dispatcher import Dispatcher
     import types
-    state = types.SimpleNamespace(state="village", location="village", frame=None)
+    # A FRAME, because the scrim is read from it. `frame=None` means "cannot tell",
+    # which `_dimmed` resolves to DIMMED — the safe default, and it would mask every
+    # assertion about the no-scrim path.
+    state = types.SimpleNamespace(state="village", location="village",
+                                  frame=object())
     d = Dispatcher(perceive=lambda: state,
                    activities={"village": activity, "market": activity},
                    next_goal=lambda _r, _s: "a goal",
@@ -331,10 +335,31 @@ class ADialogWithNoButtonsIsClosedNotReported(unittest.TestCase):
                     title="Montpellierlle", anchors=("close",))
         act = _Bare()
         disp, state = _dispatcher(act)
-        with patch("actions.ui.tap_at") as tap:
+        # NOTHING IS DIMMED, so no window is over the screen. That is the half that makes the
+        # anchor damning: measured `scrim=clear` on the world-map frame against `scrim=scrim`
+        # on a real card whose anchors were also just ('close',).
+        with patch("actions.ui.tap_at") as tap, \
+             patch("vision.overlay.scrim_state", return_value="clear"):
             rec = disp._offer_dialog(act, d, state)
         tap.assert_not_called()
         self.assertIsNone(rec, "hand back so the real screen is dispatched on")
+
+    def test_a_REAL_card_with_only_an_X_is_still_closed(self):
+        """The refusal must not swallow the case this branch exists for.
+
+        Live 2026-09-06 at Barcelona: a genuine card at (813,329)-(1587,754), anchors
+        ('close',) — the same anchor set as the world-map accident — but the screen behind it
+        WAS dimmed. Refusing on the anchor alone left it standing and the task stopped with
+        "NOTHING CHANGED for 3 ticks"."""
+        d = _Dialog(close=(1335, 359, 1413, 414), actions=(), kind="informational",
+                    title="Notice", anchors=("close",))
+        act = _Bare()
+        disp, state = _dispatcher(act)
+        with patch("actions.ui.tap_at") as tap, \
+             patch("vision.overlay.scrim_state", return_value="scrim"):
+            rec = disp._offer_dialog(act, d, state)
+        tap.assert_called_once()
+        self.assertIsNotNone(rec)
 
     def test_a_dialog_with_buttons_still_goes_to_the_game_rules(self):
         """The X must not become a shortcut past a real decision."""

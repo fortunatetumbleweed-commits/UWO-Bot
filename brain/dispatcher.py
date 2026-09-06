@@ -806,6 +806,22 @@ class Dispatcher:
             logger.debug(f"[dispatch] could not look for a dialog: {exc}")
             return None
 
+    def _dimmed(self, state: Any) -> bool:
+        """Is something dimming the screen — i.e. is a window actually over it?
+
+        Unknown reads as DIMMED, which is the safe direction here: it leaves the long-standing
+        behaviour in place and only the confident "nothing is dimmed" refuses a tap.
+        """
+        frame = getattr(state, "frame", None)
+        if frame is None:
+            return True
+        try:
+            from vision.overlay import CLEAR, scrim_state
+            return scrim_state(frame) != CLEAR
+        except Exception as exc:              # noqa: BLE001 — a poorer read, not a broken one
+            logger.debug(f"[dispatch] could not read the scrim: {exc}")
+            return True
+
     def _words_inside(self, dialog: Any, state: Any) -> list:
         """Every label the dialog's own bounds contain — the rules decide, we OBSERVE.
 
@@ -921,10 +937,22 @@ class Dispatcher:
         # it is a real card whose X sits in real chrome, and nothing about it changes here.
         # What is refused is acting on ONE weak geometric anchor; the screen still reaches the
         # activity and the state classifier, which is where a real dialog gets recognised.
+        # AND THE SCRIM IS WHAT SETTLES IT. A dialog is a WINDOW: it dims what it covers
+        # (`docs/dialogs_are_windows.md`, measured x1.98), and `vision.overlay.scrim_state`
+        # already reads that. So a lone close-X anchor is refused only when NOTHING is dimmed
+        # — no scrim, no window, nothing to close. Measured on the two frames:
+        #
+        #     world map, no dialog at all   anchors=('close',)  scrim=clear
+        #     a real card after a purchase  anchors=('close',)  scrim=scrim
+        #
+        # Refusing on the anchor alone was too broad and cost a run of its own: at Barcelona
+        # a genuine card sat at (813,329)-(1587,754) with only an X, nothing closed it, and
+        # the task stopped with "NOTHING CHANGED for 3 ticks".
         anchors = tuple(getattr(dialog, "anchors_fired", ()) or ())
-        if not options and close is not None and anchors == ("close",):
-            logger.info(f"[dispatch] this {kind} rests on a close-X alone — the X is the only "
-                        "evidence for it AND the thing we would tap, so not tapping it")
+        if not options and close is not None and anchors == ("close",) and not self._dimmed(state):
+            logger.info(f"[dispatch] this {kind} rests on a close-X alone and nothing on "
+                        "screen is dimmed — the X is the only evidence for it AND the thing "
+                        "we would tap, so not tapping it")
             return None
         if not options and close is not None:
             x1, y1, x2, y2 = close

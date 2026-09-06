@@ -310,7 +310,7 @@ def detect_dialog(
     close_btn = _find_x_close(candidates, fw, fh)
 
     # Anchor 2 — action verb buttons in the centre band.
-    action_btns = _find_action_buttons(candidates, fw, fh)
+    action_btns = _find_action_buttons(candidates, fw, fh, frame)
 
     fired = []
     if close_btn:     fired.append("close")
@@ -487,7 +487,7 @@ def _find_x_close(
 
 
 def _find_action_buttons(
-    elements: Sequence[DetectedElement], fw: int, fh: int,
+    elements: Sequence[DetectedElement], fw: int, fh: int, frame=None,
 ) -> List[DialogAction]:
     """Action-verb buttons in the centre band, lower half.
 
@@ -530,7 +530,69 @@ def _find_action_buttons(
                 "open", "receive", "purchase", "sell", "buy", "recruit",
             },
         ))
-    return out
+    if out:
+        return out
+    # NO READABLE VERB — LOOK FOR THE GOLD PILL INSTEAD.
+    #
+    # This game marks its positive control by COLOUR, not by wording (CLAUDE.md: "a POSITIVE
+    # button is identified by its yellow/gold background"), and OmniParser does not always
+    # give that control a word. On a purchase Result card it comes back as a bare `icon`:
+    #
+    #     'Result' … 'Total Amount' 275,175 … 'Balance' 68,606,484,238
+    #     icon (1092,676)-(1309,749)          <- 217x73, gold, bottom centre: the OK
+    #
+    # so the verb loop above found nothing, the dialog reported `actions=[]`, and every layer
+    # downstream concluded the card had no button to press. `tap_one_positive` found nothing
+    # five times running at Barcelona on 2026-09-06 and the run stalled. The X in the corner
+    # was closing these cards instead — a dismissal standing in for a completion, which is
+    # backwards (user: "using the Ok button would be the preferred method for all the
+    # confirmation dialogs", and *Back / Home = Cancel, not progress*).
+    #
+    # The test is the CANONICAL one, not a new one: `looks_like_commit_button` — a wide pill
+    # with enough gold — which already accepts this button (217x73, aspect 2.97, yellow 0.324
+    # against a 0.25 floor). Same reasoning as `keypad.py`: recognise the control by what it
+    # IS when the caption is missing.
+    gold = _find_gold_action(elements, frame, fw, fh)
+    return [gold] if gold is not None else []
+
+
+def _find_gold_action(elements, frame, fw: int, fh: int) -> Optional[DialogAction]:
+    """The positive control, by colour, when it carries no readable word.
+
+    NEVER a red-gem button. Those spend real money, and `commit_button.cost_currency` is the
+    same reading `brain/action_executor.py` gates on — a control this function cannot price
+    is not offered as an option at all.
+    """
+    if frame is None:
+        return None
+    try:
+        import numpy as _np
+
+        from vision.region_detectors.commit_button import (cost_currency,
+                                                           looks_like_commit_button,
+                                                           yellow_fraction)
+        arr = _np.asarray(frame.convert("RGB"))
+    except Exception:                       # noqa: BLE001 — a poorer read, not a broken one
+        return None
+    best = None
+    for e in elements:
+        if not (0.20 * fw <= e.cx <= 0.80 * fw and 0.45 * fh <= e.cy <= 0.95 * fh):
+            continue
+        x1, y1, x2, y2 = int(e.x1), int(e.y1), int(e.x2), int(e.y2)
+        w, h = x2 - x1, y2 - y1
+        if w <= 0 or h <= 0:
+            continue
+        try:
+            frac = yellow_fraction(arr, x1, y1, x2, y2)
+            if not looks_like_commit_button(w, h, frac):
+                continue
+            if cost_currency(arr, x1, y1, x2, y2) == "red_gem":
+                continue
+        except Exception:                   # noqa: BLE001
+            continue
+        if best is None or frac > best[0]:
+            best = (frac, DialogAction(label="Ok", bbox=(x1, y1, x2, y2), is_positive=True))
+    return best[1] if best else None
 
 
 def _find_title_bar(

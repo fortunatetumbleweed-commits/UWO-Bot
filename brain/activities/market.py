@@ -367,9 +367,15 @@ class MarketActivity:
         iteration 2 pressed its Receive, and the handler that owns overflow never ran.
         """
         from brain.commit_actions import tap_one_positive
-        tap_one_positive(goal_keywords=["ok", "confirm"],
-                         capture_fn=lambda: self._frame(),
-                         tap_fn=self._tap_fn())
+        if not tap_one_positive(goal_keywords=["ok", "confirm"],
+                                capture_fn=lambda: self._frame(),
+                                tap_fn=self._tap_fn()):
+            # See `_on_result`: claiming a dialog we did not press ends the dispatcher's turn
+            # on it, so its fallbacks never run and the card stands.
+            logger.info("[market] this dialog has no positive button — handing back rather "
+                        "than reporting one we did not answer")
+            return ActivityResult(UNRECOGNISED, {"port": port},
+                                  detail="our dialog, with no positive button")
         self._state.did("answered a dialog")
         return ActivityResult(WORKING, {"port": port, "did": "answered a dialog"},
                               detail=f"sell at {port}")
@@ -445,9 +451,25 @@ class MarketActivity:
         for name in sold:
             if name not in self._state.sold:
                 self._state.sold.append(name)
-        tap_one_positive(goal_keywords=["ok", "confirm"],
-                         capture_fn=lambda: self._frame(),
-                         tap_fn=self._tap_fn())
+        if not tap_one_positive(goal_keywords=["ok", "confirm"],
+                                capture_fn=lambda: self._frame(),
+                                tap_fn=self._tap_fn()):
+            # NOTHING WAS PRESSED, SO NOTHING WAS CLEARED. Saying otherwise ends the
+            # dispatcher's turn on this dialog — `_offer_dialog` returns as soon as an
+            # activity claims it — so its own fallbacks never run and the card just stands.
+            #
+            # Live 2026-09-06 at Barcelona, five times: "no positive button found — settled
+            # after 0 tap(s)" then "market answered the informational dialog -> working
+            # {'did': 'cleared the result dialog'}", and the task stopped with NOTHING
+            # CHANGED for 3 ticks. The goods HAD been read and recorded above, which is why
+            # this went unnoticed — the ledger was right and only the screen was stuck.
+            #
+            # A result card with no positive button is a real shape: some carry only an X.
+            # Handing back says so honestly and lets the dispatcher close it.
+            logger.info("[market] the result card has no positive button — handing back "
+                        "rather than reporting a dialog we did not clear")
+            return ActivityResult(UNRECOGNISED, {"sold": list(self._state.sold), "port": port},
+                                  detail="a result card with no positive button")
         self._state.did("cleared the result dialog")
         return ActivityResult(WORKING, {"sold": list(self._state.sold), "port": port,
                                         "did": "cleared the result dialog"},
