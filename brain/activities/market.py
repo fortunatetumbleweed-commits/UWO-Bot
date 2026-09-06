@@ -186,6 +186,45 @@ class MarketActivity:
             return self._trim_to(goal, port)
         return ActivityResult(BLOCKED, {}, detail=f"the market cannot serve {goal!r}")
 
+    def on_dialog(self, dialog, goal):
+        """First refusal on a dialog covering the market. None means "not mine".
+
+        THE DISPATCHER ASKS THIS BEFORE IT CLASSIFIES A CONTEXT, so a handler table alone is
+        not enough — without this method the dispatcher hears "nothing owns it" and falls
+        back to `game_rules`, which knows the GAME but not what this activity is in the
+        middle of.
+
+        Live 2026-09-06 at Barcelona, the first live run of the buy handler. The cart
+        committed 304,767 ducats, the purchase confirm came up, and:
+
+            nothing owns the confirmation dialog — the game rules say 'Ok'
+            no rule and no positive option among ['No'] — leaving it alone
+            FAILED: gather:Barcelona: a confirmation dialog nobody will answer
+
+        The dialogs were the market's own — its purchase chain — and its `confirm_dialog`,
+        `result_dialog` and `negotiation` handlers were never consulted, because the
+        dispatcher never reached the context table.
+
+        WHAT IT CLAIMS, AND WHAT IT DOES NOT. Only the cards this activity's own actions
+        raise (CLAUDE.md: "who caused the dialog decides how to clear it"). Anything else —
+        daily news, a promo, an announcement — is unsolicited, belongs to the dispatcher's
+        obstruction layer, and gets None.
+        """
+        if not isinstance(goal, self.GOALS):
+            return None
+        where = self._classify()
+        handler = self._HANDLERS.get(where)
+        if handler is None or where in (_ctx.MARKET_LANDING, _ctx.PURCHASE_PAGE,
+                                        _ctx.SELL_PAGE):
+            # Not one of our cards. A page is not a dialog, and claiming one here would
+            # answer a card we have not identified.
+            return None
+        port = self._port_name(None)
+        self._state = self._state.for_goal((type(goal).__name__, port))
+        self._goal_orders = dict(getattr(goal, "orders", {}) or {})
+        logger.info(f"[market] the {where} dialog is ours — answering it")
+        return handler(self, goal, port)
+
     # ── the context path ─────────────────────────────────────────────────────
     def _tick(self, goal: Any, port: str) -> ActivityResult:
         """Classify, do ONE thing, hand back. Never a flow.
@@ -332,6 +371,39 @@ class MarketActivity:
         self._state.did("answered a dialog")
         return ActivityResult(WORKING, {"port": port, "did": "answered a dialog"},
                               detail=f"sell at {port}")
+
+    def _on_negotiation(self, goal: Any, port: str) -> ActivityResult:
+        """The haggle prompt — DECLINED, which is not the positive option.
+
+        THE ONLY MARKET CARD WHOSE RIGHT ANSWER IS "NO". Every other one is completed by its
+        positive button; this one offers to gamble the transaction on a haggle, and the flow
+        this replaces has always skipped it:
+
+            if "negotiat" in txt:                          # haggle popup -> skip
+                pos = find_text_button(tokens, "no", min_ratio=0.85)
+                logger.info("[buy] negotiation popup — No")
+
+        Routing it to the positive handler, as this table did until now, would have said YES
+        on every purchase — a behaviour change smuggled in by a refactor that is supposed to
+        preserve behaviour. It also explains the stall at Barcelona: `game_rules` was offered
+        a card whose only option it could read was 'No', found nothing positive, and quite
+        correctly refused to answer someone else's dialog.
+        """
+        from actions.sail_actions import _ocr_frame
+        from actions.route_execution import find_text_button
+        tokens = _ocr_frame(self._frame(), min_conf=0.3)
+        where = find_text_button(tokens, "no", min_ratio=0.85)
+        if where is None:
+            # Not answerable this tick. Hand back rather than press something else — the
+            # dispatcher looks again, and a wrong button here accepts a haggle.
+            return ActivityResult(UNRECOGNISED, self._observed(port),
+                                  detail="a negotiation prompt with no readable 'No'")
+        logger.info(f"[market] negotiation prompt — No")
+        self._tap_fn()(*where)
+        self._state.did("declined the negotiation")
+        return ActivityResult(WORKING, {**self._observed(port),
+                                        "did": "declined the negotiation"},
+                              detail=f"buy at {port}")
 
     def _on_result(self, goal: Any, port: str) -> ActivityResult:
         """THE PROOF a transaction happened — and the ONLY place the ledger is written.
@@ -541,7 +613,7 @@ MarketActivity._HANDLERS = {
     _ctx.MARKET_LANDING:  MarketActivity._on_market_landing,
     _ctx.CONFIRM_DIALOG:  MarketActivity._on_our_dialog,
     _ctx.RESULT_DIALOG:   MarketActivity._on_result,
-    _ctx.NEGOTIATION:     MarketActivity._on_our_dialog,
+    _ctx.NEGOTIATION:     MarketActivity._on_negotiation,
 }
 
 

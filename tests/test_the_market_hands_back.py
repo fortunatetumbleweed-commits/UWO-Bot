@@ -84,12 +84,34 @@ class OurOwnCardsAreAnsweredOnceEach(unittest.TestCase):
         self.assertEqual(loop.call_args.kwargs.get("max_taps"), 1,
                          "one tap per tick — the looping form is what caused FC-3")
 
-    def test_a_negotiation_is_answered_the_same_way(self):
-        act, _ = _act(ctx.NEGOTIATION)
-        with mock.patch("brain.commit_actions.commit_via_positive_taps",
-                        return_value=[("ok", 0.5, 0.9)]) as loop:
-            act.work(GOAL, _state())
-        self.assertEqual(loop.call_args.kwargs.get("max_taps"), 1)
+
+class ANegotiationIsDeclined(unittest.TestCase):
+    """THE ONLY MARKET CARD WHOSE RIGHT ANSWER IS "NO".
+
+    Every other one is completed by its positive button. This one offers to gamble the
+    transaction on a haggle, and the flow being replaced has always skipped it:
+    `[buy] negotiation popup — No`. Routing it to the positive handler, as the table did
+    until 2026-09-06, would have said YES on every purchase.
+    """
+
+    def test_it_taps_No_not_a_positive(self):
+        act, taps = _act(ctx.NEGOTIATION)
+        with mock.patch("actions.sail_actions._ocr_frame", return_value=[]), \
+             mock.patch("actions.route_execution.find_text_button", return_value=(900, 800)), \
+             mock.patch("brain.commit_actions.commit_via_positive_taps") as positive:
+            res = act.work(GOAL, _state())
+        self.assertEqual(taps, [(900, 800)])
+        positive.assert_not_called()
+        self.assertEqual(res.observed["did"], "declined the negotiation")
+
+    def test_an_unreadable_No_hands_back_rather_than_pressing_something_else(self):
+        """A wrong button here ACCEPTS a haggle. The dispatcher looks again."""
+        act, taps = _act(ctx.NEGOTIATION)
+        with mock.patch("actions.sail_actions._ocr_frame", return_value=[]), \
+             mock.patch("actions.route_execution.find_text_button", return_value=None):
+            res = act.work(GOAL, _state())
+        self.assertEqual(res.status, UNRECOGNISED)
+        self.assertEqual(taps, [])
 
 
 class OnlyTheResultCardWritesTheLedger(unittest.TestCase):
