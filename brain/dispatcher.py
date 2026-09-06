@@ -806,6 +806,26 @@ class Dispatcher:
             logger.debug(f"[dispatch] could not look for a dialog: {exc}")
             return None
 
+    def _button_by_text(self, state: Any, label) -> Optional[tuple]:
+        """Where a NAMED button is, read off the frame — the second reader.
+
+        Only ever asked about a label a written rule chose, never swept for candidates: a
+        sweep turns up page furniture, and a point with a plausible name is exactly the kind
+        of guess that lands a tap somewhere nobody meant.
+        """
+        frame = getattr(state, "frame", None)
+        if frame is None or not label:
+            return None
+        try:
+            from actions.route_execution import find_text_button
+            from actions.sail_actions import _ocr_frame
+            where = find_text_button(_ocr_frame(frame, min_conf=0.3), str(label),
+                                     min_ratio=0.95)
+        except Exception as exc:              # noqa: BLE001 — a poorer read, not a broken one
+            logger.debug(f"[dispatch] could not re-read the dialog's buttons: {exc}")
+            return None
+        return (int(where[0]), int(where[1])) if where is not None else None
+
     def _dimmed(self, state: Any) -> bool:
         """Is something dimming the screen — i.e. is a window actually over it?
 
@@ -975,13 +995,35 @@ class Dispatcher:
             ui.tap_at((x1 + x2) // 2, (y1 + y2) // 2, why=f"close an unowned {kind} dialog")
             return {"did": f"closed a {kind} dialog with no buttons"}
 
-        from brain.game_rules import answer_dialog
+        from brain.game_rules import answer_dialog, rule_answer
         text = list(getattr(dialog, "body_text", ()) or ())
         if getattr(dialog, "title_bar", None) is not None and dialog.title_bar.text:
             text.append(dialog.title_bar.text)
         text.extend(self._words_inside(dialog, state))
         choice = answer_dialog(options, text)
         if choice is None:
+            # A WRITTEN RULE MAY NAME A BUTTON THE PARSER MISSED. `answer_dialog` will not
+            # pick an option nobody offered, which is right — but the option list came from
+            # OmniParser's action boxes, and a mis-boxed button simply is not in it.
+            #
+            # Live 2026-09-06 at bootstrap: the Attempt Negotiation card, its 'No' returned as
+            # a 725x364 phantom that the size guard rightly dropped, leaving `options=['buy']`.
+            # The rules refused — "'attempt_negotiation' applies but 'no' is not offered" —
+            # honest, and still stuck, because the 'No' was plainly on screen. OCR puts it at
+            # (1803,639).
+            #
+            # ONLY A NAMED RULE GETS THIS. The positive DEFAULT does not, deliberately: a
+            # free text sweep also turns up 'Purchase' at (200,49) and 'Sell' at (64,275) —
+            # the market's TAB labels — and "take the positive option" among words nobody
+            # placed is how a tab gets tapped instead of a button.
+            named = rule_answer(text)
+            spot = self._button_by_text(state, named) if named else None
+            if spot is not None:
+                from actions import ui
+                logger.info(f"[dispatch] the rules say {named!r} and the box parser missed "
+                            f"it — read off the frame at {spot}")
+                ui.tap_at(spot[0], spot[1], why=f"{named} on an unowned {kind} dialog")
+                return {"did": f"answered a {kind} dialog with {named!r}"}
             logger.warning(f"[dispatch] nothing owns this {kind} dialog and the game rules "
                            f"will not answer it (options={options}) — reporting rather than "
                            "pressing something at random")
@@ -991,13 +1033,16 @@ class Dispatcher:
 
         target = next((a.bbox for a in dialog.actions if a.label == choice), None)
         from actions import ui
-        if target is None:
+        point = None
+        if target is not None:
+            x1, y1, x2, y2 = target
+            point = ((x1 + x2) // 2, (y1 + y2) // 2)
+        if point is None:
             logger.warning(f"[dispatch] {choice!r} is not on screen after all — not guessing")
             return None
-        x1, y1, x2, y2 = target
         logger.info(f"[dispatch] nothing owns the {kind} dialog — the game rules say "
                     f"{choice!r} ({self._dialog_looks}/{self._MAX_DIALOG_LOOKS})")
-        ui.tap_at((x1 + x2) // 2, (y1 + y2) // 2, why=f"{choice} on an unowned {kind} dialog")
+        ui.tap_at(point[0], point[1], why=f"{choice} on an unowned {kind} dialog")
         return {"did": f"answered a {kind} dialog with {choice!r}"}
 
     # How many consecutive `unknown` ticks may be carried on a remembered activity. A dialog

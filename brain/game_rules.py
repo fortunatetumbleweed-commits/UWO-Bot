@@ -122,6 +122,23 @@ def answer_dialog(options: Sequence[str], text: Sequence[str], *,
     return choice
 
 
+def rule_answer(text: Sequence[str]) -> Optional[str]:
+    """The answer a NAMED rule implies, regardless of what the caller says is on offer.
+
+    `answer_dialog` will not choose an option nobody offered, which is right: it must not
+    invent a button. But a caller whose option list came from a parser that MISSED a button
+    needs to know what the rules would have said, so it can go and look for that button with
+    another reader. This says so, and names nothing that is not a written rule — the positive
+    DEFAULT is deliberately absent, because "take the positive option" is only meaningful
+    among options that were actually seen.
+    """
+    joined = " ".join(t.lower() for t in text if t)
+    for rule in DIALOG_RULES:
+        if all(p in joined for p in rule.phrases):
+            return rule.answer
+    return None
+
+
 def _default_positive(options: Sequence[str]) -> Optional[str]:
     """The option that advances the flow, by word. Ordered by how affirmative it is."""
     lowered = {o.strip().lower(): o for o in options}
