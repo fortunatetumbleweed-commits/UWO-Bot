@@ -631,6 +631,27 @@ class WorldMapActivity:
         """
         where = getattr(goal, "where", None)
         for_us = self._panel_is_for(where)
+
+        # A BARE `Move` NAMES NOTHING, SO UNKNOWN IS A REFUSAL HERE (live 2026-09-05).
+        #
+        # "Unknown is not no" is right for a CITY: its panel is the city's, the control says
+        # "Go to City", and refusing an unreadable panel would strand a correct departure.
+        # A saved route has neither — its commit control says only `Move`, so if the panel
+        # cannot be confirmed as ours then NOTHING on the screen ties the tap to the
+        # destination, and pressing it sails wherever the panel already pointed.
+        #
+        # At Hutu the route list was opened over route 2's panel. `location_panel_is_for`
+        # crops the CITY panel's region and matches the destination's FIRST WORD — 'Sans' of
+        # 'Sans to London' — so on a route panel it read nothing, returned None, and the bare
+        # Move went in. The fleet sailed 'sailing route 2': ETA 39 days on 6 days of supply,
+        # and the activity reported FINISHED for 'Sans to London'.
+        kind = getattr(goal, "kind", "port")
+        if kind == "route" and for_us is not True:
+            logger.warning(f"[world_map] the open panel cannot be confirmed as the route "
+                           f"{where!r} (reads {for_us!r}) — a bare 'Move' names nothing, so "
+                           "this would commit whichever route is already selected")
+            return ActivityResult(BLOCKED, {"where": where, "why": "route not confirmed"},
+                                  detail=f"cannot confirm the open panel is {where!r}")
         if for_us is False:
             # NOT ours. Sailing from here goes somewhere nobody chose, so hand back and let
             # the map be searched again rather than committing to whatever is open.
