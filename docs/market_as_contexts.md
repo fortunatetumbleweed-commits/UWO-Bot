@@ -11,6 +11,60 @@ are recorded below as verification anchors. Branch: `market_refactor`. Companion
 > can call back when the action is performed. So you do not need a loop to wait for that. I am
 > wondering how that paradigm can be used for subloops still in market."* — user, 2026-08-30
 
+## The architecture: no sub-loops at all
+
+**The cycle, and there is only one** (user, 2026-09-05):
+
+```
+dispatcher   perceive  ->  dispatch
+activity     handle the perceived request  ->  modify context  ->  take action  ->  hand back
+```
+
+*"Thus it never swallows anything."* That sentence is the whole justification, and it is a
+property of the SHAPE, not of any handler's care. Every screen the game puts up passes
+through `perceive` before anything acts on it, because there is nowhere else for control to
+be. A dialog cannot be tapped through unseen; a dropped tap cannot be mistaken for a state
+change; an unexpected screen cannot be reasoned about by code that never asked what it was.
+
+**This is stricter than "a loop may wait for its own effect".** CLAUDE.md's Principle #5
+permits that narrower form, and it is what the remaining loops appeal to. But a loop waiting
+for its own effect still holds control while the screen changes under it, and holding control
+is exactly what swallows. FC-3 is the proof: `commit_via_positive_taps` was waiting for its
+own effect — the commit cycle closing — and in the meantime tapped `Receive` and then `OK` on
+a discard notice, so the dispatcher never got a tick and the overflow handler was never a
+possibility. Nothing in that loop was careless; the loop itself was the defect.
+
+So the target is not "fewer sub-loops" or "sub-loops that behave". It is **none**, and the
+test is mechanical: *can control be inside this function while the screen is showing something
+it did not expect?* If yes, it is a sub-loop whatever it is called.
+
+### What this costs, and why it is affordable
+
+One tick per action instead of one tick per flow. The Performance section below bounds it: a
+tick is **one observation → one decision → the actions that decision entails**, so taps
+justified by the SAME observation still go together, and the cost is perceives, not taps.
+
+### It applies to the village's retry too
+
+`actions/barter_panel._try` is quoted below as the reference for handling an unresponsive
+tap, and its DOCTRINE is right — read back, compare a signature, and answer `None` for "the
+tap never landed" rather than `False`. Its LOOP is not:
+
+```python
+for attempt in (1, 2):          # <- a sub-loop, by the rule above
+    ui.tap_at(...)
+    reading = read_barter_panel(screen().get(...).frame)
+```
+
+Control sits in that function across a capture, so a dialog arriving between the two attempts
+is tapped over rather than seen. Under this architecture the retry is not a loop at all: the
+handler taps, returns, and the NEXT tick either sees a changed screen (done) or the same one
+(tap again) — with the bound living on the activity, keyed to the goal, as `_selects` and
+`_committed` already do. Same doctrine, no loop, and the dialog case comes free.
+
+The village is the model for HOW to judge a tap. It is not yet the model for WHERE the
+waiting happens.
+
 ## What a listener actually buys
 
 Not "no polling" — **inversion of control**. The code stops asking *has it happened yet?* and
@@ -299,7 +353,8 @@ FC-4   "Select the goods you'd like to sell."
 
 ### The village already answers this, and the market must inherit it
 
-`actions/barter_panel._try` is the reference implementation, and it is four rules:
+`actions/barter_panel._try` is the reference for the JUDGEMENT — not for the loop it is
+written in, which the architecture above rules out. Four rules:
 
 ```python
 for attempt in (1, 2):                      # 3. BOUNDED retry — a swallowed tap costs a repeat
@@ -329,11 +384,12 @@ mission.
 - the effect is verified by comparing an observation before and after — a signature, a
   basket count, a cart state — never by the tap returning;
 - one bounded re-tap on the same control before concluding anything;
-- and because the dispatcher re-perceives between ticks anyway, a handler may simply return
-  and let the next tick see the unchanged screen. **That is the version the refactor should
-  prefer**: no retry loop at all, because the context is still `goods_staged` next tick and
-  the same handler fires again. The bound then lives where the village already puts it — an
-  attempt counter on the activity, keyed to the goal, reporting rather than grinding.
+- and the retry is NOT a loop. The handler taps, returns, and the next tick either sees a
+  changed screen (done) or the same one (tap again) — the context is still `goods_staged`, so
+  the same handler fires. The bound lives on the activity, keyed to the goal, as `_selects`
+  and `_committed` already do. This is not a preference; it is the architecture: a retry loop
+  holds control across a capture, and a dialog arriving mid-retry is tapped over rather than
+  seen — which is FC-3 exactly.
 
 ## The line to keep: who caused the dialog
 
@@ -364,6 +420,11 @@ Small steps, each independently checkable, in this order:
 
 Each step is measurable in the same way: the sub-loop count in the market path, and whether a
 run still completes.
+
+**The acceptance test is mechanical, and it is the architecture's own:** for every function
+in the market path, *can control be inside it while the screen shows something it did not
+expect?* The migration is done when the answer is no everywhere — not when the count is low,
+and not when the loops are careful. `commit_via_positive_taps` was careful.
 
 ## Performance — one perceive per DECISION, not per action
 
