@@ -52,6 +52,38 @@ These are the batching rule in `market_as_contexts.md`: *a tick is one observati
 decision → the actions that decision entails.* Deleting them would buy nothing and cost
 perceives.
 
+**The rule, stated exactly** (user, 2026-09-05): *"if one loop is on one perceive, and only
+takes one action, that is fine. If it takes an action, the action result needs to be
+perceived by the dispatcher, not in a subloop."*
+
+So the test is not how many taps a loop makes — it is **who perceives the result**. One
+observation may justify a batch of taps; the batch then ENDS and the dispatcher takes the
+next look. What is forbidden is looking at the outcome from inside, because that is the
+control the dispatcher needs in order to see anything unexpected.
+
+### The known risk in the batched tap, and where it stands
+
+A batch is chosen from ONE observation, so anything that observation got wrong is acted on
+without recourse — most concretely a **restricted tile**: a good carrying a ribbon or badge
+marking a criterion that must first be met (`Unlock Condition (0/1)` on Shea Butter at
+Madeira). Tapping one is a wasted tap at best.
+
+**On the BUY side this is already handled, in two places** —
+`market_reader.py:628` sets `good.conditional` when the tile carries a corner ribbon
+(*"gated, not empty"*), `buy_materials.py:484` refuses it (*"A GATED GOOD IS NOT BUYABLE AND
+NOT REFRESHABLE"*), and `buy_materials.py:1164` keeps it out of the batch. So
+`purchase_goods` receives a pre-filtered `targets` and the risk does not arise today.
+
+**On the SELL side it is neither checked nor populated:** the ribbon test runs only under
+`if tab == "purchase"`, so `conditional` is never set on a sell tile, and `sell_goods` never
+asks. Whether a sell-side gate exists is UNKNOWN — worth answering from recorded frames
+before step 5 rather than assuming either way.
+
+**Accepted for now** (user, 2026-09-05): the tile batch stays as one action needing one
+perceive after it. The residual risk is inherent to batching — a read that misses a NEW badge
+type makes every tap in that batch blind — and the mitigation is that the batch is bounded
+and the next tick sees the result, not that the read is perfect.
+
 ### Functions that move unchanged
 
 Readers (`read_market_page_omni`, `_read_owned_via_sell`, `fill_missing_quantities`), tappers
