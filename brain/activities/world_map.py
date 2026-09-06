@@ -701,12 +701,38 @@ class WorldMapActivity:
     def _ensure_tab(self, tab: str, goal) -> bool:
         if self._require_tab is not None:
             return bool(self._require_tab(tab))
-        from actions.sail_actions import require_world_map_tab
+        from actions.sail_actions import active_world_map_tab, require_world_map_tab
         # Pass the tick's frame: the guard READS which tab is live, and reading it from a
         # screen taken after the one we were routed on is how a guard ends up answering about
         # a different moment than the decision it guards.
-        return bool(require_world_map_tab(tab, why=f"the {goal.kind} list lives on it",
-                                          frame=self._frame()))
+        frame = self._frame()
+        was_already_lit = active_world_map_tab(frame) == tab
+        ok = bool(require_world_map_tab(tab, why=f"the {goal.kind} list lives on it",
+                                        frame=frame))
+
+        # SWITCHING TABS IS A SCREEN CHANGE, SO THE TICK'S FRAME IS SPENT (live 2026-09-05).
+        #
+        # `_tick_frame` exists so every reader in one tick answers about the SAME screen —
+        # right, until something in that tick CHANGES the screen. This runs before the
+        # context is classified and before any handler, so after a switch the whole rest of
+        # the tick was reading the tab we just left.
+        #
+        # At Hutu, taking the route home: the tick opened on the PORT tab, this switched to
+        # Route, and everything downstream still read the port screen. The classifier called
+        # it MAP_OPEN instead of ROUTE_LIST; `_find_on_screen` OCR'd 32 tokens with no route
+        # in them and reported 'Sans to London' not on screen (it was on screen, and matches
+        # fuzzily — the frame was simply the wrong one); `_open_list` then took the PORT
+        # rail's icon at (69,170) and tapped it into the route list that had appeared, where
+        # that point is the divider between 'Sailing Route 2' and 'san to london'. It
+        # selected the row above, the bare Move committed it, and the fleet sailed a 39-day
+        # route on 6 days of supply.
+        #
+        # Dropping the frame costs one capture and only when a switch actually happened.
+        if ok and not was_already_lit:
+            logger.info("[world_map] the tab changed, so the tick's frame is spent — "
+                        "re-reading rather than deciding from the tab we just left")
+            self._tick_frame = None
+        return ok
 
     def _find_on_screen(self, where: str, kind: str = "port", *, in_list: bool = False):
         """(cx, cy) of `where` if it is already visible, else None.
