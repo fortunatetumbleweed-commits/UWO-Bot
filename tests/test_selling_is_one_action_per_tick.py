@@ -30,8 +30,11 @@ def _good(name, qty=100, profit=500):
 class _Sell:
     """Drives `on_sell_page` with a scripted page and commit button."""
 
-    def __init__(self, goods, commit=None):
+    def __init__(self, goods, commit=None, cart_empty=True):
         self.goods, self.commit = goods, commit
+        # What the right-hand panel says. "Select the goods you'd like to sell" is the ONLY
+        # safe licence to tap a tile again — a second tap on a STAGED tile un-stages it.
+        self.cart_empty = cart_empty
         self.taps = []
 
     def run(self, state, goal):
@@ -41,9 +44,10 @@ class _Sell:
              mock.patch("actions.sell_goods._find_sell_commit",
                         lambda f, e: self.commit), \
              mock.patch.object(MS, "_scroll", lambda: self.taps.append("scroll")):
+            panel = [types.SimpleNamespace(label="Select the goods")] if self.cart_empty else []
             return on_sell_page(state, goal, frame=object(), capture_fn=lambda: object(),
                                 tap_fn=lambda x, y: self.taps.append((x, y)),
-                                omni_fn=lambda f: [])
+                                omni_fn=lambda f: panel)
 
 
 SELL_ALL = types.SimpleNamespace(__class__=type("SellHold", (), {}), exclude=())
@@ -80,6 +84,18 @@ class StagingIsVerifiedAgainstTheBasket(unittest.TestCase):
         out = run.run(s, _Goal())                # tick 2 — page unchanged
         self.assertEqual(out["do"], "staged", "a swallowed tap is retried, not a failure")
         self.assertEqual(len(run.taps), 2)
+
+    def test_a_basket_that_may_be_staged_is_NOT_re_tapped(self):
+        """THE DESTRUCTIVE RETRY, refused. No commit button has two causes: the tap was
+        swallowed, or the detector missed a button that is there. Re-staging on that reading
+        un-stages a correct basket — `purchase_goods` removed exactly this retry in August
+        after it toggled a correctly filled cart."""
+        s = MarketState()
+        run = _Sell([_good("Bambara Groundnut")], cart_empty=False)
+        run.run(s, _Goal())                      # tick 1 — stages
+        out = run.run(s, _Goal())                # tick 2 — page same, cart NOT read as empty
+        self.assertEqual(out["do"], "waited")
+        self.assertEqual(len(run.taps), 1, "the second tick must not tap at all")
 
     def test_a_tile_that_never_takes_a_tap_is_reported(self):
         """Bounded: the third identical page says the control is not responding."""

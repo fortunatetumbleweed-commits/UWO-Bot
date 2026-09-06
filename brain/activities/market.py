@@ -202,6 +202,11 @@ class MarketActivity:
                            capture_fn=self._capture_fn(), tap_fn=self._tap_fn(),
                            omni_fn=self._omni_fn())
         did = out.get("do")
+        if did == "waited":
+            # Looked, chose not to act. A tick that taps nothing is a legitimate move when
+            # the alternative is a destructive tap — see `market_sell._cart_is_empty`.
+            return ActivityResult(WORKING, {"sold": list(self._state.sold), "port": port,
+                                            "did": "looked again"}, detail=f"sell at {port}")
         if did == "blocked":
             return ActivityResult(BLOCKED, {"sold": list(self._state.sold), "port": port},
                                   detail=out.get("why", "the sell page refused"))

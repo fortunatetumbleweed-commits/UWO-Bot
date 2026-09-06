@@ -37,6 +37,19 @@ _MAX_STAGE_ATTEMPTS = 1
 # The grid is one 3x3 page. Nothing sellable IN VIEW is not an empty hold — scroll and look.
 _MAX_SELL_SCROLLS = 4
 
+# The panel's own words when the basket holds nothing. This is the ONLY safe licence to tap a
+# tile again, and the reason is in `purchase_goods`:
+#
+#     TAPPING A STAGED TILE UN-STAGES IT. So when the commit detector failed — it was
+#     rejecting a lit Purchase button at 0.279787 against a 0.28 cut — this "retry" toggled a
+#     cart that had been correctly filled on the first tap.
+#
+# "No commit button" has TWO causes: the tap was swallowed, or the button is there and the
+# detector missed it. Re-staging on that reading destroys a correct basket in the second
+# case. The empty-cart message has one cause, and it is the very evidence FC-4 recorded as
+# on-screen and unread.
+_CART_EMPTY = ("select the goods",)
+
 
 def selection_for(goal: Any, goods: Sequence) -> list:
     """The goods this goal wants sold, from a page reading. The existing chooser."""
@@ -93,15 +106,28 @@ def on_sell_page(state, goal, *, frame, capture_fn, tap_fn, omni_fn) -> dict:
 
     wanted = selection_for(goal, goods)
     if wanted:
-        # A STAGING TAP THAT CHANGED NOTHING IS A SWALLOWED TAP, not an empty hold. The
-        # previous tick's signature is what says so.
+        # A STAGING TAP THAT CHANGED NOTHING IS A SWALLOWED TAP — but only the panel saying
+        # the cart is EMPTY licenses tapping again, because a second tap on a staged tile
+        # un-stages it. A missing commit button is not enough: the detector may simply have
+        # missed one that is there.
         if state.last_intent == "staged" and state.last_signature == page_signature(goods):
+            if not _cart_is_empty(frame, omni_fn):
+                # Staged, probably, and the commit control was not found. Do NOT tap — hand
+                # back and let the next tick look with fresh eyes. One honest refusal beats
+                # three destructive taps (`purchase_goods`, 2026-08-30).
+                logger.info("[market] the basket does not read as empty but no Sell button "
+                            "was found — looking again rather than re-tapping, which would "
+                            "un-stage it")
+                if state.repeated("commit_lookup", _MAX_STAGE_ATTEMPTS):
+                    return {"do": "blocked",
+                            "why": "goods appear staged but no Sell button can be found"}
+                return {"do": "waited"}
             if state.repeated("stage", _MAX_STAGE_ATTEMPTS):
                 return {"do": "blocked",
                         "why": (f"staged {len(wanted)} good(s) {_MAX_STAGE_ATTEMPTS + 1}x and "
-                                "the basket stayed empty — the tile is not taking taps")}
-            logger.warning("[market] the basket is still empty after staging — that tap did "
-                           "not register; staging again")
+                                "the cart stayed empty — the tile is not taking taps")}
+            logger.warning("[market] the cart reads EMPTY after staging — that tap did not "
+                           "register; staging again")
         for g in wanted:
             logger.info(f"[market] stage {getattr(g, 'name', '?')} @ "
                         f"({g.tap_x},{g.tap_y}) (profit/u "
@@ -127,6 +153,20 @@ def on_sell_page(state, goal, *, frame, capture_fn, tap_fn, omni_fn) -> dict:
     except Exception as exc:
         logger.debug(f"[market] trade-point award check skipped: {exc}")
     return {"do": "finished", "why": "nothing left to sell", "trade_point_award": award}
+
+
+def _cart_is_empty(frame, omni_fn) -> bool:
+    """Does the panel SAY the basket is empty? Unknown reads as False — not empty.
+
+    Erring towards "something may be staged" is the safe direction: the cost of being wrong
+    is one wasted tick, against un-staging a correct basket.
+    """
+    try:
+        labels = [(getattr(e, "label", "") or "").strip().lower() for e in omni_fn(frame) or []]
+        return any(any(m in l for m in _CART_EMPTY) for l in labels)
+    except Exception as exc:
+        logger.debug(f"[market] could not read the cart: {exc}")
+        return False
 
 
 def _scroll() -> None:
