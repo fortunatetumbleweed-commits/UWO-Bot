@@ -5,7 +5,7 @@
     "inputs": [
       {
         "material": "Raisin",
-        "ratio": 219,
+        "ratio": 249,
         "source_ports": [
           "Bordeaux",
           "Madeira",
@@ -14,7 +14,7 @@
       },
       {
         "material": "Pig",
-        "ratio": 219,
+        "ratio": 249,
         "source_ports": [
           "Faro",
           "Gijon",
@@ -48,7 +48,7 @@
       "san_village": [
         {
           "material": "Raisin",
-          "ratio": 225,
+          "ratio": 249,
           "source_ports": [
             "Bordeaux",
             "Madeira",
@@ -57,7 +57,7 @@
         },
         {
           "material": "Pig",
-          "ratio": 285,
+          "ratio": 249,
           "source_ports": [
             "Faro",
             "Gijon",
@@ -73,7 +73,7 @@
     ],
     "output_per_round": {
       "Neutral": 829,
-      "Friendly": 967
+      "Friendly": 898
     },
     "preconditions": {
       "amity_min": null,

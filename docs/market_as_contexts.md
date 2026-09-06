@@ -99,6 +99,57 @@ Both of today's market defects stop being reachable:
   revisited. `result_dialog` is the natural and only place to record what actually sold —
   from `Total Amount`, which CLAUDE.md already names as the proof a transaction happened.
 
+## Failure cases the refactor must dissolve
+
+A growing list, kept because each one is a VERIFICATION ANCHOR: the migration is not done
+until the case is unreachable, and each is concrete enough to replay from its recorded
+session. They are evidence, not a backlog — a fix that guards one of these without
+dissolving it has not done the work.
+
+### FC-1 — a dropped OK left a dialog nobody could see (live 2026-09-05, Madeira)
+
+Session `data/sessions/trace_barter_cmd_2026-09-05T19-58-09`, log `/tmp/san_run1.log`,
+20:43:04 onward. Buying Raisin, 14 refresh cycles in.
+
+```
+20:43:04  [refresh] tap Replenish-Stock OK @ (1309, 827)
+20:43:12  [refresh] verify: accepted=True timer 00.28.50→?? → refreshed=False
+20:43:12  no refresh for 'Raisin' — refresh NOT confirmed; the shelf stays empty
+20:44:10  gather:Madeira done
+20:44:10  sell_surplus happens inside a market and there is none on 'unknown'
+          FAILED at step mission
+```
+
+**The tap was correct.** Measured on the screen afterwards, the dialog's OK button is at
+(1307, 826); the bot tapped (1309, 827). The game simply did not register it — the ~1-in-20
+dropped tap this codebase already documents. The Replenish Stock dialog was still open when
+the process exited, 90 minutes later.
+
+**Four things then went wrong, and every one is a consequence of the sub-loop:**
+
+1. **The verify was blind BY CONSTRUCTION.** It confirms a refresh by reading the good's tile
+   or the restock timer — both of which the dialog covers. A stuck dialog and a failed
+   refresh produce identical readings, so the sub-loop cannot tell them apart even in
+   principle. As contexts, the dialog classifies first and the question never arises.
+2. **Nothing dismissed the dialog.** `refresh_market` owns a private dialog waiter; when its
+   expectation is not met it returns False and the loop breaks, leaving the dialog on screen.
+   A dispatcher tick would have perceived it and routed it to `on_dialog` — the machinery in
+   `docs/dialogs_are_windows.md` that every other activity already gets for free.
+3. **No retry of a tap that plainly did not land.** One re-tap on a re-read position is the
+   documented remedy for a dropped tap, and there is nowhere in a sub-loop that owns it.
+4. **The failure surfaced three steps away from its cause.** The leftover dialog made the
+   next leg's location read `'unknown'`, `port_is_underfoot` returned False, and the mission
+   died with a message about markets and locations. Nothing in that message points at a
+   dropped tap in the previous leg.
+
+**What the refactor must show:** with the market as contexts, a `replenish_dialog` context
+classifies before any goods read, its handler answers or re-taps, and a dropped OK costs one
+tick instead of a mission. The anchor is FC-1 replayed from its frames: the run reaches the
+village.
+
+**Cost of this instance:** the mission failed one leg from San Village with 1,828 Pig and
+1,540 Raisin aboard — everything needed for all six planned rounds.
+
 ## The line to keep: who caused the dialog
 
 CLAUDE.md already draws it by cause, and the context model gives it a home:

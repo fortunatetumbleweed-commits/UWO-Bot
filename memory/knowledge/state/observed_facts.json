@@ -4,21 +4,21 @@
     "value": 4952
   },
   "mission_progress": {
-    "at": 1788651704.872266,
+    "at": 1788656451.71742,
     "value": {
       "good": "Bambara Groundnut",
-      "phase": "bartering",
+      "phase": "gathering",
       "recipe": {
         "good": "Bambara Groundnut",
         "materials": {
-          "Pig": 219,
-          "Raisin": 219
+          "Pig": 249,
+          "Raisin": 249
         },
-        "obtain": 967
+        "obtain": 898
       },
-      "rounds": 5,
+      "rounds": 6,
       "rounds_remaining": 7,
-      "village": "Hutu Village"
+      "village": "San Village"
     }
   },
   "settlement": {
