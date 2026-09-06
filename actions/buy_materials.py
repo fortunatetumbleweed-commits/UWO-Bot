@@ -836,16 +836,39 @@ def material_states(ledger, goal: Mapping[str, int]) -> dict:
     UNKNOWN IS NOT MET, deliberately. The ledger marks an unreadable purchase pending so
     the caller goes and reads the sell grid; calling it satisfied would turn "I could not
     read it" into "I have enough".
+
+    BUT `believed` IS A LOWER BOUND, AND UNCERTAINTY ONLY POINTS UP. An unreadable purchase
+    is one we MADE and could not quantify, so the true holding is `believed` PLUS something
+    non-negative. When `believed` already clears the goal, "how much more" cannot make us
+    short, and the material is met — with certainty, not by assumption.
+
+    Testing `amount_unknown` FIRST made that unreachable, and the result was a loop with no
+    exit. Live 2026-09-05 at Madeira, goal 1,719:
+
+        [ledger] bought 110 Raisin — believed 1802 (fleet 1540 + pending 262)
+        not met — amount unknown for Raisin — the sell grid must settle it
+        [ledger] bought 110 Raisin — believed 1912 ...            (and again, and again)
+
+    One unreadable purchase early in the leg poisoned the good for the rest of it: every
+    later reading said "unknown" however large the total grew. The escape hatch the message
+    names — go and read the sell grid — is gated on the CARGO COUNT being unreadable, and
+    the cargo tile was reading perfectly (1,870, 1,980, ...). So the one thing that could
+    clear the flag was unreachable exactly because the other reading worked. Six blue-gem
+    refreshes in, it was still buying, and it would have run to the 60-round cap.
     """
     out: dict = {}
     for material, want in goal.items():
         want = int(want)
-        if ledger.amount_unknown(material):
-            out[material] = {"have": None, "want": want, "state": "unknown"}
-            continue
         have = ledger.believed(material)
-        out[material] = {"have": have, "want": want,
-                         "state": "met" if have >= want else "short"}
+        if have >= want:
+            # Certain even when amounts are unknown: the unread purchases only ADD.
+            out[material] = {"have": have, "want": want, "state": "met"}
+        elif ledger.amount_unknown(material):
+            # Genuinely undecidable HERE — we may or may not have enough, and only the sell
+            # grid can say. `have` stays None so no caller mistakes a floor for a count.
+            out[material] = {"have": None, "want": want, "state": "unknown"}
+        else:
+            out[material] = {"have": have, "want": want, "state": "short"}
     return out
 
 
