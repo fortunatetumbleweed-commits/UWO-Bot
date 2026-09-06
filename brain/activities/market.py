@@ -141,6 +141,7 @@ class MarketActivity:
         self._tap = tap_fn
         self._omni = omni_fn
         self._sell_page = sell_page_fn
+        self._goal_orders: dict = {}
         from brain.market_state import MarketState
         self._state = MarketState()
         self._tick_frame = None
@@ -164,11 +165,23 @@ class MarketActivity:
         # SELLING GOES THROUGH THE CONTEXTS — one action per tick, the dispatcher perceives
         # between them, and nothing is swallowed. Buying still calls the old flow; it is the
         # next conversion, and mixing the two for one goal would give the market two owners.
-        if isinstance(goal, (FreeHold, SellHold)):
+        # AN INJECTED FLOW IS A TEST SEAM, NOT A SECOND PRODUCTION PATH. `run_goal` builds
+        # `MarketActivity()` with no arguments, so nothing in production supplies these — a
+        # caller that does is substituting the world, the same as `capture_fn` or `tap_fn`.
+        # Honouring it keeps the WIRING tests testing wiring (does gather reach the market and
+        # report?) instead of forcing them to simulate the market's internals, which would
+        # couple them to it. The market's own behaviour is covered directly, by the buy and
+        # sell handler tests.
+        if isinstance(goal, Hold) and self._buy is None:
+            return self._tick(goal, port)
+        if isinstance(goal, (FreeHold, SellHold)) and self._sell is None:
             return self._tick(goal, port)
 
         if isinstance(goal, Hold):
             return self._buy_toward(goal, port)
+        if isinstance(goal, (FreeHold, SellHold)):
+            return self._sell_off(getattr(goal, "keep", None) or getattr(goal, "exclude", ()),
+                                  port, clear=isinstance(goal, FreeHold))
         if isinstance(goal, TrimHold):
             return self._trim_to(goal, port)
         return ActivityResult(BLOCKED, {}, detail=f"the market cannot serve {goal!r}")
@@ -184,6 +197,7 @@ class MarketActivity:
         import brain.market_context as ctx
 
         self._state = self._state.for_goal((type(goal).__name__, port))
+        self._goal_orders = dict(getattr(goal, "orders", {}) or {})
         where = self._classify()
 
         handler = self._HANDLERS.get(where)
@@ -195,37 +209,116 @@ class MarketActivity:
         logger.info(f"[market] {where} -> {handler.__name__}")
         return handler(self, goal, port)
 
+    def _on_purchase_page(self, goal: Any, port: str) -> ActivityResult:
+        # THE WRONG GRID FOR THIS GOAL IS ONE TAP FROM THE RIGHT ONE. Handing back would be
+        # honest and useless — the dispatcher would route here again on the same screen. The
+        # two grids look alike and mean opposite things (the shop's stock, the fleet's hold),
+        # so the one action worth taking is to switch.
+        if not isinstance(goal, Hold):
+            from actions.buy_materials import ensure_sell_tab
+            ensure_sell_tab(self._capture_fn(), self._tap_fn())
+            self._state.did("switched to the sell tab")
+            return ActivityResult(WORKING, {**self._observed(port),
+                                            "did": "switched to the sell tab"},
+                                  detail=f"sell at {port}")
+        from brain.activities.market_buy import on_purchase_page
+
+        if self._state.ledger is None:
+            self._state.ledger = self._seed_ledger(goal)
+        out = on_purchase_page(self._state, goal, port, frame=self._frame(),
+                               capture_fn=self._capture_fn(), tap_fn=self._tap_fn(),
+                               omni_fn=self._omni_fn())
+        return self._as_result(out, goal, port, what="buy")
+
+    def _seed_ledger(self, goal: Any):
+        """What the fleet ALREADY holds, before a single tap.
+
+        THE SELL GRID IS THE ONLY PLACE A PER-GOOD QUANTITY IS LEGIBLE, and skipping this is
+        how a leg buys what it already carries. A read that fails seeds nothing rather than
+        seeding zero — `None` is not `[]`, and zero would be a claim about the hold.
+        """
+        from brain.market_ledger import MarketLedger
+        led = MarketLedger()
+        try:
+            from actions.buy_materials import _read_owned_via_sell
+            owned = _read_owned_via_sell(self._capture_fn(), self._tap_fn(), 1.2)
+            if owned:
+                led.seed(owned)
+                logger.info(f"[market] the hold already carries {owned}")
+        except Exception as exc:
+            logger.debug(f"[market] could not seed the ledger: {exc}")
+        return led
+
     def _on_sell_page(self, goal: Any, port: str) -> ActivityResult:
+        if isinstance(goal, Hold):
+            self._show_purchase_grid()
+            self._state.did("switched to the purchase tab")
+            return ActivityResult(WORKING, {**self._observed(port),
+                                            "did": "switched to the purchase tab"},
+                                  detail=f"buy at {port}")
         from brain.activities.market_sell import on_sell_page
 
         out = on_sell_page(self._state, goal, frame=self._frame(),
                            capture_fn=self._capture_fn(), tap_fn=self._tap_fn(),
                            omni_fn=self._omni_fn())
+        return self._as_result(out, goal, port, what="sell")
+
+    def _as_result(self, out: dict, goal: Any, port: str, *, what: str) -> ActivityResult:
         did = out.get("do")
         if did == "waited":
             # Looked, chose not to act. A tick that taps nothing is a legitimate move when
             # the alternative is a destructive tap — see `market_sell._cart_is_empty`.
-            return ActivityResult(WORKING, {"sold": list(self._state.sold), "port": port,
-                                            "did": "looked again"}, detail=f"sell at {port}")
+            return ActivityResult(WORKING, {**self._observed(port), "did": "looked again"},
+                                  detail=f"{what} at {port}")
         if did == "blocked":
-            return ActivityResult(BLOCKED, {"sold": list(self._state.sold), "port": port},
-                                  detail=out.get("why", "the sell page refused"))
+            return ActivityResult(BLOCKED, self._observed(port),
+                                  detail=out.get("why", f"the {what} page refused"))
         if did == "finished":
             owned_state.changed(owned_state.FLEET, owned_state.BUILDING)
             return ActivityResult(FINISHED,
-                                  {"sold": list(self._state.sold), "port": port,
-                                   "stopped_because": out.get("why", "nothing left to sell")},
-                                  detail=f"sell at {port}")
-        return ActivityResult(WORKING, {"sold": list(self._state.sold), "port": port,
-                                        "did": did}, detail=f"sell at {port}")
+                                  {**self._observed(port),
+                                   "stopped_because": out.get("why", "nothing left to do")},
+                                  detail=f"{what} at {port}")
+        return ActivityResult(WORKING, {**self._observed(port), "did": did},
+                              detail=f"{what} at {port}")
+
+    def _observed(self, port: str) -> dict:
+        """What every result carries: what this visit has done, in the task's vocabulary."""
+        out = {"sold": list(self._state.sold), "port": port}
+        if self._state.ledger is not None:
+            try:
+                from actions.buy_materials import material_states
+                orders = getattr(self._goal_orders, "orders", None) or self._goal_orders
+                if orders:
+                    out["materials"] = material_states(self._state.ledger, dict(orders))
+                out["bought_total"] = sum(v for v in (self._state.ledger.fleet or {}).values())
+            except Exception as exc:
+                logger.debug(f"[market] could not summarise the ledger: {exc}")
+        return out
 
     def _on_market_landing(self, goal: Any, port: str) -> ActivityResult:
-        """Neither grid is up. Open the one this goal needs — and only that."""
+        """Neither grid is up. Open the one THIS GOAL needs — and only that.
+
+        Buying wants the Purchase grid, selling the Sell grid, and opening the wrong one is
+        not a harmless extra tap: the two grids look alike and mean opposite things (the shop's
+        stock versus the fleet's hold), which is how a Purchase page was once read as the hold.
+        """
+        if isinstance(goal, Hold):
+            self._show_purchase_grid()
+            self._state.did("opened the purchase tab")
+            return ActivityResult(WORKING, {"port": port, "did": "opened the purchase tab"},
+                                  detail=f"buy at {port}")
         from actions.buy_materials import ensure_sell_tab
         ensure_sell_tab(self._capture_fn(), self._tap_fn())
         self._state.did("opened the sell tab")
         return ActivityResult(WORKING, {"port": port, "did": "opened the sell tab"},
                               detail=f"sell at {port}")
+
+    def _show_purchase_grid(self) -> None:
+        if self._show_grid is not None:
+            self._show_grid()
+            return
+        _default_show_purchase_grid()
 
     def _on_our_dialog(self, goal: Any, port: str) -> ActivityResult:
         """OUR OWN card — complete it with ONE tap and hand back.
@@ -444,6 +537,7 @@ import brain.market_context as _ctx  # noqa: E402  (after the class, like the vi
 
 MarketActivity._HANDLERS = {
     _ctx.SELL_PAGE:       MarketActivity._on_sell_page,
+    _ctx.PURCHASE_PAGE:   MarketActivity._on_purchase_page,
     _ctx.MARKET_LANDING:  MarketActivity._on_market_landing,
     _ctx.CONFIRM_DIALOG:  MarketActivity._on_our_dialog,
     _ctx.RESULT_DIALOG:   MarketActivity._on_result,

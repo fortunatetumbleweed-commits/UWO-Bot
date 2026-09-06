@@ -42,11 +42,35 @@ class AnUnrecognisedScreenGoesBackToTheDispatcher(unittest.TestCase):
         """Buying's cards and the barter's overflow are not this goal's business. Answering
         them here would be the activity acting on a screen it cannot reason about."""
         for where in (ctx.QUANTITY_DIALOG, ctx.TRADE_GOODS_INFO, ctx.RESTOCK_PROMPT,
-                      ctx.OVERFLOW_PROMPT, ctx.DISCARD_NOTICE, ctx.PURCHASE_PAGE):
+                      ctx.OVERFLOW_PROMPT, ctx.DISCARD_NOTICE):
             act, taps = _act(where)
             res = act.work(GOAL, _state())
             self.assertEqual(res.status, UNRECOGNISED, where)
             self.assertEqual(taps, [], f"{where}: handed back, and nothing tapped")
+
+
+class TheWrongGridIsSwitched_NotHandedBack(unittest.TestCase):
+    """Handing back would be honest and useless — the dispatcher routes here again on the
+    same screen. The two grids look alike and mean opposite things, so switching IS the one
+    action worth taking."""
+
+    def test_a_sell_goal_on_the_purchase_grid_switches(self):
+        act, _ = _act(ctx.PURCHASE_PAGE)
+        with mock.patch("actions.buy_materials.ensure_sell_tab", return_value=True) as sw:
+            res = act.work(GOAL, _state())
+        self.assertEqual(res.status, WORKING)
+        self.assertEqual(res.observed["did"], "switched to the sell tab")
+        sw.assert_called_once()
+
+    def test_a_buy_goal_on_the_sell_grid_switches(self):
+        from brain.activities.market import Hold
+
+        act, _ = _act(ctx.SELL_PAGE)
+        shown = []
+        act._show_grid = lambda: shown.append(True)
+        res = act.work(Hold({"Iron": 100}), _state())
+        self.assertEqual(res.observed["did"], "switched to the purchase tab")
+        self.assertEqual(len(shown), 1)
 
 
 class OurOwnCardsAreAnsweredOnceEach(unittest.TestCase):
