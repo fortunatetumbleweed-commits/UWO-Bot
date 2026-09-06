@@ -22,7 +22,7 @@ import types
 
 import brain.world_map_context as C
 from brain.activities.world_map import ChooseDestination, WorldMapActivity
-from brain.dispatcher import BLOCKED, FINISHED
+from brain.dispatcher import BLOCKED, FINISHED, WORKING
 
 MAP = types.SimpleNamespace(state="world_map", port=None)
 
@@ -74,7 +74,13 @@ def test_a_city_still_sails_on_an_unreadable_panel():
 
 
 def test_a_city_panel_for_somewhere_else_is_still_refused():
+    """The refusal is the subject here and is unchanged: nothing is committed.
+
+    What the activity DOES about it changed on 2026-09-06 — it now closes the panel and hands
+    back WORKING, because refusing alone left the panel covering the map and the next attempt
+    met the identical screen (the Seville leg died that way). BLOCKED still arrives once the
+    closes are spent; `tests/test_the_wrong_panel_is_closed.py` covers both halves."""
     act, log = _act(False)
     res = act.work(ChooseDestination("Barcelona", "port"), MAP)
-    assert res.status == BLOCKED
-    assert log == []
+    assert res.status == WORKING
+    assert log == [], "no departure we did not ask for"

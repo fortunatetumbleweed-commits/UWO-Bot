@@ -36,9 +36,14 @@ from brain.dispatcher import BLOCKED, UNRECOGNISED, WORKING, ActivityResult
 
 
 class _Dialog:
-    def __init__(self, *, close=None, actions=(), kind="confirmation", body=()):
+    def __init__(self, *, close=None, actions=(), kind="confirmation", body=(), title="Info",
+                 anchors=None):
         self.close_button, self._kind, self.body_text = close, kind, body
-        self.title_bar = None
+        self.title_bar = None if title is None else type("T", (), {"text": title})()
+        # WHICH ANCHORS FIRED is what tells a real card from a lucky geometric match, so the
+        # stand-in has to carry it. Default: whatever the caller's shape implies.
+        self.anchors_fired = tuple(anchors) if anchors is not None else tuple(
+            (["close"] if close else []) + (["actions"] if actions else []))
         self.actions = tuple(type("A", (), {"label": l, "bbox": b})() for l, b in actions)
 
     def kind(self):
@@ -300,7 +305,8 @@ class ADialogWithNoButtonsIsClosedNotReported(unittest.TestCase):
     positive button to press."""
 
     def test_the_close_x_is_used(self):
-        d = _Dialog(close=(1448, 96, 1505, 157), actions=(), kind="informational")
+        d = _Dialog(close=(1448, 96, 1505, 157), actions=(), kind="informational",
+                    title="Gear Info", anchors=("close", "actions"))
         act = _Bare()
         disp, state = _dispatcher(act)
         with patch("actions.ui.tap_at") as tap:
@@ -308,6 +314,27 @@ class ADialogWithNoButtonsIsClosedNotReported(unittest.TestCase):
         tap.assert_called_once()
         self.assertEqual(tap.call_args[0][:2], (1476, 126))
         self.assertIsNotNone(rec)
+
+    def test_an_X_THAT_IS_THE_ONLY_ANCHOR_is_not_tapped(self):
+        """The X was the only evidence for the dialog, and the X is what we would tap.
+
+        Live 2026-09-06 on the Seville leg this fired on the bare WORLD MAP: the detector
+        returned `actions=[]`, `anchors=('close',)` and a "close button" that was really the
+        '108 108' trade badge beside Montpellier. The tap at (1374,386) opened MARSEILLE's
+        Location Info, the world-map activity found a panel for the wrong place, and the leg
+        died. Every later symptom came from this one tap.
+        """
+        # A title bar would NOT have caught this: `_find_title_bar` runs over the cluster
+        # after the anchors and returned `TitleBar(text='Montpellierlle')` — the map's own
+        # port label. Only the anchor set separates the two cases.
+        d = _Dialog(close=(1335, 359, 1413, 414), actions=(), kind="informational",
+                    title="Montpellierlle", anchors=("close",))
+        act = _Bare()
+        disp, state = _dispatcher(act)
+        with patch("actions.ui.tap_at") as tap:
+            rec = disp._offer_dialog(act, d, state)
+        tap.assert_not_called()
+        self.assertIsNone(rec, "hand back so the real screen is dispatched on")
 
     def test_a_dialog_with_buttons_still_goes_to_the_game_rules(self):
         """The X must not become a shortcut past a real decision."""

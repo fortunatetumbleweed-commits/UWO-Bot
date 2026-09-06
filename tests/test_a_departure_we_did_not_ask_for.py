@@ -127,9 +127,14 @@ class TheCommitButtonSaysWhatItDoesNotWhere(unittest.TestCase):
         return a._on_location_info(goal), committed
 
     def test_another_citys_panel_is_not_committed(self):
-        from brain.dispatcher import BLOCKED
+        """The subject — no departure nobody asked for — is unchanged.
+
+        The status is not BLOCKED any more: since 2026-09-06 the activity CLOSES the wrong
+        panel and hands back WORKING, because refusing alone left it covering the map and the
+        retry met the identical screen. See `tests/test_the_wrong_panel_is_closed.py`."""
+        from brain.dispatcher import WORKING
         res, committed = self._run(panel_for=False)
-        self.assertEqual(res.status, BLOCKED)
+        self.assertEqual(res.status, WORKING)
         self.assertEqual(committed, [], "Faro's panel is not Barcelona's course")
 
     def test_our_own_panel_is_committed(self):

@@ -898,6 +898,34 @@ class Dispatcher:
         # system pressing a positive button; there is no positive button to press.
         options = [a.label for a in dialog.actions]
         close = getattr(dialog, "close_button", None)
+        # THE X MAY NOT BE BOTH THE EVIDENCE AND THE TARGET. `detect_dialog` rests on two
+        # anchors — a close X, and a row of action buttons — and reports which fired. When
+        # `close` is the ONLY one, the sole reason to believe a dialog is open is the very
+        # thing this branch would tap. That is circular, and it is how a tap gets spent on a
+        # screen with no dialog at all.
+        #
+        # Live 2026-09-06 on the Seville leg, this tapped the bare WORLD MAP. The detector
+        # returned bbox (973,296)-(2246,1046), `actions=[]`, `anchors_fired=('close',)`, and
+        # its "close button" (1335,359)-(1413,414) was the '108 108' trade-value badge beside
+        # the Montpellier label. The tap went in at (1374,386) — which on a world map OPENS a
+        # port's Location Info. Marseille's. The world-map activity then found a panel for the
+        # wrong place, rightly refused to sail from it, and the leg died two attempts later.
+        # Every later symptom came from this one tap.
+        #
+        # A TITLE BAR WOULD NOT HAVE CAUGHT IT, which is worth recording because it was the
+        # first fix tried: `_find_title_bar` runs over the cluster AFTER the anchors and
+        # happily returned `TitleBar(text='Montpellierlle')` — the map's own port label. Only
+        # the anchor set distinguishes the two cases.
+        #
+        # `Gear Info` — the informational dialog this branch was written for — is unaffected:
+        # it is a real card whose X sits in real chrome, and nothing about it changes here.
+        # What is refused is acting on ONE weak geometric anchor; the screen still reaches the
+        # activity and the state classifier, which is where a real dialog gets recognised.
+        anchors = tuple(getattr(dialog, "anchors_fired", ()) or ())
+        if not options and close is not None and anchors == ("close",):
+            logger.info(f"[dispatch] this {kind} rests on a close-X alone — the X is the only "
+                        "evidence for it AND the thing we would tap, so not tapping it")
+            return None
         if not options and close is not None:
             x1, y1, x2, y2 = close
             from actions import ui

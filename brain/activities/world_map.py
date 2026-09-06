@@ -162,6 +162,8 @@ class WorldMapActivity:
         self._panel_for = panel_for_fn
         self._capture = capture_fn
         self._typed = 0            # typings that LANDED in the box
+        self._panel_closes = 0     # another place's panel, closed so the map
+                                   # can be searched — bounded like the rest
         self._type_attempts = 0    # typings SENT — the backstop against a
                                    # keyboard that never accepts anything
         self._pending_query = None
@@ -196,6 +198,7 @@ class WorldMapActivity:
             self._goal_key, self._typed, self._scrolls = key, 0, 0
             self._type_attempts, self._pending_query = 0, None
             self._kb_clears = 0
+            self._panel_closes = 0
             self._kb_hygiene = 0
             self._last_rail_sig = None
             self._list_taps = 0
@@ -653,10 +656,33 @@ class WorldMapActivity:
             return ActivityResult(BLOCKED, {"where": where, "why": "route not confirmed"},
                                   detail=f"cannot confirm the open panel is {where!r}")
         if for_us is False:
-            # NOT ours. Sailing from here goes somewhere nobody chose, so hand back and let
-            # the map be searched again rather than committing to whatever is open.
-            logger.warning(f"[world_map] the open Location Info panel is not {where!r} — "
-                           "not committing a departure we did not ask for")
+            # NOT ours. Sailing from here goes somewhere nobody chose — but REFUSING IS NOT
+            # ENOUGH, because nothing else closes it.
+            #
+            # Live 2026-09-06, the Seville leg. A stale Marseille panel was already open when
+            # the activity took control; this branch reported BLOCKED, `sail_runner` counted
+            # the attempt and dispatched again, met the IDENTICAL screen, and the leg died
+            # after two:
+            #
+            #     the open Location Info panel is not 'Seville' — not committing
+            #     could not set a course for 'Seville' after 2 attempts
+            #
+            # "Hand back and let the map be searched again" was the intent, and it does not
+            # follow from handing back: the search cannot run while the panel covers it. So
+            # take the ONE action that changes the screen — close it — and hand back, which
+            # is the pattern this activity exists to follow. The map's own state dies with it
+            # (`memory/world-map-state-dies-with-the-map`), so nothing is lost by closing.
+            if self._panel_closes < _MAX_PANEL_CLOSES:
+                self._panel_closes += 1
+                logger.warning(f"[world_map] the open Location Info panel is not {where!r} — "
+                               f"closing it so the map can be searched "
+                               f"({self._panel_closes}/{_MAX_PANEL_CLOSES})")
+                self._close_panel()
+                return ActivityResult(WORKING, {"where": where,
+                                                "did": "closed another place's panel"},
+                                      detail=f"Location Info was open for another place")
+            logger.warning(f"[world_map] the Location Info panel is still not {where!r} after "
+                           f"{_MAX_PANEL_CLOSES} closes — reporting rather than tapping on")
             return ActivityResult(BLOCKED, {"where": where, "why": "panel is another place"},
                                   detail=f"Location Info is open, but not for {where!r}")
         if not self._commit_departure(where):
@@ -664,6 +690,21 @@ class WorldMapActivity:
                                   detail="Location Info is open but has no Move button")
         return ActivityResult(FINISHED, {"where": where,
                                          "via": "location_info"}, detail=str(goal))
+
+    def _close_panel(self) -> None:
+        """Close whatever panel is over the map, through the seam already declared.
+
+        `back_fn` has been a constructor argument with no caller since the activity was
+        written; this is the case it was for. On the world map Back closes the panel, and if
+        it closes the MAP too that is equally fine — the map reopens on the Port tab and
+        holds no state worth keeping.
+        """
+        if self._back is not None:
+            self._back()
+            return
+        from actions import ui
+        ui.back(why="a Location Info panel for another place is covering the map")
+
 
     def _panel_is_for(self, where) -> Optional[bool]:
         """Whether the open panel belongs to `where`. None when it cannot be read — unknown
@@ -1182,6 +1223,10 @@ _MAX_FREE_TAPS = 1
 
 _MAX_TYPED = 2              # typings that must LAND before we fall back to scrolling
 _MAX_TYPE_ATTEMPTS = 4      # ...and how many may be SENT trying to land them
+# Another place's panel, closed so the map can be searched. TWO, because a stale panel
+# is cleared by one Back and a second says the Back is not landing — at which point it
+# is a fact to report, not something to grind at.
+_MAX_PANEL_CLOSES = 2
 _MAX_KB_CLEARS = 2
 # Putting the keyboard away as routine hygiene BEFORE reading or tapping, budgeted apart
 # from _MAX_KB_CLEARS above. That one is the poisoned-query recovery and resets the typing
