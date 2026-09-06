@@ -1,8 +1,10 @@
 # Dialogs without sub-loops — the market as contexts
 
-**Status: DRAFT, 2026-08-30.** The market is the chosen case study: it is the last activity
-still driving whole flows internally, so converting it is how we find out whether the pattern
-holds. Companion to `docs/capability_registry_design.md` and `docs/intent_graph.md`.
+**Status: DRAFT 2026-08-30; four live failure cases recorded 2026-09-05.** The market is the
+chosen case study: it is the last activity still driving whole flows internally, so converting
+it is how we find out whether the pattern holds. It is no longer speculative — an evening of
+runs produced four distinct failures that the pattern would have made unreachable, and they
+are recorded below as verification anchors. Branch: `market_refactor`. Companion to `docs/capability_registry_design.md` and `docs/intent_graph.md`.
 
 > *"in Android or any UI framework, you register handlers for UI controls, so a click on a
 > button does not need to go through the intent dispatcher, but it is a listener registry that
@@ -83,13 +85,31 @@ A first cut, to be corrected against frames:
 | `restock_prompt` | the gem refresh | blue gem yes, **red gem never** |
 | `MISS` | none of the above | hand back — the dispatcher owns it |
 
+**CORRECTED AGAINST FRAMES, 2026-09-05.** Three contexts were missing and one rule was
+implicit:
+
+| context | what the game actually draws |
+|---|---|
+| `overflow_prompt` | title **"Insufficient Empty Space"**, a `Received Trade Goods` strip, a `Cargo` strip, a `Receive` button |
+| `discard_notice` | **"Complete the trade? N X has not been claimed yet. Unclaimed trade goods will be discarded."** Cancel / OK |
+| `cargo_full_notice` | **"The Cargo Hold's Trade Goods slot will be exceeded by N slots"** |
+
+**CLASSIFY BY STRUCTURE AND POSITION, NEVER BY WORDING.** FC-3 is the whole argument: the
+village's `OVERFLOW_PROMPT` keys on `("overflow", "exceeds", "cargo is full")` and the game
+says *"Insufficient Empty Space"*, so the handler has never once been reached. The words were
+guessed; the layout was not. Each row above is identifiable by what it CONTAINS — a titled
+card with a `Received Trade Goods` strip over a `Cargo` strip is that dialog whatever it is
+called — and `DialogModel` already segments the card from the brown title bar. Wording may
+rank candidates; it may never be the test.
+
 Goals stay as they are (`Hold`, `FreeHold`, `TrimHold`, `SellHold`) and become the second key,
 exactly as `(handler, goals)` already works on the world map: a context that cannot serve the
 current goal hands back instead of acting.
 
 ## What this dissolves, rather than guards
 
-Both of today's market defects stop being reachable:
+Two defects from 2026-08-30 stop being reachable. The four cases recorded below are
+the current evidence, and each carries its own "what the refactor must show":
 
 - **`Im glad` staged as a good.** The reader parsed a goods grid while a Result dialog was up
   — the dialog draws inside the goods zone, so a dialog row became a tile. As contexts,
@@ -196,6 +216,125 @@ anchor is FC-2 replayed from its frames: the cart empties, or the run does not c
 **Cost of this instance:** a wasted refresh gem, a ledger that over-counted Raisin, and a leg
 that ended believing it had bought something.
 
+### FC-3 — the overflow handler is unreachable, twice over (live 2026-09-05, San Village)
+
+Session `data/sessions/trace_barter_cmd_2026-09-05T21-38-09`, frame 214. Six barter rounds,
+hold at 4,952/4,952:
+
+```
+Insufficient Empty Space — "Cannot receive item due to insufficient space."
+Received Trade Goods: 360        Cargo: 241 water · 248 food · Pig 1 · Raisin 1 · Groundnut 4,461
+```
+
+Overflow 360 against materials of 1+1, so `overflow_dialog`'s first last-round condition —
+*the overflow exceeds every material aboard* — was met outright, and both should have been
+dumped. Nothing was dumped. The run discarded 360 units here and 400 earlier, silently.
+
+**TWO independent barriers stood between the dialog and the handler, and fixing either alone
+leaves the other:**
+
+1. **The commit sub-loop never handed back.** `commit_via_positive_taps` (`max_taps=6`,
+   *"re-captures and re-parses at the top of every iteration"*) was mid-iteration tapping
+   positive buttons — `Receive`, then `OK` on *"Unclaimed trade goods will be discarded"*. The
+   dispatcher got no tick while the dialog was up, so **nothing classified the screen at all**.
+2. **The keywords do not match.** Classifying frame 214 offline returns `village_top_menu`,
+   because `_OVERFLOW_WORDS = ("overflow", "exceeds", "cargo is full")` and the game says
+   *"Insufficient Empty Space" / "insufficient space" / "organize your Cargo Hold"*. Not one
+   word overlaps.
+
+Barrier 2 is the SAME miss `docs/dialogs_are_windows.md` records as the motivation for the
+window model — *"The dialog says 'Insufficient Empty Space'. Same meaning, no match."* It was
+written down and the keyword list was never changed. That is the argument against classifying
+any dialog by wording, in the market's new table as much as the village's old one.
+
+**What the refactor must show:** the dialog is classified before any positive button is
+pressed, and the handler that owns it decides. The anchor is FC-3 replayed: something is
+dumped, or the run says why it chose not to.
+
+### FC-4 — a sell tap that did not register, and a basket nobody checked (live 2026-09-05, London)
+
+Same session, frame 255. The mission's payoff: 4,461 Bambara Groundnut at 39,642 profit/unit,
+about 177M ducats.
+
+```
+22:31:40  tap (1450,314)   "load-to-sell Bambara Groundnut"
+22:31:49  sold at London: nothing
+          blocked: 'no Sell button after loading basket'
+          FAILED at step mission
+```
+
+**The aim was right.** `(1451,316)` — one pixel away, same tile slot, same screen — staged
+and sold Argan Oil at London earlier the same evening, and `(1010,314)` sold Almond. The tile
+BODY is the control on the sell grid. The tap simply did not register.
+
+**And the proof was on the frame in hand:** the right-hand panel read *"Select the goods
+you'd like to sell."* Nothing staged. The loop did not look; it went hunting for a Sell button
+that only exists once something IS staged, then reported THAT as the failure — a message
+about a missing button, three steps from a tap that was swallowed.
+
+**What the refactor must show:** staging is verified against the basket, a tap that changed
+nothing is re-tapped, and `Load All` (present on this screen) is available as the batch move.
+
+## The common cause: a dropped tap treated as a state change
+
+All four cases are the same failure wearing different clothes, and **none of them is an
+aiming bug**:
+
+| | tap | evidence it was correct |
+|---|---|---|
+| FC-1 | Replenish `OK` (1309,827) | measured afterwards: the button is at (1307,826) |
+| FC-2 | `Purchase` (1959,997) | the same point committed purchases in earlier cycles |
+| FC-4 | sell tile (1450,314) | (1451,316) sold Argan Oil an hour earlier |
+
+The game drops roughly **one tap in twenty**, which this codebase has documented since
+2026-08-26. That rate is not a defect; it is the environment. The defect is that each
+sub-loop treated the tap as having happened and moved on to the NEXT control — and in every
+case the disproof was already on the frame it held:
+
+```
+FC-1   the Replenish dialog still open
+FC-2   the goods still staged in the cart, the price still showing
+FC-4   "Select the goods you'd like to sell."
+```
+
+### The village already answers this, and the market must inherit it
+
+`actions/barter_panel._try` is the reference implementation, and it is four rules:
+
+```python
+for attempt in (1, 2):                      # 3. BOUNDED retry — a swallowed tap costs a repeat
+    ui.tap_at(...)
+    reading = read_barter_panel(...)        # 1. TAP, THEN READ BACK — verify the effect
+    if _panel_signature(reading) != last_sig:
+        break                               # 2. A SIGNATURE decides whether the screen moved
+if _panel_signature(reading) == last_sig:
+    return None                             # 4. TRISTATE: None is "the tap never landed",
+                                            #    NOT False ("wrong good")
+```
+
+Rule 4 is the one that matters most and the one the market has nowhere: **"the action did not
+happen" is a different answer from "the action happened and the result is no".** `_try`'s
+docstring says it outright — *"None = the tap never landed, so this tile says NOTHING about
+the village."* Every market failure above collapsed those two into one, and then reasoned
+from the collapsed value.
+
+The village pays for this and says why: *"a swallowed tap costs the tile nothing but a
+repeat; the second tap meets a screen with no tip on it."* One extra tap against a lost
+mission.
+
+**Requirements this puts on the market's contexts** — these are not optional polish:
+
+- every handler that taps a commit control returns a TRISTATE, and the activity must not
+  treat `None` as a negative result;
+- the effect is verified by comparing an observation before and after — a signature, a
+  basket count, a cart state — never by the tap returning;
+- one bounded re-tap on the same control before concluding anything;
+- and because the dispatcher re-perceives between ticks anyway, a handler may simply return
+  and let the next tick see the unchanged screen. **That is the version the refactor should
+  prefer**: no retry loop at all, because the context is still `goods_staged` next tick and
+  the same handler fires again. The bound then lives where the village already puts it — an
+  attempt counter on the activity, keyed to the goal, reporting rather than grinding.
+
 ## The line to keep: who caused the dialog
 
 CLAUDE.md already draws it by cause, and the context model gives it a home:
@@ -299,6 +438,51 @@ one tap (with anti-cheat jitter)      ~0.3-0.8 s
 Staging five goods as five ticks costs ~5 perceives ≈ 10-15 s. As one decision it costs one
 perceive plus five jittered taps ≈ 4-7 s, and the anti-cheat discipline is untouched.
 
+### The market's own numbers, measured (2026-09-05, Madeira)
+
+The Svear figures above are the village's. The market is worse, and in a different way — one
+buy cycle, 110 units of Raisin, **87 seconds**:
+
+```
+12.7s  post-purchase market read          9.5s  find + tap Purchase
+11.0s  refresh verify read                9.1s  confirm dialog
+ 6.3s  a SECOND full read 7s later,       7.9s  refresh icon → Replenish OK
+       identical values                   6.9s  negotiation popup ("No")
+ 8.7s  find + tap goods tile              6.8s  result dialog
+```
+
+Three or four FULL-PAGE reads per cycle, each running OmniParser over the whole frame and
+then OCR'ing every tile individually via `fill_missing_quantities` — at Madeira that is
+Madeira Wine, Sugar, Keris, Sugar Cane, Wooden Statue and Shea Butter, when the order wanted
+Raisin. Two of those reads returned IDENTICAL values seven seconds apart.
+
+The user's framing is the rule for this work: *"we should not act blindly, but also should
+not try to read the same frame again and again"* (2026-09-05). Both halves have cost a run —
+acting blind produced the route-tab mis-sail the same evening, and re-reading produced this.
+
+**Use the machinery that exists rather than adding a cache.** `vision/perceive_repository`
+already models it: an `Observation` with a GENERATION, `current_if_valid()` (valid exactly
+while nothing has acted), and `_derived[(generation, key)]` with `elements_if_ready()` so a
+parse is made once per observation and reused. Routing market reads through it makes reuse
+safe BY CONSTRUCTION; a TTL or a private cache would re-introduce the stale-frame bug on a
+timer, which is the worse of the two failures.
+
+## What must not regress
+
+Guards earned live in September, all in `actions/buy_materials.py` and all POLICY the
+handlers must carry rather than re-derive:
+
+- **per-good, never the sum** — a surplus of one material must not cover another's shortfall;
+- **`believed` is a LOWER BOUND** (`c753d6d`) — an unread purchase only ADDS, so a floor that
+  clears the goal is met with certainty; testing `unknown` first produced a buy loop with no
+  exit, six gems deep and heading for the 60-round cap;
+- **a gem only buys a restock of something this market still owes us** (`2599067`) — and
+  because a refresh is MARKET-WIDE, the good that justifies it need not be the one whose
+  shelf emptied (Barcelona: Iron met, Matchlock short → refresh is right);
+- **a shelf about to restock itself is not a refused shelf** (`0043cbb`);
+- **the separator is whatever OCR saw** (`53431d9`) — `3.129` is 3,129;
+- **`None` is not `[]`** — a leg that never saw the hold must refuse, not report success.
+
 ### What this means for the migration
 
 Step 2 (the read path) is worth doing FIRST for performance as much as for correctness — the
@@ -315,8 +499,23 @@ not become 47 perceives, because a round's staging taps are one decision.
 - **Where does the ledger live?** `market_ledger` accumulates what was bought this session.
   As contexts, the natural home is the `result_dialog` handler — but the ledger outlives any
   one dialog, so who owns it?
+  **Sharpened by evidence, 2026-09-05.** The ledger got it wrong in BOTH directions in one
+  evening: FC-2 recorded a purchase that never happened (no result dialog, no goods, an entry
+  anyway), and the Madeira runaway under-counted so badly that the tile read 1,870 while the
+  ledger believed 1,582 and kept buying. So the answer is not only WHERE it lives but WHAT
+  MAY WRITE TO IT: **only a `result_dialog` may add to the ledger**, which makes FC-2
+  unreachable, and a reading that disagrees with it must be reconciled rather than ignored.
 - **Is `negotiation` one context or several?** It has its own outcomes and may need a policy
   the goal carries, not the context.
 - **What replaces the scroll loop?** Selling re-flows the grid, so "sell page → scroll →
   repeat" is a sequence. As contexts it becomes `sell_page` with a `scrolled` marker — which
   is state the activity holds, and state is what contexts are supposed to avoid.
+- **How does a handler bound its own retries without holding state?** The dropped-tap rules
+  above want "one bounded re-tap", but a context is meant to be stateless. The village's
+  answer is an attempt counter on the ACTIVITY keyed to the goal (`_selects`, `_goal_key`),
+  reset when the goal changes — the same shape as `_committed`. Adopting that keeps the
+  contexts stateless and puts the bound where the goal's lifetime already is.
+- **Does `Load All` replace per-tile staging on the sell page?** It is on screen in FC-4 and
+  would have made that failure impossible. If the goal is "sell everything except a keep
+  list", one tap plus removals may be strictly better than N tile taps — and it is far fewer
+  chances for a swallowed tap.
