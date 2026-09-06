@@ -406,15 +406,31 @@ class VillageActivity:
         return self._done(goal, why)
 
     def _on_confirm(self, goal: Barter) -> ActivityResult:
-        """OUR OWN dialog, raised by our own Exchange tap — complete it, never dismiss it."""
-        from brain.commit_actions import commit_via_positive_taps
-        commit_via_positive_taps(goal_keywords=["ok", "confirm"])
+        """OUR OWN dialog, raised by our own Exchange tap — complete it, never dismiss it.
+
+        ONE TAP, THEN HAND BACK. This used the LOOPING form, and that is how FC-3 happened
+        (`docs/market_as_contexts.md`): iteration 1 pressed `OK`, the game raised
+        "Insufficient Empty Space", iteration 2 pressed its `Receive`, and a third pressed
+        `OK` on "Unclaimed trade goods will be discarded" — three screens inside one handler
+        call. The dispatcher never ticked, so `_on_overflow` below, which owns exactly that
+        card, was never reachable, and 360 units were discarded in silence.
+
+        The dispatcher re-perceives after every action. If a confirm is still up next tick,
+        this handler runs again on a screen that has been LOOKED at; if the overflow card is
+        up instead, its own handler gets it.
+        """
+        from brain.commit_actions import tap_one_positive
+        tap_one_positive(goal_keywords=["ok", "confirm"])
         return ActivityResult(WORKING, {"rounds_committed": self._committed, "did": "confirmed the exchange"}, detail=str(goal))
 
     def _on_result(self, goal: Barter) -> ActivityResult:
-        """The result dialog is the PROOF the round happened. Clear it and carry on."""
-        from brain.commit_actions import commit_via_positive_taps
-        commit_via_positive_taps(goal_keywords=["ok", "confirm"])
+        """The result dialog is the PROOF the round happened. Clear it and carry on.
+
+        One tap, then hand back — see `_on_confirm`. The result card is also where the
+        overflow appears behind, so pressing on past it is precisely FC-3.
+        """
+        from brain.commit_actions import tap_one_positive
+        tap_one_positive(goal_keywords=["ok", "confirm"])
         return ActivityResult(WORKING, {"rounds_committed": self._committed, "did": "cleared the result dialog"}, detail=str(goal))
 
     def _on_overflow(self, goal: Barter) -> ActivityResult:

@@ -28,7 +28,7 @@
 from __future__ import annotations
 
 import time
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Sequence
 
 from loguru import logger
 
@@ -494,8 +494,35 @@ def commit_via_positive_taps(
         tapped.append(key)
         time.sleep(settle_secs)
 
-    logger.warning(
-        f"[commit] reached max_taps={max_taps} without closing cycle — "
-        f"transaction may not have settled"
-    )
+    if max_taps > 1:
+        logger.warning(
+            f"[commit] reached max_taps={max_taps} without closing cycle — "
+            f"transaction may not have settled"
+        )
     return tapped
+
+
+def tap_one_positive(*, goal_keywords: Sequence[str] = (), capture_fn=None,
+                     tap_fn=None) -> bool:
+    """Press the positive control ONCE and hand back. True when a tap went in.
+
+    THE ONE-SHOT FORM, for a caller inside the dispatcher's cycle. `commit_via_positive_taps`
+    keeps pressing until the cycle closes, which is right for an escalation path that owns
+    the screen until it settles — and wrong for an activity handler, which must do one thing
+    and return so the dispatcher can look again.
+
+    Live 2026-09-05 at San Village (FC-3, `docs/market_as_contexts.md`): the village's
+    `_on_confirm` called the looping form, iteration 1 tapped `OK`, the game raised
+    "Insufficient Empty Space", and iteration 2 tapped its `Receive` — then `OK` on
+    "Unclaimed trade goods will be discarded". Three screens, one handler call, no tick
+    between them, so the village's own `overflow_prompt` handler never ran and 360 units were
+    discarded. Nothing in that loop was careless; holding control across a capture is what
+    swallows.
+
+    The bound moves to the caller, where the goal's lifetime already is — the dispatcher
+    re-perceives after every action anyway, so "tap again" is the next tick's decision, made
+    on a screen that has been looked at.
+    """
+    tapped = commit_via_positive_taps(max_taps=1, goal_keywords=goal_keywords,
+                                      capture_fn=capture_fn, tap_fn=tap_fn)
+    return bool(tapped)

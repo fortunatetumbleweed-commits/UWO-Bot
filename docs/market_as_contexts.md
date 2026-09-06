@@ -301,9 +301,38 @@ window model — *"The dialog says 'Insufficient Empty Space'. Same meaning, no 
 written down and the keyword list was never changed. That is the argument against classifying
 any dialog by wording, in the market's new table as much as the village's old one.
 
-**What the refactor must show:** the dialog is classified before any positive button is
-pressed, and the handler that owns it decides. The anchor is FC-3 replayed: something is
-dumped, or the run says why it chose not to.
+**FIXED 2026-09-06, AND NOT WHERE THIS DOC PUT IT.** FC-3 was filed under the market. It is
+not a market failure at all — the market is never involved. `VillageActivity._on_confirm` and
+`._on_result` called `commit_via_positive_taps`, the LOOPING form, from inside handlers that
+are otherwise perfectly context-driven:
+
+```
+[commit] iter 1: tap 'Ok'
+[commit] iter 2: tap 'Receive'     <- the overflow card, which had just appeared
+         ...     tap 'Ok'          <- "Unclaimed trade goods will be discarded"
+```
+
+Three screens, one handler call, no dispatcher tick — so `_on_overflow`, which owns that card
+and holds the dumping policy, was never reachable. The sub-loop was hiding INSIDE the
+activity this doc holds up as the reference implementation.
+
+The fix is `commit_actions.tap_one_positive` — press the positive control once and hand back
+— used by both handlers. The looping form survives for the callers that genuinely want it
+(`verified_recruit`, `human_escalation`, `plan_actions`, `barter_executor`), where an
+escalation path owns the screen until it settles.
+
+**Two corrections to this doc follow:**
+
+* **Step 4's gate was wrong.** It read "FC-1 and FC-3 replay to a different outcome". FC-3
+  cannot gate a market step. FC-1 still can.
+* **Step 7 — "delete the private waiters" — is not available for
+  `commit_via_positive_taps`.** It has eight-plus call sites across the codebase and is
+  general infrastructure. Either callers opt into a one-shot mode, as the village now does,
+  or each converts on its own schedule; the loop itself stays.
+
+**What the market refactor must still show for the overflow:** the dialog is classified
+before any positive button is pressed, and the handler that owns it decides. That remains
+true — it is simply the VILLAGE that proves it first.
 
 ### FC-4 — a sell tap that did not register, and a basket nobody checked (live 2026-09-05, London)
 
