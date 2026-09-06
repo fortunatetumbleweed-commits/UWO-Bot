@@ -87,3 +87,49 @@ def test_the_injected_tab_fn_is_still_honoured():
                            capture_fn=lambda: "x")
     assert act._ensure_tab("route", ROUTE) is True
     assert calls == ["route"]
+
+
+# ── the Route tab has no list icon: its list IS the tab ──────────────────────
+#
+# User, 2026-09-05: "it should not try to tap the Port icon when it is on another tab,
+# because the port list icon is only on the Port tab."
+#
+# The rail's icons belong to whichever tab is lit — index 0 opens the PORT list, index 1 the
+# Explore/village list — and a route goal falls through to `else 0`. On the Route tab that
+# control does not exist; the saved routes are already listed there, so the port icon's
+# coordinate is over the LIST and tapping it can only select a row.
+
+
+def _opener(taps):
+    return WorldMapActivity(
+        context_fn=lambda _s: C.MAP_OPEN,
+        require_tab_fn=lambda t: True,
+        find_fn=lambda w: None,
+        tap_fn=lambda x, y: taps.append((x, y)),
+        capture_fn=lambda: "frame",
+        commit_fn=lambda where: True)
+
+
+def test_a_route_goal_taps_nothing_to_open_a_list():
+    taps = []
+    _opener(taps)._open_list(ROUTE)
+    assert taps == [], "the Route tab lists its routes itself; there is nothing to open"
+
+
+def test_a_port_goal_still_opens_its_list():
+    """The fix must not disarm the rail for the tabs that DO have a list icon."""
+    import actions.sail_actions as SA
+
+    taps = []
+    with mock.patch.object(SA, "_explore_left_icons", lambda f: [(69, 180)]):
+        _opener(taps)._open_list(ChooseDestination("Lisboa", "port"))
+    assert taps == [(69, 180)]
+
+
+def test_a_village_goal_still_opens_its_list():
+    import actions.sail_actions as SA
+
+    taps = []
+    with mock.patch.object(SA, "_explore_left_icons", lambda f: [(69, 180), (70, 300)]):
+        _opener(taps)._open_list(ChooseDestination("Hutu Village", "village"))
+    assert taps and taps[0] == (70, 300), "the house is the second icon"

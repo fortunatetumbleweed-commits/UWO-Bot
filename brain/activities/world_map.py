@@ -899,6 +899,29 @@ class WorldMapActivity:
         if self._open_list_fn is not None:
             self._open_list_fn()
             return
+
+        # THE ROUTE TAB HAS NO LIST ICON — ITS LIST *IS* THE TAB (user, 2026-09-05: "it
+        # should not try to tap the Port icon when it is on another tab, because the port
+        # list icon is only on the Port tab").
+        #
+        # The rail's icons belong to whichever tab is lit: index 0 opens the PORT list,
+        # index 1 the Explore/village list. A route goal falls through to `else 0` and so
+        # aims at the PORT icon — a control that does not exist on the Route tab. There the
+        # saved routes are already listed, so that coordinate is over the LIST, and tapping
+        # it cannot open anything; it can only select a row.
+        #
+        # Live 2026-09-05 it landed on the divider between 'Sailing Route 2' and 'san to
+        # london', selected the row above, and the bare `Move` that appeared as a RESULT of
+        # that selection was then taken for a destination panel and pressed. The fleet sailed
+        # a 39-day route on 6 days of supply.
+        #
+        # Nothing to open means nothing to tap: hand back, and the next tick classifies the
+        # list that is already there (ROUTE_LIST) and searches it by name.
+        if (getattr(goal, "kind", None) or "port") == "route":
+            logger.info("[world_map] the Route tab lists its routes itself — there is no list "
+                        "icon to open, so looking again rather than tapping the port rail")
+            return
+
         from actions.sail_actions import (_explore_left_icons, _RAIL_FALLBACK_POINTS,
                                           _VILLAGE_LIST_ICON_INDEX)
 
