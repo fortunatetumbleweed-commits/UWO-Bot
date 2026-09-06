@@ -111,3 +111,28 @@ class BoughtNothingFromAStockedShelfMeansTheHoldIsFull(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TheNegotiationIsDeclinedEvenWithNoOwner(unittest.TestCase):
+    """`_on_negotiation` covers the market's own tick. It does NOT cover BOOTSTRAP.
+
+    Live 2026-09-06: the bot was restarted with the Attempt Negotiation card already on
+    screen from the previous run. Bootstrap has no market activity, so nothing owned the
+    dialog, `game_rules` had no rule for it, and the run died at step 1 —
+    *"nothing owns this confirmation dialog and the game rules will not answer it
+    (options=['No'])"*.
+
+    This is the only card in the game whose right answer is NOT the positive one, so the
+    default is not merely unhelpful here — it would say YES.
+    """
+
+    def test_game_rules_declines_it(self):
+        from brain.game_rules import answer_dialog
+        self.assertEqual(
+            answer_dialog(["No", "Use one chance", "Use All"], ["Attempt Negotiation"]), "No")
+
+    def test_the_default_still_applies_to_every_other_card(self):
+        from brain.game_rules import answer_dialog
+        self.assertEqual(answer_dialog(["Cancel", "OK"],
+                                       ["The Cargo Hold's Trade Goods slot will be exceeded "
+                                        "by 52 slots. Purchase the trade goods?"]), "OK")

@@ -56,6 +56,15 @@ DIALOG_RULES: Tuple[DialogRule, ...] = (
                  "'immediately set sail' warning applies only when Auto Supply is not "
                  "possible"),
     ),
+    DialogRule(
+        name="attempt_negotiation",
+        phrases=("negotiat",),
+        answer="no",
+        because=("a haggle GAMBLES the transaction the bot has already committed to, and "
+                 "every flow this game has ever run declines it (`_react_after_purchase`: "
+                 "'negotiation popup — No'). It is also the only card here whose right "
+                 "answer is not the positive one, so the default would say YES to it"),
+    ),
 )
 
 
