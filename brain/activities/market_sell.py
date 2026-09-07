@@ -36,6 +36,10 @@ from loguru import logger
 _MAX_STAGE_ATTEMPTS = 1
 # The grid is one 3x3 page. Nothing sellable IN VIEW is not an empty hold — scroll and look.
 _MAX_SELL_SCROLLS = 4
+# How many times to look again at a price this pass could not read. Perception
+# varies frame to frame — the same card that parsed as a 725x364 phantom parsed
+# correctly on the very next frame — so a re-read is worth more than a refusal.
+_MAX_PRICE_READS = 2
 
 # The panel's own words when the basket holds nothing. This is the ONLY safe licence to tap a
 # tile again, and the reason is in `purchase_goods`:
@@ -147,6 +151,35 @@ def on_sell_page(state, goal, *, frame, capture_fn, tap_fn, omni_fn) -> dict:
     #
     # And the test is SELLABILITY, not whether the page changed. An empty hold needs no
     # special case: it yields nothing sellable, scrolls once, still yields nothing, finishes.
+    # NOTHING SELLABLE IS NOT THE SAME AS NOTHING ABOARD. A tile is on the Sell page because
+    # we hold it, so cargo we own that this pass declined means the pass could not price it —
+    # not that the hold is empty.
+    #
+    # Live 2026-09-06 at Lisboa, the end of an otherwise clean mission:
+    #
+    #     [sell] skipping 'Birch Tree' — we hold 3668 but its price is unreadable,
+    #            and this pass sells on profit
+    #     nothing sellable after scrolling to page 2 — the clear is finished
+    #     sell done / every leg is done / status done
+    #
+    # The mission reported SUCCESS holding the 3,668 units it had sailed to Lisboa to sell.
+    # Skipping an unpriced good is right on its own — a profit pass must not guess at a price
+    # — but calling the leg finished converted one bad read into a lost cargo, and threw away
+    # the retry that would have re-read it.
+    #
+    # CLAUDE.md, flow completeness: "a flow is complete only when it (1) ends at a recognised
+    # state AND (2) contains at least one positive transaction."
+    held = _cargo_this_pass_declined(goal, goods)
+    if held and not state.sold:
+        if not state.repeated("price_read", _MAX_PRICE_READS):
+            logger.warning(f"[market] {held[0]!r} is aboard but this pass could not price it "
+                           "— looking again rather than reporting the hold as empty")
+            state.did("re-read the prices")
+            return {"do": "waited", "why": f"{held[0]!r} aboard but unpriced"}
+        return {"do": "blocked",
+                "why": (f"holding {', '.join(held)} that this pass could not price — the "
+                        "hold is not empty and nothing was sold")}
+
     if state.last_intent == "scrolled":
         logger.info(f"[market] nothing sellable after scrolling to page "
                     f"{state.scrolled_pages + 1} — the clear is finished")
@@ -168,6 +201,28 @@ def on_sell_page(state, goal, *, frame, capture_fn, tap_fn, omni_fn) -> dict:
     except Exception as exc:
         logger.debug(f"[market] trade-point award check skipped: {exc}")
     return {"do": "finished", "why": "nothing left to sell", "trade_point_award": award}
+
+
+def _cargo_this_pass_declined(goal, goods) -> list:
+    """Goods we OWN that this pass did not choose — the hold's own answer to "is it empty?".
+
+    Named goods a goal deliberately keeps (Water, Food, the barter's materials) are not
+    declined, they are kept, so they must not hold the leg open forever.
+    """
+    keep = {str(n).strip().lower()
+            for n in tuple(getattr(goal, "keep", ()) or ())
+            + tuple(getattr(goal, "exclude", ()) or ())}
+    out = []
+    for g in goods or ():
+        name = str(getattr(g, "name", "")).strip()
+        if not name or name.lower() in keep:
+            continue
+        try:
+            if int(getattr(g, "owned_qty", 0) or 0) > 0:
+                out.append(name)
+        except (TypeError, ValueError):
+            continue
+    return out
 
 
 def _cart_is_empty(frame, omni_fn) -> bool:

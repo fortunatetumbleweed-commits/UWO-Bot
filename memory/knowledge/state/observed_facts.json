@@ -1,21 +1,13 @@
 {
   "fleet_capacity": {
-    "at": 1788662959.151065,
+    "at": 1788736655.7973812,
     "value": 4952
   },
-  "hold": {
-    "at": 1788734371.7323442,
-    "value": {
-      "candle": 920,
-      "iron": 999,
-      "matchlock gun": 486
-    }
-  },
   "mission_progress": {
-    "at": 1788720533.205996,
+    "at": 1788736663.763031,
     "value": {
       "good": "Birch Tree",
-      "phase": "gathering",
+      "phase": "bartering",
       "recipe": {
         "good": "Birch Tree",
         "materials": {
@@ -31,7 +23,7 @@
     }
   },
   "settlement": {
-    "at": 1788727058.1937652,
-    "value": "Barcelona"
+    "at": 1788736178.2728682,
+    "value": "Tripoli"
   }
 }

@@ -665,6 +665,8 @@ def read_market_page_omni(
     # gaps HERE, while this frame's tiles are still where they were, and every caller gets the
     # combined read instead of each choosing.
     fill_missing_quantities(frame, goods)
+    if tab != "purchase":
+        fill_missing_prices(frame, goods)
 
     logger.info(
         f"[{tab}] omni grid {grid.n_rows}×{grid.n_cols}: {len(goods)} goods"
@@ -804,6 +806,75 @@ def fill_missing_quantities(frame, goods, *, read_text_fn=None):
             g.owned_qty = int(digits[-1])
             logger.info(f"[market] {g.name!r} owned was unreadable on the page; its tile "
                         f"reads {g.owned_qty}")
+    return goods
+
+
+# The tile's price BAR — the dark pill holding "price (profit)", with the index badge left
+# out. Offsets from the tile's tap point, measured on both grid rows of
+# trace_barter_cmd_2026-09-06T18-08-54 frame 209 (row 1 taps y=315, row 2 y=556).
+_TILE_PRICE_BOX = (-125, 58, 235, 127)
+# Tried in order, first CLEAN read wins. Noise is not monotonic in scale — the same bar read
+# '13,322' at x4-rejected, '13, 4 322' at x6 and '13,322' at x8 — so one scale is a gamble
+# and a short ladder is not.
+_TILE_PRICE_SCALES = (8, 4, 6)
+
+# STRICT, AND ANCHORED AT THE START. This is the whole safety of the re-read: a bar that OCR'd
+# as '13 1 322 (10,330)' must be REJECTED, not read as 322 by a pattern that is happy to start
+# matching in the middle. `^` plus a number that may hold only separators does that — '13'
+# then a space is not followed by '(', so the match fails and the price stays unreadable.
+#
+# `fill_missing_quantities` states the reason: "A wrong number is worse than a missing one
+# because nothing downstream can tell." Here it is worth 10x — 131,322 against 13,322.
+_PRICE_PAIR = re.compile(r"^\s*(\d[\d,.']*)\s*\(\s*([-+]?\d[\d,.']*)\s*\)")
+
+
+def fill_missing_prices(frame, goods, *, read_text_fn=None):
+    """Re-read `price`/`profit_per_unit` from EACH GOOD'S OWN TILE, for goods the page missed.
+
+    The same remedy `fill_missing_quantities` applies to badges, for the price bar — and the
+    same reason. CLAUDE.md: "DOWNSCALED IMAGES ARE FOR COARSE JUDGMENTS ONLY — never for
+    CONTENT... the `44` on Matchlock Gun's thumbnail was NEVER PROPOSED AS TEXT... The same
+    detector on a 750x520 CROP read the `44` without trouble."
+
+    Live 2026-09-06 at Lisboa, and it cost the mission its cargo. The Birch Tree tile reads
+    `99%  13,322 (10,330)`; the whole-frame parse proposed ONE token for that row — '990',
+    which is the 99% badge with its '%' read as '0' — and no price at all. `select_sellable`
+    then skipped the good ("we hold 3668 but its price is unreadable, and this pass sells on
+    profit") and the mission reported DONE holding 3,668 units it had sailed there to sell.
+    The three neighbouring tiles, whose prices are four digits, parsed perfectly from the same
+    frame.
+
+    Mutates and returns `goods`. A bar that will not read CLEANLY stays None — unreadable is
+    not zero, and a guessed price is worse than none.
+    """
+    if read_text_fn is None:
+        from vision.ocr import read_text as read_text_fn
+
+    dx1, dy1, dx2, dy2 = _TILE_PRICE_BOX
+    for g in goods:
+        if getattr(g, "profit_per_unit", None) is not None:
+            continue
+        if not getattr(g, "owned_qty", None):
+            continue                          # not aboard — no sale to price
+        x, y = getattr(g, "tap_x", None), getattr(g, "tap_y", None)
+        if x is None or y is None:
+            continue
+        for scale in _TILE_PRICE_SCALES:
+            try:
+                bar = frame.crop((max(0, x + dx1), max(0, y + dy1),
+                                  max(0, x + dx2), min(frame.height, y + dy2)))
+                bar = bar.resize((bar.width * scale, bar.height * scale))
+                m = _PRICE_PAIR.match(read_text_fn(bar) or "")
+            except Exception as exc:
+                logger.debug(f"[market] price re-read failed for {g.name!r}: {exc}")
+                break
+            if m is None:
+                continue
+            g.price = int(m.group(1).translate(_SEP))
+            g.profit_per_unit = int(m.group(2).translate(_SEP))
+            logger.info(f"[market] {g.name!r} price was unreadable on the page; its tile "
+                        f"reads {g.price:,} ({g.profit_per_unit:,}) at x{scale}")
+            break
     return goods
 
 
