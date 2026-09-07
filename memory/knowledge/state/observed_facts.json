@@ -3,6 +3,24 @@
     "at": 1788753126.17954,
     "value": 4952
   },
+  "mission_progress": {
+    "at": 1788792988.488974,
+    "value": {
+      "good": "Bambara Groundnut",
+      "phase": "gathering",
+      "recipe": {
+        "good": "Bambara Groundnut",
+        "materials": {
+          "Pig": 218,
+          "Raisin": 248
+        },
+        "obtain": 829
+      },
+      "rounds": 6,
+      "rounds_remaining": 7,
+      "village": "San Village"
+    }
+  },
   "settlement": {
     "at": 1788749155.722743,
     "value": "Faro"
