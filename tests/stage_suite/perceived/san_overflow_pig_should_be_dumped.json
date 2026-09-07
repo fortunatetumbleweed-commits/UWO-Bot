@@ -1,0 +1,10 @@
+{
+ "state": "village",
+ "port": null,
+ "detail": "Village interior (menu: barter, explore, gifting, loot, recruit crew)",
+ "raw": {
+  "location": "village",
+  "port": null,
+  "detail": "Village interior (menu: barter, explore, gifting, loot, recruit crew)"
+ }
+}
