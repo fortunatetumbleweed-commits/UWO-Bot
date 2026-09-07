@@ -352,10 +352,14 @@ class MissionRunner:
         recipe = self._per_round_needs()
         if not recipe or not wanted:
             return wanted
+        # THE BOTTLENECK RULE RUNS FIRST, and that ordering is the whole of it: the cap below
+        # needs a FINISHED material and returns early without one — which is the very case
+        # this is for, two materials both still being gathered. Placed after, it was dead code
+        # in the situation it exists to fix.
+        capped = self._not_ahead_of_the_bottleneck(dict(wanted), recipe)
         rounds = self._rounds_fundable(recipe, still_shopping=set(wanted))
         if rounds is None:
-            return wanted
-        capped = dict(wanted)
+            return capped
         for material, per_round in recipe.items():
             if per_round <= 0:
                 continue
@@ -369,6 +373,48 @@ class MissionRunner:
                             "consumes them all")
                 capped[key] = cap
         return capped
+
+    def _not_ahead_of_the_bottleneck(self, wanted: dict, recipe: dict) -> dict:
+        """Stop topping up a material that is already further ahead than the bottleneck.
+
+        THE HOLD IS THE THING THIS PROTECTS. Rounds are limited by the SCARCEST material, so
+        buying more of a plentiful one buys no rounds at all — it buys cargo space away from
+        the material that would.
+
+        Live 2026-09-07 at Faro. Pig read 1,505 against a padded 1,755 and so read SHORT, and
+        the buy round did what it was told: it kept buying. Raisin stood at 881 — three rounds
+        — which needs 654 Pig, so the hold already carried more than twice what any round
+        could use. The ship finished at 4,952/4,952, FULL OF PIG, with no room left for the
+        Raisin that actually gates the barter.
+
+        The padded target was not wrong, it was answering the wrong question: "how much would
+        seven rounds take?" rather than "how much can we currently use?".
+
+        NOT THE SAME AS CAPPING ON WHAT IS ABOARD, which is self-fulfilling and was caught by
+        a test earlier: the BOTTLENECK itself is never capped, so it always keeps buying. Only
+        materials that are AHEAD of it stop, and they resume the moment it catches up.
+        """
+        rounds = {}
+        for material, per_round in recipe.items():
+            have = self._materials_aboard.get(str(material).lower())
+            if have is None:
+                return wanted                 # unread — no honest bottleneck to find
+            rounds[str(material).lower()] = have // per_round
+        if len(rounds) < 2:
+            return wanted
+        floor = min(rounds.values())
+        for material in list(wanted):
+            key = str(material).lower()
+            if key not in rounds or rounds[key] <= floor:
+                continue                      # the bottleneck, or level with it — keep buying
+            have = self._materials_aboard.get(key, 0)
+            if have < wanted[material]:
+                logger.info(f"[mission_runner] {material}: {have} is already "
+                            f"{rounds[key]} round(s) against the bottleneck's {floor} — not "
+                            "topping it up while that is short; the hold is needed for the "
+                            "material that is behind")
+                wanted[material] = have
+        return wanted
 
     def _per_round_needs(self) -> dict:
         """The pinned recipe's per-round materials, or {} when it is not known."""
@@ -536,7 +582,21 @@ class MissionRunner:
             return
         tried = {str((getattr(t, "params", None) or {}).get("port") or t.location).lower()
                  for t in self.subtasks if t.kind == "gather"}
+        # A MATERIAL A PENDING LEG ALREADY COVERS NEEDS NO NEW SOURCE. Short HERE is not
+        # short everywhere: the plan may simply not have reached the port that sells it.
+        #
+        # Live 2026-09-07 at Madeira, this fired twice — rightly for Raisin, and wrongly for
+        # Pig, which `gather:Faro` was on its way to buy. It added `gather:Gijon:Pig` for a
+        # material that was one leg from being met. (The pre-sail settle would have closed it
+        # again, so it cost nothing this time; that is luck, not design.)
+        still_planned = {str(m).lower()
+                         for t in self.subtasks if t.kind == "gather" and not t.done
+                         for m in ((getattr(t, "params", None) or {}).get("orders") or {})}
         for material in short:
+            if str(material).lower() in still_planned:
+                logger.info(f"[mission_runner] {material} is short here, but a pending leg "
+                            "already goes where it is sold — not rerouting it")
+                continue
             want = (reported.get(material) or {}).get("want")
             alt = self._another_source(material, tried)
             if alt is None:

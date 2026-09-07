@@ -99,7 +99,7 @@ class BoughtNothingFromAStockedShelfMeansTheHoldIsFull(unittest.TestCase):
     def test_the_buy_round_STOPS_rather_than_buying_or_refreshing_again(self):
         # The shelf as it stood when Purchase was tapped now rides in its own slot, so the
         # confirm and result cards cannot overwrite it before the credit runs.
-        state = MarketState(awaiting_credit=(("raisin", 217),))
+        state = MarketState(awaiting_credit=((("raisin", 217),), None))
         with mock.patch("vision.market_reader.read_market_page_omni",
                         return_value=[Tile("Raisin", 217)]), \
              mock.patch("actions.buy_materials._find_purchase_commit", return_value=None):

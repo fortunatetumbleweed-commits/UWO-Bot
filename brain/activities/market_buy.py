@@ -79,6 +79,53 @@ def credit_the_shelf_drop(state, before: tuple, after: Mapping) -> list:
     return credited
 
 
+def _safe_total(frame) -> Optional[int]:
+    """The hold's total, or None. Never raises — a missing reading is one fewer source."""
+    try:
+        from actions.buy_materials import _safe_cargo_total
+        return _safe_cargo_total(frame)
+    except Exception as exc:                  # noqa: BLE001
+        logger.debug(f"[market] cargo total unreadable: {exc}")
+        return None
+
+
+def _credit_the_cargo_rise(state, orders: Mapping, goods: Mapping, frame,
+                           cargo_before: Optional[int]) -> list:
+    """What the HOLD gained across the purchase, when the shelf could not say.
+
+    A SOLD-OUT SHELF READS AS UNREADABLE, NOT ZERO — rightly, since the reader genuinely
+    failed — so the one purchase that empties a shelf teaches the ledger nothing. Live
+    2026-09-07 that was every purchase: Pig sat at its seeded 1,505 for twenty minutes and a
+    dozen buys across two ports, read short against 1,755 the whole time, and filled the hold
+    to 4,952/4,952 with Pig while the Raisin that gates the barter had nowhere to go.
+
+    ONLY WHEN ONE GOOD CAN BE ATTRIBUTED. The cargo total is an aggregate, so it names no
+    good; with a single order material stocked here every unit it gained is that material's,
+    and with two it says nothing about either. Same rule `buy_to_goal` states for its own
+    aggregate: "ONE GOOD IN THE ORDER MAKES AN AGGREGATE PER-GOOD".
+
+    Supplies do not move during a buy, so the difference is the purchase.
+    """
+    if cargo_before is None or state.ledger is None:
+        return []
+    from actions.buy_materials import tile_in_stock
+    here = [m for m in (orders or {})
+            if (goods or {}).get(str(m).lower()) is not None]
+    if len(here) != 1:
+        return []
+    now = _safe_total(frame)
+    if now is None:
+        return []
+    gained = now - int(cargo_before)
+    if gained <= 0:
+        return []
+    material = here[0]
+    state.ledger.bought(material, gained)
+    logger.info(f"[market] the hold rose {cargo_before:,} -> {now:,} across that purchase — "
+                f"crediting {gained} {material!r} (the shelf could not be read)")
+    return [(material, gained)]
+
+
 def _stocked_but_unmoved(state, orders: Mapping, goods: Mapping, *,
                          before: Optional[tuple] = None) -> Optional[str]:
     """A wanted good that is ACTIVE and READABLE, whose shelf did not move across a purchase.
@@ -142,7 +189,14 @@ def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn) -
         state.did("tapped Purchase", shelf_signature(goods))
         # AND IN ITS OWN SLOT, which survives the confirm and result cards this tap raises.
         # `last_intent` describes the previous TICK, and those cards are ticks of their own.
-        state.awaiting_credit = shelf_signature(goods)
+        #
+        # TWO READINGS, because the first one fails exactly when it matters. The shelf drop
+        # says what was bought — until the purchase EMPTIES the shelf, when the tile reads
+        # `available_qty=None` and no drop can be computed. The CARGO TOTAL is on the same
+        # screen, it rises with every purchase, and it does not care whether the shelf is
+        # legible (user, 2026-09-07: "it should be reading the pigs now in the cargo, it
+        # increases after every purchase").
+        state.awaiting_credit = (shelf_signature(goods), _safe_total(frame))
         tap_fn(commit.cx, commit.cy)
         return {"do": "committed", "cost": staged_cost}
 
@@ -152,12 +206,36 @@ def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn) -
     # A PURCHASE JUST COMPLETED? The shelf will have dropped. Credit it before deciding
     # anything else, or the goal test runs on a ledger that has not heard about the last buy.
     if state.awaiting_credit:
-        before = state.awaiting_credit
+        before, cargo_before = state.awaiting_credit
         credited = credit_the_shelf_drop(state, before, goods)
+        if not credited:
+            credited = _credit_the_cargo_rise(state, orders, goods, frame, cargo_before)
         stuck = None if credited else _stocked_but_unmoved(state, orders, goods,
                                                            before=before)
         state.awaiting_credit = None
         state.did(None)
+        if not credited:
+            # NEITHER READING LANDED, so what the ledger holds is now KNOWN to be stale
+            # is now KNOWN to be stale — and a belief known to be stale is worse than none.
+            #
+            # The drop is uncomputable exactly when it matters most: a bought-out shelf reads
+            # `available_qty=None`, which `shelf_signature` records as -1 and
+            # `credit_the_shelf_drop` rightly refuses to treat as zero ("unread is not zero").
+            # So the one purchase that empties a shelf teaches nothing.
+            #
+            # Live 2026-09-07: Pig was seeded at 1,505 and stayed 1,505 for twenty minutes and
+            # a dozen purchases across two ports — every buy emptied the shelf, every credit
+            # was skipped. It read short against its 1,755 target the whole time, kept buying,
+            # and filled the hold to 4,952/4,952 with Pig, leaving no room for the Raisin that
+            # actually gates the barter.
+            #
+            # Dropping the ledger makes the next tick re-read the hold from the sell grid,
+            # which is authoritative. It costs a tab switch, and only on a purchase whose
+            # shelf could not be read — and the seed hands the Purchase page back now, so it
+            # no longer breaks the restock that follows.
+            logger.info("[market] the shelf could not be read across that purchase — "
+                        "re-reading the hold rather than keeping a count we know is stale")
+            state.ledger = None
         if credited:
             logger.info(f"[market] the shelf dropped {credited} — credited to the ledger")
         elif stuck:

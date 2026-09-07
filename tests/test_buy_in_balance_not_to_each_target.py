@@ -50,10 +50,16 @@ class TheWantIsCappedByTheScarcestMaterial(unittest.TestCase):
 
     def test_A_MATERIAL_STILL_BEING_BOUGHT_IS_NOT_A_CONSTRAINT(self):
         """Otherwise the cap is self-fulfilling: the want falls to what is already aboard and
-        no more can ever be bought. Pig at 200 mid-gather would cap the mission to 1 round."""
+        no more can ever be bought. Pig at 200 mid-gather would cap the mission to 1 round.
+
+        Raisin DOES stop here, and that is the bottleneck rule below doing its job — it is
+        1,464 against Pig's 200, seven rounds ahead, and the hold is needed for the material
+        that is behind. What must never happen is Pig being capped."""
         m = _runner({"Pig": 1755, "Raisin": 1755}, {"raisin": 1464, "pig": 200})
         with _with_recipe(RECIPE):
-            self.assertEqual(m._everything_still_wanted(), {"Pig": 1755, "Raisin": 1755})
+            out = m._everything_still_wanted()
+        self.assertEqual(out["Pig"], 1755, "the bottleneck must always be free to grow")
+        self.assertEqual(out["Raisin"], 1464, "already far ahead — stop topping it up")
 
     def test_an_UNREAD_material_yields_no_cap(self):
         """Unread is not zero — capping on a material nobody has looked at would want 0."""
@@ -81,3 +87,51 @@ class TheWantIsCappedByTheScarcestMaterial(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class NotBoughtAHEADOfTheBottleneck(unittest.TestCase):
+    """Rounds are limited by the SCARCEST material, so buying more of a plentiful one buys no
+    rounds — it buys cargo space away from the material that would.
+
+    Live 2026-09-07 at Faro. Pig read 1,505 against a padded 1,755 and so read SHORT, and the
+    buy round did as told. Raisin stood at 881 — three rounds — needing 654 Pig, so the hold
+    already carried more than twice what any round could use. The ship finished at
+    4,952/4,952, FULL OF PIG, with no room for the Raisin that gates the barter.
+
+    The padded target was not wrong; it answered "how much would seven rounds take?" rather
+    than "how much can we currently use?".
+    """
+
+    def test_the_plentiful_material_stops_and_the_scarce_one_does_not(self):
+        m = _runner({"Pig": 1755, "Raisin": 1997}, {"pig": 1505, "raisin": 881})
+        with _with_recipe({"Pig": 218, "Raisin": 248}):
+            out = m._everything_still_wanted()
+        self.assertEqual(out["Pig"], 1505, "Pig is 6 rounds against Raisin's 3 — stop")
+        self.assertEqual(out["Raisin"], 1997, "Raisin is the bottleneck — keep buying")
+
+    def test_THE_BOTTLENECK_ITSELF_IS_NEVER_CAPPED(self):
+        """Capping on what is aboard is self-fulfilling — the scarce one must always grow."""
+        m = _runner({"Pig": 1755, "Raisin": 1997}, {"pig": 200, "raisin": 1464})
+        with _with_recipe({"Pig": 218, "Raisin": 248}):
+            out = m._everything_still_wanted()
+        self.assertEqual(out["Pig"], 1755, "Pig is the bottleneck — keep buying")
+        self.assertEqual(out["Raisin"], 1464, "Raisin is 5 rounds ahead — stop")
+
+    def test_materials_LEVEL_with_each_other_both_keep_buying(self):
+        m = _runner({"Pig": 1755, "Raisin": 1997}, {"pig": 436, "raisin": 496})
+        with _with_recipe({"Pig": 218, "Raisin": 248}):
+            out = m._everything_still_wanted()
+        self.assertEqual((out["Pig"], out["Raisin"]), (1755, 1997))
+
+    def test_an_UNREAD_material_yields_no_bottleneck(self):
+        m = _runner({"Pig": 1755, "Raisin": 1997}, {"pig": 1505})
+        with _with_recipe({"Pig": 218, "Raisin": 248}):
+            out = m._everything_still_wanted()
+        self.assertEqual((out["Pig"], out["Raisin"]), (1755, 1997))
+
+    def test_it_resumes_once_the_bottleneck_catches_up(self):
+        """Stopping is not permanent — it is a "not yet", and the next look re-decides."""
+        m = _runner({"Pig": 1755, "Raisin": 1997}, {"pig": 1505, "raisin": 1500})
+        with _with_recipe({"Pig": 218, "Raisin": 248}):
+            out = m._everything_still_wanted()
+        self.assertEqual(out["Pig"], 1755, "Raisin now funds 6 rounds; Pig may grow again")

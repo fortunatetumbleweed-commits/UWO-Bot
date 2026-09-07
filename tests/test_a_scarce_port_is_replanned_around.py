@@ -47,6 +47,9 @@ def _runner(materials, legs=None):
 
 def _reroute(m, seasons=None):
     leg = m.subtasks[0]
+    # `_finish_leg` marks the leg done BEFORE calling the reroute, and it matters: a leg still
+    # pending would look like "somewhere else already goes there" and suppress the reroute.
+    leg.done = True
     with mock.patch("memory.barter_kb.load_recipe", return_value=_recipe()), \
          mock.patch("memory.market_kb.season_of",
                     side_effect=lambda p, g: (seasons or {}).get((p, g))):
@@ -78,13 +81,29 @@ class AShortMaterialGetsAnotherPort(unittest.TestCase):
         self.assertNotIn("gather:Bordeaux:Raisin", ids)
 
     def test_a_port_ALREADY_TRIED_is_not_tried_again(self):
+        """Tried means FINISHED with. A port still pending is covered by the next test."""
         m = _runner(SHORT, legs=[
             SubTask(id="gather:Madeira", kind="gather", location="Madeira",
                     params={"port": "Madeira", "orders": {"Raisin": 1712}}),
-            SubTask(id="gather:Bordeaux", kind="gather", location="Bordeaux",
+            SubTask(id="gather:Bordeaux", kind="gather", location="Bordeaux", done=True,
                     params={"port": "Bordeaux", "orders": {"Raisin": 1712}}),
         ])
         self.assertIn("gather:Trabzon:Raisin", _reroute(m))
+
+    def test_A_MATERIAL_A_PENDING_LEG_ALREADY_COVERS_IS_NOT_REROUTED(self):
+        """Short HERE is not short everywhere — the plan may simply not have reached the port
+        that sells it.
+
+        Live 2026-09-07 at Madeira the reroute fired twice: rightly for Raisin, and wrongly
+        for Pig, which `gather:Faro` was on its way to buy. It added `gather:Gijon:Pig` for a
+        material one leg from being met."""
+        m = _runner({"Pig": {"have": 1505, "want": 1755, "state": "short"}}, legs=[
+            SubTask(id="gather:Madeira", kind="gather", location="Madeira",
+                    params={"port": "Madeira", "orders": {"Pig": 1755}}),
+            SubTask(id="gather:Faro", kind="gather", location="Faro",
+                    params={"port": "Faro", "orders": {"Pig": 1755}}),
+        ])
+        self.assertEqual(_reroute(m), ["gather:Madeira", "gather:Faro"])
 
     def test_NOWHERE_LEFT_carries_on_short(self):
         """A leg that cannot help is worse than no leg — the mission proceeds as before."""
