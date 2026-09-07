@@ -3,6 +3,24 @@
     "at": 1788736655.7973812,
     "value": 4952
   },
+  "mission_progress": {
+    "at": 1788743593.2068639,
+    "value": {
+      "good": "Bambara Groundnut",
+      "phase": "gathering",
+      "recipe": {
+        "good": "Bambara Groundnut",
+        "materials": {
+          "Pig": 218,
+          "Raisin": 218
+        },
+        "obtain": 673
+      },
+      "rounds": 7,
+      "rounds_remaining": 7,
+      "village": "Hutu Village"
+    }
+  },
   "settlement": {
     "at": 1788736178.2728682,
     "value": "Tripoli"

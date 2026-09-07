@@ -162,6 +162,7 @@ class WorldMapActivity:
         self._panel_for = panel_for_fn
         self._capture = capture_fn
         self._typed = 0            # typings that LANDED in the box
+        self._shortenings = 0      # a filter that came back empty, retyped shorter
         self._panel_closes = 0     # another place's panel, closed so the map
                                    # can be searched — bounded like the rest
         self._type_attempts = 0    # typings SENT — the backstop against a
@@ -199,6 +200,7 @@ class WorldMapActivity:
             self._type_attempts, self._pending_query = 0, None
             self._kb_clears = 0
             self._panel_closes = 0
+            self._shortenings = 0
             self._kb_hygiene = 0
             self._last_rail_sig = None
             self._list_taps = 0
@@ -305,6 +307,39 @@ class WorldMapActivity:
             self._tap_at(*found)
             return ActivityResult(WORKING, {"did": f"tapped {goal.where} on the map"},
                                   detail=str(goal))
+        # A QUERY WE TYPED THAT FOUND NOTHING IS A WRONG QUERY, NOT A CLOSED LIST.
+        #
+        # The game filters on ITS spelling and we type OURS, and the two differ wherever the
+        # name carries an accent: the port is `Gijón`, our KB and the map OCR both flatten it
+        # to `Gijon`, and the prefix `Gijo` matches nothing because character four is `ó`.
+        # The list then holds ZERO rows — and an empty list looks exactly like no list, so
+        # this branch re-opened it, which TOGGLES the rail shut. Live 2026-09-06:
+        #
+        #     typing 'Gijo' (prefix of 'Gijon') — attempt 1/4, 0/2 landed
+        #     'Gijon' is not on screen — opening the list          (x3)
+        #     NOTHING CHANGED for 3 ticks ... choose port 'Gijon'
+        #
+        # The box read `gijo` with the rows below it empty and the map showing through. Every
+        # "is the list open?" check says no, because they all look for the search FIELD and
+        # the parse returned only the 58px word we typed — undetectable exactly when it
+        # matters. So the screen cannot answer this one; our own RECORDED INTENT can. We know
+        # we typed, and we know nothing came back.
+        #
+        # Shortening is the remedy because a shorter prefix is a SUPERSET: it cannot exclude
+        # the destination, only filter less. An accent can sit anywhere in a name — `Málaga`
+        # fails at two, `Ávila` at one — so this walks down rather than guessing a safe length.
+        if self._typed and self._shortenings < _MAX_SHORTENINGS:
+            shorter = goal.where[:max(1, _PREFIX_LEN - self._shortenings - 1)]
+            self._shortenings += 1
+            logger.info(f"[world_map] the filter for {goal.where!r} came back empty — its "
+                        f"name is spelled differently in the game (an accent, most likely), "
+                        f"so retyping the shorter {shorter!r} "
+                        f"({self._shortenings}/{_MAX_SHORTENINGS})")
+            self._pending_query = shorter
+            self._typed = self._type_attempts = 0
+            self._type_prefix(shorter)
+            return ActivityResult(WORKING, {"did": f"typed {shorter!r}"}, detail=str(goal))
+
         logger.info(f"[world_map] {goal.where!r} is not on screen — opening the list")
         self._open_list(goal)
         return ActivityResult(WORKING, {"did": "opened the destination list"}, detail=str(goal))
@@ -900,14 +935,16 @@ class WorldMapActivity:
 
         The row is identified by POSITION, not by what it says — what it says is the problem.
         """
+        # ONE TEST, SHARED. This band and `_find_port_on_world_map`'s exclusion were two
+        # copies of the same rule and they disagreed — the reader's looked for the search
+        # FIELD, which is only findable when the box is empty, so on 2026-09-06 it failed to
+        # exclude a box holding 'gijo' and this backstop then discarded the real 'Gijon' with
+        # it. Both now ask `sail_actions.is_the_search_box`, which answers by POSITION.
         try:
-            from actions.sail_actions import _map_search_box
-            box = _map_search_box(frame)
+            from actions.sail_actions import is_the_search_box
+            return is_the_search_box(frame, getattr(el, "cx", 0), el.cy)
         except Exception:
             return False
-        if not box:
-            return False
-        return abs(el.cy - box[1]) <= _SEARCH_BOX_BAND
 
     def _tap_at(self, x, y) -> None:
         if self._tap is not None:
@@ -1200,6 +1237,10 @@ class WorldMapActivity:
 
 # A prefix, not the whole name: OCR mangles accents and the game filters as you type.
 _PREFIX_LEN = 4
+# How far the prefix may be walked back when the filter comes back empty. Three
+# gets `Gijo` down to `G`, which cannot exclude anything; past that the query is
+# not the problem.
+_MAX_SHORTENINGS = 3
 # Typing twice on the same destination means the box did not take it. Scrolling is next.
 # How far from the search box's centre still counts as the search box's own row. The field is
 # a single line; anything sharing its band is its text or its furniture, never a list row.

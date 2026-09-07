@@ -3812,16 +3812,12 @@ def _find_port_on_world_map(
     # looking for a port sitting in plain view (user). The rule is already written down —
     # "the search box always matches the query, so it is a guaranteed false positive" — and
     # this path did not apply it. Narrowing to the rail does not help: the box IS in the rail.
-    _box = None
-    try:
-        _box = search_box_element(frame)
-    except Exception as exc:                      # noqa: BLE001 — no box is not an error
-        logger.debug(f"  could not locate the search box: {exc}")
-
     def _is_our_own_query(cx: int, cy: int) -> bool:
-        if _box is None:
-            return False
-        return (_box.x1 <= cx <= _box.x2) and (_box.y1 <= cy <= _box.y2)
+        # POSITION, not the element lookup. `search_box_element` needs the FIELD — wide, or
+        # saying "search" — and so finds the box only when it is EMPTY. The box that matters
+        # is the one holding our query: live 2026-09-06 it held 'gijo', OmniParser returned
+        # that word alone at 58px, the lookup returned None, and the box went unexcluded.
+        return is_the_search_box(frame, cx, cy)
 
     for bbox, text, conf in raw:
         if conf < 0.25:
@@ -5951,6 +5947,40 @@ def _map_search_box(frame) -> Tuple[int, int]:
         if el.cx < 700 and any(k in lab for k in ("search", "edit", "input", "field")):
             return (el.cx, el.cy)
     return (420, 141)
+
+
+# The rail is the LEFT edge; nothing further right is the search box. Load-bearing, not
+# decoration: on 2026-09-06 Gijon sat at (1428,112) — 29px from the box's y, well inside the
+# band — so a y-only test excludes the very port being hunted.
+_SEARCH_BOX_RAIL_MAX_X = 700
+# How far from the box's centre still counts as the box.
+SEARCH_BOX_BAND = 40
+
+
+def is_the_search_box(frame, cx: int, cy: int) -> bool:
+    """Is this point the rail's search box — i.e. our own typing rather than a result?
+
+    BY POSITION, NEVER BY CONTENT, because the content is the problem: the box holds what we
+    typed, so it fuzzy-matches the destination BY CONSTRUCTION and outscores the real label.
+
+    ONE TEST, because there were two and they disagreed. `search_box_element` looks for the
+    FIELD among the parsed elements and needs it to be wide (>=200px) or to say "search" — so
+    it finds the box only when the box is EMPTY. Live 2026-09-06 the box held 'gijo' and
+    OmniParser returned just that word, 58px wide, so the element lookup returned None, the
+    candidate was never excluded, its 1.00 outscored the real 'Gijon' label, and
+    `_find_on_screen`'s backstop then threw away the WHOLE read — the port was on the map at
+    (1428,112) the entire time. The bot re-opened the list twice and stopped: "NOTHING CHANGED
+    for 3 ticks ... choose port 'Gijon'".
+
+    `_map_search_box` falls back to the observed position when detection fails, so this
+    answers even on a frame where the field itself cannot be picked out — which is exactly the
+    frame where it is needed.
+    """
+    try:
+        bx, by = _map_search_box(frame)
+    except Exception:                             # noqa: BLE001 — no box is not an error
+        return False
+    return cx < _SEARCH_BOX_RAIL_MAX_X and abs(cy - by) <= SEARCH_BOX_BAND
 
 
 def _type_search_prefix(search_xy: Tuple[int, int], prefix: str) -> None:
