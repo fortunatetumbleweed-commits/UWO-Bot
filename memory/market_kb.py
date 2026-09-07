@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import json
+import time
 from dataclasses import dataclass, asdict, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -46,6 +47,10 @@ class MarketGood:
     # corner; measured at Bordeaux, Hungary Water's corner is 62% magenta against 0% on every
     # other tile on the grid.
     conditional: bool = False
+    # "low" | "abundant" | None, from the tile's TOP-RIGHT season ribbon. A season is not a
+    # stock level: an empty shelf is restocked by a blue gem, a scarce season is not, so this
+    # is asked only of a tile that is NOT sold out (see `vision.market_reader.tile_season`).
+    season: Optional[str] = None
     profit_per_unit: Optional[int] = None  # sell tab: per-unit profit baked with distance (negative = loss)
     is_loss: bool = False                # sell tab: selling here loses money (profit < 0)
     owned_qty: Optional[int] = None      # sell tab: units of this good currently in cargo
@@ -133,6 +138,68 @@ def save_snapshot(snapshot: MarketSnapshot) -> None:
     path = _market_path(snapshot.port)
     path.write_text(json.dumps(record, indent=2, ensure_ascii=False))
     logger.info(f"Market snapshot saved: {snapshot.summary()}")
+
+
+# HOW LONG A SEASON READING IS WORTH KEEPING. A GUESS, and recorded as one (user,
+# 2026-09-06: "for now use 72 hours, I am not exactly sure but I think it is 3 game month").
+# Revisit once a season boundary has actually been observed — the honest way to learn it is to
+# see a port's ribbon change and measure the gap, not to reason about game months.
+SEASON_TTL_S = 72 * 3600
+
+
+def note_season(port: str, good: str, season: Optional[str], *, now: Optional[float] = None) -> None:
+    """Record that `good` reads `low` / `abundant` at `port`, with the time we saw it.
+
+    An ORDINARY tile (season None) CLEARS any record: the season has turned, and a stale
+    "low" would keep steering the plan away from a port that has recovered.
+    """
+    if not port or not good:
+        return
+    stamp = time.time() if now is None else float(now)
+    record = load_market(port)
+    seasons = dict(record.get("seasons") or {})
+    key = str(good).strip().lower()
+    if season:
+        seasons[key] = {"state": season, "seen_at": stamp}
+    else:
+        seasons.pop(key, None)
+    record["port"], record["seasons"] = port, seasons
+    _MARKETS_DIR.mkdir(parents=True, exist_ok=True)
+    _market_path(port).write_text(json.dumps(record, indent=2, ensure_ascii=False))
+
+
+def season_of(port: str, good: str, *, now: Optional[float] = None) -> Optional[str]:
+    """The remembered season for `good` at `port`, or None when unknown or EXPIRED.
+
+    An entry past its TTL is dropped rather than trusted: a season that has turned makes the
+    record a conclusion whose evidence is gone (CLAUDE.md — never store a conclusion).
+    """
+    if not port or not good:
+        return None
+    entry = (load_market(port).get("seasons") or {}).get(str(good).strip().lower())
+    if not entry:
+        return None
+    seen = float(entry.get("seen_at") or 0.0)
+    age = (time.time() if now is None else float(now)) - seen
+    if age > SEASON_TTL_S:
+        return None
+    return entry.get("state") or None
+
+
+def ports_where_low(good: str, *, now: Optional[float] = None) -> set:
+    """Every port whose record still says `good` is scarce. For the planner's ranking."""
+    out = set()
+    if not _MARKETS_DIR.exists():
+        return out
+    for path in _MARKETS_DIR.glob("*__market.json"):
+        try:
+            record = json.loads(path.read_text())
+        except Exception:                     # noqa: BLE001 — a bad file is not a season
+            continue
+        port = record.get("port") or ""
+        if port and season_of(port, good, now=now) == "low":
+            out.add(port)
+    return out
 
 
 def latest_snapshot(port: str) -> Optional[MarketSnapshot]:

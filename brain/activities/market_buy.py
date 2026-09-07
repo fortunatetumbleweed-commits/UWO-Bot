@@ -39,6 +39,10 @@ _MAX_STAGE_ATTEMPTS = 1
 # re-perceive fixes; a shelf with no control at all is a fact, and three looks is
 # enough to tell them apart without grinding.
 _MAX_RESTOCK_LOOKS = 3
+# How many gems a LOW-SEASON shelf is worth before reporting back. The refresh works
+# there; it just pays a quarter rate, so the remedy is another port. Two buys enough
+# to be sure the season reading was not a one-frame fluke.
+_MAX_LOW_SEASON_GEMS = 2
 
 
 def shelf_signature(goods: Mapping) -> tuple:
@@ -138,6 +142,7 @@ def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn) -
         return {"do": "committed", "cost": staged_cost}
 
     orders = dict(getattr(goal, "orders", {}) or {})
+    _note_seasons(port, orders, goods)
 
     # A PURCHASE JUST COMPLETED? The shelf will have dropped. Credit it before deciding
     # anything else, or the goal test runs on a ledger that has not heard about the last buy.
@@ -188,6 +193,17 @@ def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn) -
     empty = [m for m in orders
              if (goods.get(m.lower()) is not None and not tile_in_stock(goods[m.lower()]))]
     if empty and _worth_a_gem(state, orders, goods):
+        # A SCARCE SEASON IS NOT WORTH GRINDING. The refresh still works at a low-season port
+        # — it just returns a quarter of the goods for the same gem, so the answer is another
+        # port, not another gem. Live 2026-09-06: Faro returned ~457 Pig per refresh and
+        # Madeira ~110 Raisin; ten refreshes and 45 minutes still left Raisin short, capping
+        # the barter at 6 rounds. Report it and let the mission choose, rather than paying
+        # eleven gems at a time to find out.
+        if _season_here(port, empty[0]) == "low" and state.repeated("low_season_gem",
+                                                                    _MAX_LOW_SEASON_GEMS):
+            return {"do": "finished", "season": "low", "good": empty[0],
+                    "why": (f"{empty[0]!r} is scarce here this season — "
+                            f"{_MAX_LOW_SEASON_GEMS} refresh(es) is all this port is worth")}
         from actions.buy_materials import refresh_market
         logger.info(f"[market] {empty[0]!r} is sold out and still wanted here — restocking")
         res = refresh_market(capture_fn=capture_fn, tap_fn=tap_fn, verify_good=empty[0],
@@ -220,6 +236,35 @@ def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn) -
         return {"do": "refreshed", "good": empty[0]}
 
     return {"do": "finished", "why": "nothing here is still wanted"}
+
+
+def _note_seasons(port: str, orders: Mapping, goods: Mapping) -> None:
+    """Record what the shelves say about the season, for the goods this mission wants.
+
+    Written on SIGHT rather than on failure: by the time a leg has ground through ten
+    refreshes the information has already cost what it was worth.
+    """
+    if not port:
+        return
+    try:
+        from memory.market_kb import note_season
+        for material in orders or {}:
+            good = (goods or {}).get(str(material).lower())
+            if good is None or getattr(good, "sold_out", False):
+                continue          # a sold-out tile has no readable season — see `tile_season`
+            note_season(port, str(material), getattr(good, "season", None))
+    except Exception as exc:                  # noqa: BLE001 — bookkeeping, not the buy
+        logger.debug(f"[market] could not record the season: {exc}")
+
+
+def _season_here(port: str, good: str) -> Optional[str]:
+    """What we know about this good's season at this port, or None."""
+    try:
+        from memory.market_kb import season_of
+        return season_of(port, good)
+    except Exception as exc:                  # noqa: BLE001
+        logger.debug(f"[market] could not read the season: {exc}")
+        return None
 
 
 def _worth_a_gem(state, orders: Mapping, goods: Mapping) -> bool:

@@ -528,6 +528,50 @@ _SOLD_OUT_MAX_BRIGHT = 35.0
 _RIBBON_MIN_MAGENTA = 0.15
 
 
+# THE SEASON RIBBON sits in the tile's TOP-RIGHT corner, opposite the guild one, carrying a
+# flower icon: RED when the good is scarce this season, GREEN when it is abundant, absent when
+# it is ordinary. `memory/stock-status-is-a-colour` records the pairing — "top-right seasonal
+# stock, top-left guild monopoly".
+#
+# Measured on the Madeira Purchase grid, frame 158 of
+# `data/sessions/trace_barter_cmd_2026-09-06T21-45-01`, over a 60x52 band:
+#
+#     Sugar Cane   red 0.447  green 0.000     LOW
+#     Shea Butter  red 0.000  green 0.469     ABUNDANT
+#     four ordinary tiles      0.000/0.000
+#
+# A 0.45-against-0.00 gap, so this is not a delicate threshold either.
+_SEASON_MIN_FRAC = 0.15
+
+
+def tile_season(frame, cell) -> Optional[str]:
+    """"low" | "abundant" | None, from the tile's top-right season ribbon.
+
+    A SOLD-OUT TILE IS NOT A SCARCE SEASON, and the two want opposite things: a blue gem
+    restocks an empty shelf and can do nothing about a bad season. They are easy to confuse
+    because an empty tile is ALSO reddish — the Sold Out stamp and a red `0` badge — so the
+    caller must not ask this of a tile it has already judged sold out. Measured on that same
+    grid: Raisin, sold out and with no ribbon at all, reads red 0.138.
+    """
+    try:
+        import numpy as np
+        a = np.asarray(frame.convert("RGB")).astype(float)
+        cor = a[cell.y1:cell.y1 + 52, max(0, cell.x2 - 64):max(0, cell.x2 - 4)]
+        if cor.size == 0:
+            return None
+        R, G, B = cor[..., 0], cor[..., 1], cor[..., 2]
+        red = float(((R > 110) & (R - G > 45) & (R - B > 45)).mean())
+        green = float(((G > 90) & (G - R > 25) & (G - B > 15)).mean())
+        if green >= _SEASON_MIN_FRAC and green > red:
+            return "abundant"
+        if red >= _SEASON_MIN_FRAC and red > green:
+            return "low"
+        return None
+    except Exception as exc:
+        logger.debug(f"[market] season-ribbon check skipped: {exc}")
+        return None
+
+
 def _tile_has_condition_ribbon(frame, cell) -> bool:
     """True when the tile carries a corner ribbon marking it as CONDITIONAL."""
     try:
@@ -633,6 +677,13 @@ def read_market_page_omni(
         elif tab == "purchase" and not good.sold_out and _tile_looks_sold_out(frame, cell):
             logger.info(f"[{tab}] {good.name!r} tile is greyed — sold out")
             good.sold_out = True
+        # THE SEASON, asked only of a tile we have NOT judged sold out. An empty tile is also
+        # reddish (the stamp, the red `0`) and would read as a scarce season — a different
+        # fact with the opposite remedy, since a gem restocks a shelf and cannot mend a season.
+        if tab == "purchase" and not good.sold_out and not good.conditional:
+            good.season = tile_season(frame, cell)
+            if good.season:
+                logger.info(f"[{tab}] {good.name!r} season ribbon: {good.season}")
         # SELL tab: the owned-count overlay (white, bottom-left of the icon) is too small for
         # the general OmniParser pass — it mangles multi-digit counts (1,444→444/14444), so
         # read it directly from that sub-region (threshold the white digits + targeted OCR).
