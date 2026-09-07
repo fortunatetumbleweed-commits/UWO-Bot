@@ -392,10 +392,18 @@ class MarketActivity:
                                   detail=out.get("why", f"the {what} page refused"))
         if did == "finished":
             owned_state.changed(owned_state.FLEET, owned_state.BUILDING)
-            return ActivityResult(FINISHED,
-                                  {**self._observed(port),
-                                   "stopped_because": out.get("why", "nothing left to do")},
-                                  detail=f"{what} at {port}")
+            observed = {**self._observed(port),
+                        "stopped_because": out.get("why", "nothing left to do")}
+            # THE LOW-STOCK REPORT TRAVELS WITH THE RESULT. `season`/`good` say outright
+            # "this port cannot supply this material" — which is what the mission needs to
+            # send the fleet somewhere else — and this branch used to drop them, forwarding
+            # only the sentence. Live 2026-09-07 the Madeira result reached the runner as
+            # {'sold': [], 'port': 'Madeira', 'stopped_because': "'Raisin' is scarce here..."}
+            # and the reroute, which reads a different field, had nothing to act on.
+            for key in ("season", "good"):
+                if out.get(key) is not None:
+                    observed[key] = out[key]
+            return ActivityResult(FINISHED, observed, detail=f"{what} at {port}")
         return ActivityResult(WORKING, {**self._observed(port), "did": did},
                               detail=f"{what} at {port}")
 

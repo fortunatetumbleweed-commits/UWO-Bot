@@ -25,7 +25,7 @@ import unittest
 from unittest import mock
 
 from brain.activities.market import Hold
-from brain.activities.market_buy import _MAX_LOW_SEASON_GEMS, on_purchase_page
+from brain.activities.market_buy import on_purchase_page
 from brain.market_ledger import MarketLedger
 from brain.market_state import MarketState
 from memory import market_kb
@@ -88,22 +88,29 @@ class AScarceSeasonIsNotGroundThrough(unittest.TestCase):
     def _sold_out_low(self):
         return [Tile("Raisin", 0, sold_out=True, active=False)]
 
-    def test_it_stops_paying_after_a_couple_of_gems(self):
+    def test_it_pays_NOTHING_and_reports_at_once(self):
+        """User, 2026-09-07: "if the stock is low, instead of refreshing, just buy what is at
+        the market and leave the market and report low stock".
+
+        This allowed two gems first, to be sure the season reading was not a one-frame fluke.
+        Live 2026-09-07 at Madeira the ribbon read `low` on all six looks across nine minutes
+        — the reading was never the doubtful part. Those two gems bought ~110 Raisin apiece
+        and delayed the report the mission actually needed.
+        """
         st = _state()
         with mock.patch("memory.market_kb.season_of", return_value="low"), \
              mock.patch("memory.market_kb.note_season"):
-            for _ in range(_MAX_LOW_SEASON_GEMS):
-                self.assertEqual(_run(st, self._sold_out_low())["do"], "refreshed")
             out = _run(st, self._sold_out_low())
-        self.assertEqual(out["do"], "finished")
+        self.assertEqual(out["do"], "finished", "the first look is enough")
         self.assertEqual(out["season"], "low")
+        self.assertEqual(out["good"], "Raisin", "the report NAMES what this port cannot supply")
 
     def test_an_ordinary_season_keeps_refreshing(self):
         """Faro's Pig came 457 at a time — that shelf is worth every gem."""
         st = _state()
         with mock.patch("memory.market_kb.season_of", return_value=None), \
              mock.patch("memory.market_kb.note_season"):
-            for _ in range(_MAX_LOW_SEASON_GEMS + 3):
+            for _ in range(5):
                 self.assertEqual(_run(st, self._sold_out_low())["do"], "refreshed")
 
 

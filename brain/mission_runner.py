@@ -224,6 +224,9 @@ class MissionRunner:
     # The per-material breakdown the last gather reported — what is short, and how much was
     # wanted. Read by the reroute, which needs to know WHICH material a port failed to supply.
     _last_materials: dict = field(default_factory=dict)
+    # Material -> the port that reported it scarce this season. The market says so outright;
+    # the reroute acts on it without having to infer a gap from a breakdown it may not have.
+    _cannot_supply: dict = field(default_factory=dict)
 
     # A LEG IS ONE OR MORE STEPS, and the mission advances through them exactly as it
     # advances through legs. `_SailThenLeg` used to nest a sequencer inside a sequencer to
@@ -265,6 +268,13 @@ class MissionRunner:
         if self._leg is not None and getattr(self._leg, "kind", None) == "gather":
             _obs = getattr(result, "observed", None) or {}
             self._settle_gathers(bool(_obs.get("met")), _obs.get("materials"))
+            # A PORT SAYING WHAT IT CANNOT SUPPLY, in its own words. The market reports
+            # `season: low, good: Raisin` when it finds a scarce shelf, and that is a direct
+            # statement — stronger than inferring a gap from the have/want breakdown, which
+            # is exactly what was missing at Madeira when the ledger had just been cleared.
+            if _obs.get("season") == "low" and _obs.get("good"):
+                port = str(_obs.get("port") or getattr(self._leg, "location", "") or "")
+                self._cannot_supply[str(_obs["good"]).lower()] = port
 
         for _ in range(len(self.subtasks) * 4 + 8):     # a leg cannot need more turns
             if self._runner is None:
@@ -478,7 +488,26 @@ class MissionRunner:
         boolean over the union — which is why the comment above used to say there was "no
         breakdown to give".
         """
-        self._last_materials = dict(materials or {})
+        # AN ABSENT BREAKDOWN IS NOT AN EMPTY ONE. This assigned unconditionally, so any
+        # result without a `materials` key wiped what the last good reading said — and the
+        # reroute below is driven entirely by this field.
+        #
+        # Live 2026-09-07 at Madeira, the exact sequence that cost the mission a barter round:
+        #
+        #     15:38:41  the shelf could not be read across that purchase — re-reading the hold
+        #     15:38:41  market -> finished {'sold': [], 'port': 'Madeira',
+        #                                   'stopped_because': "'Raisin' is scarce here..."}
+        #
+        # That re-read clears the ledger on purpose, and `_observed` gates `materials` on the
+        # ledger — so the result that ENDS a scarce gather is the one most likely to carry no
+        # breakdown, because an unreadable shelf is the same condition that makes a port
+        # scarce. The reroute then saw nothing short and returned silently, and the fleet
+        # sailed with Raisin 1,211 of 1,712.
+        #
+        # Same rule as `_sell_page` returning None rather than []: "I could not look" and
+        # "I looked and there is nothing" are different answers, and only one of them is news.
+        if materials:
+            self._last_materials = dict(materials)
         for material, st in (materials or {}).items():
             have = (st or {}).get("have")
             if have is not None:
@@ -578,6 +607,13 @@ class MissionRunner:
         # breakdown to reroute from.
         reported = getattr(self, "_last_materials", None) or {}
         short = [m for m, st in reported.items() if (st or {}).get("state") == "short"]
+        # A PORT THAT SAID SO OUTRANKS AN INFERENCE. `_cannot_supply` holds what the market
+        # itself reported scarce — `season: low, good: Raisin` — and that needs no breakdown
+        # to be true. At Madeira the breakdown was the one thing missing, because the shelf
+        # that could not be read is what made the port scarce in the first place.
+        for material, where in (getattr(self, "_cannot_supply", None) or {}).items():
+            if str(where).lower() == str(leg.location or "").lower() and material not in short:
+                short.append(material)
         if not short:
             return
         tried = {str((getattr(t, "params", None) or {}).get("port") or t.location).lower()

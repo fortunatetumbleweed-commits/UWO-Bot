@@ -39,10 +39,6 @@ _MAX_STAGE_ATTEMPTS = 1
 # re-perceive fixes; a shelf with no control at all is a fact, and three looks is
 # enough to tell them apart without grinding.
 _MAX_RESTOCK_LOOKS = 3
-# How many gems a LOW-SEASON shelf is worth before reporting back. The refresh works
-# there; it just pays a quarter rate, so the remedy is another port. Two buys enough
-# to be sure the season reading was not a one-frame fluke.
-_MAX_LOW_SEASON_GEMS = 2
 
 
 def shelf_signature(goods: Mapping) -> tuple:
@@ -312,11 +308,19 @@ def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn) -
         # Madeira ~110 Raisin; ten refreshes and 45 minutes still left Raisin short, capping
         # the barter at 6 rounds. Report it and let the mission choose, rather than paying
         # eleven gems at a time to find out.
-        if _season_here(port, empty[0]) == "low" and state.repeated("low_season_gem",
-                                                                    _MAX_LOW_SEASON_GEMS):
+        if _season_here(port, empty[0]) == "low":
+            # BUY WHAT IS HERE AND LEAVE (user, 2026-09-07: "if the stock is low, instead of
+            # refreshing, just buy what is at the market and leave the market and report low
+            # stock"). Everything buyable was staged above; only an empty shelf reaches here,
+            # so there is nothing left to take and no reason to pay for a quarter-rate refill.
+            #
+            # This used to allow two gems first, to be sure the season reading was not a
+            # one-frame fluke. Live 2026-09-07 at Madeira the ribbon read `low` on every one
+            # of six looks across nine minutes — the reading is not the doubtful part. The two
+            # gems bought ~110 Raisin apiece and delayed the report that matters.
             return {"do": "finished", "season": "low", "good": empty[0],
-                    "why": (f"{empty[0]!r} is scarce here this season — "
-                            f"{_MAX_LOW_SEASON_GEMS} refresh(es) is all this port is worth")}
+                    "why": (f"{empty[0]!r} is scarce here this season — buying what is on the "
+                            "shelf and reporting rather than paying for a quarter-rate refill")}
         # ONE TAP, THEN HAND BACK. This used to call `refresh_market`, which captured a fresh
         # frame, tapped the control, captured again to find the Replenish-Stock OK by OCR,
         # tapped that, captured a third time to verify the tile, and could SLEEP up to 90
