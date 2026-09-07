@@ -4,10 +4,10 @@
     "value": 4952
   },
   "mission_progress": {
-    "at": 1788753139.2268648,
+    "at": 1788754702.4414551,
     "value": {
       "good": "Bambara Groundnut",
-      "phase": "bartering",
+      "phase": "sailing_route",
       "recipe": {
         "good": "Bambara Groundnut",
         "materials": {

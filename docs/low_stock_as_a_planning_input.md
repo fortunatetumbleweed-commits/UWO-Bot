@@ -89,3 +89,27 @@ A refresh that yields 110 units is not a failure — nothing errors, the gem is 
 goes active, and the loop is happy to repeat. Without the season flag the bot cannot tell a
 port that is merely slow from one that is drained, so it grinds. The signal to tell them apart
 has been on screen the whole time.
+
+## The other half: buy in BALANCE, not to each material's own target
+
+The same run made the cost of ignoring this exact:
+
+| | bought | used (6 rounds) | left |
+|---|---|---|---|
+| Pig | 1,828 | 1,099 | **729** |
+| Raisin | 1,100 | 1,099 | 1 |
+
+A round consumes ALL its materials, so the barter is capped by the SCARCEST one. Raisin capped
+it at 6 rounds; every Pig bought past ~1,100 was dead weight — money, gems, hold space, and
+the Faro refreshes that fetched it. The plan bought each material to its own padded target
+(1,755) as though they were independent.
+
+The rule: **buy to the number of ROUNDS that can actually be funded.** Once Raisin is known to
+cap at 6, Pig's target is 6 rounds' worth and its leg should stop there. This is the pending
+`Stop buying when the rounds are funded, not when the padded goal is hit` task, and it is the
+same planning gap as the season flag above — both are the plan refusing to revise itself while
+the world is telling it something.
+
+Together they compound: the season flag says "Raisin will be slow here", the balance rule says
+"then do not buy 1,828 Pig", and the replan says "and try Bordeaux for the Raisin". Any one
+alone leaves most of the waste in place.
