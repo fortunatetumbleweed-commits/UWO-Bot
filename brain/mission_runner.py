@@ -117,6 +117,24 @@ class _VoyageStep:
             return
         if _same_place(arrived_at, self.destination):
             return
+        # AN UNREAD NAME NEVER STOPS A VOYAGE — only a CONFIDENT reading of somewhere else.
+        #
+        # The rule (user, 2026-09-07): "Unable to read port name should not stop things except
+        # on the world map. No other activities really depend on port name... If the bot does
+        # not know if it has arrived at a port it needs to buy stuff, should still go to the
+        # market to check." That is already how this behaves — an `arrived_at` of None returns
+        # above — and the misreading that stranded the Faro leg no longer reaches here at all:
+        # `read_port_name` rejects prose, and the title picker returns `Faro` rather than the
+        # 'north?' it had taken from an NPC bubble.
+        #
+        # WHAT SURVIVES IS NARROWER AND STILL WORTH KEEPING. A name that IS read and IS a
+        # different port is not a bad read: live 2026-09-01 it was Tripoli, the port the fleet
+        # had never left, reported as the arrival for a Barcelona leg — a voyage that never
+        # happened, checking itself off. Absence of evidence lets the mission go and look;
+        # evidence of the wrong place does not.
+        #
+        # Where the name genuinely DECIDES something is the world map, and that is guarded
+        # there — `world_map._on_location_info` refuses to commit a panel it cannot confirm.
         self.status = FAILED
         self.reason = (f"the voyage ended at {arrived_at!r}, not {self.destination!r} — "
                        "the leg is not done")
@@ -531,7 +549,32 @@ class MissionRunner:
             self.subtasks.append(type(leg)(id=ident, kind="gather", location=alt,
                                            params={"port": alt,
                                                    "orders": {material: int(want or 0)}}))
+            # AND NOTHING DOWNSTREAM MAY START WITHOUT IT. Adding the leg is not the same as
+            # ORDERING it: the tail is a dependency chain built at plan time —
+            # `sell_surplus` deps on the ORIGINAL gather ids, `sail_to_village` on
+            # `supply_verify` — so a leg added later hangs outside it and the runner is free
+            # to pick anything else that is runnable.
+            #
+            # Live 2026-09-07 it did exactly that: `adding gather:Bordeaux:Raisin`, then
+            # sell_surplus, supply_verify, and `next leg: sail_to_village` — sailing for San
+            # with 331 Raisin against 248 a round. Past that departure there is no more
+            # gathering at all (`_departed_for_the_village`), so the leg would never have run.
+            self._make_everything_downstream_wait_for(ident)
             tried.add(alt.lower())
+
+    def _make_everything_downstream_wait_for(self, ident: str) -> None:
+        """Every pending leg that is not itself a gather now depends on `ident`.
+
+        Blunt on purpose. The tail is ordered among itself already, so adding one more
+        predecessor to each pending member cannot reorder it — it only stops the whole tail
+        from starting before the material is aboard. Gathers are left alone because they are
+        mutually unordered by design and ranked by cost.
+        """
+        for other in self.subtasks:
+            if other.done or other.kind == "gather" or other.id == ident:
+                continue
+            if ident not in (other.deps or ()):
+                other.deps = tuple(other.deps or ()) + (ident,)
 
     def _another_source(self, material: str, tried: set) -> Optional[str]:
         """A port that sells `material`, has not been tried, and is not known scarce there."""

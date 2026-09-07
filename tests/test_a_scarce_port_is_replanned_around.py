@@ -103,3 +103,59 @@ class AShortMaterialGetsAnotherPort(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TheNewLegRunsBEFORETheTail(unittest.TestCase):
+    """Adding a leg is not the same as ORDERING it.
+
+    The tail is a dependency chain built at plan time — `sell_surplus` deps on the ORIGINAL
+    gather ids, `sail_to_village` on `supply_verify` — so a leg added later hangs outside it
+    and the runner is free to pick anything else that is runnable.
+
+    Live 2026-09-07 it did exactly that: "adding gather:Bordeaux:Raisin", then sell_surplus,
+    supply_verify, and "next leg: sail_to_village" — sailing for San with 331 Raisin against
+    248 a round, and past that departure there is no more gathering at all.
+    """
+
+    def _mission(self):
+        legs = [
+            SubTask(id="gather:Madeira", kind="gather", location="Madeira",
+                    params={"port": "Madeira", "orders": {"Raisin": 1712}}),
+            SubTask(id="sell_surplus", kind="sell_surplus", location="",
+                    deps=("gather:Madeira",)),
+            SubTask(id="supply_verify", kind="supply_verify", location="",
+                    deps=("sell_surplus",)),
+            SubTask(id="sail_to_village", kind="sail_to_village", location="San Village",
+                    deps=("supply_verify",)),
+        ]
+        m = _runner(SHORT, legs=legs)
+        _reroute(m)
+        return {t.id: t for t in m.subtasks}
+
+    def test_the_sail_to_the_village_waits_for_it(self):
+        by_id = self._mission()
+        self.assertIn("gather:Bordeaux:Raisin", by_id["sail_to_village"].deps)
+
+    def test_every_pending_tail_leg_waits_for_it(self):
+        by_id = self._mission()
+        for ident in ("sell_surplus", "supply_verify", "sail_to_village"):
+            self.assertIn("gather:Bordeaux:Raisin", by_id[ident].deps, ident)
+
+    def test_the_ORIGINAL_deps_are_kept(self):
+        by_id = self._mission()
+        self.assertIn("supply_verify", by_id["sail_to_village"].deps)
+
+    def test_gathers_are_left_unordered(self):
+        """They are mutually unordered by design and ranked by cost."""
+        by_id = self._mission()
+        self.assertEqual(by_id["gather:Madeira"].deps, ())
+
+    def test_a_leg_ALREADY_DONE_is_not_given_a_new_dependency(self):
+        legs = [
+            SubTask(id="gather:Madeira", kind="gather", location="Madeira",
+                    params={"port": "Madeira", "orders": {"Raisin": 1712}}),
+            SubTask(id="sell_surplus", kind="sell_surplus", location="", done=True),
+        ]
+        m = _runner(SHORT, legs=legs)
+        _reroute(m)
+        self.assertEqual({t.id: t for t in m.subtasks}["sell_surplus"].deps, ())
