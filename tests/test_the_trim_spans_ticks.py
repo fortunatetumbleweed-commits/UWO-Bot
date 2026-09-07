@@ -342,3 +342,48 @@ class TheActivityRoutesTheTrimsOwnScreens(unittest.TestCase):
         tab.assert_called_once()
         trim.assert_not_called()
         self.assertEqual(res.observed["did"], "switched to the sell tab")
+
+
+class TheFinishingTickSurvivesItsOwnReport(unittest.TestCase):
+    """A skip list is a LIST, and reporting it must not crash the leg.
+
+    Live 2026-09-07 at London. The trim did everything right — Put In Bulk off, Pig 1,812
+    trimmed to 1,081, `tap Sell for {'Pig': 731}`, bulk restored — and then died on the tick
+    that reports what it did:
+
+        18:22:05  [market] sell_page -> _on_sell_page
+        18:22:05  [sell] omni grid 1x1: 1 goods
+        18:22:05  [run_task] step 15 failed: can only concatenate list (not "tuple") to list
+
+    `_why_nothing_to_stage` returns a list and `trim_skipped` is a list, but the report line
+    read `(out.get("skipped") or ()) + tuple(...)`. It raised only when something had actually
+    been skipped, so every unit test and the whole first half of the run passed over it. The
+    mission stopped with the sale already made and the phone sat idle.
+    """
+
+    def _finish_with(self, skipped, trim_skipped=()):
+        from brain.activities.market import MarketActivity, TrimHold
+        from brain.dispatcher import FINISHED
+        act = MarketActivity(capture_fn=lambda: object(), tap_fn=lambda *a: None,
+                             omni_fn=lambda _f: [])
+        act._state.trim_skipped = list(trim_skipped)
+        act._state.trim_staged = {"Pig": 731}
+        out = {"do": "finished", "why": "nothing to trim", "skipped": skipped}
+        res = act._trim_result(out, TrimHold(keep_qty={"Pig": 1081}), "London")
+        self.assertEqual(res.status, FINISHED)
+        return res
+
+    def test_a_LIST_of_skips_is_reported_without_raising(self):
+        res = self._finish_with(["Raisin: not on the sell page", "Pig: 1081 ≤ keep 1081"])
+        self.assertEqual(res.observed["trimmed"], {"Pig": 731})
+
+    def test_skips_from_both_sources_are_reported_together(self):
+        self._finish_with(["Raisin: not on the sell page"],
+                          trim_skipped=["Candle: its tile would not open a quantity dialog"])
+
+    def test_no_skips_at_all_still_finishes(self):
+        self._finish_with([])
+
+    def test_a_tuple_of_skips_also_works(self):
+        """The callers are not all the same shape, and neither side should have to care."""
+        self._finish_with(("Raisin: not on the sell page",))

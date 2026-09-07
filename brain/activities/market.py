@@ -768,7 +768,13 @@ class MarketActivity:
                                   detail=out.get("why", "nothing to stage here"))
         if did == "finished":
             owned_state.changed(owned_state.FLEET, owned_state.BUILDING)
-            for skip in (out.get("skipped") or ()) + tuple(self._state.trim_skipped):
+            # BOTH SIDES COERCED. `_why_nothing_to_stage` returns a LIST and `trim_skipped`
+            # is one too, so `(list or ()) + tuple(...)` raised TypeError — and only when
+            # something had actually been skipped, which is why the unit tests and the first
+            # half of the run went by without it. Live 2026-09-07 at London: the trim sold
+            # its 731 Pig, restored bulk, and died on the finishing tick with "can only
+            # concatenate list (not "tuple") to list", leaving the phone idle.
+            for skip in tuple(out.get("skipped") or ()) + tuple(self._state.trim_skipped):
                 # A SKIP IS A READING FAILURE, AND IT MUST NOT BE SILENT. Refusing to sell a
                 # good whose owned quantity could not be read is right — nothing downstream
                 # can tell a guess from a count — but dropping the reason made a trim that
