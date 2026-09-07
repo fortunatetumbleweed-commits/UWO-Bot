@@ -43,8 +43,9 @@ def _no_panel_failure() -> dict:
             "screen": detail, "submenu": submenu}
 
 
-def _open_barter_panel() -> bool:
-    """Open the village's Barter sub-menu. True when the screen confirms we are on it.
+def _open_barter_panel(frame=None) -> bool:
+    """Tap the village's Barter menu item. ONE TAP on `frame`, and the next tick says whether
+    it opened.
 
     Goes through the LEFT MENU REGION, not a frame-wide label search. A chromed screen has a
     known layout (user, 2026-08-23): title top-left, the menu item list directly below it on
@@ -57,49 +58,39 @@ def _open_barter_panel() -> bool:
     `vision.region_detectors.left_menu` is the canonical reader for that region and also
     reports `is_locked` / `is_selected`, so this needs no geometry of its own.
 
-    Confirmed by the TITLE, which in this game is always the sub-menu currently selected
-    (`actions.ui.active_submenu`) — so "did the tap work?" is answered by reading, not
-    assuming.
+    Returns True when the tap went out, "unavailable" when the item wears the red ribbon that
+    means the day's rounds are spent, and False when there is no Barter item to tap.
+
+    WHAT IT NO LONGER DOES, and why none of it is lost:
+
+      * It captured its own screen and asked `on_submenu` whether we were already on the
+        panel. The dispatcher classified the screen to route us here, so the answer is
+        already known — asking again re-perceives, and a second reading of one source is not
+        a second source.
+      * It re-read the left menu up to three times, 1.5s apart, capturing again each time.
+        That retry was added on 2026-08-24 for a San Village read of `[]` that was not
+        transient at all: `detect_left_menu` was judging reward widgets by box width and
+        threw the real menu away every time. Three looks failed identically. Its own comment
+        records the conclusion — "a cushion, not a cure" — and the dispatcher's next tick is
+        the same cushion, without holding the tick open for four and a half seconds.
+      * It captured AFTER the tap to confirm the title, and checked that frame for the
+        daily-count Notice. Both are now the dispatcher's: the title is next tick's context,
+        and the Notice is a dialog, which `VillageActivity.on_dialog` claims.
     """
-    import time as _t
     from actions import ui
-    from actions.ui import on_submenu
-    from capture.adb_capture import capture_screen
     from vision.omniparser import parse_fast_cached
     from vision.region_detectors.left_menu import detect_left_menu
     try:
-        frame = capture_screen()
-        if on_submenu("barter", frame):
-            return True                      # already there — do not tap again
-
-        # ONE EMPTY FRAME IS NOT PROOF THE MENU IS ABSENT: the menu animates in, and a
-        # standby gate can cover it for a moment, so a single capture can land on nothing.
-        #
-        # NB on history: this retry was added on 2026-08-24 believing a San Village read of
-        # [] was transient. It was NOT — `detect_left_menu` was judging reward widgets by box
-        # width, OmniParser boxed three of the five rows full-width in that capture, and the
-        # real menu was discarded every single time. Three looks failed identically. The
-        # actual fix was in the detector (identify by association, not dimension).
-        # The retry is kept because animation and gates are real, but it is a cushion, not a
-        # cure — a read that fails repeatedly means the DETECTOR is wrong, not the timing.
-        item = None
-        for attempt in range(_MENU_READ_ATTEMPTS):
-            # PASS THE FRAME. The lock is a RED RIBBON, and only the pixels say so — the
-            # wording (`Cannot Exchange` here, `Unavailable` elsewhere) is not dependable.
-            menu = detect_left_menu(list(parse_fast_cached(frame)), frame.width,
-                                    frame.height, frame=frame)
-            item = menu.find("Barter") if menu else None
-            if item is not None:
-                break
-            if attempt < _MENU_READ_ATTEMPTS - 1:
-                logger.info(f"[mission.barter] left menu read as "
-                            f"{menu.labels() if menu else None} — re-perceiving "
-                            f"({attempt + 2}/{_MENU_READ_ATTEMPTS})")
-                _t.sleep(1.5)
-                frame = capture_screen()
+        if frame is None:                    # no tick frame — the caller is not a handler
+            from capture.adb_capture import capture_screen
+            frame = capture_screen()
+        # PASS THE FRAME. The lock is a RED RIBBON, and only the pixels say so — the wording
+        # (`Cannot Exchange` here, `Unavailable` elsewhere) is not dependable.
+        menu = detect_left_menu(list(parse_fast_cached(frame)), frame.width, frame.height,
+                                frame=frame)
+        item = menu.find("Barter") if menu else None
         if item is None:
-            logger.warning(f"[mission.barter] no 'Barter' item in the left menu after "
-                           f"{_MENU_READ_ATTEMPTS} looks "
+            logger.warning(f"[mission.barter] no 'Barter' item in the left menu "
                            f"(menu reads {menu.labels() if menu else None})")
             return False
         if item.get("is_locked"):
@@ -112,20 +103,7 @@ def _open_barter_panel() -> bool:
             return "unavailable"
 
         ui.tap_element(item, why="village → Barter", dwell="dialog")
-        after = capture_screen()
-        opened = on_submenu("barter", after)
-        if not opened and daily_barters_used_up(after):
-            # THE SAME FACT, ANSWERED THE OTHER WAY. The `is_locked` check above reads the
-            # game's answer BEFORE the tap, off the ribbon. Live 2026-08-30 at Svear the item
-            # was not locked at all: the tap went through and the game answered AFTER it, with
-            # a Notice. One detector saw nothing, so the run looped — tap, notice, dismiss,
-            # tap — until it stalled. Both readings mean the day is spent and the fleet should
-            # leave, so both return the same word.
-            logger.info("[mission.barter] the game says the daily Trade Count is spent — the "
-                        "bartering is finished and the fleet should leave")
-            return "unavailable"
-        logger.info(f"[mission.barter] Barter panel opened: {opened}")
-        return opened
+        return True
     except Exception as exc:
         logger.warning(f"[mission.barter] could not open the Barter panel: {exc}")
         return False

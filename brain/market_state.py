@@ -40,6 +40,10 @@ class MarketState:
     # Where we are in a grid that does not fit on one page.
     scrolled_pages: int = 0
 
+    # The Trade Point award is claimed at most once per visit — tapping the chest opens a
+    # dialog that hides the very counter a second attempt would consult.
+    award_claimed: bool = False
+
     # THE RECORDED INTENT. What the previous tick did, and the screen it did it to.
     last_intent: Optional[str] = None
     last_signature: Optional[Tuple] = None

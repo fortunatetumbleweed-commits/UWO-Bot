@@ -1,63 +1,114 @@
-"""Reading the hold switches TABS, so the buy round must be handed back its own page.
+"""Reading the hold is a TICK, not a side trip inside one.
 
-`_read_owned_via_sell` goes to the Sell tab — that is where per-good quantities are legible —
-and the buy round that follows reads whatever page is up: `read_market_page_omni(...,
-tab="purchase")` labels what it finds "purchase" without checking.
+The hold is only legible on the Sell grid, so the buy round has to go there — and it used to
+go and come back INSIDE a single tick: switch tabs, scroll a whole grid, switch back. That is
+the sub-loop shape the market refactor removes, and it did real damage twice.
 
-Live 2026-09-06 at Faro. Frame 69 of trace_barter_cmd_2026-09-06T20-48-41 catches it exactly:
-the Purchase page, Pig stamped Sold Out, and the restock control right there — `00:15:07 ↻ 11
-gems`. The tap recorded on that same frame is (174,276), the rail's `+ Sell`. From then on the
-"shop" was the hold (Madeira Wine, Keris, Sugar Cane), Pig and Raisin read as sold out, and:
+    the live screen no longer matched the frame the tick was reasoning about, so
+    `refresh_market`'s own capture found the Sell page and refused: "no restock control
+    (market fresh or not on Purchase grid)" — with the ↻ sitting there at 00:15:07 and 11
+    blue gems (Faro, frame 69 of trace_barter_cmd_2026-09-06T20-48-41)
 
-    'Pig' is sold out and still wanted here — restocking
-    no refresh for 'Pig' — no restock control (market fresh or not on Purchase grid)
+    and every failed port-name read rebuilt the state, so it ran AGAIN — twelve times for
+    eleven purchases at Madeira, each one a full grid scroll
 
-the SECOND of those two causes, never the first. Two ports, two legs, ~1,300 units unbought.
+As ticks it is three plain steps, and nothing acts on a screen the dispatcher has not seen:
 
-`buy_to_goal` always switched back — "pre-check left us on the Sell tab → back to Purchase" —
-and the port dropped the line.
+    purchase page, hold unread  ->  ask for the Sell tab, hand back
+    sell page                   ->  read the hold HERE, seed, ask for Purchase, hand back
+    purchase page, hold known   ->  buy
 """
 
 from __future__ import annotations
 
+import types
 import unittest
 from unittest import mock
 
-from brain.activities.market import MarketActivity
+import brain.market_context as ctx
+from brain.activities.market import Hold, MarketActivity
+from brain.dispatcher import UNRECOGNISED, WORKING
+from brain.market_ledger import MarketLedger
 
 
-class TheSeedHandsBackThePurchaseGrid(unittest.TestCase):
+def _act(context, *, shown=None, sell_tab=True):
+    act = MarketActivity(context_fn=lambda _f: context,
+                         capture_fn=lambda: object(), tap_fn=lambda *a: None,
+                         omni_fn=lambda _f: [],
+                         show_grid_fn=(lambda: shown.append("purchase")) if shown is not None
+                         else None)
+    act._sell_tab_ok = sell_tab
+    return act
 
-    def _seed(self, owned=None, boom=False):
+
+def _state():
+    return types.SimpleNamespace(state="building:market", port="Faro", frame=object())
+
+
+GOAL = Hold(orders={"Pig": 900})
+
+
+class TheBuyTickAsksForTheSellTab(unittest.TestCase):
+    """It does not go and fetch the hold itself."""
+
+    def test_an_unread_hold_sends_us_to_the_sell_tab(self):
+        act = _act(ctx.PURCHASE_PAGE)
+        with mock.patch("actions.buy_materials.ensure_sell_tab", return_value=True) as tab, \
+             mock.patch.object(MarketActivity, "_port_name", return_value="Faro"):
+            res = act.work(GOAL, _state())
+        tab.assert_called_once()
+        self.assertEqual(res.observed["did"], "went to read the hold")
+
+    def test_a_sell_tab_that_will_not_open_hands_back(self):
+        """Never buy against a count we do not have."""
+        act = _act(ctx.PURCHASE_PAGE)
+        with mock.patch("actions.buy_materials.ensure_sell_tab", return_value=False), \
+             mock.patch.object(MarketActivity, "_port_name", return_value="Faro"):
+            res = act.work(GOAL, _state())
+        self.assertEqual(res.status, UNRECOGNISED)
+
+    def test_once_the_hold_is_known_it_just_buys(self):
+        act = _act(ctx.PURCHASE_PAGE)
+        with mock.patch("actions.buy_materials.ensure_sell_tab", return_value=True), \
+             mock.patch.object(MarketActivity, "_port_name", return_value="Faro"):
+            act.work(GOAL, _state())          # the tick that goes to read the hold
+        act._state.ledger = MarketLedger()    # ... which the sell page would then seed
+
+        with mock.patch("actions.buy_materials.ensure_sell_tab") as tab, \
+             mock.patch("brain.activities.market_buy.on_purchase_page",
+                        return_value={"do": "waited"}), \
+             mock.patch.object(MarketActivity, "_port_name", return_value="Faro"):
+            act.work(GOAL, _state())
+        tab.assert_not_called()
+
+
+class TheSellPageReadsTheHoldItIsLookingAt(unittest.TestCase):
+
+    def _run(self, goods):
         shown = []
-        act = MarketActivity(context_fn=lambda _f: "purchase_page",
-                             capture_fn=lambda: object(), tap_fn=lambda *a: None,
-                             omni_fn=lambda _f: [],
-                             show_grid_fn=lambda: shown.append("purchase"))
-        read = mock.Mock(side_effect=RuntimeError("tab never opened")) if boom \
-            else mock.Mock(return_value=owned or {})
-        with mock.patch("actions.buy_materials._read_owned_via_sell", read):
-            led = act._seed_ledger(object())
-        return led, shown
+        act = _act(ctx.SELL_PAGE, shown=shown)
+        with mock.patch("actions.sell_goods._sell_page", return_value=goods), \
+             mock.patch.object(MarketActivity, "_port_name", return_value="Faro"):
+            res = act.work(GOAL, _state())
+        return act, shown, res
 
-    def test_it_returns_to_the_purchase_grid(self):
-        _led, shown = self._seed({"pig": 457})
-        self.assertEqual(shown, ["purchase"], "left the buy round on the Sell page")
+    def test_it_seeds_from_the_grid_in_front_of_it(self):
+        good = types.SimpleNamespace(name="Pig", owned_qty=457)
+        act, _shown, _res = self._run([good])
+        self.assertEqual(act._state.ledger.believed("Pig"), 457)
 
-    def test_it_returns_even_when_the_hold_read_finds_nothing(self):
-        """An empty read still moved the screen."""
-        _led, shown = self._seed({})
+    def test_and_then_goes_back_to_the_purchase_grid(self):
+        good = types.SimpleNamespace(name="Pig", owned_qty=457)
+        _act_, shown, res = self._run([good])
         self.assertEqual(shown, ["purchase"])
+        self.assertEqual(res.observed["did"], "switched to the purchase tab")
 
-    def test_it_returns_even_when_the_hold_read_THREW(self):
-        """A seed that failed has still switched tabs — hence `finally`."""
-        _led, shown = self._seed(boom=True)
+    def test_an_unreadable_grid_still_goes_back(self):
+        """A poorer seed, not a stall — being stuck on the Sell page helps nobody."""
+        act, shown, res = self._run([])
+        self.assertIsNotNone(act._state.ledger)
         self.assertEqual(shown, ["purchase"])
-
-    def test_the_hold_is_still_seeded(self):
-        """The seed is what stops a leg re-buying what it carries — it must survive."""
-        led, _shown = self._seed({"pig": 457, "raisin": 110})
-        self.assertEqual(led.believed("Pig"), 457)
+        self.assertEqual(res.status, WORKING)
 
 
 if __name__ == "__main__":

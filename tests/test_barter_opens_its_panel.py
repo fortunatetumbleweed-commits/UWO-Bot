@@ -31,47 +31,72 @@ _FRAME = Image.new("RGB", (2400, 1080))
 
 class OpensTheBarterPanel(unittest.TestCase):
 
-    def _run(self, *, already_on, tap_ok=True, after_tap):
-        """Returns (result, taps) for a scripted screen."""
+    def _run(self, *, tap_ok=True, locked=False, captures=None):
+        """Returns (result, taps) for a scripted screen.
+
+        `captures` counts the screens the opener takes for itself. It is asserted at zero:
+        the frame is the dispatcher's, and a primitive that captures again is reasoning about
+        a screen nobody routed on.
+        """
         import types
         taps = []
-        seq = [already_on] + list(after_tap)
-        item = {"label": "Barter", "cx": 183, "cy": 616, "is_locked": False}
+        item = {"label": "Barter", "cx": 183, "cy": 616, "is_locked": locked}
         menu = types.SimpleNamespace(items=[item], labels=lambda: ["Barter"],
                                      find=lambda lab: item)
-        with patch("actions.ui.on_submenu", side_effect=lambda _n, _f=None: seq.pop(0)), \
-             patch("vision.region_detectors.left_menu.detect_left_menu",
+        grabbed = captures if captures is not None else []
+        with patch("vision.region_detectors.left_menu.detect_left_menu",
                    return_value=menu if tap_ok else None), \
              patch("vision.omniparser.parse_fast_cached", return_value=[]), \
              patch("actions.ui.tap_element",
                    side_effect=lambda el, **k: taps.append(k.get("why")) or True), \
-             patch("capture.adb_capture.capture_screen", return_value=_FRAME):
-            return bp._open_barter_panel(), taps
+             patch("capture.adb_capture.capture_screen",
+                   side_effect=lambda *a, **k: grabbed.append(1) or _FRAME):
+            return bp._open_barter_panel(_FRAME), taps
 
     def test_it_taps_barter_from_the_village_interior(self):
-        ok, taps = self._run(already_on=False, after_tap=[True])
+        ok, taps = self._run()
         self.assertTrue(ok)
         self.assertEqual(len(taps), 1)
 
-    def test_it_does_not_tap_when_the_panel_is_already_open(self):
-        """The title already says Barter — tapping again would navigate away."""
-        ok, taps = self._run(already_on=True, after_tap=[])
-        self.assertTrue(ok)
-        self.assertEqual(taps, [])
+    def test_it_reads_the_frame_it_was_given_and_takes_none_of_its_own(self):
+        """THE TICK'S FRAME, and only it.
 
-    def test_a_tap_that_did_not_open_the_panel_reports_failure(self):
-        """Confirmed by reading the title, not by assuming the tap worked."""
-        ok, _taps = self._run(already_on=False, after_tap=[False])
-        self.assertFalse(ok)
+        This used to capture up to five times inside one call: one to ask `on_submenu`
+        whether we were already on the panel, three more re-reading the left menu 1.5s apart,
+        and one after the tap to confirm the title. Every one of them was a screen the
+        dispatcher had not classified, and the retry's own comment had already recorded that
+        it was "a cushion, not a cure" — the San Village read it was written for turned out
+        to be a detector bug, not a transient one, and failed identically all three times.
+        """
+        grabbed = []
+        self._run(captures=grabbed)
+        self.assertEqual(grabbed, [])
+
+    def test_the_red_ribbon_means_the_day_is_spent_not_that_it_failed(self):
+        ok, taps = self._run(locked=True)
+        self.assertEqual(ok, "unavailable")
+        self.assertEqual(taps, [], "a locked item is the answer, not something to tap")
+
+    def test_it_does_not_wait_to_see_whether_the_panel_opened(self):
+        """The next tick is what says so.
+
+        The old verify captured after the tap and read the title. It could not tell a
+        dropped tap from a game that answered with a Notice instead — so it also had to
+        check that frame for the daily-count Notice, which is now `on_dialog`'s to hear.
+        """
+        ok, taps = self._run()
+        self.assertTrue(ok, "the tap went out; whether it landed is next tick's question")
+        self.assertEqual(len(taps), 1)
 
     def test_a_missing_barter_item_reports_failure(self):
-        ok, _taps = self._run(already_on=False, tap_ok=False, after_tap=[False])
+        ok, _taps = self._run(tap_ok=False)
         self.assertFalse(ok)
 
     def test_a_perceive_failure_is_not_a_success(self):
-        with patch("actions.ui.on_submenu", side_effect=RuntimeError("boom")), \
-             patch("capture.adb_capture.capture_screen", return_value=_FRAME):
-            self.assertFalse(bp._open_barter_panel())
+        with patch("vision.region_detectors.left_menu.detect_left_menu",
+                   side_effect=RuntimeError("boom")), \
+             patch("vision.omniparser.parse_fast_cached", return_value=[]):
+            self.assertFalse(bp._open_barter_panel(_FRAME))
 
 
 if __name__ == "__main__":

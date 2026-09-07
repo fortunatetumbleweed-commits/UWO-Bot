@@ -226,8 +226,8 @@ class MarketActivity:
         #
         # Live 2026-09-06 at Madeira: `'port': ''` appears 12 times in the log and the hold
         # was re-read 12 times for 11 purchases. Each flip between ('Hold','Madeira') and
-        # ('Hold','') handed back a fresh MarketState with `ledger=None`, so `_seed_ledger`
-        # ran again — switching to the Sell tab, scrolling the whole grid, switching back —
+        # ('Hold','') handed back a fresh MarketState with `ledger=None`, so the hold was
+        # read again — a trip to the Sell tab, a whole grid scrolled, and a trip back —
         # and the next tick, reading the name successfully, flipped it straight back.
         #
         # The ledger does not need re-reading anyway: it is seeded once and every purchase
@@ -290,54 +290,60 @@ class MarketActivity:
         from brain.activities.market_buy import on_purchase_page
 
         if self._state.ledger is None:
-            self._state.ledger = self._seed_ledger(goal)
+            # THE HOLD IS READ ON THE SELL PAGE, SO GO THERE AS A TICK, not as a side trip.
+            #
+            # reading the hold used to switch tabs, scroll a whole grid and switch back INSIDE
+            # this tick, which is the sub-loop shape the refactor removes — and it did real
+            # damage twice: the live screen no longer matched the frame the tick was reasoning
+            # about, so `refresh_market`'s capture found the Sell page and refused ("no
+            # restock control"), and every failed port-name read rebuilt the state and made it
+            # run again, twelve times for eleven purchases.
+            #
+            # As a tick it is three plain steps: ask for the Sell tab, read the hold ON that
+            # page and seed, come back. Nothing acts on a screen the dispatcher has not seen.
+            from actions.buy_materials import ensure_sell_tab
+            if not ensure_sell_tab(self._capture_fn(), self._tap_fn()):
+                logger.info("[market] the hold is unread and the Sell tab did not open — "
+                            "handing back rather than buying against a count we do not have")
+                return ActivityResult(UNRECOGNISED, self._observed(port),
+                                      detail="the Sell tab would not open")
+            self._state.did("went to read the hold")
+            return ActivityResult(WORKING, {**self._observed(port),
+                                            "did": "went to read the hold"},
+                                  detail=f"buy at {port}")
         out = on_purchase_page(self._state, goal, port, frame=self._frame(),
                                capture_fn=self._capture_fn(), tap_fn=self._tap_fn(),
                                omni_fn=self._omni_fn())
         return self._as_result(out, goal, port, what="buy")
 
-    def _seed_ledger(self, goal: Any):
-        """What the fleet ALREADY holds, before a single tap.
+    def _seed_from_this_page(self):
+        """The hold, from the Sell grid already on screen. No tab switching, no capture.
 
-        THE SELL GRID IS THE ONLY PLACE A PER-GOOD QUANTITY IS LEGIBLE, and skipping this is
-        how a leg buys what it already carries. A read that fails seeds nothing rather than
-        seeding zero — `None` is not `[]`, and zero would be a claim about the hold.
+        `_read_owned_via_sell` does the switching AND the reading; here the switching has
+        already happened as its own tick, so only the reading is left — on the frame the
+        dispatcher handed us.
         """
         from brain.market_ledger import MarketLedger
         led = MarketLedger()
         try:
-            from actions.buy_materials import _read_owned_via_sell
-            owned = _read_owned_via_sell(self._capture_fn(), self._tap_fn(), 1.2)
+            from actions.sell_goods import _sell_page
+            goods = _sell_page(self._frame()) or []
+            owned = {str(getattr(g, "name", "")).strip().lower(): int(getattr(g, "owned_qty", 0) or 0)
+                     for g in goods if getattr(g, "owned_qty", None) is not None}
             if owned:
                 led.seed(owned)
                 logger.info(f"[market] the hold already carries {owned}")
-        except Exception as exc:
-            logger.debug(f"[market] could not seed the ledger: {exc}")
-        finally:
-            # AND BACK TO THE PURCHASE GRID. Reading the hold means SWITCHING TABS, and the
-            # buy round that follows reads whatever page is up: `read_market_page_omni(...,
-            # tab="purchase")` labels what it finds "purchase" without checking, so the Sell
-            # page is read as the shop's stock.
-            #
-            # Live 2026-09-06 at Faro. Frame 69 catches it exactly — the Purchase page with
-            # Pig stamped Sold Out and the restock control right there, `00:15:07 ↻ 11 gems`
-            # — and the tap recorded on that very frame is (174,276), the rail's `+ Sell`.
-            # From then on the "shop" was the hold (Madeira Wine, Keris, Sugar Cane), Pig and
-            # Raisin read as sold out, and the refresh refused with "no restock control
-            # (market fresh or not on Purchase grid)" — the second cause, not the first. Two
-            # ports, two legs, ~1,300 units never bought.
-            #
-            # `buy_to_goal` always did this — "pre-check left us on the Sell tab → back to
-            # Purchase" — and the port dropped the line. In a `finally` because a seed that
-            # THREW still moved the screen.
-            try:
-                self._show_purchase_grid()
-            except Exception as exc:          # noqa: BLE001 — bookkeeping, not the buy
-                logger.debug(f"[market] could not return to the purchase grid: {exc}")
+        except Exception as exc:              # noqa: BLE001 — a poorer seed, not a failure
+            logger.debug(f"[market] could not read the hold here: {exc}")
         return led
 
     def _on_sell_page(self, goal: Any, port: str) -> ActivityResult:
         if isinstance(goal, Hold):
+            # WE ARE ON THE PAGE THE HOLD IS LEGIBLE ON, so read it here — the grid is in
+            # front of us and this is the only screen that prints a per-good owned count.
+            # Then go back. Two actions, two ticks, and no capture the dispatcher has not made.
+            if self._state.ledger is None:
+                self._state.ledger = self._seed_from_this_page()
             self._show_purchase_grid()
             self._state.did("switched to the purchase tab")
             return ActivityResult(WORKING, {**self._observed(port),

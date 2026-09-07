@@ -6,7 +6,7 @@ it as a new key throws the whole visit away.
 
 Live 2026-09-06 at Madeira: `'port': ''` appears 12 times in the log, and the hold was re-read
 12 times for 11 purchases. Each flip between ('Hold','Madeira') and ('Hold','') handed back a
-fresh MarketState with `ledger=None`, so `_seed_ledger` ran again — switching to the Sell tab,
+fresh MarketState with `ledger=None`, so the hold was read again — switching to the Sell tab,
 scrolling the whole grid, switching back — and the next tick, reading the name successfully,
 flipped it straight back.
 
@@ -33,16 +33,21 @@ class TheVisitSurvivesAnUnreadableName(unittest.TestCase):
                              capture_fn=lambda: object(), tap_fn=lambda *a: None,
                              omni_fn=lambda _f: [])
         act._port_name = lambda _s=None: ports.pop(0) if ports else ""
-        act._seed_ledger = lambda _g: seeds.append(1) or MarketLedger()
+        act._trips = seeds
         return act, seeds
 
     def _tick(self, act, goal):
-        """The state-keying half of a tick, without driving the whole activity."""
+        """The state-keying half of a tick, without driving the whole activity.
+
+        An unread ledger costs a round trip to the Sell tab and back — two ticks of it — so
+        `seeds` counts those trips.
+        """
         port = act._port_name(None)
         if port:
             act._state = act._state.for_goal((type(goal).__name__, port))
         if act._state.ledger is None:
-            act._state.ledger = act._seed_ledger(goal)
+            act._trips.append(1)
+            act._state.ledger = MarketLedger()
 
     def test_the_ledger_survives_a_name_that_did_not_read(self):
         goal = Hold(orders={"Raisin": 1755})

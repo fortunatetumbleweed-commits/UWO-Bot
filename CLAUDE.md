@@ -136,6 +136,24 @@ Read the SUSPECT lines first.  A flag that is always False may simply not apply
 (`has_sea_hud` in port); one that is False 93% of the time, having been True three times, is
 a check that works and usually does not — which is what a broken read looks like from outside.
 
+## Debugging a Failed Run — the frames first, the code after
+When a run fails, in this order and no other:
+
+1. **Generate the trace report and open it** (see *Trace Viewer Reports* above).
+2. **Walk the frames one by one.** For each frame, say what the bot DID and what came of it.
+   A frame whose action produced no visible effect is the most informative kind — name it,
+   do not skip it.
+3. **Only then** state the analysis, and only after that propose a change.
+
+Do not interleave edits with the walk, and do not diagnose from the log alone.
+
+Why this is the standing order: the failures here are almost never where the traceback
+points, and the log cannot tell a wrong DECISION from a wrong READING. On 2026-09-06 the
+question "why did it tap Sell instead of refreshing?" read as broken refresh logic and was
+neither — the ↻ was on screen with 11 blue gems, and the tick had simply left the Purchase
+grid before looking. The frames said so; the log did not. Guiding Principle #3 — enumerate
+the causes, do not hardcode one — is unenforceable without the walk that produces them.
+
 ## Voyage Evaluation Procedure
 Standard, single-command voyage evaluation against the canonical
 Cairo→Y-tip reference path:

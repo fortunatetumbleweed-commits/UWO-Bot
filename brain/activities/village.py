@@ -136,6 +136,13 @@ class VillageActivity:
         self._last_after = None
         self._goal_key = None
         self._selects = 0
+        # The game's own "daily Trade Count is spent" Notice, heard by `on_dialog` on one
+        # tick and acted on by the next. It holds the GOAL it was heard for, not a bare
+        # flag: `on_dialog` runs before `work` has registered the goal, so a bool would be
+        # set on one tick and cleared by the key check on the very next. What it means is
+        # "this barter is over", and a fact belongs to what it is about (Guiding Principle
+        # #4) — so it is stored that way and expires when the goal does.
+        self._day_spent_for = None
 
     # ── the one entry point: classify in context, take ONE action ────────────
     def work(self, goal: Any, state: Any) -> ActivityResult:
@@ -172,6 +179,8 @@ class VillageActivity:
         key = (getattr(goal, "good", None), getattr(goal, "village", None))
         if key != self._goal_key:
             self._goal_key, self._committed, self._selects = key, 0, 0
+            if self._day_spent_for != key:
+                self._day_spent_for = None
 
         local = self._classify(state)
 
@@ -245,6 +254,24 @@ class VillageActivity:
         decision the game has already made for us.
         """
         text = " ".join(getattr(dialog, "body_text", ()) or ()).lower()
+
+        # THE DAY'S ROUNDS ARE GONE, and this Notice is the game saying so:
+        #
+        #     Notice / You have used all your daily Trade Count: / 17.3348 / OK
+        #
+        # Live 2026-08-30 at Svear the Barter item was not locked — the tap went through and
+        # the game answered AFTER it. `_open_barter_panel` used to capture its own frame to
+        # catch this, and without that catch the run looped: tap, notice, dismiss, tap. The
+        # dispatcher sees the Notice as what it is, so the fact is recorded here and the next
+        # tick ends the goal on it. OK is still the right button, so this hands back.
+        from actions.barter_panel import _DAILY_COUNT_SPENT
+        if _DAILY_COUNT_SPENT in text:
+            logger.info("[village] the game says the daily Trade Count is spent — the "
+                        "bartering is finished and the fleet should leave")
+            self._day_spent_for = (getattr(goal, "good", None),
+                                   getattr(goal, "village", None))
+            return None
+
         if "has not been claimed" in text or "will be discarded" in text:
             logger.warning(
                 "[village] the hold is full, so this round's output cannot be received — "
@@ -252,6 +279,11 @@ class VillageActivity:
                 "return to the same prompt with nowhere to put the goods. Said: "
                 f"{' '.join(getattr(dialog, 'body_text', ()) or ())!r}")
         return None
+
+    @property
+    def _day_spent(self) -> bool:
+        """True when THIS goal is the one the Notice was raised against."""
+        return self._day_spent_for is not None and self._day_spent_for == self._goal_key
 
     def _frame(self):
         """The frame for THIS tick — the dispatcher's, or a fresh one if it carried none."""
@@ -274,7 +306,13 @@ class VillageActivity:
     def _on_top_menu(self, goal: Barter) -> ActivityResult:
         """The submenu is not up. Either we have not opened it, or the game CLOSED it
         because the day's rounds are spent — `_open_barter_panel` says which."""
-        opened = (self._open_panel or _default_open)()
+        # THE DAY IS SPENT, AS THE DISPATCHER HEARD IT. The opener used to capture again
+        # after its tap and look for the Notice itself; now that Notice arrives as a dialog
+        # and `on_dialog` records it, which is the same fact read in the place that already
+        # sees dialogs. Checked before tapping, or we would tap Barter once more first.
+        if self._day_spent:
+            return self._done(goal, "the village's barters for today are used up")
+        opened = _call_frame_reader(self._open_panel or _default_open, self._frame())
         if opened == "unavailable":
             return self._done(goal, "the village's barters for today are used up")
         if not opened:
@@ -456,7 +494,7 @@ class VillageActivity:
 
     def _on_overflow(self, goal: Barter) -> ActivityResult:
         """Units held PENDING because the hold is full. Dismissing this loses them."""
-        pending = (self._overflow or _read_overflow)()
+        pending = _call_frame_reader(self._overflow or _read_overflow, self._frame())
         jettison = (self._jettison
                     or _default_jettison(goal.good, self._recipe_for(goal.good),
                                          rounds_done=self._committed))
@@ -697,14 +735,22 @@ def _amity(panel) -> Optional[tuple]:
     return getattr(panel, "amity_points", None)
 
 
-def _read_overflow() -> int:
+def _read_overflow(frame=None) -> int:
     """Units the game is holding PENDING because the hold is full. Non-zero must be cleared
-    before they are discarded — dismissing that dialog loses them."""
+    before they are discarded — dismissing that dialog loses them.
+
+    Reads the TICK'S frame. It used to capture its own, which is a second look at the same
+    screen taken a moment later — and the screen it is reading is a dialog the dispatcher
+    has just classified, so the fresh capture could only disagree with the routing, never
+    improve on it.
+    """
     try:
         from actions.overflow_dialog import read_overflow
-        from capture.adb_capture import capture_screen
         from vision.omniparser import parse_fast_cached
-        ov = read_overflow(parse_fast_cached(capture_screen()))
+        if frame is None:                     # no tick frame — the caller is not a handler
+            from capture.adb_capture import capture_screen
+            frame = capture_screen()
+        ov = read_overflow(parse_fast_cached(frame))
         if ov is not None and ov.pending:
             logger.warning(f"[village] OVERFLOW — {int(ov.pending)} unit(s) pending")
             return int(ov.pending)
@@ -715,9 +761,22 @@ def _read_overflow() -> int:
 
 # ── the defaults, which touch the device ─────────────────────────────────────
 
-def _default_open():
+def _call_frame_reader(fn, frame):
+    """Call an injected reader that may or may not want the tick's frame.
+
+    The injection points predate the frame and their stubs are written `lambda: 0` /
+    `lambda: True`; an argument the caller cannot accept is not a reason to fail to read the
+    screen or to open a panel.
+    """
+    try:
+        return fn(frame)
+    except TypeError:
+        return fn()
+
+
+def _default_open(frame=None):
     from actions.barter_panel import _open_barter_panel
-    return _open_barter_panel()
+    return _open_barter_panel(frame)
 
 
 def _default_select(good: str, recipe) -> bool:

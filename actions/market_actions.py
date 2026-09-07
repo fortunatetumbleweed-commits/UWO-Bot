@@ -2683,6 +2683,31 @@ def _read_trade_points(elements):
     return None, None
 
 
+def tap_the_award_chest(frame, tap_fn, omni_fn) -> Optional[int]:
+    """Claim the Trade Point award on THIS frame. One tap, no verifying, no waiting.
+
+    The counter reads 'N/1,000' and the chest sits at the right end of its row; N ≥ 1,000
+    means an award is pending. Returns the points that were showing, or None when there is
+    nothing to claim (counter not visible, or below 1,000).
+
+    `get_trade_point_award` does the same thing surrounded by a verify loop — up to six
+    captures and twelve seconds — and that loop is the bug rather than the safety net: the
+    claim opens a reward dialog which OCCLUDES the counter, so "the points did not drop" is
+    exactly what a SUCCESSFUL claim looks like from inside it, and the second attempt taps
+    the chest again through the dialog. The dispatcher already perceives every tick and
+    already has a handler for the dialog, so the honest primitive is this: tap once, say
+    what was showing, and let the next tick see what happened.
+    """
+    points, counter = _read_trade_points(omni_fn(frame))
+    if points is None or points < 1000:
+        return None
+    # Chest centre = counter right end less ~half the chest width (it spans the last ~80px).
+    tx, ty = counter.x2 - 49, (counter.y1 + counter.y2) // 2
+    logger.info(f"[trade-award] {points}/1,000 → tapping the award chest @ ({tx},{ty})")
+    tap_fn(tx, ty)
+    return points
+
+
 def get_trade_point_award(*, capture_fn=None, tap_fn=None, omni_fn=None,
                           settle: float = 2.0, max_verify: int = 3) -> dict:
     """Claim pending Trade Point awards from the market screen (perceive→act→verify).
