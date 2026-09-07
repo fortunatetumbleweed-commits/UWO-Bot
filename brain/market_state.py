@@ -44,6 +44,22 @@ class MarketState:
     last_intent: Optional[str] = None
     last_signature: Optional[Tuple] = None
 
+    # THE SHELF AS IT STOOD WHEN `Purchase` WAS TAPPED, waiting to be compared against the
+    # shelf now — that difference is what was actually bought, and it is the ONLY way to
+    # learn it, because the result card reports money rather than units.
+    #
+    # ITS OWN SLOT, and that is the point. It used to ride on `last_intent`, which is a
+    # single slot describing the PREVIOUS TICK — and between tapping Purchase and coming back
+    # to the grid the game shows a confirm and a result, each answered by a handler that
+    # records what IT did. The purchase intent was overwritten every time, so the credit
+    # never ran.
+    #
+    # Live 2026-09-07 at Faro: the ledger seeded `pig: 729`, ~914 Pig were bought over the
+    # next four minutes, and the hold panel read 1,643 while the ledger still said 729 —
+    # already past its 1,505 target and still buying. It had been masked until now by a
+    # separate bug that re-seeded the ledger on almost every tick.
+    awaiting_credit: Optional[Tuple] = None
+
     # Per-control attempt counts — the retry bound, replacing every `for attempt in range`.
     # The bound lives here because the GOAL's lifetime is the right lifetime for it.
     attempts: dict = field(default_factory=dict)

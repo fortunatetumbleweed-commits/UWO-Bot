@@ -79,7 +79,8 @@ def credit_the_shelf_drop(state, before: tuple, after: Mapping) -> list:
     return credited
 
 
-def _stocked_but_unmoved(state, orders: Mapping, goods: Mapping) -> Optional[str]:
+def _stocked_but_unmoved(state, orders: Mapping, goods: Mapping, *,
+                         before: Optional[tuple] = None) -> Optional[str]:
     """A wanted good that is ACTIVE and READABLE, whose shelf did not move across a purchase.
 
     THE ROOM IS THE PROBLEM, NOT THE SHELF (user, 2026-09-04: *"blue gem should only be used
@@ -96,7 +97,8 @@ def _stocked_but_unmoved(state, orders: Mapping, goods: Mapping) -> Optional[str
     rule `credit_the_shelf_drop` follows, and the reason this cannot fire on a bad parse.
     """
     from actions.buy_materials import tile_in_stock
-    was, now = dict(state.last_signature or ()), dict(shelf_signature(goods))
+    was = dict(before if before is not None else (state.last_signature or ()))
+    now = dict(shelf_signature(goods))
     for material in orders or {}:
         key = str(material).lower()
         good = (goods or {}).get(key)
@@ -138,6 +140,9 @@ def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn) -
         state.landed("stage")
         logger.info(f"[market] the cart holds {staged_cost:,} ducats' worth — purchasing")
         state.did("tapped Purchase", shelf_signature(goods))
+        # AND IN ITS OWN SLOT, which survives the confirm and result cards this tap raises.
+        # `last_intent` describes the previous TICK, and those cards are ticks of their own.
+        state.awaiting_credit = shelf_signature(goods)
         tap_fn(commit.cx, commit.cy)
         return {"do": "committed", "cost": staged_cost}
 
@@ -146,9 +151,12 @@ def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn) -
 
     # A PURCHASE JUST COMPLETED? The shelf will have dropped. Credit it before deciding
     # anything else, or the goal test runs on a ledger that has not heard about the last buy.
-    if state.last_intent == "tapped Purchase" and state.last_signature:
-        credited = credit_the_shelf_drop(state, state.last_signature, goods)
-        stuck = None if credited else _stocked_but_unmoved(state, orders, goods)
+    if state.awaiting_credit:
+        before = state.awaiting_credit
+        credited = credit_the_shelf_drop(state, before, goods)
+        stuck = None if credited else _stocked_but_unmoved(state, orders, goods,
+                                                           before=before)
+        state.awaiting_credit = None
         state.did(None)
         if credited:
             logger.info(f"[market] the shelf dropped {credited} — credited to the ledger")
