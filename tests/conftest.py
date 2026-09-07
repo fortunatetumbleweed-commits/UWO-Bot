@@ -631,3 +631,24 @@ def _sleep_advances_the_clock(request, monkeypatch):
         pass
     yield
 
+
+
+@pytest.fixture(autouse=True)
+def _market_kb_is_not_the_live_one(tmp_path, monkeypatch):
+    """Point the market KB at a scratch directory for every test.
+
+    IT IS PRODUCTION STATE THAT A LIVE RUN WRITES TO. The bot records what it learns about a
+    port's season there — `Madeira {'raisin': 'low'}` was written by a real run on 2026-09-07
+    — and a test that reads it is reading whatever the last voyage happened to see.
+
+    Found the same way the daily-news cell above was: `test_a_refused_refresh_may_be_recoverable`
+    PASSED alone and FAILED in the full suite, because a scarce season legitimately stops the
+    refreshes before that test's own bound is reached. Neither a stale test nor a production
+    bug — a test reading what the bot writes.
+
+    A scratch directory rather than a mock, so the KB's own read/write path is still exercised
+    and a test that WANTS an entry can simply record one.
+    """
+    from memory import market_kb
+    monkeypatch.setattr(market_kb, "_MARKETS_DIR", tmp_path / "markets", raising=False)
+    yield

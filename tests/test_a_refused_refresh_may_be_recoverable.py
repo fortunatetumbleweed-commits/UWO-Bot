@@ -41,9 +41,15 @@ SOLD_OUT = {"raisin": Tile("Raisin", 0, sold_out=True, active=False)}
 
 def _run(state, refresh_result):
     goal = Hold(orders={"Raisin": 1755})
+    # THE SEASON KB IS PRODUCTION STATE, and a live run writes to it — "Madeira raisin low"
+    # was recorded on 2026-09-07 and made this file pass alone and fail in the suite, because
+    # a scarce season stops the refreshes before this test's own bound is reached. A test must
+    # not read what the bot writes (CLAUDE.md: "Reset session state you depend on").
     with mock.patch("vision.market_reader.read_market_page_omni",
                     return_value=list(SOLD_OUT.values())), \
          mock.patch("actions.buy_materials._find_purchase_commit", return_value=None), \
+         mock.patch("memory.market_kb.season_of", return_value=None), \
+         mock.patch("memory.market_kb.note_season"), \
          mock.patch("actions.buy_materials.refresh_market", return_value=refresh_result):
         return on_purchase_page(state, goal, "Madeira", frame=object(),
                                 capture_fn=lambda: object(), tap_fn=lambda *a: None,

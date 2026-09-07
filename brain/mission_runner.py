@@ -203,6 +203,9 @@ class MissionRunner:
     # kept because it is what tells us how many rounds the materials can fund — and a
     # material missing from it is UNREAD, never zero.
     _materials_aboard: dict = field(default_factory=dict)
+    # The per-material breakdown the last gather reported — what is short, and how much was
+    # wanted. Read by the reroute, which needs to know WHICH material a port failed to supply.
+    _last_materials: dict = field(default_factory=dict)
 
     # A LEG IS ONE OR MORE STEPS, and the mission advances through them exactly as it
     # advances through legs. `_SailThenLeg` used to nest a sequencer inside a sequencer to
@@ -411,6 +414,7 @@ class MissionRunner:
         boolean over the union — which is why the comment above used to say there was "no
         breakdown to give".
         """
+        self._last_materials = dict(materials or {})
         for material, st in (materials or {}).items():
             have = (st or {}).get("have")
             if have is not None:
@@ -455,6 +459,8 @@ class MissionRunner:
             # upstream may be revisited — which is exactly what the next run needs to know.
             if leg.kind == "barter":
                 self._record_progress("advance", "sailing_route")
+            if leg.kind == "gather":
+                self._reroute_what_this_port_cannot_supply(leg, runner)
             logger.info(f"[mission_runner] {leg.id} done")
             return
         # TRIMMING IS SUPPORT, NOT A LEG OF THE MISSION (CLAUDE.md: "the task is gather,
@@ -482,6 +488,71 @@ class MissionRunner:
         self.status = FAILED
         self.reason = f"{leg.id}: {runner.reason or 'failed'}"
         logger.warning(f"[mission_runner] {self.reason}")
+
+    def _reroute_what_this_port_cannot_supply(self, leg, runner) -> None:
+        """A material this port cannot supply gets another port — now, not next run.
+
+        STOPPING THE WASTE IS ONLY HALF OF IT. The buy round already refuses to grind a
+        scarce shelf: "'Raisin' is scarce here this season — 2 refresh(es) is all this port is
+        worth". But the mission then carried on regardless, and live 2026-09-07 it set off for
+        San Village with ONE Raisin against 248 a round — zero barter rounds, a voyage spent
+        to arrive unable to trade. The user asked for the other half: "it records the data and
+        replans immediately".
+
+        Raisin has three sources — Bordeaux, Madeira, Trabzon — and only Madeira was flagged.
+        There was somewhere to go.
+
+        A PORT IS ONLY TRIED ONCE, and a port already known scarce for that material is not
+        tried at all; when neither leaves a candidate the mission carries on short, exactly as
+        before, because a leg that cannot help is worse than no leg.
+
+        `brain/mission.py::recover` does this for the OLD `run_mission` path, which the live
+        mission stopped using — it is imported and unreachable. This is the same idea where
+        the mission actually runs.
+        """
+        # Nothing reported yet is a real state — a gather that never reached a market has no
+        # breakdown to reroute from.
+        reported = getattr(self, "_last_materials", None) or {}
+        short = [m for m, st in reported.items() if (st or {}).get("state") == "short"]
+        if not short:
+            return
+        tried = {str((getattr(t, "params", None) or {}).get("port") or t.location).lower()
+                 for t in self.subtasks if t.kind == "gather"}
+        for material in short:
+            want = (reported.get(material) or {}).get("want")
+            alt = self._another_source(material, tried)
+            if alt is None:
+                logger.info(f"[mission_runner] {material}: no other source to try — "
+                            "carrying on short")
+                continue
+            ident = f"gather:{alt}:{material}"
+            logger.warning(f"[mission_runner] {material} is short and {leg.location} cannot "
+                           f"supply it — adding {ident}")
+            self.subtasks.append(type(leg)(id=ident, kind="gather", location=alt,
+                                           params={"port": alt,
+                                                   "orders": {material: int(want or 0)}}))
+            tried.add(alt.lower())
+
+    def _another_source(self, material: str, tried: set) -> Optional[str]:
+        """A port that sells `material`, has not been tried, and is not known scarce there."""
+        try:
+            from memory.barter_kb import load_recipe
+            from memory.market_kb import season_of
+            recipe = load_recipe(self.good)
+            for inp in (getattr(recipe, "inputs", None) or []):
+                if str(inp.material).lower() != str(material).lower():
+                    continue
+                for port in (inp.source_ports or []):
+                    if str(port).lower() in tried:
+                        continue
+                    if season_of(port, material) == "low":
+                        logger.info(f"[mission_runner] skipping {port} for {material} — "
+                                    "recorded scarce there this season")
+                        continue
+                    return port
+        except Exception as exc:              # noqa: BLE001 — no alternative is not a crash
+            logger.debug(f"[mission_runner] could not look for another source: {exc}")
+        return None
 
     def _record_progress(self, what: str, phase: str = "") -> None:
         """Tell `mission_progress` how far this mission has got. Never fails the mission.
