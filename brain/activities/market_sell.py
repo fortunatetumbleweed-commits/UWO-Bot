@@ -138,7 +138,13 @@ def on_sell_page(state, goal, *, frame, capture_fn, tap_fn, omni_fn) -> dict:
                         f"{getattr(g, 'profit_per_unit', '?')})")
             tap_fn(g.tap_x, g.tap_y)
         state.did("staged", page_signature(goods))
-        return {"do": "staged", "goods": [str(getattr(g, "name", "")) for g in wanted]}
+        names = [str(getattr(g, "name", "")) for g in wanted]
+        # THE NAMES THE RESULT CARD WILL NOT CARRY. Held pending until a card confirms the
+        # sale actually happened; see `MarketState.sold_pending`.
+        for n in names:
+            if n and n not in state.sold_pending:
+                state.sold_pending.append(n)
+        return {"do": "staged", "goods": names}
 
     # NOTHING SELLABLE IN VIEW IS NOT AN EMPTY HOLD. The grid shows one 3x3 page, so before
     # believing it: SCROLL, and look again.

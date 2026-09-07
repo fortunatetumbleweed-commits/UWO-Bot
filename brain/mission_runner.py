@@ -1002,8 +1002,25 @@ class MissionRunner:
             return [_OneGoalLeg(ReadHold())]
 
         if leg.kind == "sell_surplus":
+            # CLEARING AND TRIMMING ARE TWO JOBS, and `trim_before_gather` asks for both:
+            # `params={"good": ..., "keep_qty": ..., "clear": True}`. This branched on
+            # `clear` and returned, dropping `keep_qty` on the floor — so the node its own
+            # comment describes as "clear the non-materials AND trim the materials to plan
+            # before buying anything" only ever did the first half.
+            #
+            # They are not interchangeable. `FreeHold` protects everything in `self.keep`,
+            # which is exactly the barter's materials — so a clear cannot touch a MATERIAL
+            # surplus by construction. Live 2026-09-07 the hold reached San Village carrying
+            # 2,876 Pig against a plan of 1,505; `trim_before_gather` had run, sold nothing,
+            # and reported done. 1,812 of that Pig came home unused.
+            #
+            # Clear first: it disposes of whole goods and shortens the grid the trim then
+            # has to read.
             keep_qty = p.get("keep_qty") or {}
+            steps = []
             if p.get("clear"):
-                return [_OneGoalLeg(FreeHold(keep=tuple(self.keep)))]
-            return [_OneGoalLeg(TrimHold(keep_qty=dict(keep_qty)))]
+                steps.append(_OneGoalLeg(FreeHold(keep=tuple(self.keep))))
+            if keep_qty:
+                steps.append(_OneGoalLeg(TrimHold(keep_qty=dict(keep_qty))))
+            return steps or None
         return None

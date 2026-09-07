@@ -35,6 +35,14 @@ class MarketState:
     # What this visit has done. `sold` is what a RESULT dialog confirmed, never what was
     # staged: reporting the staged list is a defect this doc-set already records.
     sold: List[str] = field(default_factory=list)
+    # WHAT WAS STAGED, WAITING FOR THE CARD TO AUTHORISE IT. A SELL result card reports
+    # MONEY — "Total Amount 122,637,216" — and names no goods at all, so `sold` could never
+    # be filled from it and stayed `[]` through a 122.6M sale (live 2026-09-07 at London).
+    #
+    # This does not weaken the rule above. The CARD is still the only thing that authorises
+    # an entry; staging merely supplies the NAME the card omits, and nothing moves across
+    # without a card. Same shape as the buy side's `awaiting_credit`.
+    sold_pending: List[str] = field(default_factory=list)
     ledger: Any = None
 
     # Where we are in a grid that does not fit on one page.

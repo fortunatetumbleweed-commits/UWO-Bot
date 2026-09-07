@@ -566,9 +566,24 @@ class MarketActivity:
         """
         from brain.commit_actions import tap_one_positive
         sold = self._read_result_goods()
+        # A SELL CARD NAMES NO GOODS. It reports money — Mate Trade EXP, Sales Cost, Tax,
+        # Surcharge, Profit, Total Amount, Balance — and `_read_result_goods` looks for a
+        # goods grid that is not on it, so this list is always empty on a sale. Live
+        # 2026-09-07 at London every result carried `'sold': []` through a 122,637,216-ducat
+        # sale of 4,382 Bambara Groundnut.
+        #
+        # That is not only a false report. `market_sell.on_sell_page` refuses to call a clear
+        # finished while `held and not state.sold` — the guard written after Lisboa on
+        # 2026-09-06, where a mission reported success holding the 3,668 units it had sailed
+        # there to sell — and a `sold` that can never fill is a guard that can never fire.
+        #
+        # So the names come from what was staged, and the CARD is still what authorises them:
+        # being in this handler means the game has confirmed the transaction.
+        sold = list(sold) + [n for n in self._state.sold_pending if n not in sold]
         for name in sold:
             if name not in self._state.sold:
                 self._state.sold.append(name)
+        self._state.sold_pending.clear()
         if not tap_one_positive(goal_keywords=["ok", "confirm"],
                                 capture_fn=lambda: self._frame(),
                                 tap_fn=self._tap_fn()):
