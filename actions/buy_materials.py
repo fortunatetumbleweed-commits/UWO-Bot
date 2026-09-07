@@ -643,21 +643,23 @@ def ensure_sell_tab(capture_fn, tap_fn, settle: float = 1.2) -> bool:
     if _on_sell_tab(frame):
         return True
 
-    # OUR OWN TAP RAISED A CONFIRM, SO COMPLETE IT (live 2026-09-01 at Tripoli). Switching
-    # tabs with goods staged makes the game ask "Moving to another menu will empty the cart.
-    # Continue?" — the same dialog `abandon_basket_confirm` names. The tab does not change
-    # until it is answered, so refusing here leaves a leg failed over a question nobody
-    # replied to: the trim reported "could not reach the Sell grid", the dispatcher cleared
-    # the dialog a few seconds later, and the switch then completed with the mission already
-    # dead. A dialog the bot's OWN action provoked is COMPLETED, never left for someone else.
-    ok = _cart_confirm_ok(frame)
-    if ok is not None:
-        logger.info("[market] the staged cart raised a confirm — answering it, the cart is "
-                    "the shop's, not the hold's")
-        tap_fn(*ok)
-        time.sleep(settle)
-        frame = capture_fn()
-        return bool(_on_sell_tab(frame))
+    # A DIALOG BELONGS TO THE DISPATCHER, NOT TO THIS PRIMITIVE (user, 2026-09-07: "The
+    # dialog should be checked by the dispatcher, and dispatch to the activity, not being
+    # perceived and handled by the activity").
+    #
+    # This used to answer the empty-the-cart confirm itself: capture, read a dialog, tap its
+    # OK, capture again. That is a private perceive-decide-act inside a primitive — the very
+    # sub-loop shape the market refactor exists to remove — and it kept a SECOND dialog reader
+    # which was configured differently from the dispatcher's and worse. Live 2026-09-07 at
+    # Faro the game asked "Moving to another menu will empty the cart. Continue?" with 454 Pig
+    # staged; this read found no OK (`_dialog_ok_pos` calls `detect_dialog` without the frame),
+    # concluded "nothing asked us anything", and re-tapped Sell behind the modal. Four cycles,
+    # then "NOTHING CHANGED for 3 ticks" — while the DISPATCHER classifies that same card as
+    # `confirm_dialog` with an `Ok` and the market's own handler would have answered it.
+    #
+    # So this reports and hands back. The dispatcher perceives the card, offers it to the
+    # activity, the activity answers it, and the next tick taps Sell again — which is also
+    # where the retry now comes from, so the one below is no longer the only remedy.
 
     # NOTHING EXPLAINS THE UNCHANGED SCREEN, SO THE TAP WAS SIMPLY DROPPED — try once more.
     #

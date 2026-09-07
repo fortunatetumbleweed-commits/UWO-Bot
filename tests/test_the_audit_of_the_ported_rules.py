@@ -12,7 +12,7 @@ import unittest
 from unittest import mock
 
 import brain.market_context as ctx
-from brain.activities.market import Hold, MarketActivity
+from brain.activities.market import FreeHold, Hold, MarketActivity
 from brain.activities.market_buy import _stocked_but_unmoved, on_purchase_page
 from brain.dispatcher import UNRECOGNISED, WORKING
 from brain.market_state import MarketState
@@ -225,3 +225,34 @@ class AHandlerMayNotClaimATapItDidNotMake(unittest.TestCase):
         res = self._market(True)
         self.assertEqual(res.status, WORKING)
         self.assertEqual(res.observed["did"], "cleared the result dialog")
+
+
+class ATabSwitCHThatDidNotHappenIsNotReported(unittest.TestCase):
+    """`ensure_sell_tab` confirms with `_on_sell_tab` and returns False as a REFUSAL — and
+    both call sites discarded it, reporting "switched to the sell tab" either way.
+
+    Live 2026-09-07 at Faro, four cycles: tap the Sell row, report the switch, come back to a
+    Purchase page, tap again — "NOTHING CHANGED for 3 ticks (goal=free the hold)". The same
+    shape as `_on_result` claiming a dialog it never pressed: an action reporting a verdict on
+    its own success.
+    """
+
+    def _work(self, switched, ctx_state):
+        act = MarketActivity(context_fn=lambda _f: ctx_state,
+                             capture_fn=lambda: object(), tap_fn=lambda *a: None,
+                             omni_fn=lambda _f: [])
+        state = types.SimpleNamespace(state="building:market", port="Faro", frame=object())
+        with mock.patch("actions.buy_materials.ensure_sell_tab", return_value=switched), \
+             mock.patch.object(MarketActivity, "_port_name", return_value="Faro"):
+            return act.work(FreeHold(keep=("Water", "Food")), state)
+
+    def test_a_refused_switch_is_handed_back(self):
+        self.assertEqual(self._work(False, ctx.PURCHASE_PAGE).status, UNRECOGNISED)
+
+    def test_a_real_switch_still_reports_it(self):
+        res = self._work(True, ctx.PURCHASE_PAGE)
+        self.assertEqual(res.status, WORKING)
+        self.assertEqual(res.observed["did"], "switched to the sell tab")
+
+    def test_the_landing_page_refusal_too(self):
+        self.assertEqual(self._work(False, ctx.MARKET_LANDING).status, UNRECOGNISED)

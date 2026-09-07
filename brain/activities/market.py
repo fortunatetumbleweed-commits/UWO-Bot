@@ -269,8 +269,20 @@ class MarketActivity:
         # two grids look alike and mean opposite things (the shop's stock, the fleet's hold),
         # so the one action worth taking is to switch.
         if not isinstance(goal, Hold):
+            # ITS ANSWER IS THE POINT. `ensure_sell_tab` confirms with `_on_sell_tab` and
+            # returns False as a REFUSAL — and this discarded it, reporting "switched to the
+            # sell tab" whether or not the tab had switched.
+            #
+            # Live 2026-09-07 at Faro, four times over: tap the Sell row, report the switch,
+            # come back to a Purchase page, tap again — "NOTHING CHANGED for 3 ticks (goal=
+            # free the hold)". The same shape as `_on_result` claiming a dialog it never
+            # pressed: an action reporting a verdict on its own success.
             from actions.buy_materials import ensure_sell_tab
-            ensure_sell_tab(self._capture_fn(), self._tap_fn())
+            if not ensure_sell_tab(self._capture_fn(), self._tap_fn()):
+                logger.warning("[market] the Sell tab did not open — reporting rather than "
+                               "claiming a switch that did not happen")
+                return ActivityResult(UNRECOGNISED, self._observed(port),
+                                      detail="the Sell tab would not open")
             self._state.did("switched to the sell tab")
             return ActivityResult(WORKING, {**self._observed(port),
                                             "did": "switched to the sell tab"},
@@ -384,7 +396,11 @@ class MarketActivity:
             return ActivityResult(WORKING, {"port": port, "did": "opened the purchase tab"},
                                   detail=f"buy at {port}")
         from actions.buy_materials import ensure_sell_tab
-        ensure_sell_tab(self._capture_fn(), self._tap_fn())
+        if not ensure_sell_tab(self._capture_fn(), self._tap_fn()):
+            logger.warning("[market] the Sell tab did not open — reporting rather than "
+                           "claiming a switch that did not happen (see `_on_sell_page`)")
+            return ActivityResult(UNRECOGNISED, self._observed(port),
+                                  detail="the Sell tab would not open")
         self._state.did("opened the sell tab")
         return ActivityResult(WORKING, {"port": port, "did": "opened the sell tab"},
                               detail=f"sell at {port}")

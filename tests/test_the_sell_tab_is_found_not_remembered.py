@@ -109,12 +109,18 @@ if __name__ == "__main__":
 class TheStagedCartRaisesAConfirmAndItIsAnswered(unittest.TestCase):
     """Switching tabs with goods staged makes the game ask before it will switch.
 
-    Live 2026-09-01 at Tripoli: the trim tapped Sell, the game asked "Moving to another menu
-    will empty the cart. Continue?", `_on_sell_tab` correctly said no, and `ensure_sell_tab`
-    refused — so the leg failed over a question nobody answered. The dispatcher cleared the
-    dialog seconds later and the switch completed, with the mission already dead.
+    THE DIALOG BELONGS TO THE DISPATCHER (user, 2026-09-07: "The dialog should be checked by
+    the dispatcher, and dispatch to the activity, not being perceived and handled by the
+    activity"). This primitive used to answer it itself, which meant a private
+    perceive-decide-act inside a primitive and a SECOND dialog reader — configured differently
+    from the dispatcher's, and worse: live 2026-09-07 at Faro it found no OK on a card the
+    dispatcher classifies as `confirm_dialog` with an `Ok`, called it a dropped tap, and
+    re-tapped Sell behind the modal four times.
 
-    A dialog the bot's OWN action provoked is COMPLETED, not left for someone else.
+    The 2026-09-01 incident this class was written for — the leg FAILING over a question
+    nobody answered — is now prevented by the shape rather than by answering here: the caller
+    hands back instead of failing, the dispatcher perceives the card and offers it to the
+    activity, and the next tick taps Sell again.
     """
 
     def _run(self, *, on_sell, cart_ok):
@@ -126,10 +132,11 @@ class TheStagedCartRaisesAConfirmAndItIsAnswered(unittest.TestCase):
             ok = ensure_sell_tab(_frame, lambda *a: taps.append(a), 0.0)
         return ok, taps
 
-    def test_the_confirm_is_answered_and_the_switch_completes(self):
-        ok, taps = self._run(on_sell=[False, False, True], cart_ok=(1200, 700))
-        self.assertTrue(ok)
-        self.assertIn((1200, 700), taps, "the confirm our own tap raised must be completed")
+    def test_the_confirm_is_LEFT_FOR_THE_DISPATCHER(self):
+        """It reports the tab did not open; it does not reach into the dialog itself."""
+        ok, taps = self._run(on_sell=[False, False, False], cart_ok=(1200, 700))
+        self.assertFalse(ok, "a tab that did not open is a refusal, not a success")
+        self.assertNotIn((1200, 700), taps, "answered a dialog the dispatcher owns")
 
     def test_no_confirm_means_the_tap_was_DROPPED_so_it_tries_once_more(self):
         """This asserted a single tap — "no dialog found means no extra tap".
