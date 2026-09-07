@@ -232,6 +232,15 @@ class VillageActivity:
         logger.info(f"[village] {local} -> {handler.__name__}")
         return handler(self, goal)
 
+    def on_tick_frame(self, frame) -> None:
+        """The dispatcher's frame for THIS tick, handed over before `on_dialog`.
+
+        `work()` sets this itself; `on_dialog` runs earlier in the same tick and would
+        otherwise read the previous screen — which is what `_on_overflow` would then be
+        jettisoning against.
+        """
+        self._tick_frame = frame
+
     def on_dialog(self, dialog, goal):
         """First refusal on a dialog covering the village. None means "not mine".
 
@@ -271,6 +280,36 @@ class VillageActivity:
             self._day_spent_for = (getattr(goal, "good", None),
                                    getattr(goal, "village", None))
             return None
+
+        # THE OVERFLOW CARD IS NOT THE DISCARD NOTICE, and only one of them can be acted on.
+        #
+        #   the NOTICE   "Complete the trade? 486 Bambara Groundnut has not been claimed yet.
+        #                 Unclaimed trade goods will be discarded."      [Cancel] [Ok]
+        #                 -- nothing to organise; the goods are gone either way, so Ok.
+        #
+        #   the CARD     "Insufficient Empty Space -- Cannot receive item due to insufficient
+        #                 space. Please organize your Cargo Hold."
+        #                 Received: 379   Cargo 4,952/4,952: water 223, food 213, Pig 1,812,
+        #                 Groundnut 2,704                                [Receive]
+        #                 -- it SHOWS the hold and invites us to free it. Receive here keeps
+        #                 what fits and discards the rest.
+        #
+        # Both say "will be discarded", so the single text test below claimed the card too,
+        # logged the notice's reasoning at it, and handed back — and the default answer to a
+        # card whose only button is `Receive` is Receive. Live 2026-09-07 at San Village
+        # (frame 222 of trace_barter_cmd_2026-09-07T15-20-16) that threw away 379 Bambara
+        # Groundnut while 1,812 Pig sat aboard that NO remaining round could use, the Raisin
+        # having run out two rounds earlier — the exact condition that makes a material safe
+        # to jettison.
+        #
+        # `vision.region_detectors.overflow_cards` owns telling them apart, by the furniture
+        # rather than the wording, and the notice is tested first because it opens OVER the
+        # card and only the innermost is live.
+        from vision.region_detectors.overflow_cards import is_discard_notice, is_overflow_card
+        if not is_discard_notice(text) and is_overflow_card(text) and isinstance(goal, Barter):
+            logger.info("[village] the hold is full and the card is showing it — freeing "
+                        "space before receiving, rather than letting the overflow be dropped")
+            return self._on_overflow(goal)
 
         if "has not been claimed" in text or "will be discarded" in text:
             logger.warning(

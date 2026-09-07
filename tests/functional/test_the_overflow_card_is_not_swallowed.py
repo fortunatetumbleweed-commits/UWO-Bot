@@ -83,3 +83,62 @@ class TheCardIsStillReadable(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AndTheVillageClaimsItRatherThanReceiving(unittest.TestCase):
+    """Not tapping is only half of it — someone has to act on the card.
+
+    `on_dialog` runs BEFORE the context is classified, and its single "will be discarded"
+    test matched this card as well as the notice it was written for. It logged the notice's
+    reasoning and handed back, and the default answer to a card whose only button is
+    `Receive` is Receive. So the overflow context and `_on_overflow` behind it were
+    unreachable even once the commit loop stopped swallowing the card.
+
+    The two cards differ in furniture, not wording:
+
+        NOTICE  "Complete the trade? ... has not been claimed yet."     [Cancel] [Ok]
+        CARD    "Insufficient Empty Space ... Please organize your Cargo Hold."
+                Received: 379 · Cargo 4,952/4,952 · water/food/Pig/Groundnut   [Receive]
+    """
+    STAGE = "tests/stage_suite/frames/san_overflow_pig_should_be_dumped.png"
+
+    def _frame(self):
+        if not os.path.exists(self.STAGE):
+            self.skipTest("stage frame not available")
+        from PIL import Image
+        return Image.open(self.STAGE)
+
+    def _dialog_for(self, im):
+        from vision.omniparser import parse_fast_cached
+        from vision.region_detectors.dialog import detect_dialog
+        els = list(parse_fast_cached(im))
+        return detect_dialog(els, im.width, im.height, frame=im)
+
+    def test_the_village_context_calls_it_the_overflow_prompt(self):
+        from brain.village_context import OVERFLOW_PROMPT, classify
+        self.assertEqual(classify(self._frame()), OVERFLOW_PROMPT)
+
+    def test_on_dialog_claims_it_and_jettisons_instead_of_receiving(self):
+        from brain.activities.village import Barter, VillageActivity
+        im = self._frame()
+        jettisoned = []
+        act = VillageActivity(overflow_fn=lambda *a: 379,
+                              jettison_fn=lambda pending: jettisoned.append(pending),
+                              recipe_fn=lambda good: {"Pig": 3},
+                              saw_fn=lambda: {})
+        act.on_tick_frame(im)
+        res = act.on_dialog(self._dialog_for(im),
+                            Barter(good="Bambara Groundnut", village="San Village"))
+        self.assertIsNotNone(res, "an unclaimed card falls through to a blind Receive")
+        self.assertEqual(jettisoned, [379], "the pending units are what it frees space for")
+
+    def test_the_discard_NOTICE_is_still_left_to_the_default(self):
+        """It has nothing to organise — the goods are gone either way, so Ok is right."""
+        import types
+        from brain.activities.village import Barter, VillageActivity
+        notice = types.SimpleNamespace(is_modal=True, body_text=(
+            "Notice", "Complete the trade? 486 Bambara Groundnut has not been claimed yet.",
+            "Unclaimed trade goods will be discarded.", "Cancel", "Ok"))
+        act = VillageActivity(saw_fn=lambda: {})
+        self.assertIsNone(act.on_dialog(notice, Barter(good="Bambara Groundnut",
+                                                       village="San Village")))
