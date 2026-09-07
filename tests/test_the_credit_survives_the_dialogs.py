@@ -39,8 +39,8 @@ def _buy_tick(state, tiles):
     with mock.patch("vision.market_reader.read_market_page_omni", return_value=tiles), \
          mock.patch("actions.buy_materials._find_purchase_commit", return_value=None), \
          mock.patch("memory.market_kb.note_season"), \
-         mock.patch("actions.buy_materials.refresh_market",
-                    return_value={"ok": False, "acted": True}):
+         mock.patch("vision.region_detectors.market_restock.find_restock_button",
+                    return_value=None):
         return on_purchase_page(state, goal, "Faro", frame=object(),
                                 capture_fn=lambda: object(), tap_fn=lambda *a: None,
                                 omni_fn=lambda _f: [])
@@ -193,8 +193,8 @@ class TheCargoRiseSaysWhatTheShelfCannot(unittest.TestCase):
                                       Tile("Raisin", 300)]), \
              mock.patch("actions.buy_materials._find_purchase_commit", return_value=None), \
              mock.patch("memory.market_kb.note_season"), \
-             mock.patch("actions.buy_materials.refresh_market",
-                        return_value={"ok": False, "acted": True}):
+             mock.patch("vision.region_detectors.market_restock.find_restock_button",
+                        return_value=None):
             on_purchase_page(st, goal, "Faro", frame=object(), capture_fn=lambda: object(),
                              tap_fn=lambda *a: None, omni_fn=lambda _f: [])
         self.assertIsNone(st.ledger, "guessed which good an aggregate belonged to")

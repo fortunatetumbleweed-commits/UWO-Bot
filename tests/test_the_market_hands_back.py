@@ -41,7 +41,11 @@ class AnUnrecognisedScreenGoesBackToTheDispatcher(unittest.TestCase):
     def test_contexts_this_activity_does_not_drive_hand_back(self):
         """Buying's cards and the barter's overflow are not this goal's business. Answering
         them here would be the activity acting on a screen it cannot reason about."""
-        for where in (ctx.QUANTITY_DIALOG, ctx.TRADE_GOODS_INFO, ctx.RESTOCK_PROMPT,
+        # RESTOCK_PROMPT left this list on 2026-09-07: the ↻ is tapped by the buy tick now, so
+        # the Replenish card is OURS to finish. It used to be answered inside `refresh_market`
+        # — captured, OCR'd and tapped there — which is why the context sat classified and
+        # unhandled while the market looked as though it did not drive it.
+        for where in (ctx.QUANTITY_DIALOG, ctx.TRADE_GOODS_INFO,
                       ctx.OVERFLOW_PROMPT, ctx.DISCARD_NOTICE):
             act, taps = _act(where)
             res = act.work(GOAL, _state())

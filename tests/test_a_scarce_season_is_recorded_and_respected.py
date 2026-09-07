@@ -31,6 +31,10 @@ from brain.market_state import MarketState
 from memory import market_kb
 
 
+class _RestockControl:
+    """What `find_restock_button` returns — the seam the buy tick now uses directly."""
+    cx, cy, timer, currency = 1399, 160, "00.23.59", "blue_gem"
+
 class Tile:
     def __init__(self, name, qty, season=None, sold_out=False, active=True):
         self.name, self.available_qty, self.season = name, qty, season
@@ -47,8 +51,8 @@ def _run(state, tiles, port="Madeira", refresh=None):
     goal = Hold(orders={"Raisin": 1755})
     with mock.patch("vision.market_reader.read_market_page_omni", return_value=tiles), \
          mock.patch("actions.buy_materials._find_purchase_commit", return_value=None), \
-         mock.patch("actions.buy_materials.refresh_market",
-                    return_value=refresh or {"ok": True, "acted": True}):
+         mock.patch("vision.region_detectors.market_restock.find_restock_button",
+                    return_value=(refresh if refresh is not None else _RestockControl())):
         return on_purchase_page(state, goal, port, frame=object(),
                                 capture_fn=lambda: object(), tap_fn=lambda *a: None,
                                 omni_fn=lambda _f: [])

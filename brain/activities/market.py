@@ -432,6 +432,34 @@ class MarketActivity:
         return ActivityResult(WORKING, {"port": port, "did": "answered a dialog"},
                               detail=f"sell at {port}")
 
+    def _on_restock_prompt(self, goal: Any, port: str) -> ActivityResult:
+        """The Replenish-Stock card our own ↻ raised — OK.
+
+        WE ASKED FOR IT, so we finish it (CLAUDE.md: "who caused the dialog decides how to
+        clear it"). It spends a BLUE gem, and the price was already confirmed as blue before
+        the control was tapped — `_tap_the_restock_control` refuses anything else, and red
+        gems are real money.
+
+        THIS CONTEXT WAS CLASSIFIED AND UNHANDLED for as long as the table has existed,
+        because `refresh_market` answered the card itself: capture, OCR for a word that looks
+        like OK, tap it, capture again to verify, and up to 90 seconds of sleeping if the
+        timer was nearly up. A whole flow inside one tick, with its own OCR, beside a context
+        the dispatcher was already naming correctly.
+        """
+        from brain.commit_actions import tap_one_positive
+        if not tap_one_positive(goal_keywords=["ok", "confirm"],
+                                capture_fn=lambda: self._frame(),
+                                tap_fn=self._tap_fn()):
+            logger.info("[market] the Replenish card has no positive button — handing back "
+                        "rather than reporting one we did not answer")
+            return ActivityResult(UNRECOGNISED, self._observed(port),
+                                  detail="a Replenish card with no positive button")
+        logger.info("[market] Replenish Stock — OK (a blue gem, already confirmed)")
+        self._state.did("answered the restock prompt")
+        return ActivityResult(WORKING, {**self._observed(port),
+                                        "did": "answered the restock prompt"},
+                              detail=f"buy at {port}")
+
     def _on_cargo_full_notice(self, goal: Any, port: str) -> ActivityResult:
         """"The Cargo Hold's Trade Goods slot will be exceeded by N slots. Purchase?" — OK.
 
@@ -759,6 +787,7 @@ MarketActivity._HANDLERS = {
     _ctx.RESULT_DIALOG:   MarketActivity._on_result,
     _ctx.NEGOTIATION:     MarketActivity._on_negotiation,
     _ctx.CARGO_FULL_NOTICE: MarketActivity._on_cargo_full_notice,
+    _ctx.RESTOCK_PROMPT:  MarketActivity._on_restock_prompt,
 }
 
 

@@ -79,6 +79,33 @@ def credit_the_shelf_drop(state, before: tuple, after: Mapping) -> list:
     return credited
 
 
+def _tap_the_restock_control(frame, tap_fn, good: str) -> dict:
+    """Press the restock control on THIS tick's frame. One action, no waiting.
+
+    Never a currency that is not a confirmed BLUE gem: red gems are real money, and looking
+    again cannot change a price. `acted` tells the caller whether anything was spent, which is
+    what separates "the control was not on screen this look" from "this shelf will not
+    restock" — see the caller.
+    """
+    try:
+        from vision.region_detectors.market_restock import find_restock_button
+        btn = find_restock_button(frame)
+    except Exception as exc:                  # noqa: BLE001 — blind, not broken
+        logger.debug(f"[market] could not look for the restock control: {exc}")
+        return {"ok": False, "acted": False, "reason": "the restock control could not be read"}
+    if btn is None:
+        return {"ok": False, "acted": False,
+                "reason": "no restock control (market fresh or not on Purchase grid)"}
+    if getattr(btn, "currency", None) != "blue_gem":
+        return {"ok": False, "acted": True, "refused": True,
+                "reason": f"restock cost is {getattr(btn, 'currency', None)} "
+                          "(not a confirmed blue gem) — refused"}
+    logger.info(f"[market] {good!r} is sold out and still wanted here — tapping the restock "
+                f"@ ({btn.cx},{btn.cy}) (timer read {btn.timer})")
+    tap_fn(btn.cx, btn.cy)
+    return {"ok": True, "acted": True, "currency": "blue_gem"}
+
+
 def _safe_total(frame) -> Optional[int]:
     """The hold's total, or None. Never raises — a missing reading is one fewer source."""
     try:
@@ -290,11 +317,23 @@ def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn) -
             return {"do": "finished", "season": "low", "good": empty[0],
                     "why": (f"{empty[0]!r} is scarce here this season — "
                             f"{_MAX_LOW_SEASON_GEMS} refresh(es) is all this port is worth")}
-        from actions.buy_materials import refresh_market
-        logger.info(f"[market] {empty[0]!r} is sold out and still wanted here — restocking")
-        res = refresh_market(capture_fn=capture_fn, tap_fn=tap_fn, verify_good=empty[0],
-                             port=port) or {}
-        state.did("refreshed")
+        # ONE TAP, THEN HAND BACK. This used to call `refresh_market`, which captured a fresh
+        # frame, tapped the control, captured again to find the Replenish-Stock OK by OCR,
+        # tapped that, captured a third time to verify the tile, and could SLEEP up to 90
+        # seconds waiting out a nearly-expired timer — a whole perceive-decide-act flow inside
+        # one tick, and the market's own `restock_prompt` context sat unhandled beside it.
+        #
+        # The tick shape needs none of it. Tap the control; the dispatcher perceives the
+        # Replenish card and hands it to `_on_restock_prompt`; the tick after that reads the
+        # grid and simply SEES whether the shelf refilled. The verification is the next look.
+        #
+        # The wait-out case dissolves rather than being ported (live 2026-09-05 at Madeira:
+        # the ↻ went in at 00.00:11, the game was already turning the market over, no dialog
+        # appeared, and the unconfirmed refresh broke the leg 11 seconds before the shelf
+        # refilled for free). There is no "failed to confirm" step here to recover from — the
+        # next tick looks, and a shelf that refilled by itself is simply a shelf with stock.
+        res = _tap_the_restock_control(frame, tap_fn, empty[0])
+        state.did("tapped the restock")
         if not res.get("ok"):
             # A REFUSAL THAT SPENT NOTHING IS ABOUT THIS LOOK, NOT ABOUT THE SHELF.
             #

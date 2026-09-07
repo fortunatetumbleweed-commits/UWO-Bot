@@ -256,3 +256,62 @@ class ATabSwitCHThatDidNotHappenIsNotReported(unittest.TestCase):
 
     def test_the_landing_page_refusal_too(self):
         self.assertEqual(self._work(False, ctx.MARKET_LANDING).status, UNRECOGNISED)
+
+
+class TheRestockCardIsOurs(unittest.TestCase):
+    """The ↻ we tapped raises "Replenish Stock" — and we asked for it, so we finish it.
+
+    This context was CLASSIFIED and UNHANDLED for as long as the table has existed, because
+    `refresh_market` answered the card itself: capture, OCR for a word like OK, tap it,
+    capture again to verify, and up to 90 seconds of sleeping if the timer was nearly up. A
+    whole flow inside one tick, with its own OCR, beside a context the dispatcher was already
+    naming correctly.
+    """
+
+    def _answer(self, pressed):
+        act = MarketActivity(context_fn=lambda _f: ctx.RESTOCK_PROMPT,
+                             capture_fn=lambda: object(), tap_fn=lambda x, y: None,
+                             omni_fn=lambda _f: [])
+        with mock.patch("brain.commit_actions.tap_one_positive", return_value=pressed), \
+             mock.patch.object(MarketActivity, "_port_name", return_value="Faro"):
+            return act.work(Hold(orders={"Pig": 900}), types.SimpleNamespace(
+                state="building:market", port="Faro", frame=object()))
+
+    def test_it_has_a_handler_now(self):
+        self.assertIn(ctx.RESTOCK_PROMPT, MarketActivity._HANDLERS)
+
+    def test_it_is_answered(self):
+        res = self._answer(True)
+        self.assertEqual(res.status, WORKING)
+        self.assertEqual(res.observed["did"], "answered the restock prompt")
+
+    def test_no_positive_button_hands_back(self):
+        self.assertEqual(self._answer(False).status, UNRECOGNISED)
+
+
+class TheRestockControlIsNeverTappedOnAPriceWeCannotConfirm(unittest.TestCase):
+    """Red gems are real money, and "cannot tell" is not "go ahead"."""
+
+    def _tap(self, currency):
+        from brain.activities.market_buy import _tap_the_restock_control
+        taps = []
+        btn = types.SimpleNamespace(cx=1399, cy=160, timer="00.23.59", currency=currency)
+        with mock.patch("vision.region_detectors.market_restock.find_restock_button",
+                        return_value=btn):
+            res = _tap_the_restock_control(object(), lambda x, y: taps.append((x, y)), "Pig")
+        return res, taps
+
+    def test_a_blue_gem_is_tapped(self):
+        res, taps = self._tap("blue_gem")
+        self.assertTrue(res["ok"])
+        self.assertEqual(taps, [(1399, 160)])
+
+    def test_a_red_gem_is_not(self):
+        res, taps = self._tap("red_gem")
+        self.assertFalse(res["ok"])
+        self.assertEqual(taps, [])
+
+    def test_an_unknown_currency_is_not(self):
+        res, taps = self._tap(None)
+        self.assertFalse(res["ok"])
+        self.assertEqual(taps, [])

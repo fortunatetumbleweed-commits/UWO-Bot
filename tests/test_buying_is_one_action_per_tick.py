@@ -41,8 +41,11 @@ def _run(state, goal, rows, *, cost=0, taps=None, refresh=None):
          mock.patch("actions.buy_materials._find_purchase_commit", return_value=commit), \
          mock.patch("actions.buy_materials._find_material_tile",
                     side_effect=lambda els, m: (500, 400)), \
-         mock.patch("actions.buy_materials.refresh_market",
-                    return_value=refresh or {"ok": True}):
+         mock.patch("vision.region_detectors.market_restock.find_restock_button",
+                    return_value=(refresh if refresh is not None
+                                  else types.SimpleNamespace(cx=1399, cy=160,
+                                                             timer="00.23.59",
+                                                             currency="blue_gem"))):
         out = on_purchase_page(state, goal, "Madeira", frame=object(),
                                capture_fn=lambda: object(),
                                tap_fn=lambda x, y: taps.append((x, y)),
