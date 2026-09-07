@@ -220,7 +220,21 @@ class MarketActivity:
             # answer a card we have not identified.
             return None
         port = self._port_name(None)
-        self._state = self._state.for_goal((type(goal).__name__, port))
+        # AN UNREADABLE PORT NAME IS "UNKNOWN", NOT "SOMEWHERE ELSE". The state is keyed to
+        # (goal, port) so one visit's cart never serves another — but a FAILED READING of the
+        # name is not a new owner, and treating it as one throws the visit away.
+        #
+        # Live 2026-09-06 at Madeira: `'port': ''` appears 12 times in the log and the hold
+        # was re-read 12 times for 11 purchases. Each flip between ('Hold','Madeira') and
+        # ('Hold','') handed back a fresh MarketState with `ledger=None`, so `_seed_ledger`
+        # ran again — switching to the Sell tab, scrolling the whole grid, switching back —
+        # and the next tick, reading the name successfully, flipped it straight back.
+        #
+        # The ledger does not need re-reading anyway: it is seeded once and every purchase
+        # after that is credited from the shelf drop (user: "if the Result dialog is shown,
+        # the number is added, no need to check every time").
+        if port:
+            self._state = self._state.for_goal((type(goal).__name__, port))
         self._goal_orders = dict(getattr(goal, "orders", {}) or {})
         logger.info(f"[market] the {where} dialog is ours — answering it")
         return handler(self, goal, port)
@@ -235,7 +249,8 @@ class MarketActivity:
         """
         import brain.market_context as ctx
 
-        self._state = self._state.for_goal((type(goal).__name__, port))
+        if port:                                  # see `on_dialog` — unknown is not elsewhere
+            self._state = self._state.for_goal((type(goal).__name__, port))
         self._goal_orders = dict(getattr(goal, "orders", {}) or {})
         where = self._classify()
 
@@ -664,13 +679,45 @@ class MarketActivity:
 
     # ── helpers ──────────────────────────────────────────────────────────────
     def _port_name(self, state: Any) -> str:
+        """Which port this market belongs to — ASKED OF THE PLACE, not of the screen.
+
+        THE NAME IS PAINTED ON THE OVERWORLD AND NOWHERE ELSE. Inside a building the title
+        bar is the SUB-MENU, so a read here cannot succeed — `observation` states it as
+        `SETTLEMENT_NAME_VISIBLE_ON = {"port_overworld"}` and records the cost of forgetting
+        it: "Live 2026-08-22: the mission asked for the port from the MAIN MENU, retried
+        three times, and aborted 'current port unreadable'".
+
+        This method made that same mistake in a new place. `_current_port()` gates on
+        `location == "port_overworld"`, so from a market it returns None every time — after
+        three captures and two seconds of sleeping — and the caller got "".
+
+        A BUILDING BELONGS TO A PORT, which is the lifetime the answer already has
+        (CLAUDE.md: COMPANY > FLEET > PLACE > BUILDING > PANEL, and the port IS the PLACE).
+        `last_known_settlement` is exactly that value: written when the overworld paints it,
+        carried through the buildings above it, and dropped on reaching sea — "at sea —
+        forgetting 'Madeira'; a port we have left is not where we are". A village needs no
+        special case here: it sits on the sea and has no market.
+
+        What that empty string cost, live 2026-09-06 at Madeira: the market's state is
+        keyed to (goal, port), so "" flipped the key on 12 of 27 ticks, handed back a fresh
+        MarketState each time, and the hold was re-read — Sell tab, full scroll, back again —
+        12 times for 11 purchases.
+        """
         if self._port is not None:
             return self._port()
         got = getattr(state, "port", None)
         if got:
             return got
-        from brain.barter_mission_live import _current_port
-        return _current_port() or ""
+        try:
+            from brain import observation as _obs
+            cur = _obs.current()
+            held = (cur.last_known_settlement if cur else None) \
+                or _obs._ensure_persisted_loaded()
+            if held:
+                return str(held)
+        except Exception as exc:              # noqa: BLE001 — a poorer answer, not a failure
+            logger.debug(f"[market] could not resolve the port from the place: {exc}")
+        return ""
 
 
 MarketActivity.GOALS = (Hold, FreeHold, TrimHold, SellHold)

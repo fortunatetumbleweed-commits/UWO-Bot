@@ -1,20 +1,20 @@
 {
   "fleet_capacity": {
-    "at": 1788736655.7973812,
+    "at": 1788753126.17954,
     "value": 4952
   },
   "hold": {
-    "at": 1788748063.080884,
+    "at": 1788752899.241992,
     "value": {
-      "pig": 457,
-      "raisin": 110
+      "pig": 1828,
+      "raisin": 1100
     }
   },
   "mission_progress": {
-    "at": 1788743593.2068639,
+    "at": 1788753139.2268648,
     "value": {
       "good": "Bambara Groundnut",
-      "phase": "gathering",
+      "phase": "bartering",
       "recipe": {
         "good": "Bambara Groundnut",
         "materials": {
@@ -29,7 +29,7 @@
     }
   },
   "settlement": {
-    "at": 1788747672.300832,
-    "value": "Madeira"
+    "at": 1788749155.722743,
+    "value": "Faro"
   }
 }
