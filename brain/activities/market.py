@@ -219,6 +219,14 @@ class MarketActivity:
             # Not one of our cards. A page is not a dialog, and claiming one here would
             # answer a card we have not identified.
             return None
+        if (where in (_ctx.TRADE_GOODS_INFO, _ctx.QUANTITY_DIALOG)
+                and not isinstance(goal, TrimHold)):
+            # THE TRIM'S TWO CARDS, AND ONLY WHILE TRIMMING. It opens a good's card and the
+            # keypad over it deliberately, so while a TrimHold is running they are ours and
+            # the game rules must not close them. Under any other goal one of these is a
+            # card nobody here opened, and claiming it would be answering a dialog we cannot
+            # account for.
+            return None
         port = self._port_name(None)
         # AN UNREADABLE PORT NAME IS "UNKNOWN", NOT "SOMEWHERE ELSE". The state is keyed to
         # (goal, port) so one visit's cart never serves another — but a FAILED READING of the
@@ -349,6 +357,8 @@ class MarketActivity:
             return ActivityResult(WORKING, {**self._observed(port),
                                             "did": "switched to the purchase tab"},
                                   detail=f"buy at {port}")
+        if isinstance(goal, TrimHold):
+            return self._trim_to(goal, port)
         from brain.activities.market_sell import on_sell_page
 
         out = on_sell_page(self._state, goal, frame=self._frame(),
@@ -686,16 +696,62 @@ class MarketActivity:
             detail=str(goal))
 
     def _trim_to(self, goal: TrimHold, port: str) -> ActivityResult:
-        sell_down = self._sell_down
-        if sell_down is None:
-            from actions.sell_goods import sell_down_to as sell_down
-        res = sell_down(port, dict(goal.keep_qty)) or {}
+        """One move on the Sell grid toward the keep levels. The dispatcher calls again.
+
+        An INJECTED `sell_down` still runs the whole walk in one call — that is how the
+        callers that are not on the tick path use it, and their tests with it.
+        """
+        if self._sell_down is not None:
+            return self._trim_in_one_call(goal, port)
+
+        from brain.activities import market_trim
+        out = market_trim.on_sell_page(self._state, goal, frame=self._frame(),
+                                       tap_fn=self._tap_fn(), omni_fn=self._omni_fn())
+        return self._trim_result(out, goal, port)
+
+    def _trim_result(self, out: dict, goal: TrimHold, port: str) -> ActivityResult:
+        did = out.get("do")
+        if did == "blocked":
+            return ActivityResult(BLOCKED, self._observed(port),
+                                  detail=out.get("why", "the trim refused"))
+        if did == "unclaimed":
+            # A CARD WE DID NOT OPEN. Hand it back rather than answering it — the dispatcher
+            # owns the screen and knows what else might want it.
+            return ActivityResult(UNRECOGNISED, self._observed(port),
+                                  detail=out.get("why", "not this trim's dialog"))
+        if did == "dismiss":
+            # Close the card through its OWN control. An outside tap does dismiss a dialog we
+            # opened, but it is the same gesture as a misfire and so unreadable in the log.
+            from brain.commit_actions import tap_one_positive
+            tap_one_positive(goal_keywords=["cancel", "close"],
+                             capture_fn=lambda: self._frame(), tap_fn=self._tap_fn())
+            self._state.did("closed the goods card")
+            return ActivityResult(WORKING, {**self._observed(port),
+                                            "did": "closed the goods card"},
+                                  detail=out.get("why", "nothing to stage here"))
+        if did == "finished":
+            owned_state.changed(owned_state.FLEET, owned_state.BUILDING)
+            for skip in (out.get("skipped") or ()) + tuple(self._state.trim_skipped):
+                # A SKIP IS A READING FAILURE, AND IT MUST NOT BE SILENT. Refusing to sell a
+                # good whose owned quantity could not be read is right — nothing downstream
+                # can tell a guess from a count — but dropping the reason made a trim that
+                # never had a number for Candle look like one that decided Candle was fine.
+                logger.warning(f"[market] trim skipped at {port}: {skip}")
+            trimmed = dict(self._state.trim_staged)
+            logger.info(f"[market] trimmed at {port}: {trimmed or 'nothing'}")
+            return ActivityResult(FINISHED,
+                                  {"trimmed": trimmed, "port": port,
+                                   "stopped_because": out.get("why") or "nothing to trim"},
+                                  detail=str(goal))
+        return ActivityResult(WORKING,
+                              {**self._observed(port), "did": out.get("why", "trimming")},
+                              detail=f"trim at {port}")
+
+    def _trim_in_one_call(self, goal: TrimHold, port: str) -> ActivityResult:
+        """The injected `sell_down_to`, kept whole for the callers that are not ticks."""
+        res = self._sell_down(port, dict(goal.keep_qty)) or {}
         owned_state.changed(owned_state.FLEET, owned_state.BUILDING)
         logger.info(f"[market] trimmed at {port}: {res.get('reason')}")
-        # A SKIP IS A READING FAILURE, AND IT WAS SILENT. `sell_down_to` refuses to sell a
-        # good whose owned quantity it could not read — right, because nothing downstream can
-        # tell a guess from a count — and returns why. Dropping that made the trim look like
-        # it had simply decided Candle was fine, when in fact it never had a number for it.
         for skip in res.get("skipped") or ():
             logger.warning(f"[market] trim skipped at {port}: {skip}")
         return ActivityResult(
@@ -703,6 +759,27 @@ class MarketActivity:
             {"trimmed": res.get("trimmed"), "port": port,
              "stopped_because": res.get("reason") or "nothing to trim"},
             detail=str(goal))
+
+    def _on_goods_info(self, goal: Any, port: str) -> ActivityResult:
+        """The Trade Goods Info card. Only the trim opens one deliberately."""
+        if not isinstance(goal, TrimHold):
+            return ActivityResult(UNRECOGNISED, self._observed(port),
+                                  detail="a goods card this goal did not open")
+        from brain.activities import market_trim
+        out = market_trim.on_goods_info(self._state, goal, frame=self._frame(),
+                                        tap_fn=self._tap_fn(), omni_fn=self._omni_fn())
+        return self._trim_result(out, goal, port)
+
+    def _on_keypad(self, goal: Any, port: str) -> ActivityResult:
+        """The number keypad, open over a goods card. Again, the trim's."""
+        if not isinstance(goal, TrimHold):
+            return ActivityResult(UNRECOGNISED, self._observed(port),
+                                  detail="a keypad this goal did not open")
+        from brain.activities import market_trim
+        out = market_trim.on_keypad(self._state, goal, frame=self._frame(),
+                                    capture_fn=self._capture_fn(), tap_fn=self._tap_fn(),
+                                    omni_fn=self._omni_fn())
+        return self._trim_result(out, goal, port)
 
     def _sell_off(self, protect: Sequence[str], port: str, *, clear: bool) -> ActivityResult:
         sell = self._sell
@@ -794,6 +871,10 @@ MarketActivity._HANDLERS = {
     _ctx.NEGOTIATION:     MarketActivity._on_negotiation,
     _ctx.CARGO_FULL_NOTICE: MarketActivity._on_cargo_full_notice,
     _ctx.RESTOCK_PROMPT:  MarketActivity._on_restock_prompt,
+    # The trim's own two screens — the good's card and the keypad over it. Every other goal
+    # answers UNRECOGNISED on them, which is what it means to open a dialog deliberately.
+    _ctx.TRADE_GOODS_INFO: MarketActivity._on_goods_info,
+    _ctx.QUANTITY_DIALOG:  MarketActivity._on_keypad,
 }
 
 

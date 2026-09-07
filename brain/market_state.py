@@ -23,7 +23,7 @@ made across ticks instead.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 
 @dataclass
@@ -39,6 +39,21 @@ class MarketState:
 
     # Where we are in a grid that does not fit on one page.
     scrolled_pages: int = 0
+
+    # THE TRIM, WHICH NOW SPANS TICKS. `trim_staged` is the REPORT of what went into the
+    # basket, never the thing consulted to decide what to stage next — staging moves a good
+    # OUT of its tile (measured live: Iron 999 read 822 once its 177 surplus was staged), so
+    # the grid itself says what is left to do and survives any interruption the dispatcher
+    # routes through. `trim_good`/`trim_owned`/`trim_excess` are the good whose dialog THIS
+    # tick expects, and they are cleared the moment it is answered.
+    trim_staged: Dict[str, int] = field(default_factory=dict)
+    trim_skipped: List[str] = field(default_factory=list)
+    trim_bulk_off: bool = False
+    trim_committed: bool = False
+    trim_good: Optional[str] = None
+    trim_owned: Optional[int] = None
+    trim_excess: Optional[int] = None
+    trim_giving_up: set = field(default_factory=set)
 
     # The Trade Point award is claimed at most once per visit — tapping the chest opens a
     # dialog that hides the very counter a second attempt would consult.
