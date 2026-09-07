@@ -176,6 +176,20 @@ class MarketActivity:
             return self._tick(goal, port)
         if isinstance(goal, (FreeHold, SellHold)) and self._sell is None:
             return self._tick(goal, port)
+        # THE TRIM GOES THROUGH THE CONTEXTS TOO, and it was the last goal that did not.
+        #
+        # Without this line `_trim_to` was reached DIRECTLY, so the trim acted on whatever
+        # screen happened to be up and the routing in `_on_sell_page` was unreachable. Live
+        # 2026-09-07 at Faro, frame 130 of trace_barter_cmd_2026-09-07T15-20-16: the goal
+        # arrived while we stood on the PURCHASE page, `market_trim.on_sell_page` read it,
+        # `_sell_page` said "this is not the Sell grid", and the leg was blocked four
+        # milliseconds after it began — no context line in the log, because `_tick` never ran.
+        #
+        # `sell_down_to` did its own tab switch, which is why the old `_trim_to` did not need
+        # one; the tick version gets it from `_on_purchase_page` instead, one tap and a hand
+        # back, exactly like every other goal that finds the wrong grid.
+        if isinstance(goal, TrimHold) and self._sell_down is None:
+            return self._tick(goal, port)
 
         if isinstance(goal, Hold):
             return self._buy_toward(goal, port)

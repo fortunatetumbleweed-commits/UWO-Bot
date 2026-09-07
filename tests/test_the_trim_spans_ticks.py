@@ -315,3 +315,30 @@ class TheActivityRoutesTheTrimsOwnScreens(unittest.TestCase):
                      types.SimpleNamespace(state="building:market", frame=object()))
         trim.assert_called_once()
         clear.assert_not_called()
+
+    def test_the_trim_goes_through_the_contexts_like_every_other_goal(self):
+        """It was the last goal that did not, and that made the routing unreachable.
+
+        Live 2026-09-07 at Faro, frame 130 of trace_barter_cmd_2026-09-07T15-20-16. The goal
+        arrived while the fleet stood on the PURCHASE page:
+
+            15:45:22  next leg: sell_surplus
+            15:45:23  market <- TrimHold(keep_qty={'Pig': 1505, 'Raisin': 1712})
+            15:45:23  [sell] this is not the Sell grid — not reading it as the hold
+            15:45:23  market -> blocked
+
+        Four milliseconds, and no `purchase_page -> _on_purchase_page` line in the log,
+        because `_tick` never ran: `work` sent a TrimHold straight to `_trim_to`, which read
+        whatever screen was up. `sell_down_to` did its own tab switch, which is why the old
+        `_trim_to` needed none; the tick version gets one from `_on_purchase_page`.
+        """
+        from brain.activities.market import TrimHold
+        act, _ctx = self._activity("purchase_page")
+        with mock.patch.object(type(act), "_port_name", return_value="Faro"), \
+             mock.patch("actions.buy_materials.ensure_sell_tab", return_value=True) as tab, \
+             mock.patch("brain.activities.market_trim.on_sell_page") as trim:
+            res = act.work(TrimHold(keep_qty={"Pig": 1505}),
+                           types.SimpleNamespace(state="building:market", frame=object()))
+        tab.assert_called_once()
+        trim.assert_not_called()
+        self.assertEqual(res.observed["did"], "switched to the sell tab")
