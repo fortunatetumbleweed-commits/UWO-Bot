@@ -13,6 +13,20 @@
     "expect": "Svear barter panel with the WRONG good selected: Naverslojd, not the wanted Birch Tree. Material Wares 0/3 short, so Exchange is GREY. Tiles 3 and 4 carry red lock banners.",
     "from": "data/sessions/trace_barter_cmd_2026-08-26T09-21-24/frame_0003.png"
   },
+  "faro_cart_confirm_on_tab_switch": {
+    "frame": "frames/faro_cart_confirm_on_tab_switch.png",
+    "state": "world_map",
+    "port": null,
+    "expect": "the empty-the-cart Notice raised by the Purchase->Sell tab switch, with 454 Pig staged and the hold 52 over capacity. `market_context` classifies it confirm_dialog, `detect_dialog` offers ['Ok','Cancel'], `game_rules` answers 'Ok', and the market activity taps it at (1307,826). NOTE the stored nav reading is a MISREAD \u2014 the family classifier calls this dimmed market page 'world_map' at 0.97 \u2014 recorded as it stands, not endorsed; the dialog path runs before it and was unaffected live.",
+    "from": "data/sessions/trace_barter_cmd_2026-09-07T15-00-05/frame_0009.png"
+  },
+  "goods_info_dialog_over_sell_grid": {
+    "frame": "frames/goods_info_dialog_over_sell_grid.png",
+    "state": "sub_menu:sell",
+    "port": "Barcelona",
+    "expect": "Trade Goods Info dialog open over the sell grid. The 50% scrim caps the left gutter's white chrome at 128 while a panel would leave it 255. 'Put In Bulk' is still perfectly legible THROUGH the scrim at (364,988)-(563,1030), so presence is not reachability \u2014 tapping it dismisses the dialog. The quantity field reads '/148' (OmniParser drops the leading 1), and on a sell dialog that denominator IS the holding.",
+    "from": "data/sessions/trace_barter_cmd_2026-08-27T11-18-32/frame_0011.png"
+  },
   "idle_lock_looks_like_a_notice": {
     "frame": "frames/idle_lock_looks_like_a_notice.png",
     "state": "idle_lock",
@@ -40,6 +54,13 @@
     "port": "Amsterdam",
     "expect": "standing in a port; entering a building is a transition the dispatcher performs",
     "from": "data/sessions/trace_barter_cmd_2026-08-26T00-06-32/frame_0000.png"
+  },
+  "sell_grid_candle_wax_misread": {
+    "frame": "frames/sell_grid_candle_wax_misread.png",
+    "state": "sub_menu:sell",
+    "port": "Barcelona",
+    "expect": "Barcelona sell grid, Iron 2,099 and Candle 148, Cargo 3,040/4,952. The badge specialist reads Candle as 2148 at conf 0.6519 (the melted wax left of the digits thresholds into a leading '2') while full-frame OCR reads 148 at 0.9987. The per-good bound does NOT catch it \u2014 2,148 < 3,040 held. Only the sum does: 2,099 + 2,148 = 4,247. With supplies, 2,099 + 148 + 793 = 3,040 exactly.",
+    "from": "data/sessions/trace_barter_cmd_2026-08-27T11-18-32/frame_0010.png"
   },
   "sell_grid_iron_2099": {
     "frame": "frames/sell_grid_iron_2099.png",
@@ -76,40 +97,19 @@
     "expect": "a mate finished promotion: full-screen 'Effect Unlocked' notice, no close-X and no OK, dismissed by tapping. 'Other Mates (1)' means another is queued behind it.",
     "from": "/tmp/mate_promotion_notice.png"
   },
-  "village_trade_list_missing_quantity": {
-    "frame": "frames/village_trade_list_missing_quantity.png",
-    "state": "world_map",
-    "port": null,
-    "expect": "Svear Village Info trade list. The full-frame parse reads 358/102/102 and NEVER proposes the 44 on Matchlock Gun's thumbnail as text; a x2 region read recovers it. The frame the region-read merge was built from.",
-    "from": "/tmp/village_trade_list.png"
-  },
-  "world_map_village_list": {
-    "frame": "frames/world_map_village_list.png",
-    "state": "world_map",
-    "port": null,
-    "expect": "the world map on the Explore tab with the village list open \u2014 a village is chosen from here",
-    "from": "data/sessions/trace_barter_cmd_2026-08-26T00-06-32/frame_0110.png"
-  },
-  "sell_grid_candle_wax_misread": {
-    "frame": "frames/sell_grid_candle_wax_misread.png",
-    "state": "sub_menu:sell",
-    "port": "Barcelona",
-    "expect": "Barcelona sell grid, Iron 2,099 and Candle 148, Cargo 3,040/4,952. The badge specialist reads Candle as 2148 at conf 0.6519 (the melted wax left of the digits thresholds into a leading '2') while full-frame OCR reads 148 at 0.9987. The per-good bound does NOT catch it \u2014 2,148 < 3,040 held. Only the sum does: 2,099 + 2,148 = 4,247. With supplies, 2,099 + 148 + 793 = 3,040 exactly.",
-    "from": "data/sessions/trace_barter_cmd_2026-08-27T11-18-32/frame_0010.png"
-  },
-  "goods_info_dialog_over_sell_grid": {
-    "frame": "frames/goods_info_dialog_over_sell_grid.png",
-    "state": "sub_menu:sell",
-    "port": "Barcelona",
-    "expect": "Trade Goods Info dialog open over the sell grid. The 50% scrim caps the left gutter's white chrome at 128 while a panel would leave it 255. 'Put In Bulk' is still perfectly legible THROUGH the scrim at (364,988)-(563,1030), so presence is not reachability \u2014 tapping it dismisses the dialog. The quantity field reads '/148' (OmniParser drops the leading 1), and on a sell dialog that denominator IS the holding.",
-    "from": "data/sessions/trace_barter_cmd_2026-08-27T11-18-32/frame_0011.png"
-  },
   "village_trade_list_badge_lost": {
     "frame": "frames/village_trade_list_badge_lost.png",
     "state": "world_map",
     "port": null,
     "expect": "Svear Village Trade List: Birch Tree 689 <- Iron 88, Matchlock Gun 44, Candle 88. The whole-frame parse reads 689/88/88 but NEVER PROPOSES Matchlock Gun's 44 as text \u2014 its tile comes back a bare 'icon'. The row parser drops a material with no quantity, so the recipe read as two of three and certified itself complete. Cropping that one tile at x4 reads 44 at confidence 1.00. Naverslojd is cut off at the panel edge and must stay incomplete rather than be guessed.",
     "from": "data/sessions/trace_barter_cmd_2026-08-27T17-10-56/frame_0006.png"
+  },
+  "village_trade_list_missing_quantity": {
+    "frame": "frames/village_trade_list_missing_quantity.png",
+    "state": "world_map",
+    "port": null,
+    "expect": "Svear Village Info trade list. The full-frame parse reads 358/102/102 and NEVER proposes the 44 on Matchlock Gun's thumbnail as text; a x2 region read recovers it. The frame the region-read merge was built from.",
+    "from": "/tmp/village_trade_list.png"
   },
   "world_map_port_tab_lit_white": {
     "frame": "frames/world_map_port_tab_lit_white.png",
@@ -118,11 +118,11 @@
     "expect": "World map on the PORT tab. Two readings fail here and both had to be fixed: OmniParser merges the Explore label with its neighbour ('NarExplore'), so an EQUALITY match drops it and the strip reads ['port','route','trade']; and the lit tab is near-WHITE, not gold, so the warmth test scores it LOWEST (port 0.6 vs route 17.8) and answers 'cannot tell'. Luminance separates it outright: 193.3 against 48.8 / 60.8 / 56.1.",
     "from": "live capture 2026-08-27T20:05, fleet at Barcelona"
   },
-  "faro_cart_confirm_on_tab_switch": {
-    "frame": "frames/faro_cart_confirm_on_tab_switch.png",
-    "state": "building:market",
-    "port": "Faro",
-    "expect": "the empty-the-cart Notice raised by the Purchase->Sell tab switch, with 454 Pig staged and the hold 52 over capacity; classifies as confirm_dialog with ['Ok','Cancel'] and the market activity taps Ok at (1307,826)",
-    "from": "data/sessions/trace_barter_cmd_2026-09-07T15-00-05/frame_0009.png"
+  "world_map_village_list": {
+    "frame": "frames/world_map_village_list.png",
+    "state": "world_map",
+    "port": null,
+    "expect": "the world map on the Explore tab with the village list open \u2014 a village is chosen from here",
+    "from": "data/sessions/trace_barter_cmd_2026-08-26T00-06-32/frame_0110.png"
   }
 }
