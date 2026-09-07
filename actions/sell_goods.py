@@ -690,9 +690,28 @@ def sell_down_to(port: str, keep: Mapping[str, int], *,
         overlay_after = overlay_fn(after)
         if (overlay_after.is_modal
                 and _find_qty_field(omni_fn(after), dialog_bbox=overlay_after.bbox)):
-            return _abort(f"{name}: quantity dialog still open after Load — the amount "
-                          "may not be in the basket; aborted before selling anything",
-                          skipped, overlay=overlay_after)
+            # A DIALOG STILL OPEN IS PROOF THE LOAD DID NOT HAPPEN, which is what makes ONE
+            # re-tap safe: a Load that had worked would have closed it, so this cannot load
+            # the amount twice. The usual cause is the tap the game drops about once in
+            # twenty, and re-tapping the same control on the same screen is waiting for our
+            # own effect — the one loop a primitive may have.
+            #
+            # Live 2026-09-06 at Madeira, frame 400 of trace_barter_cmd_2026-09-06T21-45-01:
+            # the Trade Goods Info card open for Pig, the field reading a correct `73 / 1,828`
+            # (1,828 aboard less 1,755 kept), and the tap at (1313,943) dead on Load. Four
+            # seconds later the card was unchanged. The trim aborted with "the amount may not
+            # be in the basket" and the whole surplus sailed on unsold.
+            logger.info(f"[{port}] {name}: the quantity dialog is still open — re-tapping "
+                        "Load once; it cannot have loaded and stayed open")
+            tap_fn(*load)
+            time.sleep(settle)
+            after = capture_fn()
+            overlay_after = overlay_fn(after)
+            if (overlay_after.is_modal
+                    and _find_qty_field(omni_fn(after), dialog_bbox=overlay_after.bbox)):
+                return _abort(f"{name}: quantity dialog still open after Load — the amount "
+                              "may not be in the basket; aborted before selling anything",
+                              skipped, overlay=overlay_after)
         trimmed[name] = excess
 
     if not trimmed:

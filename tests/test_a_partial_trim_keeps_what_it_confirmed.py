@@ -30,8 +30,12 @@ def _good(name, owned):
 
 
 class _Harness:
-    def __init__(self, qty_fields, page_after_failure=None):
+    def __init__(self, qty_fields, page_after_failure=None, modal=False):
         self.qty_fields = list(qty_fields)
+        self.taps = []
+        # `is_modal` gates the post-Load "did it close?" check, so it must be True to
+        # exercise that path at all.
+        self.modal = modal
         self.page_after_failure = page_after_failure
         self.sold, self.reads = None, 0
 
@@ -44,6 +48,9 @@ class _Harness:
     def qty(self, *_a, **_k):
         return self.qty_fields.pop(0) if self.qty_fields else None
 
+    def load_button(self, *_a, **_k):
+        return (1313, 943)
+
     def commit(self, _frame, _els):
         return types.SimpleNamespace(cx=1959, cy=996, verb="Sell", cost="205,013")
 
@@ -52,12 +59,15 @@ class _Harness:
              mock.patch("memory.observed_facts.forget"):
             return sell_down_to(
                 "Tripoli", KEEP,
-                capture_fn=lambda: object(), tap_fn=lambda *a, **k: None,
+                capture_fn=lambda: object(),
+                tap_fn=lambda x, y, *a, **k: self.taps.append((x, y)),
                 omni_fn=lambda _f: [], read_page_fn=self.page,
                 set_bulk_fn=lambda *a, **k: True,
                 type_qty_fn=lambda *a, **k: True, commit_fn=self.commit,
-                overlay_fn=lambda _f: types.SimpleNamespace(is_modal=False, bbox=None),
-                react_fn=lambda *a, **k: None, find_button_fn=lambda *a, **k: (1, 1),
+                find_button_fn=self.load_button,
+                overlay_fn=lambda _f: types.SimpleNamespace(is_modal=self.modal,
+                                                            bbox=None),
+                react_fn=lambda *a, **k: None,
                 ensure_sell_tab_fn=lambda *a, **k: True, settle=0)
 
 
@@ -101,3 +111,32 @@ class TheConfirmedGoodsAreStillSold(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ASwallowedLoadIsRetriedOnce(unittest.TestCase):
+    """A dialog still open is PROOF the Load did not happen — which is what makes one re-tap
+    safe: a Load that had worked would have closed it, so it cannot load the amount twice.
+
+    Live 2026-09-06 at Madeira, frame 400 of trace_barter_cmd_2026-09-06T21-45-01: the Trade
+    Goods Info card open for Pig, the field reading a correct `73 / 1,828`, and the tap at
+    (1313,943) dead on Load. Four seconds later the card was unchanged. The trim aborted with
+    "the amount may not be in the basket" and the whole surplus sailed on unsold.
+    """
+
+    def test_a_dropped_load_is_re_tapped_and_the_good_is_trimmed(self):
+        # open, still-open (Load swallowed), closed on the retry
+        h = _Harness([CANDLE, (500, 600, 920), None,
+                      IRON, None,
+                      MATCH, None], modal=True)
+        out = h.run()
+        self.assertTrue(out["ok"], out.get("reason"))
+        self.assertIn("Candle", out["trimmed"])
+        self.assertEqual(h.taps.count((1313, 943)), 4,
+                         "three goods loaded, and the swallowed one re-tapped once")
+
+    def test_a_dialog_that_will_not_close_still_aborts(self):
+        """Two says the control is not responding, which is a fact for the mission."""
+        h = _Harness([CANDLE, (500, 600, 920), (500, 600, 920)], modal=True)
+        out = h.run()
+        self.assertFalse(out["ok"])
+        self.assertIn("still open after Load", out["reason"])

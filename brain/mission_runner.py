@@ -509,6 +509,51 @@ class MissionRunner:
         except Exception as exc:              # noqa: BLE001 — bookkeeping, not the mission
             logger.debug(f"[mission_runner] could not record progress: {exc}")
 
+    def _settle_gathers_already_aboard(self) -> None:
+        """Close a gather leg whose materials are ALREADY ABOARD — before the sail, not after.
+
+        `_settle_gathers` runs on ARRIVAL, from the market's own per-material read, so a leg
+        that needs nothing is only discovered once the voyage has been spent. Live
+        2026-09-06: the fleet finished at Tripoli, sailed to Barcelona, read the hold, found
+        Iron and Matchlock Gun both already aboard —
+
+            gather:Barcelona settled — Iron, Matchlock Gun already aboard, bought elsewhere
+
+        — and sailed BACK to Tripoli for the Candle. Everything needed to skip it was in the
+        ledger before the fleet left.
+
+        This is the predicate half of `docs/the_plan_is_a_checklist.md`: "an item is done when
+        the WORLD says so". The world had already said so.
+
+        AN UNREAD MATERIAL NEVER CLOSES A LEG. `_materials_aboard` holds what was actually
+        read off a sell grid; a material missing from it is unknown, not absent, and skipping
+        a voyage on an unknown would strand the material — the same rule `_settle_gathers`
+        follows for exactly the same reason.
+        """
+        held = self._materials_aboard
+        if not held:
+            return
+        wanted = self._everything_still_wanted()
+        for leg in self.subtasks:
+            if leg.done or leg.kind != "gather":
+                continue
+            orders = (getattr(leg, "params", None) or {}).get("orders") or {}
+            if not orders:
+                continue
+            covered = []
+            for material in orders:
+                have = held.get(str(material).lower())
+                want = wanted.get(material)
+                if have is None or want is None or have < want:
+                    covered = None
+                    break
+                covered.append(material)
+            if covered:
+                leg.done = True
+                self.completed.append(leg.id)
+                logger.info(f"[mission_runner] {leg.id} needs nothing — "
+                            f"{', '.join(covered)} already aboard, so no voyage is spent")
+
     def _can_run_here(self, leg, state) -> Optional[str]:
         """Why this leg cannot run from where the fleet is, or None if it can.
 
@@ -588,6 +633,14 @@ class MissionRunner:
             # THE MISSION IS OVER, SO SAY SO WHERE THE NEXT RUN WILL LOOK. `mission_progress`
             # survives the process; a mission left recorded as in-flight is what the next
             # launch RESUMES, and resuming skips planning entirely.
+            self._record_progress("finish")
+            logger.info("[mission_runner] every leg is done")
+            return False
+
+        self._settle_gathers_already_aboard()
+        pending = [t for t in self.subtasks if not t.done]
+        if not pending:
+            self.status = DONE
             self._record_progress("finish")
             logger.info("[mission_runner] every leg is done")
             return False

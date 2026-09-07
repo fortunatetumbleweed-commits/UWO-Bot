@@ -555,8 +555,13 @@ def tile_season(frame, cell) -> Optional[str]:
     """
     try:
         import numpy as np
-        a = np.asarray(frame.convert("RGB")).astype(float)
-        cor = a[cell.y1:cell.y1 + 52, max(0, cell.x2 - 64):max(0, cell.x2 - 4)]
+        # CROP FIRST, THEN CONVERT. Converting the whole 2400x1080 frame to read a 60x52
+        # corner allocates ~62MB per tile and nine tiles per grid — measured as a large
+        # slowdown across the functional suite, which reads real grids.
+        box = (max(0, cell.x2 - 64), cell.y1, max(0, cell.x2 - 4), cell.y1 + 52)
+        if box[2] <= box[0] or box[3] <= box[1]:
+            return None
+        cor = np.asarray(frame.crop(box).convert("RGB")).astype(float)
         if cor.size == 0:
             return None
         R, G, B = cor[..., 0], cor[..., 1], cor[..., 2]
@@ -576,8 +581,10 @@ def _tile_has_condition_ribbon(frame, cell) -> bool:
     """True when the tile carries a corner ribbon marking it as CONDITIONAL."""
     try:
         import numpy as np
-        cor = np.asarray(frame.convert("RGB")).astype(float)[
-            cell.y1:cell.y1 + 40, cell.x1:cell.x1 + 40]
+        # Cropped first for the same reason as `tile_season` next door — this one has always
+        # converted the whole frame to read a 40x40 corner.
+        cor = np.asarray(frame.crop((cell.x1, cell.y1, cell.x1 + 40,
+                                     cell.y1 + 40)).convert("RGB")).astype(float)
         if cor.size == 0:
             return False
         R, G, B = cor[..., 0], cor[..., 1], cor[..., 2]
