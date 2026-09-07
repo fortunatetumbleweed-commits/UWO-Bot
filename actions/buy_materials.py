@@ -647,65 +647,34 @@ def ensure_sell_tab(capture_fn, tap_fn, settle: float = 1.2) -> bool:
     # dialog should be checked by the dispatcher, and dispatch to the activity, not being
     # perceived and handled by the activity").
     #
-    # This used to answer the empty-the-cart confirm itself: capture, read a dialog, tap its
-    # OK, capture again. That is a private perceive-decide-act inside a primitive — the very
-    # sub-loop shape the market refactor exists to remove — and it kept a SECOND dialog reader
-    # which was configured differently from the dispatcher's and worse. Live 2026-09-07 at
-    # Faro the game asked "Moving to another menu will empty the cart. Continue?" with 454 Pig
-    # staged; this read found no OK (`_dialog_ok_pos` calls `detect_dialog` without the frame),
-    # concluded "nothing asked us anything", and re-tapped Sell behind the modal. Four cycles,
-    # then "NOTHING CHANGED for 3 ticks" — while the DISPATCHER classifies that same card as
-    # `confirm_dialog` with an `Ok` and the market's own handler would have answered it.
+    # SO THIS TAPS ONCE AND REPORTS. It does not look again, and above all it does not tap
+    # again — because the second tap is what destroyed the evidence.
     #
-    # So this reports and hands back. The dispatcher perceives the card, offers it to the
-    # activity, the activity answers it, and the next tick taps Sell again — which is also
-    # where the retry now comes from, so the one below is no longer the only remedy.
-
-    # NOTHING EXPLAINS THE UNCHANGED SCREEN, SO THE TAP WAS SIMPLY DROPPED — try once more.
+    # Live 2026-09-07 at Faro, frames 8-11 of trace_barter_cmd_2026-09-07T15-00-05, four
+    # times over. 454 Pig were staged in the cart and the hold was 52 units OVER capacity:
     #
-    # This game drops roughly one tap in twenty: measured 3 of 62 in a single mission, all
-    # with nothing to distinguish them from the 59 that landed. One re-tap takes ~5% to
-    # ~0.25%, which is the same arithmetic the dispatcher's own retry rests on.
+    #     frame 8   tap (174,276) on the Sell rail item
+    #     frame 9   the tap LANDED — title 'Sell', and over it the game asked
+    #               "Moving to another menu will empty the cart. Continue?"  [Cancel] [Ok]
+    #     frame 10  `_on_sell_tab` said no, so this logged "nothing asked us anything —
+    #               the tap was dropped" and re-tapped the rail at (68,276)
+    #     frame 11  back on Purchase, no dialog, cart intact
     #
-    # Live 2026-09-04, the SAME point, minutes apart and both from `_sell_menu_item`:
-    #     Faro    frame 66  tap (65,274) -> frames 67, 68, 69 all still the Purchase page
-    #     Madeira frame 170 tap (65,274) -> frame 171 on the Sell page
-    # Identical coordinates and identical sequence; one landed and one did not.
+    # The rail is OUTSIDE the modal, so the re-tap dismissed the card as a Cancel. The
+    # dispatcher DID re-perceive between calls and found nothing, because by then the retry
+    # had cleared the very thing it needed to see. Measured on frame 9: `market_context`
+    # classifies it `confirm_dialog`, `detect_dialog` offers ['Ok', 'Cancel'], and
+    # `game_rules` answers 'Ok'. The whole path worked and was never allowed to run.
     #
-    # Faro's cost the mission: with no Sell tab the owned counts were unreadable all leg, so
-    # the ledger could not mark Pig met, and the buy loop took four whole shelves — 2,736
-    # against a goal of 1,260. The surplus filled the hold, Raisin came home 391 short and
-    # the barter lost a round.
-    #
-    # ONCE, and only on a re-read of the position: the menu may have redrawn, and a stale
-    # point is what tapped dead space between 'Purchase' and 'Sell' at Luanda. Bounded here
-    # rather than looped, because past one retry the screen is refusing rather than dropping.
-    pos = _sell_menu_item(frame) or pos
-    logger.info(f"[market] the Sell tab did not open and nothing asked us anything — "
-                f"the tap was dropped; tapping {pos} once more")
-    tap_fn(*pos)
-    time.sleep(settle)
-    return bool(_on_sell_tab(capture_fn()))
-
-
-def _cart_confirm_ok(frame):
-    """(x, y) of OK on the empty-the-cart confirm, or None. Never a blind OK.
-
-    Answering an unidentified dialog is how a bot confirms a purchase it never chose, so this
-    reads the SAME two words the `abandon_basket_confirm` interruptor keys on before it will
-    touch anything. The button itself comes from DialogModel, the canonical dialog reader.
-    """
-    try:
-        from vision.omniparser import parse_fast_cached
-        words = " ".join((getattr(e, "label", "") or "") for e in parse_fast_cached(frame))
-        low = words.lower()
-        if "cart" not in low or "empty" not in low:
-            return None
-        from actions.market_actions import _dialog_ok_pos
-        return _dialog_ok_pos(frame)
-    except Exception as exc:                       # noqa: BLE001 — a miss is a refusal
-        logger.debug(f"[market] cart-confirm read failed: {exc}")
-        return None
+    # AND THE PREMISE WAS WRONG ANYWAY. "The page did not change" has two causes — the tap
+    # missed, or something is covering it — and the retry enumerated one (Guiding Principle
+    # #3). A dropped tap is still retried, by the NEXT TICK: this returns False, the activity
+    # hands back, the dispatcher re-perceives and dispatches the goal again, and the tap
+    # happens once more against a screen somebody has looked at. That is where the ~5%-to-
+    # ~0.25% arithmetic lives now, and it costs a tick instead of a modal.
+    logger.info("[market] tapped 'Sell' and the page has not changed — handing back rather "
+                "than tapping again, which lands outside anything the game may have raised")
+    return False
 
 
 def _sell_menu_item(frame):

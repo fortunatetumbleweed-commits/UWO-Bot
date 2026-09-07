@@ -2502,9 +2502,10 @@ def dismiss_interruptors(frame=None):
             # red gems. Measured on the two frames, that is exactly the discrimination this
             # needed: the Madeira cart confirm IS a dialog, the London ticker is not.
             #
-            # The Madeira case this was written for is not reopened. It is covered twice
-            # over — by that dispatcher path, and by `ensure_sell_tab._cart_confirm_ok`,
-            # which names that dialog outright.
+            # The Madeira case this was written for is not reopened: the dispatcher path
+            # covers it. It used to be covered twice, by a second reader inside
+            # `ensure_sell_tab` — which is exactly how two readers came to disagree, so that
+            # one is gone and this is the only one.
             break
 
         # Fix D: pre-screen any interruptors whose dismissal has been a
