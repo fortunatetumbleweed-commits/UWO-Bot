@@ -364,6 +364,10 @@ class MissionRunner:
         if runner.status == DONE:
             leg.done = True
             self.completed.append(leg.id)
+            # THE BARTER IS THE PHASE BOUNDARY. Past it the goods are aboard and nothing
+            # upstream may be revisited — which is exactly what the next run needs to know.
+            if leg.kind == "barter":
+                self._record_progress("advance", "sailing_route")
             logger.info(f"[mission_runner] {leg.id} done")
             return
         # TRIMMING IS SUPPORT, NOT A LEG OF THE MISSION (CLAUDE.md: "the task is gather,
@@ -391,6 +395,32 @@ class MissionRunner:
         self.status = FAILED
         self.reason = f"{leg.id}: {runner.reason or 'failed'}"
         logger.warning(f"[mission_runner] {self.reason}")
+
+    def _record_progress(self, what: str, phase: str = "") -> None:
+        """Tell `mission_progress` how far this mission has got. Never fails the mission.
+
+        THE DISPATCHER PATH RECORDED ONLY ITS START, and that was enough to send a fleet back
+        across the map. `mission_runner` advanced the phase to "bartering" when the sail to
+        the village began and then never touched it again — no `sailing_route`, no `finish`
+        — so a mission that ran to completion still LOOKED in-flight to the next launch:
+
+            [barter_command] already bartering for Svear Village (3705s ago) — skipping the
+                             check and the plan, arriving and bartering with what is aboard
+            [barter_command] not at a village (state is 'sub_menu:sell') — sailing to Svear
+
+        Live 2026-09-06: the fleet was standing in Lisboa's market with 3,668 Birch Tree
+        aboard, its barter six rounds finished an hour earlier, and it set sail for Svear
+        Village to barter again. The record is only stale for six hours, so this cannot be
+        left to expire — it is the window in which a relaunch is most likely.
+        """
+        try:
+            from brain import mission_progress
+            if what == "finish":
+                mission_progress.finish()
+            else:
+                mission_progress.advance(phase)
+        except Exception as exc:              # noqa: BLE001 — bookkeeping, not the mission
+            logger.debug(f"[mission_runner] could not record progress: {exc}")
 
     def _can_run_here(self, leg, state) -> Optional[str]:
         """Why this leg cannot run from where the fleet is, or None if it can.
@@ -468,6 +498,10 @@ class MissionRunner:
         pending = [t for t in self.subtasks if not t.done]
         if not pending:
             self.status = DONE
+            # THE MISSION IS OVER, SO SAY SO WHERE THE NEXT RUN WILL LOOK. `mission_progress`
+            # survives the process; a mission left recorded as in-flight is what the next
+            # launch RESUMES, and resuming skips planning entirely.
+            self._record_progress("finish")
             logger.info("[mission_runner] every leg is done")
             return False
 

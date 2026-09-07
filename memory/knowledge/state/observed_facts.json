@@ -4,10 +4,10 @@
     "value": 4952
   },
   "mission_progress": {
-    "at": 1788736663.763031,
+    "at": 1788741233.362768,
     "value": {
       "good": "Birch Tree",
-      "phase": "bartering",
+      "phase": "sailing_route",
       "recipe": {
         "good": "Birch Tree",
         "materials": {
