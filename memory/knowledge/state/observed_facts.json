@@ -4,9 +4,10 @@
     "value": 4952
   },
   "hold": {
-    "at": 1788746490.374475,
+    "at": 1788748063.080884,
     "value": {
-      "pig": 457
+      "pig": 457,
+      "raisin": 110
     }
   },
   "mission_progress": {
@@ -28,7 +29,7 @@
     }
   },
   "settlement": {
-    "at": 1788745770.461542,
-    "value": "Lisboa"
+    "at": 1788747672.300832,
+    "value": "Madeira"
   }
 }

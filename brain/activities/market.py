@@ -286,6 +286,27 @@ class MarketActivity:
                 logger.info(f"[market] the hold already carries {owned}")
         except Exception as exc:
             logger.debug(f"[market] could not seed the ledger: {exc}")
+        finally:
+            # AND BACK TO THE PURCHASE GRID. Reading the hold means SWITCHING TABS, and the
+            # buy round that follows reads whatever page is up: `read_market_page_omni(...,
+            # tab="purchase")` labels what it finds "purchase" without checking, so the Sell
+            # page is read as the shop's stock.
+            #
+            # Live 2026-09-06 at Faro. Frame 69 catches it exactly — the Purchase page with
+            # Pig stamped Sold Out and the restock control right there, `00:15:07 ↻ 11 gems`
+            # — and the tap recorded on that very frame is (174,276), the rail's `+ Sell`.
+            # From then on the "shop" was the hold (Madeira Wine, Keris, Sugar Cane), Pig and
+            # Raisin read as sold out, and the refresh refused with "no restock control
+            # (market fresh or not on Purchase grid)" — the second cause, not the first. Two
+            # ports, two legs, ~1,300 units never bought.
+            #
+            # `buy_to_goal` always did this — "pre-check left us on the Sell tab → back to
+            # Purchase" — and the port dropped the line. In a `finally` because a seed that
+            # THREW still moved the screen.
+            try:
+                self._show_purchase_grid()
+            except Exception as exc:          # noqa: BLE001 — bookkeeping, not the buy
+                logger.debug(f"[market] could not return to the purchase grid: {exc}")
         return led
 
     def _on_sell_page(self, goal: Any, port: str) -> ActivityResult:
