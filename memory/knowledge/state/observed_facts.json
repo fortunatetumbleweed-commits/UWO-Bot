@@ -3,25 +3,6 @@
     "at": 1788736655.7973812,
     "value": 4952
   },
-  "mission_progress": {
-    "at": 1788741233.362768,
-    "value": {
-      "good": "Birch Tree",
-      "phase": "sailing_route",
-      "recipe": {
-        "good": "Birch Tree",
-        "materials": {
-          "Candle": 88,
-          "Iron": 102,
-          "Matchlock Gun": 51
-        },
-        "obtain": 524
-      },
-      "rounds": 7,
-      "rounds_remaining": 7,
-      "village": "Svear Village"
-    }
-  },
   "settlement": {
     "at": 1788736178.2728682,
     "value": "Tripoli"
