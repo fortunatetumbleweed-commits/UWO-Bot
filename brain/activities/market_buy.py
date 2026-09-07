@@ -34,6 +34,11 @@ from loguru import logger
 # One re-stage, then report — `village._MAX_SELECT_ATTEMPTS`, and the remedy in
 # `memory/the-sell-tab-is-where-the-hold-lives`.
 _MAX_STAGE_ATTEMPTS = 1
+# How many ticks to keep looking for a restock control that is not on screen. The
+# usual cause is the live screen having drifted from the tick's, which one
+# re-perceive fixes; a shelf with no control at all is a fact, and three looks is
+# enough to tell them apart without grinding.
+_MAX_RESTOCK_LOOKS = 3
 
 
 def shelf_signature(goods: Mapping) -> tuple:
@@ -189,8 +194,29 @@ def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn) -
                              port=port) or {}
         state.did("refreshed")
         if not res.get("ok"):
+            # A REFUSAL THAT SPENT NOTHING IS ABOUT THIS LOOK, NOT ABOUT THE SHELF.
+            #
+            # `acted=False` means the restock control was not on screen — which is true
+            # whenever the LIVE screen has drifted from the tick's, and the seed's side trip
+            # to the Sell tab is exactly that. Ending the leg on it treats one dropped tap as
+            # a fact about the world.
+            #
+            # Live 2026-09-06 at Madeira: ten refreshes had already succeeded in that same
+            # leg, so the shelf was plainly refreshable. Then a late re-seed switched tabs,
+            # its switch-back tap did not land, and frame 382 shows the Sell panel at the
+            # moment of the refusal. The leg finished with Raisin at 1,100 of 1,755 — which
+            # capped the barter at 6 rounds instead of 7 and left 729 Pig unused.
+            #
+            # So: hand back and look again, BOUNDED. Anything that ACTED still finishes —
+            # the tap went in and a gem may be spent, or the price was not blue gems, and
+            # neither is improved by looking twice.
+            if not res.get("acted") and not state.repeated("restock_look", _MAX_RESTOCK_LOOKS):
+                logger.warning(f"[market] no restock control on screen for {empty[0]!r} — "
+                               "looking again rather than ending the leg")
+                return {"do": "waited", "why": "the restock control was not on screen"}
             return {"do": "finished", "why": f"no refresh for {empty[0]!r} — "
                                              f"{res.get('reason', 'not confirmed')}"}
+        state.landed("restock_look")
         return {"do": "refreshed", "good": empty[0]}
 
     return {"do": "finished", "why": "nothing here is still wanted"}

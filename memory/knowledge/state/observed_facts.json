@@ -3,24 +3,6 @@
     "at": 1788753126.17954,
     "value": 4952
   },
-  "mission_progress": {
-    "at": 1788754702.4414551,
-    "value": {
-      "good": "Bambara Groundnut",
-      "phase": "sailing_route",
-      "recipe": {
-        "good": "Bambara Groundnut",
-        "materials": {
-          "Pig": 218,
-          "Raisin": 218
-        },
-        "obtain": 673
-      },
-      "rounds": 7,
-      "rounds_remaining": 7,
-      "village": "Hutu Village"
-    }
-  },
   "settlement": {
     "at": 1788749155.722743,
     "value": "Faro"

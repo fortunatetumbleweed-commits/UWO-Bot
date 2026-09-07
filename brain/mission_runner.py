@@ -199,6 +199,10 @@ class MissionRunner:
     _leg: Any = None               # the SubTask being worked
     _runner: Any = None            # the step being worked
     _steps: list = field(default_factory=list)   # the steps left in this leg
+    # What the last gather actually READ off the sell grid, per material. An OBSERVATION,
+    # kept because it is what tells us how many rounds the materials can fund — and a
+    # material missing from it is UNREAD, never zero.
+    _materials_aboard: dict = field(default_factory=dict)
 
     # A LEG IS ONE OR MORE STEPS, and the mission advances through them exactly as it
     # advances through legs. `_SailThenLeg` used to nest a sequencer inside a sequencer to
@@ -301,7 +305,86 @@ class MissionRunner:
                 continue
             for material, qty in (getattr(t, "params", None) or {}).get("orders", {}).items():
                 wanted[material] = max(wanted.get(material, 0), int(qty))
-        return wanted
+        return self._capped_to_fundable_rounds(wanted)
+
+    def _capped_to_fundable_rounds(self, wanted: dict) -> dict:
+        """Never want more of a material than the rounds we can actually run will consume.
+
+        A ROUND CONSUMES ALL ITS MATERIALS, so the barter is capped by the SCARCEST one, and
+        every unit of the others bought past that cap is dead weight — money, gems, hold
+        space, and the refreshes that fetched it.
+
+        Live 2026-09-06, the Hutu run: Pig 1,828 bought and 1,099 used; Raisin 1,100 bought
+        and 1,099 used. Raisin capped the barter at 6 rounds, so 729 Pig — 40% of what was
+        bought — was carried to the village and back unused. The plan had bought each
+        material to its own padded 1,755 as though they were independent.
+
+        WHAT THIS DOES NOT FIX, stated because the numbers above are exactly the case it
+        misses: Pig was gathered FIRST, before Raisin's shortfall could be known, so no cap
+        computed here could have seen it coming. This guard bites when the scarce material is
+        gathered first, or when a later leg would top up a material already past the cap.
+        Knowing in ADVANCE that Madeira's Raisin is thin is the season flag's job
+        (`docs/low_stock_as_a_planning_input.md`), and the two are meant to compound.
+
+        Silent when the recipe is unknown: a cap computed from a guess is worse than none.
+        """
+        recipe = self._per_round_needs()
+        if not recipe or not wanted:
+            return wanted
+        rounds = self._rounds_fundable(recipe, still_shopping=set(wanted))
+        if rounds is None:
+            return wanted
+        capped = dict(wanted)
+        for material, per_round in recipe.items():
+            if per_round <= 0:
+                continue
+            key = next((k for k in capped if k.lower() == material.lower()), None)
+            if key is None:
+                continue
+            cap = rounds * per_round
+            if cap < capped[key]:
+                logger.info(f"[mission_runner] {key}: wanting {cap} rather than {capped[key]} "
+                            f"— the scarcest material funds {rounds} round(s), and a round "
+                            "consumes them all")
+                capped[key] = cap
+        return capped
+
+    def _per_round_needs(self) -> dict:
+        """The pinned recipe's per-round materials, or {} when it is not known."""
+        try:
+            from brain import mission_progress
+            cur = mission_progress.current() or {}
+            return {str(m): int(q) for m, q in (cur.get("recipe") or {}).items() if int(q) > 0}
+        except Exception as exc:              # noqa: BLE001 — no cap is better than a wrong one
+            logger.debug(f"[mission_runner] could not read the recipe: {exc}")
+            return {}
+
+    def _rounds_fundable(self, recipe: dict, *, still_shopping: set) -> Optional[int]:
+        """How many rounds the FINISHED materials can run, or None while that is unknown.
+
+        ONLY A MATERIAL WE HAVE STOPPED BUYING IS A CONSTRAINT. One still on the shopping
+        list can still grow, and capping on it makes the cap self-fulfilling — the want falls
+        to what is already aboard, so no more can ever be bought. (Caught by
+        `test_a_material_still_UNDER_the_cap_is_untouched`: Pig at 200 mid-gather would have
+        capped the whole mission to one round.)
+
+        A material we have not READ yet makes the answer unknown, not zero — the same rule
+        the ledger follows, and for the same reason: an unread amount is not an absent one.
+        """
+        held = self._materials_aboard
+        if not held:
+            return None
+        shopping = {str(m).lower() for m in still_shopping}
+        rounds = None
+        for material, per_round in recipe.items():
+            key = str(material).lower()
+            if key in shopping:
+                continue                      # still being gathered — not a constraint yet
+            have = held.get(key)
+            if have is None:
+                return None                   # unread — no honest cap to compute
+            rounds = have // per_round if rounds is None else min(rounds, have // per_round)
+        return rounds
 
     def _settle_gathers(self, met: bool, materials: Optional[dict] = None) -> None:
         """Finish every gather leg whose OWN materials are aboard.
@@ -328,6 +411,10 @@ class MissionRunner:
         boolean over the union — which is why the comment above used to say there was "no
         breakdown to give".
         """
+        for material, st in (materials or {}).items():
+            have = (st or {}).get("have")
+            if have is not None:
+                self._materials_aboard[str(material).lower()] = int(have)
         if met:
             for t in self.subtasks:
                 if not t.done and t.kind == "gather":

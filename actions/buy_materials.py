@@ -361,9 +361,16 @@ def refresh_market(capture_fn=None, tap_fn=None, *, ocr_fn=None, settle: float =
 
     btn = find_restock_button(capture_fn(), ocr_fn)
     if btn is None:
-        return {"ok": False, "reason": "no restock control (market fresh or not on Purchase grid)"}
+        # NOTHING WAS TAPPED AND NO GEM WAS SPENT, so this refusal is about THIS LOOK, not
+        # about the shelf. `acted=False` says so, and lets the caller tell "the control was
+        # not on screen" — true whenever the live screen has drifted from the tick's — from
+        # "this shelf cannot be restocked", which is a fact about the world.
+        return {"ok": False, "acted": False,
+                "reason": "no restock control (market fresh or not on Purchase grid)"}
     if btn.currency != "blue_gem":
-        return {"ok": False, "refused": True, "currency": btn.currency,
+        # ACTED, in the sense that matters: the control WAS found and its price read. Looking
+        # again cannot change a red-gem price, and red gems are real money.
+        return {"ok": False, "refused": True, "acted": True, "currency": btn.currency,
                 "reason": f"restock cost is {btn.currency} (not a confirmed blue gem) — refused"}
     logger.info(f"[refresh] tap ↻ refresh icon @ ({btn.cx},{btn.cy}) (timer was {btn.timer})")
     tap_fn(btn.cx, btn.cy)
@@ -434,7 +441,9 @@ def refresh_market(capture_fn=None, tap_fn=None, *, ocr_fn=None, settle: float =
                         "reason": f"the restock timer came round ({btn.timer})"}
             logger.info(f"[refresh] still empty after waiting out {btn.timer}")
 
-    return {"ok": ok, "currency": "blue_gem",
+    # THE TAP WENT IN, so a gem may be spent whatever the verification says. Never a free
+    # retry: `acted=True` keeps the caller from spending another on a look.
+    return {"ok": ok, "currency": "blue_gem", "acted": True,
             "reason": f"refresh {'ok' if ok else 'NOT confirmed'} ({signal})"}
 
 
