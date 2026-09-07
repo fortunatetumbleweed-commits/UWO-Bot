@@ -31,8 +31,24 @@ _DIALOG_ACTION_VERBS = {
     "purchase", "sell", "buy", "deposit", "withdraw", "recruit",
     "donate", "exchange", "continue", "next", "claim", "collect",
     "depart", "depart now", "set sail", "close", "back",
-    "accept", "skip", "receive", "open", "free", "get",
+    "accept", "skip", "receive", "open",
 }
+# NOT "get", AND NOT "free". They are ordinary English words, so they turn up INSIDE prose,
+# and one word is enough to manufacture a dialog out of a screen that has none.
+#
+# Live 2026-09-06 at Madeira, on the port overworld: an NPC says "You'll have to pay me if you
+# want to get to the New World...". OmniParser split that sentence and returned a standalone
+# 'get' at (1377,672)-(1438,716); it matched here, it was the ONLY anchor
+# (`anchors=('actions',)`), and the whole overworld was reported as a confirmation dialog. The
+# leg died with "a confirmation dialog nobody will answer (options=['get'])".
+#
+# REMOVING THEM COSTS NOTHING, which is what makes this the fix rather than a trade-off:
+# neither word appears in `is_positive` here or in `game_rules._POSITIVE_WORDS`, so a REAL
+# "Get" button was already unanswerable — detecting it only ever produced a stall. The verbs
+# that stay are either answerable (ok, confirm, receive) or shape-defining (no, cancel).
+#
+# The general hazard remains: any single common word can do this, and the detector asks only
+# whether a word matches, never whether a dialog exists.
 
 
 # ── The brown title bar — the game's own layer marker ───────────────
