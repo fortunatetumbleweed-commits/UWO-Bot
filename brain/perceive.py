@@ -22,8 +22,11 @@
 
 from __future__ import annotations
 
+import json
 import time
+from datetime import datetime
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Optional
 
 from loguru import logger
@@ -161,6 +164,54 @@ def _is_top_level_screen(frame) -> bool:
 # straddling the daily reset still catches the real popup.
 _DAILY_NEWS_NO_SUPPRESS_TTL_S: float = 3600.0
 _daily_news_no_suppress_until: float = 0.0
+
+# ── Once a day, and the day is Korean ──────────────────────────────────────────
+#
+# "Daily news shows up exactly one time a day, and it only happens when there is a world
+# change... if it is not a new day (Korean time), and it has been closed before, it should
+# not check it" (user, 2026-09-08).
+#
+# This REPLACES the hour TTL above as the real answer to the same question. A one-hour guess
+# was standing in for a fact the game states plainly: the news is once per Korean day. A
+# session straddling 00:00 KST now sees the new day exactly, and a session that has already
+# met the news cannot raise a second one however the pixels fall — and a FALSE POSITIVE is
+# the expensive failure here (user, 2026-08-22), because dismissing a phantom means tapping
+# a disc on somebody's transaction.
+#
+# NOT A PERFORMANCE FIX, and it was proposed as one. The 285s this check cost on 2026-09-08
+# was the OmniParser pass it was forced to redo because `parse_screen` cleared the frame
+# cache on entry; with that clear gone the whole check measures 0.00s on an already-parsed
+# frame. What is left is the correctness half, which is why this is still here.
+#
+# The world-change half of the rule is not expressible at this layer: interruptors are
+# detected BEFORE the screen is classified, so there is no world here to compare. The day
+# record subsumes it in practice — once the day's news is closed, no world change can raise
+# another one until the Korean date rolls over.
+_DAILY_NEWS_SEEN_PATH = Path("memory/knowledge/state/daily_news_seen.json")
+
+
+def _korean_today() -> str:
+    """Today's date on the game's clock. The schedule is Korean and this machine is not."""
+    from vision.trade_event_reader import KST      # one definition of Korean time, not two
+    return datetime.now(KST).date().isoformat()
+
+
+def _daily_news_already_met_today() -> bool:
+    """Has the news already appeared on today's Korean date?"""
+    try:
+        seen = json.loads(_DAILY_NEWS_SEEN_PATH.read_text()).get("date_kst")
+    except Exception:                              # noqa: BLE001 — absent, empty or corrupt
+        return False
+    return bool(seen) and seen == _korean_today()
+
+
+def _remember_daily_news_met() -> None:
+    """Record that today's news has been raised, so nothing raises a second one."""
+    try:
+        _DAILY_NEWS_SEEN_PATH.parent.mkdir(parents=True, exist_ok=True)
+        _DAILY_NEWS_SEEN_PATH.write_text(json.dumps({"date_kst": _korean_today()}, indent=2))
+    except Exception as exc:                       # noqa: BLE001 — never fail a tick on this
+        logger.debug(f"[perceive] could not record the daily news: {exc}")
 
 
 def _element_under_point(frame, x: int, y: int):
@@ -415,6 +466,14 @@ def _has_daily_news_close_x(frame) -> bool:
             return False
     except Exception as exc:
         logger.debug(f"[perceive] daily_news action-button guard skipped: {exc}")
+
+    # ONCE A KOREAN DAY. Placed after the cheap size/dim test so a popup on screen is still
+    # measured — this declines to CALL it the daily news, and the generic obstruction path
+    # still deals with whatever is actually there.
+    if _daily_news_already_met_today():
+        logger.info("[perceive] a large dimmed popup, but today's daily news has already "
+                    "been met (Korean date) — this is something else")
+        return False
 
     _DAILY_NEWS_CLOSE_SEEN[0] = (close.cx, close.cy)
     logger.info(f"[perceive] daily_news close-X detected @ ({close.cx},{close.cy})")
@@ -1179,6 +1238,11 @@ def _dismiss_close_button(frame, iid: str, position) -> None:
                     f"@ {seen} (KB says {position})")
         tap(int(seen[0]), int(seen[1]))
         _telem("dismiss_close_button", "detected")
+        if iid == "daily_news":
+            # WE HAVE NOW MET TODAY'S NEWS. Recorded at the tap, not at the detection: it is
+            # closing it that spends the day's one appearance, and recording earlier would
+            # blind us to a popup still sitting on the screen.
+            _remember_daily_news_met()
         time.sleep(1.0)
         return
 

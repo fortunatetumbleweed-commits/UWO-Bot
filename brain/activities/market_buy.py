@@ -194,7 +194,12 @@ def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn, s
     els = omni_fn(frame)
     # KEYED BY LOWERED NAME, the shape `buyable_now` and `tile_in_stock` expect — the same
     # `_read` the old loop used, so the readers cannot disagree about what a grid is.
-    rows = read_market_page_omni(frame, tab="purchase", port=port, elements=els) or []
+    # ONLY THE GOODS THIS VISIT IS ABOUT get an LLM call when OCR cannot price them. The
+    # hold's own goods are included because a purchase decision compares against what we
+    # already carry. See `_apply_claude_fallback`.
+    wanted = {str(g).strip().lower() for g in (getattr(goal, "orders", None) or ())}
+    rows = read_market_page_omni(frame, tab="purchase", port=port, elements=els,
+                                 prices_for=wanted or None) or []
     goods = {(str(getattr(g, "name", "")) or "").lower(): g for g in rows}
     if not goods:
         # AN EMPTY READ IS A PERCEIVE FAILURE, not an empty shop — a blocker over the grid,

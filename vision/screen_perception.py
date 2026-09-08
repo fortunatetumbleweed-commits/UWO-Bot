@@ -97,15 +97,20 @@ def parse_screen(
         ScreenInventory.  When OmniParser is unavailable, the inventory
         is empty (raw_elements=[], tagged=[], by_role={}).
     """
-    from vision.omniparser import (
-        get_omniparser, parse_fast_cached, clear_parse_fast_cache,
-    )
+    from vision.omniparser import get_omniparser, parse_fast_cached
     from loguru import logger
 
-    # Cache freshness: clear cross-tick stale entries.  Within this
-    # parse_screen() call, sub-consumers that call parse_fast_cached on
-    # the same frame still hit the cache.
-    clear_parse_fast_cache()
+    # NO CLEAR HERE. It used to call `clear_parse_fast_cache()` on entry, which throws away
+    # a parse OF THE FRAME IN OUR HAND: `_detect_interruptors` runs before classification and
+    # asks `_large_dimmed_popup` about the same frame, so every tick inferred it twice.
+    # Measured on frame 0040 of the 2026-09-08 run: 1 parse for the daily-news check, then
+    # 1 more here, for one picture.
+    #
+    # The staleness it guarded against cannot happen. `parse_fast_cached` keys on `id(frame)`
+    # but stores the FRAME ALONGSIDE the elements and compares `cached_frame is frame`, so a
+    # recycled CPython id misses and evicts rather than returning another frame's elements —
+    # which is the 2026-08-21 world-map-carrying-port-buildings bug, and it is fixed there,
+    # at the lookup, not by clearing on a schedule. The cache is bounded at four entries.
 
     try:
         if not get_omniparser().yolo_available():

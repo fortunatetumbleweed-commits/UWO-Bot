@@ -684,6 +684,13 @@ def _the_persisted_settlement_is_not_the_live_one(tmp_path, monkeypatch):
     from brain import observation
     monkeypatch.setattr(observation, "_SETTLEMENT_PATH",
                         tmp_path / "last_settlement.json", raising=False)
+    # THE SAME HAZARD, THE SAME REMEDY. `_DAILY_NEWS_SEEN_PATH` records the Korean date on
+    # which the day's news was closed, and a suite that wrote it would tell the next live run
+    # the news had already been met — suppressing a real popup for the rest of that day.
+    # Added with the record, before it could repeat the Amsterdam lesson.
+    from brain import perceive as _perceive
+    monkeypatch.setattr(_perceive, "_DAILY_NEWS_SEEN_PATH",
+                        tmp_path / "daily_news_seen.json", raising=False)
     observation.reset()
     yield
     observation.reset()

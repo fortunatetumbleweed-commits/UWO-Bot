@@ -259,6 +259,7 @@ def read_market_page_ocr(
     frame: Image.Image,
     tab: str = "purchase",
     port: str = "unknown",
+    prices_for: Optional[set] = None,
 ) -> list[MarketGood]:
     """
     Read one visible page of the market using EasyOCR.
@@ -310,7 +311,7 @@ def read_market_page_ocr(
     # ── Claude fallback for tiles that OCR failed to parse ─────────────────────
     # Any tile with name=None or price=None is re-tried via Claude Vision.
     # The result fixes the good in-place and saves the example as training data.
-    goods = _apply_claude_fallback(frame, goods, tab)
+    goods = _apply_claude_fallback(frame, goods, tab, prices_for)
 
     logger.info(f"[{tab}] page: {len(goods)} goods parsed")
     return goods
@@ -320,6 +321,7 @@ def _apply_claude_fallback(
     frame: Image.Image,
     goods: list[MarketGood],
     tab: str,
+    prices_for: Optional[set] = None,
 ) -> list[MarketGood]:
     """
     For each good that OCR failed on (missing name or price), crop the tile
@@ -330,10 +332,28 @@ def _apply_claude_fallback(
     for good in goods:
         price = good.buy_price if tab == "purchase" else good.sell_price
         need_name  = good.name is None
-        need_price = price is None and not good.sold_out
+        # A GATED TILE HAS NO PRICE TO READ. Where the price row belongs it shows an unlock
+        # condition, so asking is asking about something that is not on the tile — the same
+        # reason `sold_out` has always been excluded here. Live 2026-09-08 'Dhaka Muslin' was
+        # detected as gated nineteen times and consulted nineteen times.
+        need_price = price is None and not good.sold_out and not good.conditional
 
         if not need_name and not need_price:
             continue
+
+        # AND ONLY FOR A GOOD SOMEBODY ASKED ABOUT. The fallback exists so a candidate can be
+        # PRICED for a profit decision; a good the caller will never look at needs no price
+        # at any cost, let alone an LLM call.
+        #
+        # Live 2026-09-08: 94 consults over one run, and 91 of them priced goods the mission
+        # had no interest in — it wanted Ebony, Textiles and Coral, and paid for Indian
+        # String, Henna, Dhaka Muslin, Cubeb and T'nalak nineteen times each. 59 of the 94
+        # came back `price=None`, because most were tiles no reader can price.
+        #
+        # `None` means "everything", which is what every caller did before this existed.
+        if prices_for is not None and need_price and not need_name:
+            if (good.name or "").strip().lower() not in prices_for:
+                continue
 
         trigger = "no_name" if need_name else "no_price"
         logger.info(
@@ -692,6 +712,7 @@ def read_market_page_omni(
     port: str = "unknown",
     elements=None,
     claude_fallback: bool = True,
+    prices_for: Optional[set] = None,
 ) -> list[MarketGood]:
     """Read one visible market page from OmniParser-detected tiles.
 
@@ -788,7 +809,7 @@ def read_market_page_omni(
         _reconcile_owned_against_the_hold(frame, goods, owned_candidates)
 
     if claude_fallback:
-        goods = _apply_claude_fallback(frame, goods, tab)
+        goods = _apply_claude_fallback(frame, goods, tab, prices_for)
 
     # THE RECOVERY BELONGS TO THE READ, NOT TO ONE CALLER OF IT. This used to live only in
     # `read_market_all_pages`, so the ledger got the tile fallback and `sell_down_to` — which
