@@ -38,10 +38,12 @@ def _call(*, observation, recalled=("Madeira", 21674.0), state="sub_menu"):
         return bml.current_position(COORDS, tries=1)
 
 
-def _obs(settlement, *, scene="port_overworld", age=7560.0):
-    """The live shape: a dated settlement and the scene it was last seen in."""
+def _obs(settlement, *, scene="port_overworld", age=7560.0, departed_from=None):
+    """The live shape. `departed_from` is set exactly when the port is popped, and the
+    settlement is None for the whole voyage — so the two together say which fact is held."""
     return types.SimpleNamespace(last_known_settlement=settlement,
                                  last_known_base_scene=scene,
+                                 departed_from=departed_from,
                                  settlement_age_s=lambda now=None: age)
 
 
@@ -68,16 +70,19 @@ class TheFresherReadingWins(unittest.TestCase):
 class AtSeaTheFleetIsNowhere(unittest.TestCase):
     """Underway, the remembered name is the voyage's ORIGIN, not our position."""
 
-    def test_a_fleet_at_sea_is_placed_nowhere(self):
-        self.assertIsNone(_call(observation=_obs("London", scene="sea")))
-
-    def test_the_cinematic_counts_as_sea_too(self):
-        self.assertIsNone(_call(observation=_obs("London", scene="sea_cinematic")))
+    def test_a_departed_fleet_is_placed_nowhere(self):
+        """No position, but an origin — which is not the same answer."""
+        self.assertIsNone(_call(observation=_obs(None, scene="sea",
+                                                 departed_from="London")))
 
     def test_and_it_does_not_fall_back_to_the_older_record_either(self):
         """Falling through would put the fleet at a port it is demonstrably not at."""
-        self.assertIsNone(_call(observation=_obs("London", scene="sea"),
+        self.assertIsNone(_call(observation=_obs(None, scene="sea", departed_from="London"),
                                 recalled=("Madeira", 30.0)))
+
+    def test_the_map_opened_MID_VOYAGE_is_still_a_voyage(self):
+        self.assertIsNone(_call(observation=_obs(None, scene="world_map",
+                                                 departed_from="London")))
 
 
 class TheWorldMapIsNotADeparture(unittest.TestCase):

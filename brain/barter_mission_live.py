@@ -289,11 +289,14 @@ def current_position(coords: Mapping[str, tuple], fallback=None, tries: int = 3)
             try:
                 from brain import observation as _obs
                 cur = _obs.current()
-                at_sea = (cur is not None
-                          and cur.last_known_base_scene in ("sea", "sea_cinematic"))
-                if at_sea:
-                    logger.info("[mission] the fleet is at sea — placing it nowhere rather "
-                                "than at the port it sailed from")
+                # THE OBSERVATION NOW SAYS WHICH FACT IT HOLDS, so this no longer has to
+                # infer it from the scene. `departed_from` is set exactly when the port was
+                # popped, and `last_known_settlement` is None for the whole voyage — so a
+                # departed fleet is one that has an origin and no position.
+                if cur is not None and cur.departed_from and not cur.last_known_settlement:
+                    logger.info(f"[mission] the fleet sailed from {cur.departed_from!r} and "
+                                "is not in a port — placing it nowhere rather than at its "
+                                "origin")
                     return fallback
                 held = (cur.last_known_settlement if cur else None) \
                     or _obs._ensure_persisted_loaded()

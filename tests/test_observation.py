@@ -112,25 +112,45 @@ class BotObservationTests(unittest.TestCase):
         self.assertEqual(o2.last_action.name, "swipe")
         self.assertEqual(o2.last_action.target, "B")
 
-    def test_is_departed_tracks_base_scene(self):
-        """Bot is departed when on sea/world_map; not when at settlement."""
+    def test_departure_moves_the_port_to_departed_from(self):
+        """WHERE WE ARE and WHERE WE LEFT are two facts, and one field cannot hold both.
+
+        `last_known_settlement` used to carry forward at sea "as the voyage origin", so every
+        reader had to guess from the scene which of the two it was holding. That guess routed
+        an Indonesian mission to the Caribbean on 2026-09-08. The port is popped when the sea
+        becomes the world (user, 2026-08-30), so the name moves to the sea's own field.
+        """
         o1 = obs.update(tick=1, scene=fake_scene("port_overworld"),
                         detected_settlement="Tripoli")
-        self.assertFalse(o1.is_departed)
+        self.assertEqual(o1.last_known_settlement, "Tripoli")
+        self.assertIsNone(o1.departed_from, "we have not been anywhere yet")
 
         o2 = obs.update(tick=2, scene=fake_scene("sea"))
-        self.assertTrue(o2.is_departed)
-        # Settlement carried forward as voyage origin
-        self.assertEqual(o2.last_known_settlement, "Tripoli")
+        self.assertIsNone(o2.last_known_settlement, "we are not in a port any more")
+        self.assertEqual(o2.departed_from, "Tripoli")
 
-        o3 = obs.update(tick=3, scene=fake_scene("world_map"))
-        self.assertTrue(o3.is_departed)
-        self.assertEqual(o3.last_known_settlement, "Tripoli")
+        o3 = obs.update(tick=3, scene=fake_scene("sea"))
+        self.assertEqual(o3.departed_from, "Tripoli", "the origin holds for the voyage")
 
         o4 = obs.update(tick=4, scene=fake_scene("port_overworld"),
                         detected_settlement="Berber")
-        self.assertFalse(o4.is_departed)
         self.assertEqual(o4.last_known_settlement, "Berber")
+        self.assertIsNone(o4.departed_from, "ashore again — the voyage is over")
+
+    def test_the_world_map_moves_nothing(self):
+        """It is a screen opened FROM somewhere. Standing in a port with it up leaves the
+        fleet where it was — which is how the map knows where it was opened from."""
+        obs.update(tick=1, scene=fake_scene("port_overworld"), detected_settlement="Tripoli")
+        o = obs.update(tick=2, scene=fake_scene("world_map"))
+        self.assertEqual(o.last_known_settlement, "Tripoli")
+        self.assertIsNone(o.departed_from)
+
+    def test_the_map_opened_at_sea_still_reads_as_a_voyage(self):
+        obs.update(tick=1, scene=fake_scene("port_overworld"), detected_settlement="Tripoli")
+        obs.update(tick=2, scene=fake_scene("sea"))
+        o = obs.update(tick=3, scene=fake_scene("world_map"))
+        self.assertIsNone(o.last_known_settlement)
+        self.assertEqual(o.departed_from, "Tripoli")
 
     def test_detected_settlement_persists_to_disk(self):
         """A fresh detection writes the settlement to disk."""
@@ -148,7 +168,8 @@ class BotObservationTests(unittest.TestCase):
         obs.reset()    # clear in-memory state, force re-load on next update
         # First update of the new process: bot is at sea, no detected port.
         o = obs.update(tick=1, scene=fake_scene("sea"))
-        self.assertEqual(o.last_known_settlement, "Tripoli")
+        self.assertIsNone(o.last_known_settlement, "at sea we are not in a port")
+        self.assertEqual(o.departed_from, "Tripoli", "but we still know where we sailed from")
         self.assertTrue(o.is_departed)
 
     def test_disk_does_not_overwrite_fresh_detection(self):
