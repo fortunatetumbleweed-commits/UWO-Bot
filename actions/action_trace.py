@@ -48,6 +48,8 @@ def start(name: str) -> Path:
     set_capture_sink(record_capture)
     from vision.omniparser import set_parse_sink
     set_parse_sink(record_parse)
+    from vision.llm_trace import set_sink as set_llm_sink
+    set_llm_sink(record_llm)
     _PARSES.clear()
     _SAVED.clear()
     logger.info(f"[action_trace] recording every capture → {_dir}")
@@ -102,11 +104,33 @@ def record_capture(frame) -> None:
         _in_record = False
 
 
+def record_llm(consult) -> None:
+    """Append one LLM consult to `llm.jsonl`, tagged with the frame it was asked about.
+
+    The frame index is the NEXT one to be written, i.e. the capture the consult is reasoning
+    over — perception consults the model about a frame already captured, so `_idx - 1` is the
+    picture the question was asked of. Recorded rather than logged because a prompt runs to
+    ~12,000 characters and run.log is read by people.
+    """
+    if _dir is None:
+        return
+    try:
+        row = dict(consult)
+        row["frame_idx"] = max(_idx - 1, 0)
+        row["t"] = time.strftime("%H:%M:%S")
+        with (_dir / "llm.jsonl").open("a") as f:
+            f.write(json.dumps(row) + "\n")
+    except Exception as exc:
+        logger.debug(f"[action_trace] record_llm failed: {exc}")
+
+
 def stop() -> Optional[Path]:
     global _dir
     try:
         from capture.adb_capture import set_capture_sink
         set_capture_sink(None)
+        from vision.llm_trace import set_sink as set_llm_sink
+        set_llm_sink(None)
     except Exception:
         pass
     try:

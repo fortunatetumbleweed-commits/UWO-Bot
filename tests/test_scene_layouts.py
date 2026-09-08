@@ -64,20 +64,29 @@ class LoadLayoutTests(unittest.TestCase):
         # Should mention the right-panel structure
         self.assertIn("right edge", out.lower())
 
-    def test_unknown_nav_state_still_returns_universal(self):
-        # Universal chrome is loaded for every nav_state, even unknown
-        # ones — bot's phone OS + server UID at the bottom are always
-        # on screen.
-        out = load_layout("never_seen_state")
-        self.assertIn("Universal chrome", out)
-        self.assertIn("server name", out.lower())
+    def test_the_phone_and_the_account_are_not_described_to_the_model(self):
+        """`_universal.md` was deleted on 2026-09-08. It described the bottom row.
 
-    def test_universal_chrome_in_port_overworld_load(self):
+        Thirty-five lines teaching a 1.5B model about the phone's OS bar and the account
+        watermark, including a literal example of the watermark and a paragraph saying the
+        server 'Atlantic Ocean' and the sea region of that name "can coincide" — which
+        taught the very confusion it was written to prevent. Qwen then reported a fleet
+        "sailing in the Atlantic Ocean" twenty times about a bot standing in a market.
+
+        Those tokens are filtered before the prompt is built now
+        (`_above_the_device_strip`), so naming them here only puts the phrase back in the
+        model's context. See `tests/test_the_llm_is_not_fed_the_phone.py`.
+        """
+        for state in ("never_seen_state", "port_overworld"):
+            out = load_layout(state) or ""
+            with self.subTest(nav_state=state):
+                for planted in ("Universal chrome", "server name", "Wi-Fi", "player UID"):
+                    self.assertNotIn(planted, out)
+
+    def test_a_missing_layer_still_composes(self):
+        """A layout file that is absent must compose to nothing, not break the chain."""
         out = load_layout("port_overworld")
-        # Universal section is prepended
-        self.assertIn("Universal chrome", out)
-        # And the port_overworld content follows
-        self.assertIn("Right edge", out)
+        self.assertIn("Right edge", out, "the scene's own layout still loads")
 
     def test_building_chain_includes_default_and_specific(self):
         # Harbor file exists; chain should produce both _default and harbor

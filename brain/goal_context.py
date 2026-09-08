@@ -84,7 +84,11 @@ class GoalContext:
         parts: List[str] = []
         for g in self.chain():
             tgt = ""
-            for key in ("port", "destination", "building", "goods"):
+            # `goal` last: the older layer's contexts carry a specific target and should
+            # keep reading as 'set_sail @ Lisbon'. A dispatcher goal carries its own str()
+            # instead — 'hold Ebony (~942), Textiles (~1409)' — which is the better summary
+            # when there is no single named target to point at.
+            for key in ("port", "destination", "building", "goods", "goal"):
                 if key in g.target:
                     tgt = f" @ {g.target[key]}"
                     break
@@ -126,12 +130,49 @@ def pop_goal() -> Optional[GoalContext]:
     return _stack.pop()
 
 
+# ── The ambient goal ───────────────────────────────────────────────────────
+#
+# WHAT THE BOT IS WORKING ON IS NOT A NESTED SCOPE. The stack above models action chains
+# that open and close (depart -> recruit crew -> tap Hire); the dispatcher's goal is not
+# like that. It is simply what is current, replaced when the task runner hands over the
+# next work order, and it must be readable from inside a perceive that the dispatcher did
+# not lexically wrap.
+#
+# Published here rather than pushed for a reason: a stack the dispatcher pushed on every
+# tick would have to be popped on every return path in `step`, and an unbalanced pop is a
+# goal that outlives its work — the exact failure `goal()` was written to prevent. An
+# ambient slot cannot leak, because setting it is the whole operation.
+#
+# Origin 2026-09-08: `current_goal()` returned None on every dispatcher tick, because only
+# the older `brain/goals/*` layer ever pushed and that layer does not run the barter path.
+# `consult_obstruction` therefore asked Claude "does this obstruction relate to your goal?"
+# with no goal to relate it to, and answered `irrelevant` 92 times out of 92 in one run —
+# a check that structurally could not go the other way, and 177 cache files all keyed
+# `no_goal`. Nothing is required to publish one: absent an ambient goal this reads None and
+# every consumer behaves exactly as it did before.
+_ambient: Optional[GoalContext] = None
+
+
+def set_ambient_goal(ctx: Optional[GoalContext]) -> None:
+    """Say what the bot is working on now. `None` restores today's goal-less behaviour."""
+    global _ambient
+    _ambient = ctx
+
+
+def ambient_goal() -> Optional[GoalContext]:
+    """The published goal, ignoring the stack. Mostly for tests and diagnostics."""
+    return _ambient
+
+
 def current_goal() -> Optional[GoalContext]:
-    """Return the active GoalContext (top of stack), or None when
-    the stack is empty."""
-    if not _stack:
-        return None
-    return _stack[-1]
+    """The active GoalContext: the top of the stack, else the ambient goal, else None.
+
+    The stack wins because it is narrower — an action chain that opened inside the
+    dispatcher's goal is a better description of the moment than the goal itself.
+    """
+    if _stack:
+        return _stack[-1]
+    return _ambient
 
 
 def goal_stack() -> List[GoalContext]:
@@ -143,7 +184,9 @@ def goal_stack() -> List[GoalContext]:
 def clear_goal_stack() -> None:
     """Reset to empty.  Use sparingly — mainly between independent
     task runs to avoid stale state leaking."""
+    global _ambient
     _stack.clear()
+    _ambient = None          # the ambient goal is exactly the state this must not leak
 
 
 # ── Context manager ───────────────────────────────────────────────────────

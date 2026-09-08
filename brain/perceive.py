@@ -3944,6 +3944,9 @@ def _perceive_uncached(frame=None) -> PerceiveResult:
                 parent_building=parent_building,
                 elements=op_elements,
                 task_hint=task_hint,
+                # so the prompt can drop the phone's own status bar and the account
+                # watermark — see `_above_the_device_strip`
+                frame_h=getattr(frame, "height", 0),
             )
             if l25_result:
                 l25_detail = l25_result.get("detail")

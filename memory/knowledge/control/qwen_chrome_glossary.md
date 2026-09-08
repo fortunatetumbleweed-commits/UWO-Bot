@@ -13,16 +13,12 @@ into your scene description.
 
 ## Top-left strip (most screens)
 
-- **Server name**: the player's game server, almost always `Atlantic Ocean`.
-  This is a server label, NOT a description of actual sailing or geography.
 - **In-game date**: e.g. `Oct 12 1547`. The game world's calendar.
 - **In-game time**: e.g. `23:37`. The game world's clock, NOT real-world time.
 
 ## Other always-on chrome
 
-- **Wi-Fi / connection indicator**: small corner icon, sometimes shown as
-  a percentage. Real-world network signal, NOT game state.
-- **Player level**: `LV 92`. Character level. NOT a Wi-Fi value, NOT a battery.
+- **Player level**: `LV 92`. Character level.
 - **Player nameplate**: small text bar above the avatar (overworld only).
 - **Hamburger menu icon** (☰): top-right of port_overworld; opens main menu.
 
@@ -31,13 +27,8 @@ into your scene description.
 Do NOT combine chrome values into invented narratives. These are common
 mistakes to AVOID:
 
-- BAD: "Wi-Fi at 8.46% battery"  →  the `8.46%` is a connection-strength
-  indicator; `LV 92` is the character level; "battery" is not in the data
-  at all.
-- BAD: "sailing in the Atlantic Ocean server"  →  `Atlantic Ocean` is the
-  server name; the bot may not be sailing at all.
-- BAD: "current time is 23.37"  followed by a story about the time of day
-  influencing gameplay  →  the in-game clock is decoration.
+- BAD: "current time is 23.37" followed by a story about the time of day
+  influencing gameplay → the in-game clock is decoration.
 - BAD: treating any 8-digit-or-larger integer as anything other than gold.
 
 Focus your description on dynamic content: dialogs, NPC speech bubbles,

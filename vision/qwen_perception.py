@@ -349,6 +349,43 @@ regardless of structural classifier hints):
   • temple/cathedral — Donate, Pray, Fortune"""
 
 
+# THE BOTTOM STRIP IS THE PHONE AND THE ACCOUNT, NOT THE GAME (user, 2026-09-08: "that is
+# the player identifier, totally useless for game playing. If we consult LLM, the data must
+# be well perceived and organized, not just random info lumped together").
+#
+# Measured over 40 frames of the 2026-09-08 run: below 0.975 of the frame height there are
+# exactly three things — the phone's clock (`12.33`), its Wi-Fi indicator, and the build /
+# account / server watermark `4.0803.091.322 2608211115 Atlantic Ocean`. 120 tokens, no game
+# content. The band just above it (0.950-0.975) carries real game text — `LV 93`, `Bureau` —
+# so the line goes at 0.975 and nothing of the game falls below it.
+#
+# THIS WAS ALREADY KNOWN AND ALREADY LOST. `qwen_chrome_glossary.md` warned in as many
+# words: 'BAD: "sailing in the Atlantic Ocean server" -> Atlantic Ocean is the server name;
+# the bot may not be sailing at all.' Qwen was told, and in one run it answered "sailing in
+# the Atlantic Ocean" twenty times about a fleet standing in a market in Jakarta. Telling a
+# 1.5B model to disregard noise does not work. Not sending the noise does.
+#
+# BY POSITION, NEVER BY THE STRING. Matching 'Atlantic Ocean' would drop a real place name
+# and would not help a player on another server. The watermark is identified by where it is.
+_DEVICE_STRIP_Y = 0.975
+
+
+def _above_the_device_strip(items, frame_h: int, cy_of) -> list:
+    """Everything the GAME drew. Unknown height means no filtering — we cannot place a line."""
+    if not items or not frame_h:
+        return list(items or ())
+    cut = frame_h * _DEVICE_STRIP_Y
+    kept = []
+    for it in items:
+        try:
+            if cy_of(it) > cut:
+                continue
+        except Exception:                    # noqa: BLE001 — a filter, never a failure
+            pass
+        kept.append(it)
+    return kept
+
+
 def _build_prompt(
     nav_state: str,
     nav_detail: str,
@@ -356,6 +393,7 @@ def _build_prompt(
     parent_building: Optional[str] = None,
     elements: Optional[list] = None,
     task_hint: Optional[str] = None,
+    frame_h: int = 0,
 ) -> str:
     """Build the Qwen L2.5 prompt.
 
@@ -377,7 +415,13 @@ def _build_prompt(
     """
     kb_ctx   = _build_kb_context(nav_state, nav_detail)
     question = _QUESTIONS_BY_STATE.get(nav_state, "What is the current state?")
-    ocr_text = "\n".join(f"  {t}" for t, *_ in ocr_tokens) if ocr_tokens else "  (no OCR tokens)"
+    # POSITIONED AND IN READING ORDER, not a bare word list. This used to drop every
+    # coordinate (`for t, *_ in ocr_tokens`) and hand over the words in OCR's own order —
+    # the same text the elements section carries, minus everything that made it legible.
+    ocr_tokens = _above_the_device_strip(ocr_tokens, frame_h, lambda r: r[3])
+    ocr_text = ("\n".join(f"  ({cx},{cy})  {t}"
+                          for t, _conf, cx, cy in sorted(ocr_tokens, key=lambda r: (r[3], r[2])))
+                if ocr_tokens else "  (no OCR tokens)")
 
     # ── Chrome glossary (Phase 2) ──────────────────────────────────────────
     glossary = _load_chrome_glossary()
@@ -387,6 +431,7 @@ def _build_prompt(
 
     # ── OmniParser elements (Phase 1) ──────────────────────────────────────
     elements_section = ""
+    elements = _above_the_device_strip(elements, frame_h, lambda e: getattr(e, "cy", 0))
     if elements:
         serialised = _serialise_elements(elements)
         if serialised:
@@ -501,6 +546,16 @@ def _call_mlx(prompt: str) -> Optional[str]:
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
+def _record_consult(nav_state, question, prompt, raw, elapsed, **extra) -> None:
+    """Hand the consult to the trace, where the viewer's LLM tab reads it."""
+    try:
+        from vision.llm_trace import record
+        record("qwen2.5-1.5b-instruct-4bit", question, prompt, raw,
+               elapsed_s=elapsed, nav_state=nav_state, **extra)
+    except Exception:                    # noqa: BLE001 — a trace is never load-bearing
+        pass
+
+
 def qwen_perceive(
     nav_state: str,
     nav_detail: str,
@@ -508,6 +563,7 @@ def qwen_perceive(
     parent_building: Optional[str] = None,
     elements: Optional[list] = None,
     task_hint: Optional[str] = None,
+    frame_h: int = 0,
 ) -> Optional[dict]:
     """
     L2.5 reasoning over OCR tokens + OmniParser elements + KB context.
@@ -540,17 +596,31 @@ def qwen_perceive(
     prompt = _build_prompt(
         nav_state, nav_detail, ocr_tokens,
         parent_building=parent_building, elements=elements,
-        task_hint=task_hint,
+        task_hint=task_hint, frame_h=frame_h,
     )
+    # WHAT WE ACTUALLY ASKED, in the log (user, 2026-09-08). `prompt=14516 chars` said a
+    # consult happened and nothing about what it was told, so the 'sailing in the Atlantic
+    # Ocean' answers could only be explained by rebuilding the prompt offline. The question
+    # is one line and belongs here; the whole prompt goes to the trace, because run.log is
+    # read by people and a prompt is ~12,000 characters.
+    question = _QUESTIONS_BY_STATE.get(nav_state, "What is the current state?")
     logger.info(
         f"[qwen] call: nav_state={nav_state!r} detail={nav_detail!r} "
         f"parent={parent_building!r} prompt={len(prompt)} chars "
         f"ocr={len(ocr_tokens) if ocr_tokens else 0} tokens"
+        + (f" hint={task_hint!r}" if task_hint else "")
     )
+    logger.info(f"[qwen] asked: {question}")
 
     raw = _call_mlx(prompt)
 
     elapsed = _time.monotonic() - t_start
+    # THE ANSWER IN FULL, not a 200-character head. It is one short JSON object, and the
+    # times it matters most are exactly the times it parses badly or says something absurd.
+    logger.info(f"[qwen] answered in {elapsed:.1f}s: {raw!r}" if raw is not None
+                else f"[qwen] answered in {elapsed:.1f}s: None")
+    _record_consult(nav_state, question, prompt, raw, elapsed,
+                    detail=nav_detail, task_hint=task_hint)
     if raw is None:
         logger.warning(
             f"[qwen] call returned None after {elapsed:.1f}s "

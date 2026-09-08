@@ -155,6 +155,18 @@ def load_layout(
     # at bottom-left, player UID + server at bottom-right).  Always
     # prepend so Qwen knows to ignore these as noise regardless of
     # which scene it's reasoning about.
+    # `_universal.md` DESCRIBED A ROW WE NO LONGER SEND (2026-09-08). It spent 35 lines
+    # teaching the model about the phone's OS bar and the account watermark — including a
+    # literal example of the watermark, a list of server names, and a paragraph explaining
+    # that the server 'Atlantic Ocean' is distinct from the sea region of the same name but
+    # that the two "can coincide". That paragraph taught the very confusion it was written
+    # to prevent, and Qwen made it twenty times in one run about a fleet standing in a
+    # market. Those tokens are now filtered before the prompt is built — see
+    # `_above_the_device_strip` in vision/qwen_perception.py — so describing them is worse
+    # than silence: naming a phrase to forbid it still puts the phrase in the context.
+    #
+    # The read stays. A layout file that is absent must compose to nothing, and this is the
+    # only place that would notice.
     universal = _read(_LAYOUT_ROOT / "_universal.md")
     if universal:
         parts.append(universal)

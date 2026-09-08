@@ -162,6 +162,12 @@ def read_market_tile(
         sell_hint=_SELL_HINT if tab == "sell" else "",
     )
     result = _call_claude(crop, prompt, _MARKET_TILE_SYSTEM)
+    try:                                 # the trace viewer's LLM tab reads every consult
+        from vision.llm_trace import record as _record
+        _record("claude (market tile)", f"Read this {tab} tile", prompt, result,
+                tab=tab, ocr_name=local_name)
+    except Exception:                    # noqa: BLE001 — a trace is never load-bearing
+        pass
     if result is None:
         return None
 

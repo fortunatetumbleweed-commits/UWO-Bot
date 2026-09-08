@@ -131,6 +131,18 @@ class ActivityResult:
         return self.status == FINISHED
 
 
+def _did(result) -> Optional[str]:
+    """What the activity last did, from its own report. None when it did not say.
+
+    Activities already record this — `MarketState.did(...)` puts it in `observed['did']` —
+    so nothing new has to be threaded through to read it.
+    """
+    try:
+        return (getattr(result, "observed", None) or {}).get("did") or None
+    except Exception:                                # noqa: BLE001 — a label, never a failure
+        return None
+
+
 class Activity(Protocol):
     """A world the bot can be resumed in and do work in.
 
@@ -487,6 +499,33 @@ class Dispatcher:
                    if intent_name in (affordances(w, self._activities) or ())}
         return first_hop_toward(where, targets, self._activities)
 
+    def _publish_goal(self, doing: Optional[str] = None) -> None:
+        """Say what the bot is working on, so perception can read it.
+
+        THE DISPATCHER IS THE ONLY LAYER THAT KNOWS BOTH. The task runner owns the work
+        order and the activity owns the screen; only this sees the pair, which is why the
+        goal is published from here and nowhere else.
+
+        `doing` is the ACTION intent — the thing the activity last did — and it is what
+        makes the goal usable for reading a screen. "hold Ebony, Textiles, Coral" says why
+        we are in the market; "tapped Sell" says what the dialog now in front of us is. It
+        defaults to None, and a None reads exactly as today's behaviour did.
+        """
+        try:
+            from brain.goal_context import GoalContext, set_ambient_goal
+        except Exception as exc:                     # noqa: BLE001 — never fail a tick on this
+            logger.debug(f"[dispatch] could not publish the goal: {exc}")
+            return
+        if self.goal is None:
+            set_ambient_goal(None)
+            return
+        target = {"goal": str(self.goal)}
+        if doing:
+            target["doing"] = doing
+        if self._standing_in:
+            target["where"] = str(self._standing_in)
+        set_ambient_goal(GoalContext(intent=type(self.goal).__name__, target=target))
+
     def _is_a_covering_screen(self, where) -> bool:
         """Is this a screen drawn OVER the world rather than a world of its own?"""
         found = self._activities.get(where)
@@ -576,6 +615,11 @@ class Dispatcher:
         # expectation it genuinely holds, at the one moment it holds it. And it costs nothing
         # extra: `perceive` reads THROUGH the repository now, so a step captures once and
         # every reader in that step shares it.
+        # WHAT WE ARE WORKING ON, said before anything looks. `_detect_interruptors` consults
+        # Claude about a dialog and asks whether it relates to the goal; without this it was
+        # asking with no goal to relate it to. See `_publish_goal`.
+        self._publish_goal(_did(self.last))
+
         try:
             from actions.perception import screen
             screen().expect_changed("the dispatcher is taking a fresh look")
@@ -1157,6 +1201,10 @@ class Dispatcher:
         village.
         """
         self.last = result
+        # THE LOOK BELOW SHOWS WHAT THE ACTION PRODUCED, so it is read under the action that
+        # produced it — a result card is only recognisable as one when "tapped Sell" is on
+        # the record.
+        self._publish_goal(_did(result))
         if result.status == UNRECOGNISED:
             logger.info("[dispatch] activity is lost — perceiving, transitioning, refreshing")
             state = self._regain_bearings(state)

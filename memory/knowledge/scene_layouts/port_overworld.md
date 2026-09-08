@@ -67,12 +67,6 @@ docked at a port.
 - **Other player characters and their guild tags:** can appear in the
   3D area at variable positions.
 
-### Bottom row
-
-See `_universal.md` — phone OS bar (bottom-left) and player UID +
-server name (bottom-right) are present on every screen and are noise
-for scene-state reasoning.
-
 ### Event banners (any 3D-overworld screen)
 
 - **Top-center, cy ≈ 100–150:** server-wide event tickers.  Examples:

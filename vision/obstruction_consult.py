@@ -347,6 +347,17 @@ def consult_obstruction(
         f"({len(tokens_in_bbox)} tokens in bbox)"
     )
     result = _call_claude(prompt, frame)
+    # The LLM tab of the trace viewer reads every consult from one place; this is the other
+    # model we ask. See `vision/llm_trace.py`.
+    try:
+        from vision.llm_trace import record as _record
+        _record("claude (obstruction consult)",
+                f"What is this {obstruction.kind} and how do we get past it?",
+                prompt, (result or {}).get("raw_text") or result,
+                goal_intent=goal_intent, kind=obstruction.kind,
+                structural_hash=structural_hash)
+    except Exception:                    # noqa: BLE001 — a trace is never load-bearing
+        pass
     if result is None or result.get("parsed") is None:
         # Save the failed attempt to the training log so we can review
         # what went wrong even if no analysis was produced.
