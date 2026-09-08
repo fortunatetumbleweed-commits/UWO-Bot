@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase screen at a port is showing available trade goods (Gold, Coral, Pearl Oyster, Coconut, Palm Oil, Pituri) with their prices, stock levels, and purchase conditions — Palm Oil is sold out and Pituri requires an unlock condition to be met before purchase.",
+  "full_text": "00:13:46 | 60 diamonds refresh. Coral (Jewelry) x231 — 116% 14,348 gold. Pearl Oyster (Food) x535 — Specialties — 97% 605 gold. Palm Oil (Seasoning) — Sold Out — 110% 203 gold. Pituri (Luxuries) x316 — Specialties — Unlock Condition (0/1).",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "126eb6740e763a41",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T04:13:11.674526+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The Purchase screen at a port is showing available trade goods (Gold, Coral, Pearl Oyster, Coconut, Palm Oil, Pituri) with their prices, stock levels, and purchase conditions — Palm Oil is sold out and Pituri requires an unlock condition to be met before purchase.",
+    "full_text": "00:13:46 | 60 diamonds refresh. Coral (Jewelry) x231 — 116% 14,348 gold. Pearl Oyster (Food) x535 — Specialties — 97% 605 gold. Palm Oil (Seasoning) — Sold Out — 110% 203 gold. Pituri (Luxuries) x316 — Specialties — Unlock Condition (0/1).",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

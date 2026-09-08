@@ -1,0 +1,21 @@
+{
+  "purpose": "The cargo hold is completely full (4,952/4,952) so the incoming 379 Gambara Groundnuts from a barter trade cannot be stored and will be discarded unless space is freed first",
+  "full_text": "Insufficient Empty Space. Cannot receive item due to insufficient space. Please organize your Cargo Hold. Unreceived trade goods will be discarded. Received Trade Goods: 379 (groundnuts). Cargo: 4,952/4,952 (100%) — current cargo contents: 223, 213, 1,812, 2,704. Receive.",
+  "dismissal": "tap_accept",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "5d730dd1ee9de211",
+  "goal_intent": null,
+  "cached_at": "2026-09-07T22:39:22.813854+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The cargo hold is completely full (4,952/4,952) so the incoming 379 Gambara Groundnuts from a barter trade cannot be stored and will be discarded unless space is freed first",
+    "full_text": "Insufficient Empty Space. Cannot receive item due to insufficient space. Please organize your Cargo Hold. Unreceived trade goods will be discarded. Received Trade Goods: 379 (groundnuts). Cargo: 4,952/4,952 (100%) — current cargo contents: 223, 213, 1,812, 2,704. Receive.",
+    "dismissal": "tap_accept",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

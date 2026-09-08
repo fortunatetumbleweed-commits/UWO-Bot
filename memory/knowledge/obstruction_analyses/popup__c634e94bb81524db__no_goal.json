@@ -1,0 +1,21 @@
+{
+  "purpose": "A merchant NPC (Edmund Gilbert) is offering to negotiate the purchase price of a Kris weapon down by 21.5% (from 238,128 to 174,824 gold), with a 76.2% chance of negotiation success and several attempts remaining",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts: [7 attempts shown]. Price: 238,128 → 174,824 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Edmund Gilbert says: Hmm, I think we can purchase this for 21.5% less. Would you like to negotiate?",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "c634e94bb81524db",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T13:26:40.368980+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A merchant NPC (Edmund Gilbert) is offering to negotiate the purchase price of a Kris weapon down by 21.5% (from 238,128 to 174,824 gold), with a 76.2% chance of negotiation success and several attempts remaining",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts: [7 attempts shown]. Price: 238,128 → 174,824 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Edmund Gilbert says: Hmm, I think we can purchase this for 21.5% less. Would you like to negotiate?",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase panel showing available trade goods (Mace, Ebony, Rosewood, T'nalak) at this port, with prices, stock levels, and specialty bonuses — T'nalak is locked behind an unlock condition",
+  "full_text": "Purchase screen — Timer: 00:02:03 | Diamond tickets: 9 | Mace (Spices) 103 units, Specialties 103% price 1,311 | Ebony (Wares) Specialties 96% price 1,248 | Rosewood (Wares) 221 units 91% price 677 | T'nalak (Fabrics) 208 units, Specialties — Unlock Condition (0/1)",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "92c98cf62bb77768",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T04:22:55.996998+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase panel showing available trade goods (Mace, Ebony, Rosewood, T'nalak) at this port, with prices, stock levels, and specialty bonuses — T'nalak is locked behind an unlock condition",
+    "full_text": "Purchase screen — Timer: 00:02:03 | Diamond tickets: 9 | Mace (Spices) 103 units, Specialties 103% price 1,311 | Ebony (Wares) Specialties 96% price 1,248 | Rosewood (Wares) 221 units 91% price 677 | T'nalak (Fabrics) 208 units, Specialties — Unlock Condition (0/1)",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

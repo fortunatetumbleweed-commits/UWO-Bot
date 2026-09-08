@@ -1,0 +1,21 @@
+{
+  "purpose": "Market vendor is asking the player to confirm spending 2 Dia (premium currency) to replenish a sold-out or low-stock trade good back to its full quantity of 50",
+  "full_text": "Replenish Stock? (Does not affect market price) Remaining: 50/50. Cost: 2 Dia. Cancel | OK",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "b0b4e0f15987f5cd",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T16:33:14.299815+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Market vendor is asking the player to confirm spending 2 Dia (premium currency) to replenish a sold-out or low-stock trade good back to its full quantity of 50",
+    "full_text": "Replenish Stock? (Does not affect market price) Remaining: 50/50. Cost: 2 Dia. Cancel | OK",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "A player profile card for 'TaylorFP' (Season 1 Admiral of Myth rank) is displayed, showing their accumulated stats: Sea Exploration ×780, Explore Land ×1,517, Fishing ×726, and Cannot Salvage ×140 — triggered by tapping on this player's ship near Hutu Village",
+  "full_text": "Season 1 Admiral of Myth — TaylorFP — Sea Exploration ×780 | Explore Land ×1,517 | Fishing ×726 | Cannot Salvage ×140 | Pasha Garrison | Pasha Wa[ters]",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "c554cee5598bb249",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T00:31:26.022570+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "A player profile card for 'TaylorFP' (Season 1 Admiral of Myth rank) is displayed, showing their accumulated stats: Sea Exploration ×780, Explore Land ×1,517, Fishing ×726, and Cannot Salvage ×140 — triggered by tapping on this player's ship near Hutu Village",
+    "full_text": "Season 1 Admiral of Myth — TaylorFP — Sea Exploration ×780 | Explore Land ×1,517 | Fishing ×726 | Cannot Salvage ×140 | Pasha Garrison | Pasha Wa[ters]",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

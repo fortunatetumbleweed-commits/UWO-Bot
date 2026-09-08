@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade sell screen showing available cargo goods (Pig livestock and Raisin luxuries) with their quantities, market rates, and profit/loss figures before executing a sale",
+  "full_text": "Raisin Luxuries 239 units at 103% market rate, price 55 (-531)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "471a3839ef277400",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T00:06:29.491101+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Trade sell screen showing available cargo goods (Pig livestock and Raisin luxuries) with their quantities, market rates, and profit/loss figures before executing a sale",
+    "full_text": "Raisin Luxuries 239 units at 103% market rate, price 55 (-531)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "A trade negotiation prompt where pirate captain Thomas Tew offers a 21.5% discount on a purchase, requiring the player to decide whether to attempt bargaining with a 76.2% success rate at a reduced price of 2,006,400 gold (down from 2,737,368)",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts [multiple chances shown]. 2,737,368 → 2,006,400 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Thomas Tew: For this product, you can get a 21.5% discount. Do you want to bargain? Options: No | Use 1 chance | Use all remaining chances.",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "ba3e9b67b8eaa8ac",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T17:59:28.158873+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A trade negotiation prompt where pirate captain Thomas Tew offers a 21.5% discount on a purchase, requiring the player to decide whether to attempt bargaining with a 76.2% success rate at a reduced price of 2,006,400 gold (down from 2,737,368)",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts [multiple chances shown]. 2,737,368 → 2,006,400 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Thomas Tew: For this product, you can get a 21.5% discount. Do you want to bargain? Options: No | Use 1 chance | Use all remaining chances.",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

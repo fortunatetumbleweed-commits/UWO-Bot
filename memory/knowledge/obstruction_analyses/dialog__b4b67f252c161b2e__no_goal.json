@@ -1,0 +1,21 @@
+{
+  "purpose": "A confirmation dialog asking the player to spend 37 Azoth (premium currency) to replenish a trade good's stock back toward its cap of 50, with 47 of 50 units remaining",
+  "full_text": "Replenish Stock? (Does not affect market price) Remaining: 47/50. Cost: 37 Azoth. Cancel | OK",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "b4b67f252c161b2e",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T16:45:25.928971+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "A confirmation dialog asking the player to spend 37 Azoth (premium currency) to replenish a trade good's stock back toward its cap of 50, with 47 of 50 units remaining",
+    "full_text": "Replenish Stock? (Does not affect market price) Remaining: 47/50. Cost: 37 Azoth. Cancel | OK",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

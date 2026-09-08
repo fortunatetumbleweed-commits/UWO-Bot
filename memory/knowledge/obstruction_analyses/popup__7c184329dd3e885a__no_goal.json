@@ -1,0 +1,21 @@
+{
+  "purpose": "A trade item card for Coral (Jewelry) is highlighted in the Sell screen, showing its quantity (231), market rate (102%), and current price of 12,460 gold with a profit of 2,307 gold",
+  "full_text": "Coral Jewelry 231 102% 12,460 (2,307)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "7c184329dd3e885a",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T05:46:54.194977+00:00",
+  "visit_count": 8,
+  "raw_api_response": {
+    "purpose": "A trade item card for Coral (Jewelry) is highlighted in the Sell screen, showing its quantity (231), market rate (102%), and current price of 12,460 gold with a profit of 2,307 gold",
+    "full_text": "Coral Jewelry 231 102% 12,460 (2,307)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

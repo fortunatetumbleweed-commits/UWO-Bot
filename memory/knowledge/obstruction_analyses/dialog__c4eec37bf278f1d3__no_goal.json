@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade Goods Info dialog showing Coral (Jewelry) sell details, including current market price of 820, a surcharge of +228, and a final per-unit sale price of 1,048 for a stack of 1,537 units",
+  "full_text": "Trade Goods Info — Coral (Jewelry) [qty: 1537]. Description: A sea creature that lives on underwater rocks. Comes in various colors from brown to much more eye-catching hues. Prices — Current Price: 820 | Max Price: 857 | Min Price: 341. Calculation: Sales Cost 820, Tax 0, Surcharge +228, Per Price 1,048. Quantity: 1/1,537. Final Sales Price: 1,048. [Cancel] [Load]",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "c4eec37bf278f1d3",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T18:03:44.183724+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade Goods Info dialog showing Coral (Jewelry) sell details, including current market price of 820, a surcharge of +228, and a final per-unit sale price of 1,048 for a stack of 1,537 units",
+    "full_text": "Trade Goods Info — Coral (Jewelry) [qty: 1537]. Description: A sea creature that lives on underwater rocks. Comes in various colors from brown to much more eye-catching hues. Prices — Current Price: 820 | Max Price: 857 | Min Price: 341. Calculation: Sales Cost 820, Tax 0, Surcharge +228, Per Price 1,048. Quantity: 1/1,537. Final Sales Price: 1,048. [Cancel] [Load]",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

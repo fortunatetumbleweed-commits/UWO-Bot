@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase panel is open at a port market, displaying available trade goods (Sugar, Keris, Raisin, Wooden Statue) with their categories, stock quantities, price indices, and base prices for the player to buy cargo.",
+  "full_text": "00:15:10 | 66 diamonds | Sugar (Seasoning) stock 232 — Specialties 101% price 863 | Keris (Weapons) stock 118 — 102% price 982 | Raisin (Luxuries) — 100% price 570 | Wooden Statue (Artwork) stock 143 — 95% price 10,645",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "4f42f226ddbec46b",
+  "goal_intent": null,
+  "cached_at": "2026-09-07T23:51:09.144396+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase panel is open at a port market, displaying available trade goods (Sugar, Keris, Raisin, Wooden Statue) with their categories, stock quantities, price indices, and base prices for the player to buy cargo.",
+    "full_text": "00:15:10 | 66 diamonds | Sugar (Seasoning) stock 232 — Specialties 101% price 863 | Keris (Weapons) stock 118 — 102% price 982 | Raisin (Luxuries) — 100% price 570 | Wooden Statue (Artwork) stock 143 — 95% price 10,645",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "A trade item detail tooltip or highlight overlay is showing the Coral (Jewelry) goods card with its current market sell price of 15,171 gold (profit 3,893) at 97% market rate, with 169 units available in cargo",
+  "full_text": "Coral - Jewelry - 169 units - 97% market rate - sell price 15,171 gold (profit 3,893)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "fd05bf6cd281f5fd",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T15:29:12.170021+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "A trade item detail tooltip or highlight overlay is showing the Coral (Jewelry) goods card with its current market sell price of 15,171 gold (profit 3,893) at 97% market rate, with 169 units available in cargo",
+    "full_text": "Coral - Jewelry - 169 units - 97% market rate - sell price 15,171 gold (profit 3,893)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

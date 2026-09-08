@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase panel showing available trade goods (Sugar, Keris, Raisin, Wooden Statue) with their prices, stock quantities, and trade percentages at the current port",
+  "full_text": "Purchase screen — Timer: 00:16:17, Diamonds: 71. Sugar (Seasoning, Specialties) stock 232, 101%, price 863. Keris (Weapons) stock 118, 102%, price 982. Raisin (Luxuries) stock 110, 100%, price 570. Wooden Statue (Artwork) stock 143, 95%, price 10,645.",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "c86417f91fb71881",
+  "goal_intent": null,
+  "cached_at": "2026-09-07T23:50:01.260983+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase panel showing available trade goods (Sugar, Keris, Raisin, Wooden Statue) with their prices, stock quantities, and trade percentages at the current port",
+    "full_text": "Purchase screen — Timer: 00:16:17, Diamonds: 71. Sugar (Seasoning, Specialties) stock 232, 101%, price 863. Keris (Weapons) stock 118, 102%, price 982. Raisin (Luxuries) stock 110, 100%, price 570. Wooden Statue (Artwork) stock 143, 95%, price 10,645.",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

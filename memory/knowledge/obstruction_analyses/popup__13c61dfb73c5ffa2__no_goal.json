@@ -1,0 +1,21 @@
+{
+  "purpose": "Mini-map and navigation panel showing ship position, wind/current indicators, and seasonal/time-of-day conditions while sailing in the Atlantic Ocean",
+  "full_text": "HW 26.5 Patron TaylorFP 2v 1↑ Dry Season May Daytime",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "13c61dfb73c5ffa2",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T17:35:13.089551+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Mini-map and navigation panel showing ship position, wind/current indicators, and seasonal/time-of-day conditions while sailing in the Atlantic Ocean",
+    "full_text": "HW 26.5 Patron TaylorFP 2v 1↑ Dry Season May Daytime",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

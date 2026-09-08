@@ -1,0 +1,21 @@
+{
+  "purpose": "A timed-event notice warning the player that Starry Exploration Area Maps expire on 9/8 (Tuesday) at 23:59 UTC+9 and must be used before the deadline.",
+  "full_text": "Starry Exploration Area Map can only be used until 9/8 (Tue) 23:59 (UTC+9). Please use them all before the deadline.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "5579603b432e3e41",
+  "goal_intent": null,
+  "cached_at": "2026-09-07T23:43:22.691866+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "A timed-event notice warning the player that Starry Exploration Area Maps expire on 9/8 (Tuesday) at 23:59 UTC+9 and must be used before the deadline.",
+    "full_text": "Starry Exploration Area Map can only be used until 9/8 (Tue) 23:59 (UTC+9). Please use them all before the deadline.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

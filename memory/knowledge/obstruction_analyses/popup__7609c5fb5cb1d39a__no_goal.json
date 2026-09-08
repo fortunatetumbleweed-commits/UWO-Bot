@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase screen at a port marketplace is showing available trade goods (Mace, Ebony, Rosewood, T'nalak) with their prices, stock levels, and specialty bonuses — Ebony is sold out and T'nalak requires an unlock condition to be met before it can be purchased",
+  "full_text": "00:26:42 | 116 diamonds. Mace (Spices) 103 stock — Specialties 103% price 1,311. Ebony (Wares) Sold Out — Specialties 96% price 1,248. Rosewood (Wares) 221 stock — 91% price 677. T'nalak (Fabrics) 208 stock — Specialties — Unlock Condition (0/1).",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "7609c5fb5cb1d39a",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T04:28:15.901387+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase screen at a port marketplace is showing available trade goods (Mace, Ebony, Rosewood, T'nalak) with their prices, stock levels, and specialty bonuses — Ebony is sold out and T'nalak requires an unlock condition to be met before it can be purchased",
+    "full_text": "00:26:42 | 116 diamonds. Mace (Spices) 103 stock — Specialties 103% price 1,311. Ebony (Wares) Sold Out — Specialties 96% price 1,248. Rosewood (Wares) 221 stock — 91% price 677. T'nalak (Fabrics) 208 stock — Specialties — Unlock Condition (0/1).",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

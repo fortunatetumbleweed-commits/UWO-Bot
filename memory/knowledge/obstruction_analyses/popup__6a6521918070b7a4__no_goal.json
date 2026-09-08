@@ -1,0 +1,21 @@
+{
+  "purpose": "A trade item card for Coral (Jewelry category, quantity 169) is highlighted in the Sell screen, showing its current market price of 11,947 gold with a demand indicator of 669 and a 97% demand rate",
+  "full_text": "Coral Jewelry 169 units — 97% demand, price 11,947 (669)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "6a6521918070b7a4",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T17:01:31.190451+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A trade item card for Coral (Jewelry category, quantity 169) is highlighted in the Sell screen, showing its current market price of 11,947 gold with a demand indicator of 669 and a 97% demand rate",
+    "full_text": "Coral Jewelry 169 units — 97% demand, price 11,947 (669)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

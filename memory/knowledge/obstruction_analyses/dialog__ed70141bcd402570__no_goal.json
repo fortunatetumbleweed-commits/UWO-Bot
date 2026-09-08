@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase receipt confirming a completed trade transaction, showing cost breakdown (318,464 base + 15,360 tax − 60,672 discount = 273,152 total) deducted from the player's gold balance",
+  "full_text": "Result — Purchase Cost: 318,464 | Tax: 15,360 | Discount: -60,672 | Total Amount: 273,152 | Balance: 70,954,080,982 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "ed70141bcd402570",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T17:08:35.752810+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase receipt confirming a completed trade transaction, showing cost breakdown (318,464 base + 15,360 tax − 60,672 discount = 273,152 total) deducted from the player's gold balance",
+    "full_text": "Result — Purchase Cost: 318,464 | Tax: 15,360 | Discount: -60,672 | Total Amount: 273,152 | Balance: 70,954,080,982 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

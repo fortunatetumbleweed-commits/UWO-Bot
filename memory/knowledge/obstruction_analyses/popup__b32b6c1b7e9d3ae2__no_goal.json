@@ -1,0 +1,21 @@
+{
+  "purpose": "Another player's ship (TaylorFP, rank Patron) is passing nearby on the open ocean, triggering a player encounter overlay with wind/current readout",
+  "full_text": "C/HW 27.1 Patron TaylorFP Dry",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "b32b6c1b7e9d3ae2",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T17:33:32.480269+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Another player's ship (TaylorFP, rank Patron) is passing nearby on the open ocean, triggering a player encounter overlay with wind/current readout",
+    "full_text": "C/HW 27.1 Patron TaylorFP Dry",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

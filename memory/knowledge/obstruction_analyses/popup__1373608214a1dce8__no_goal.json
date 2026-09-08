@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is displaying available cargo goods (Coral, Textiles) with their quantities, market prices, and demand percentages, awaiting the player to select items to sell at port",
+  "full_text": "Coral (Jewelry) qty 1,537 | 98% demand | price 951 (-10,974 loss). Textiles (Fabrics) qty 1,536 | 96% demand | price 3,840 (+2,773 profit). Specialties category.",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "1373608214a1dce8",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T18:02:11.062966+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Sell screen is displaying available cargo goods (Coral, Textiles) with their quantities, market prices, and demand percentages, awaiting the player to select items to sell at port",
+    "full_text": "Coral (Jewelry) qty 1,537 | 98% demand | price 951 (-10,974 loss). Textiles (Fabrics) qty 1,536 | 96% demand | price 3,840 (+2,773 profit). Specialties category.",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

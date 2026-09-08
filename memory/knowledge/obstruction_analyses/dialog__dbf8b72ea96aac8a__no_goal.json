@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade Goods Info panel showing Ebony (a Specialty Ware) purchase details, including current price, tax, discount, and final per-unit cost of 1,564 gold, allowing the player to load the item into their cargo",
+  "full_text": "Trade Goods Info — Ebony, Wares, Specialties. Description: Very hard black wood. Highly valuable for decorative woodwork due to the soft sheen it shows when polished. Prices: Current Price 1,666 (Max Price 1,816, Min Price 1,365). Calculation: Purchase Cost 1,666 + Tax 215 - Discount 317 = Per Price 1,564. Quantity: 1/158. Final Purchase Price: 1,564. Options: Min, Max, Cancel, Load.",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "dbf8b72ea96aac8a",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T15:35:31.298614+00:00",
+  "visit_count": 6,
+  "raw_api_response": {
+    "purpose": "Trade Goods Info panel showing Ebony (a Specialty Ware) purchase details, including current price, tax, discount, and final per-unit cost of 1,564 gold, allowing the player to load the item into their cargo",
+    "full_text": "Trade Goods Info — Ebony, Wares, Specialties. Description: Very hard black wood. Highly valuable for decorative woodwork due to the soft sheen it shows when polished. Prices: Current Price 1,666 (Max Price 1,816, Min Price 1,365). Calculation: Purchase Cost 1,666 + Tax 215 - Discount 317 = Per Price 1,564. Quantity: 1/158. Final Purchase Price: 1,564. Options: Min, Max, Cancel, Load.",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

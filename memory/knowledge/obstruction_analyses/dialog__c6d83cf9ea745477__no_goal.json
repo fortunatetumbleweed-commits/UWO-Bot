@@ -1,0 +1,21 @@
+{
+  "purpose": "Market dialog asking the player to spend 99 gems to replenish a sold-out Coral stock (39 of 50 units remaining to refill), which does not affect the market price",
+  "full_text": "Replenish Stock? (Does not affect market price) Remaining: 39/50. Cost: 99 gems. Cancel | OK",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "c6d83cf9ea745477",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T17:40:23.220713+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Market dialog asking the player to spend 99 gems to replenish a sold-out Coral stock (39 of 50 units remaining to refill), which does not affect the market price",
+    "full_text": "Replenish Stock? (Does not affect market price) Remaining: 39/50. Cost: 99 gems. Cancel | OK",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

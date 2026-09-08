@@ -1,0 +1,21 @@
+{
+  "purpose": "Merchant Samuel Burgess is offering a price negotiation on Palm Oil, showing a 22.5% price increase (473,280 → 555,696 gold) with a 76.2% success rate and several remaining negotiation attempts",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 473,280 → 555,696 (22.5% increase). Negotiation Success Rate: Failed | 76.2% | Success. Samuel Burgess says: Oh, we should be able to sell this for 22.5% more. Why don't you try negotiating?",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "2a15f669412dd027",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T05:46:00.936310+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Merchant Samuel Burgess is offering a price negotiation on Palm Oil, showing a 22.5% price increase (473,280 → 555,696 gold) with a 76.2% success rate and several remaining negotiation attempts",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 473,280 → 555,696 (22.5% increase). Negotiation Success Rate: Failed | 76.2% | Success. Samuel Burgess says: Oh, we should be able to sell this for 22.5% more. Why don't you try negotiating?",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase panel is open at a port market, displaying available trade goods (Sugar, Keris, Raisin, Wooden Statue) with their quantities, price percentages, and base prices for the player to buy cargo.",
+  "full_text": "00:15:36 | 68 diamonds | Sugar Seasoning 232 units Specialties 101% 863 gold | Keris Weapons 118 units 102% 982 gold | Raisin Luxuries 110 units 100% 570 gold | Wooden Statue Artwork 143 units 95% 10,645 gold",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "e17176892a6ee4cf",
+  "goal_intent": null,
+  "cached_at": "2026-09-07T23:50:42.658031+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase panel is open at a port market, displaying available trade goods (Sugar, Keris, Raisin, Wooden Statue) with their quantities, price percentages, and base prices for the player to buy cargo.",
+    "full_text": "00:15:36 | 68 diamonds | Sugar Seasoning 232 units Specialties 101% 863 gold | Keris Weapons 118 units 102% 982 gold | Raisin Luxuries 110 units 100% 570 gold | Wooden Statue Artwork 143 units 95% 10,645 gold",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

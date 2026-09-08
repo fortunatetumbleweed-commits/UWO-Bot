@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase screen at a port marketplace is open, showing available trade goods (Feather Crafts, Mace, Ebony [sold out], Durian, Rosewood, T'nalak) with their prices, specialty bonuses, and cargo capacity — T'nalak is locked behind an unlock condition.",
+  "full_text": "00:25:24 | 111 | Mace Spices 103% 1,311 | Ebony Wares Sold Out 96% 1,248 | Rosewood Wares 91% 677 | T'nalak Fabrics 208 Specialties Unlock Condition (0/1)",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "5f7053771aa56c3f",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T04:55:08.236854+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase screen at a port marketplace is open, showing available trade goods (Feather Crafts, Mace, Ebony [sold out], Durian, Rosewood, T'nalak) with their prices, specialty bonuses, and cargo capacity — T'nalak is locked behind an unlock condition.",
+    "full_text": "00:25:24 | 111 | Mace Spices 103% 1,311 | Ebony Wares Sold Out 96% 1,248 | Rosewood Wares 91% 677 | T'nalak Fabrics 208 Specialties Unlock Condition (0/1)",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

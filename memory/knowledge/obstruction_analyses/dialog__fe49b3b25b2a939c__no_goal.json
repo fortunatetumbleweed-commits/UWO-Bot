@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase confirmation dialog asking the player to confirm buying 256 units of Textiles (Fabrics) for a final price of 273,152 gold after a 6% tax of 15,360 and a specialty discount of -60,672 applied to the base cost of 318,464",
+  "full_text": "Confirm Purchase. Trade Goods: Textiles (Fabrics) [Specialties] 256 units. Purchase Cost: 318,464 | Tax 6%: 15,360 | Discount: -60,672 | Purchase Price: 273,152. Total Price: 318,464 + 15,360 - 60,672 = 273,152. Cancel | OK",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "fe49b3b25b2a939c",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T17:07:39.600546+00:00",
+  "visit_count": 10,
+  "raw_api_response": {
+    "purpose": "Purchase confirmation dialog asking the player to confirm buying 256 units of Textiles (Fabrics) for a final price of 273,152 gold after a 6% tax of 15,360 and a specialty discount of -60,672 applied to the base cost of 318,464",
+    "full_text": "Confirm Purchase. Trade Goods: Textiles (Fabrics) [Specialties] 256 units. Purchase Cost: 318,464 | Tax 6%: 15,360 | Discount: -60,672 | Purchase Price: 273,152. Total Price: 318,464 + 15,360 - 60,672 = 273,152. Cancel | OK",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

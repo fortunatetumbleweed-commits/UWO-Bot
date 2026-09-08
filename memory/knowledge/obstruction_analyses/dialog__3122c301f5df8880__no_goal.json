@@ -1,0 +1,21 @@
+{
+  "purpose": "Transaction summary confirming a bulk purchase of trade goods, showing purchase cost, tax, discount applied, total amount paid, and remaining gold balance",
+  "full_text": "Result — Purchase Cost: 87,333 | Tax: 7,611 | Discount: -17,544 | Total Amount: 77,400 | Balance: 69,672,439,042 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "3122c301f5df8880",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T00:05:36.031324+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Transaction summary confirming a bulk purchase of trade goods, showing purchase cost, tax, discount applied, total amount paid, and remaining gold balance",
+    "full_text": "Result — Purchase Cost: 87,333 | Tax: 7,611 | Discount: -17,544 | Total Amount: 77,400 | Balance: 69,672,439,042 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

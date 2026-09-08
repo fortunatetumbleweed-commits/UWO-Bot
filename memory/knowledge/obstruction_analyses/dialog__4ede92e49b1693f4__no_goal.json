@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade Goods Info panel showing the price breakdown for selling Pigs (Livestock), including sales cost, tax, surcharge, and final per-unit sale price of 755 gold, with quantity selector before loading cargo",
+  "full_text": "Trade Goods Info — Pig (Livestock), quantity: 1812. Calculation: Sales Cost 595, Tax -30, Surcharge +190, Per Price 755. Description: A domesticated version of the boar. Widely raised for its meat. Prices — Current Price 595, Max Price 630, Min Price 531. Quantity: 1/1,812. Final Sales Price: 755. Options: Cancel | Load.",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "4ede92e49b1693f4",
+  "goal_intent": null,
+  "cached_at": "2026-09-07T23:19:11.087975+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade Goods Info panel showing the price breakdown for selling Pigs (Livestock), including sales cost, tax, surcharge, and final per-unit sale price of 755 gold, with quantity selector before loading cargo",
+    "full_text": "Trade Goods Info — Pig (Livestock), quantity: 1812. Calculation: Sales Cost 595, Tax -30, Surcharge +190, Per Price 755. Description: A domesticated version of the boar. Widely raised for its meat. Prices — Current Price 595, Max Price 630, Min Price 531. Quantity: 1/1,812. Final Sales Price: 755. Options: Cancel | Load.",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

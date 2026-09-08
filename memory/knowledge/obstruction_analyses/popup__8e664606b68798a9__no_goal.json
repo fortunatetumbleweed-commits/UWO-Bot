@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase panel showing available trade goods (Sugar, Keris, Raisin, Wooden Statue) at this port, including prices, stock quantities, and specialty tags — this is the standard market purchase screen, not a blocking popup",
+  "full_text": "00:13:35 | 59 diamonds | Sugar (Seasoning) 232 stock — Specialties 101% 863 gold | Keris (Weapons) 118 stock 102% 982 gold | Raisin (Luxuries) Sold Out 100% 570 gold | Wooden Statue (Artwork) 143 stock 95% 10,645 gold",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "8e664606b68798a9",
+  "goal_intent": null,
+  "cached_at": "2026-09-07T23:52:45.285144+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The Purchase panel showing available trade goods (Sugar, Keris, Raisin, Wooden Statue) at this port, including prices, stock quantities, and specialty tags — this is the standard market purchase screen, not a blocking popup",
+    "full_text": "00:13:35 | 59 diamonds | Sugar (Seasoning) 232 stock — Specialties 101% 863 gold | Keris (Weapons) 118 stock 102% 982 gold | Raisin (Luxuries) Sold Out 100% 570 gold | Wooden Statue (Artwork) 143 stock 95% 10,645 gold",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

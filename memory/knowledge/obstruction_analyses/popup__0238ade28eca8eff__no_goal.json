@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase panel showing available trade goods at this port, including Mace, Ebony (sold out), Rosewood, and T'nalak (locked), with their prices, stock quantities, and specialty discount percentages",
+  "full_text": "Restocking: Mace (Spices) 103% 1,311 | Ebony (Wares) Sold Out 96% 1,248 | Rosewood (Wares) 91% 677 | T'nalak (Fabrics) Specialties Unlock Condition (0/1)",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "0238ade28eca8eff",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T04:24:57.567930+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase panel showing available trade goods at this port, including Mace, Ebony (sold out), Rosewood, and T'nalak (locked), with their prices, stock quantities, and specialty discount percentages",
+    "full_text": "Restocking: Mace (Spices) 103% 1,311 | Ebony (Wares) Sold Out 96% 1,248 | Rosewood (Wares) 91% 677 | T'nalak (Fabrics) Specialties Unlock Condition (0/1)",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

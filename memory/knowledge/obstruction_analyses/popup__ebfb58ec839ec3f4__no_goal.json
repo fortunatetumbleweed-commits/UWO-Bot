@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase panel is open at a trade port, showing available goods (Gold, Coral, Pearl Oyster, Coconut, Palm Oil, Pituri) with their prices, stock levels, and trade percentages; Pituri is a locked Specialty requiring an unlock condition to be met before it can be purchased.",
+  "full_text": "00:15:24 | 67 diamonds | Coral (Jewelry) 231 units 116% 14,348 gold | Pearl Oyster (Food) 535 units Specialties 97% 605 gold | Palm Oil (Seasoning) 110% 203 gold | Pituri (Luxuries) 316 units Specialties Unlock Condition (0/1)",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "ebfb58ec839ec3f4",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T04:11:31.953013+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase panel is open at a trade port, showing available goods (Gold, Coral, Pearl Oyster, Coconut, Palm Oil, Pituri) with their prices, stock levels, and trade percentages; Pituri is a locked Specialty requiring an unlock condition to be met before it can be purchased.",
+    "full_text": "00:15:24 | 67 diamonds | Coral (Jewelry) 231 units 116% 14,348 gold | Pearl Oyster (Food) 535 units Specialties 97% 605 gold | Palm Oil (Seasoning) 110% 203 gold | Pituri (Luxuries) 316 units Specialties Unlock Condition (0/1)",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

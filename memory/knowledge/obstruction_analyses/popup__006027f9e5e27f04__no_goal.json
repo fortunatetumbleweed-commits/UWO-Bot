@@ -1,0 +1,21 @@
+{
+  "purpose": "The right-side panel is showing the Admiral Chronicle quest log and world map minimap panel, prompting the player to complete an Anonymous Threatening Letter Request from the Istanbul Union as part of the Admiral Chronicle storyline.",
+  "full_text": "TW 10 12.4 Melanesian Village Tropical May Major Trend Oc... Auction House Auction House Admiral Chronicle: Complete Anonymous Threatening Letter Request from Istanbul Union (0/1)",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "006027f9e5e27f04",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T18:34:15.735272+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The right-side panel is showing the Admiral Chronicle quest log and world map minimap panel, prompting the player to complete an Anonymous Threatening Letter Request from the Istanbul Union as part of the Admiral Chronicle storyline.",
+    "full_text": "TW 10 12.4 Melanesian Village Tropical May Major Trend Oc... Auction House Auction House Admiral Chronicle: Complete Anonymous Threatening Letter Request from Istanbul Union (0/1)",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

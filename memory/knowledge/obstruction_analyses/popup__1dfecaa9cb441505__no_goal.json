@@ -1,0 +1,21 @@
+{
+  "purpose": "Albrecht Wallenstein is prompting the player to negotiate the purchase price of a Kris (weapon), offering a 21.5% discount from 253,748 to 186,440 gold with a 76.2% success rate and multiple remaining negotiation attempts",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 253,748 → 186,440 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Albrecht Wallenstein: Hmm, we should be able to buy it for 21.5% less. Why don't you try negotiating?",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "1dfecaa9cb441505",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T16:44:16.163325+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Albrecht Wallenstein is prompting the player to negotiate the purchase price of a Kris (weapon), offering a 21.5% discount from 253,748 to 186,440 gold with a 76.2% success rate and multiple remaining negotiation attempts",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 253,748 → 186,440 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Albrecht Wallenstein: Hmm, we should be able to buy it for 21.5% less. Why don't you try negotiating?",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

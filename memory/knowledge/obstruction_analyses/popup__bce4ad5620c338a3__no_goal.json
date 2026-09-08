@@ -1,0 +1,21 @@
+{
+  "purpose": "Another player's ship (TaylorFP, rank Patron, level 27.1) is visible nearby on the open sea, not an obstruction but a player presence indicator overlaid on the game world",
+  "full_text": "Patron 27.1 TaylorFP",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "bce4ad5620c338a3",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T13:40:41.760706+00:00",
+  "visit_count": 6,
+  "raw_api_response": {
+    "purpose": "Another player's ship (TaylorFP, rank Patron, level 27.1) is visible nearby on the open sea, not an obstruction but a player presence indicator overlaid on the game world",
+    "full_text": "Patron 27.1 TaylorFP",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

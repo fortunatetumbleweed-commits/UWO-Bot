@@ -1,0 +1,21 @@
+{
+  "purpose": "This is the port's district navigation panel listing all available facilities in Ambon (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau), shown alongside the local climate and in-game time.",
+  "full_text": "Tropical | May | 02:18 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "b42030c8f4f3a1ee",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T13:09:02.751824+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "This is the port's district navigation panel listing all available facilities in Ambon (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau), shown alongside the local climate and in-game time.",
+    "full_text": "Tropical | May | 02:18 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

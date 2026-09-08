@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade result summary confirming the successful sale of 1,081 Pigs (Livestock), showing profit breakdown including sales cost, tax, surcharge, net profit of 348,687 gold, total received of 551,905 gold, and updated wallet balance of 69,672,612,522 gold",
+  "full_text": "Result — Mate Trade EXP: 2,920 | Contribution: 0 | Obtained Trade Point: 0 | Trade Fame: 0 | Sales Cost: 434,945 | Tax: -21,930 | Surcharge: 138,890 | Profit: 348,687 | Total Amount: 551,905 | Balance: 69,672,612,522 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "4bc58d34201da780",
+  "goal_intent": null,
+  "cached_at": "2026-09-07T23:21:29.380260+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade result summary confirming the successful sale of 1,081 Pigs (Livestock), showing profit breakdown including sales cost, tax, surcharge, net profit of 348,687 gold, total received of 551,905 gold, and updated wallet balance of 69,672,612,522 gold",
+    "full_text": "Result — Mate Trade EXP: 2,920 | Contribution: 0 | Obtained Trade Point: 0 | Trade Fame: 0 | Sales Cost: 434,945 | Tax: -21,930 | Surcharge: 138,890 | Profit: 348,687 | Total Amount: 551,905 | Balance: 69,672,612,522 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

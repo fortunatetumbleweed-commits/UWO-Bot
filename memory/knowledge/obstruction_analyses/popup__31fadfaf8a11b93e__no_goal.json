@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is displaying available trade goods (Coral/Jewelry and Textiles/Fabrics) with their quantities, market saturation percentages, and current prices including price deltas — this is the normal sell interface, not a blocking popup",
+  "full_text": "Coral Jewelry 625 | 98% 951 (-10,858) | Textiles Fabrics 1,536 Specialties | 96% 3,840 (2,773)",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "31fadfaf8a11b93e",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T17:45:45.974232+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Sell screen is displaying available trade goods (Coral/Jewelry and Textiles/Fabrics) with their quantities, market saturation percentages, and current prices including price deltas — this is the normal sell interface, not a blocking popup",
+    "full_text": "Coral Jewelry 625 | 98% 951 (-10,858) | Textiles Fabrics 1,536 Specialties | 96% 3,840 (2,773)",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

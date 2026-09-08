@@ -1,0 +1,21 @@
+{
+  "purpose": "The town navigation panel for Ambon is overlaying the screen, listing all available port facilities the player can visit (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) along with the current in-game time and climate.",
+  "full_text": "Tropical | May | 03:42 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "fd8453c0fe2d57ec",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T13:09:45.119346+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The town navigation panel for Ambon is overlaying the screen, listing all available port facilities the player can visit (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) along with the current in-game time and climate.",
+    "full_text": "Tropical | May | 03:42 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

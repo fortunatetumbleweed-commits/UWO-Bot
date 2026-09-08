@@ -1,0 +1,21 @@
+{
+  "purpose": "A trade goods card for Coral (Jewelry) is highlighted in the Sell screen, showing its quantity (169), demand rate (101%), and current market price of 15,722 gold with a profit of 4,444 gold",
+  "full_text": "Coral Jewelry 169 101% 15,722 (4,444)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "c1724cfda7fbe2c5",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T16:42:51.301319+00:00",
+  "visit_count": 6,
+  "raw_api_response": {
+    "purpose": "A trade goods card for Coral (Jewelry) is highlighted in the Sell screen, showing its quantity (169), demand rate (101%), and current market price of 15,722 gold with a profit of 4,444 gold",
+    "full_text": "Coral Jewelry 169 101% 15,722 (4,444)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

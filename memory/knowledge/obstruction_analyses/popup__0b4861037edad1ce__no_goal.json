@@ -1,0 +1,21 @@
+{
+  "purpose": "A player named TaylorFP (Patron rank) from the TW fleet is sailing nearby, with their fleet info and trade wind speed (27.1) displayed as an on-screen player encounter label",
+  "full_text": "TW 27.1 Patron TaylorFP 24",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "0b4861037edad1ce",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T16:55:49.580363+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "A player named TaylorFP (Patron rank) from the TW fleet is sailing nearby, with their fleet info and trade wind speed (27.1) displayed as an on-screen player encounter label",
+    "full_text": "TW 27.1 Patron TaylorFP 24",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

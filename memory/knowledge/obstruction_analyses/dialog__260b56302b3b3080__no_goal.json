@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade confirmation dialog asking the player to confirm the purchase of 158 units of Ebony (a Specialties Ware) for a final price of 253,748 gold after 16% tax and a discount of 51,508",
+  "full_text": "Confirm Purchase | Trade Goods: Ebony (Specialties / Wares, qty 158) | Purchase Cost: 270,338 | Tax 16%: 34,918 | Discount: -51,508 | Purchase Price: 253,748 | Total Price: 270,338 + 34,918 - 51,508 = 253,748 | Cancel | OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "260b56302b3b3080",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T16:31:56.474546+00:00",
+  "visit_count": 10,
+  "raw_api_response": {
+    "purpose": "Trade confirmation dialog asking the player to confirm the purchase of 158 units of Ebony (a Specialties Ware) for a final price of 253,748 gold after 16% tax and a discount of 51,508",
+    "full_text": "Confirm Purchase | Trade Goods: Ebony (Specialties / Wares, qty 158) | Purchase Cost: 270,338 | Tax 16%: 34,918 | Discount: -51,508 | Purchase Price: 253,748 | Total Price: 270,338 + 34,918 - 51,508 = 253,748 | Cancel | OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

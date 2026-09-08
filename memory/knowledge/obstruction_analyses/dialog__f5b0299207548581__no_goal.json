@@ -1,0 +1,21 @@
+{
+  "purpose": "A numeric entry dialog has appeared asking the player to specify how many units of Ebony (a specialty ware) to load/sell, showing a keypad with current value of 1 and stock of 1,067 units at a final sales price of 4,315 gold each",
+  "full_text": "Trade Goods Info — Ebony, Wares, Specialties (1067 in stock). Calculation: Sales Cost 3,514 | -175 | +976 | 4,315. Description: Very hard black wood. Highly valuable for decorative purposes due to the soft sheen it shows. Enter Number: 1. Prices: Max Price 4,111 | Min Price 3,289. Final Sales Price: 4,315. 1/1,067. Success Rate 76.2%. Cancel | Load",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "f5b0299207548581",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T18:05:56.898026+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A numeric entry dialog has appeared asking the player to specify how many units of Ebony (a specialty ware) to load/sell, showing a keypad with current value of 1 and stock of 1,067 units at a final sales price of 4,315 gold each",
+    "full_text": "Trade Goods Info — Ebony, Wares, Specialties (1067 in stock). Calculation: Sales Cost 3,514 | -175 | +976 | 4,315. Description: Very hard black wood. Highly valuable for decorative purposes due to the soft sheen it shows. Enter Number: 1. Prices: Max Price 4,111 | Min Price 3,289. Final Sales Price: 4,315. 1/1,067. Success Rate 76.2%. Cancel | Load",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

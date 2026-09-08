@@ -1,0 +1,21 @@
+{
+  "purpose": "A trade item card for Bambara Groundnut (Luxuries) is displayed in the sell screen, showing quantity 1,315 units at 104% price value of 48,606 gold (base price 43,823), available for selection to sell",
+  "full_text": "Bambara Groundnut — Luxuries — Quantity: 1,315 — Price: 104% — 48,606 (43,823)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "006c3450eed467fb",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T00:49:25.399650+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A trade item card for Bambara Groundnut (Luxuries) is displayed in the sell screen, showing quantity 1,315 units at 104% price value of 48,606 gold (base price 43,823), available for selection to sell",
+    "full_text": "Bambara Groundnut — Luxuries — Quantity: 1,315 — Price: 104% — 48,606 (43,823)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

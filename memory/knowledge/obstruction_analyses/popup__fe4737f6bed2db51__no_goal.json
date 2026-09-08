@@ -1,0 +1,21 @@
+{
+  "purpose": "The right-side panel is showing the Admiral Chronicle quest log prompting the player to complete an Anonymous Threatening Letter Request from the Istanbul Union, alongside Auction House notifications and environmental info (location, season, time of day).",
+  "full_text": "C/HW 10 | 27.1 | 2\" | Village 19.66, 87.10 | 0 4 | Dry Season May Night | Major Trend Oc... | Auction House ... | Auction House ... | Admiral Chronicle: Complete Anonymous Threatening Letter Request from Istanbul Union (0/1)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "fe4737f6bed2db51",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T17:33:09.741522+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The right-side panel is showing the Admiral Chronicle quest log prompting the player to complete an Anonymous Threatening Letter Request from the Istanbul Union, alongside Auction House notifications and environmental info (location, season, time of day).",
+    "full_text": "C/HW 10 | 27.1 | 2\" | Village 19.66, 87.10 | 0 4 | Dry Season May Night | Major Trend Oc... | Auction House ... | Auction House ... | Admiral Chronicle: Complete Anonymous Threatening Letter Request from Istanbul Union (0/1)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

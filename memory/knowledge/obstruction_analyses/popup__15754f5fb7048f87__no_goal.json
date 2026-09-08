@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is displaying available trade goods (Coral and Textiles) with their quantities, market prices, and price deviations, awaiting the player to select goods to sell at port",
+  "full_text": "Coral (Jewelry) quantity: 1,537 | 108% market rate, price 1,048 (deviation -10,877). Textiles (Fabrics) quantity: 1,536 | 104% market rate, price 4,154 (deviation +3,087). Textiles marked as Specialties.",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "15754f5fb7048f87",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T18:03:06.129076+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The Sell screen is displaying available trade goods (Coral and Textiles) with their quantities, market prices, and price deviations, awaiting the player to select goods to sell at port",
+    "full_text": "Coral (Jewelry) quantity: 1,537 | 108% market rate, price 1,048 (deviation -10,877). Textiles (Fabrics) quantity: 1,536 | 104% market rate, price 4,154 (deviation +3,087). Textiles marked as Specialties.",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

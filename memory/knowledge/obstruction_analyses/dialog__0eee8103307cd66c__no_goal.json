@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade confirmation dialog asking the player to confirm the purchase of 129 units of Raisin (Luxuries) for a final price of 77,400 gold after an 11% tax and a discount of 17,544",
+  "full_text": "Confirm Purchase — Trade Goods: Raisin (Luxuries) [129 units] | Purchase Cost: 87,333 | Tax 11%: 7,611 | Discount: -17,544 | Purchase Price: 77,400 | Total Price: 87,333 + 7,611 - 17,544 = 77,400 | [Cancel] [OK]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "0eee8103307cd66c",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T00:05:12.276343+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade confirmation dialog asking the player to confirm the purchase of 129 units of Raisin (Luxuries) for a final price of 77,400 gold after an 11% tax and a discount of 17,544",
+    "full_text": "Confirm Purchase — Trade Goods: Raisin (Luxuries) [129 units] | Purchase Cost: 87,333 | Tax 11%: 7,611 | Discount: -17,544 | Purchase Price: 77,400 | Total Price: 87,333 + 7,611 - 17,544 = 77,400 | [Cancel] [OK]",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}
