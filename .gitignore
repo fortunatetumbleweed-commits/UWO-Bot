@@ -81,3 +81,9 @@ models/
 # only frames that pin a behaviour worth regressing on.
 !data/test_frames/
 !data/test_frames/**
+
+# Where the fleet was last seen — runtime state, written by the bot on every new settlement.
+# Tracking it means a clone starts believing the fleet is wherever the last committer's run
+# ended, and it was carrying a value written by the TEST SUITE (see
+# tests/test_the_suite_does_not_move_the_fleet.py).
+memory/knowledge/state/last_settlement.json

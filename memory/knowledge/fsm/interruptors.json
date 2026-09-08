@@ -720,5 +720,22 @@
     "learned_at": "2026-09-04T03:56:42.841326+00:00",
     "learned_from": "qwen",
     "correction_count": 0
+  },
+  {
+    "id": "purchase_of_items_with_confirmation_dial",
+    "description": "Purchase of items with confirmation dialog",
+    "atomic": true,
+    "detection_keywords": [
+      "Purchase",
+      "Cargo",
+      "Specialties",
+      "Specialties",
+      "Specialties"
+    ],
+    "dismissal": "tap_ok_or_x",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-09-07T20:36:11.868185+00:00",
+    "learned_from": "qwen",
+    "correction_count": 0
   }
 ]

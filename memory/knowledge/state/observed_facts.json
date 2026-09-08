@@ -1,32 +1,7 @@
 {
   "fleet_capacity": {
-    "at": 1788801775.8865201,
+    "at": 1788826070.272783,
     "value": 4952
-  },
-  "hold": {
-    "at": 1788803486.8690538,
-    "value": {
-      "pig": 1505,
-      "raisin": 881
-    }
-  },
-  "mission_progress": {
-    "at": 1788792988.488974,
-    "value": {
-      "good": "Bambara Groundnut",
-      "phase": "gathering",
-      "recipe": {
-        "good": "Bambara Groundnut",
-        "materials": {
-          "Pig": 218,
-          "Raisin": 248
-        },
-        "obtain": 829
-      },
-      "rounds": 6,
-      "rounds_remaining": 7,
-      "village": "San Village"
-    }
   },
   "settlement": {
     "at": 1788802721.6340811,

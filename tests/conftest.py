@@ -652,3 +652,38 @@ def _market_kb_is_not_the_live_one(tmp_path, monkeypatch):
     from memory import market_kb
     monkeypatch.setattr(market_kb, "_MARKETS_DIR", tmp_path / "markets", raising=False)
     yield
+
+
+@pytest.fixture(autouse=True)
+def _the_persisted_settlement_is_not_the_live_one(tmp_path, monkeypatch):
+    """Point the persisted settlement at a scratch file for every test.
+
+    IT IS WHERE THE FLEET IS. `observation` writes this to disk whenever a new settlement is
+    detected, so the next process knows where it woke up — and a test that drives the real
+    update path writes it too.
+
+    `test_perceive_observation_wire` does exactly that: it feeds `port_overworld` /
+    `port='Amsterdam'` through the genuine wiring, which is the point of the test, and the
+    genuine wiring saves to disk. So every full-suite run left the file reading:
+
+        {"name": "Amsterdam", "at": ..., "saved_at": "2026-09-07T21:50:34"}
+
+    Six suite runs on 2026-09-07 and the fleet had not been near Amsterdam in 24 hours
+    (user). It is not inert, either — the San mission opened with `loaded persisted
+    settlement: 'Amsterdam'` and stamped every market result that leg with a port it was not
+    in, and `current_position` now compares the two settlement records by AGE, so a
+    test-written value is not merely wrong but freshly wrong.
+
+    Proven by setting the file to a sentinel and running that one test file: it came back
+    'Amsterdam'.
+
+    A scratch file rather than a mock, so the save/load path is still exercised; the two
+    tests that already patch `_SETTLEMENT_PATH` themselves keep working, their patch being
+    the inner one.
+    """
+    from brain import observation
+    monkeypatch.setattr(observation, "_SETTLEMENT_PATH",
+                        tmp_path / "last_settlement.json", raising=False)
+    observation.reset()
+    yield
+    observation.reset()
