@@ -18,6 +18,8 @@ dialogs (no buttons), which the legacy keyword pipeline misses.
 """
 from __future__ import annotations
 
+from loguru import logger
+
 from dataclasses import dataclass, field
 from typing import List, Optional, Sequence, Tuple
 
@@ -333,6 +335,39 @@ def detect_dialog(
     if action_btns:   fired.append("actions")
     if not fired:
         return None
+
+    # A DIALOG DIMS WHAT IT COVERS, AND A LIT SCREEN HAS NO DIALOG ON IT (user, 2026-09-07:
+    # "there is no dialog, dialog needs to dim the area outside of it").
+    #
+    # The anchors above say "something here looks like a dialog's furniture"; they cannot say
+    # a dialog is present, because ordinary screens carry furniture too. This detector fired
+    # on ONE anchor and that anchor was a misread: live 2026-09-07 at Samarai, on the plain
+    # Purchase grid (frame 49 of trace_barter_cmd_2026-09-07T23-05-09), OmniParser labelled
+    # Palm Oil's gold `110%` price-index chip as an action called `Ok`, and this returned a
+    # dialog spanning (356,121)-(2240,1039) — nearly the whole screen, with no title bar.
+    #
+    # Everything downstream then trusted it. The obstruction classifier reported
+    # `kind='dialog'`, which let a learned interruptor's broad keywords match the PAGE'S OWN
+    # words (they were "inside the dialog" because the dialog was the screen), and its
+    # dismissal tapped the `Ok` — the 110% chip — which staged 816 Palm Oil in bulk and bought
+    # them for 165,648 ducats. Nothing had chosen Palm Oil.
+    #
+    # `chrome_is_dimmed` is the canonical measure and needs no baseline: it reads the SCREEN'S
+    # OWN TITLE glyphs, which are bright when lit and dim under a scrim (the game's
+    # FLAG_DIM_BEHIND ×1.98 — see docs/dialogs_are_windows.md). Measured over six frames:
+    # the three plain Purchase pages and the Village Info PANEL read False; the cart-confirm
+    # and overflow cards read True.
+    #
+    # ONLY A DEFINITE `False` REJECTS. `None` means the title could not be measured, and the
+    # rule that function states is that "could not tell" must never be read as "nothing in the
+    # way" — so an unmeasurable screen keeps the anchors' verdict.
+    if frame is not None:
+        try:
+            from actions.ui import chrome_is_dimmed
+            if chrome_is_dimmed(frame) is False:
+                return None
+        except Exception as exc:              # noqa: BLE001 — unmeasurable is not "lit"
+            logger.debug(f"[dialog] could not measure the scrim: {exc}")
 
     # Build the cluster bbox.  Anchors tell us the dialog exists; the
     # dialog's body / title extend WELL beyond the anchor bbox (the

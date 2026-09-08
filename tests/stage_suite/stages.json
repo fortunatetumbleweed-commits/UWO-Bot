@@ -69,6 +69,13 @@
   "expect": "standing in a port; entering a building is a transition the dispatcher performs",
   "from": "data/sessions/trace_barter_cmd_2026-08-26T00-06-32/frame_0000.png"
  },
+ "samarai_banner_is_not_a_dialog": {
+  "frame": "frames/samarai_banner_is_not_a_dialog.png",
+  "state": "sub_menu:purchase",
+  "port": null,
+  "expect": "Samarai Purchase grid with a game announcement banner across the top. NOT a dialog: nothing is dimmed. DialogModel fired here on a single action anchor that was Palm Oil's gold 110% chip misread as 'Ok', returning a screen-sized bbox",
+  "from": "data/sessions/trace_barter_cmd_2026-09-07T23-05-09/frame_0049.png"
+ },
  "san_overflow_pig_should_be_dumped": {
   "frame": "frames/san_overflow_pig_should_be_dumped.png",
   "state": "village",
