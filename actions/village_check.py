@@ -703,6 +703,7 @@ class VillageCheck:
     barters_total: Optional[int] = None
     trades: list = field(default_factory=list)          # list[VillageTrade]
     sources: dict = field(default_factory=dict)         # {material: [source ports]}
+    source_villages: dict = field(default_factory=dict)  # {material: [source villages]}
 
     @property
     def rounds_remaining(self) -> Optional[int]:
@@ -881,7 +882,9 @@ def read_village_barter_remote(village: str, *, good: Optional[str] = None,
             wanted = _materials_needing_sources([partial], partial, good, known,
                                                 check.sources)
             if wanted:
-                check.sources.update(_learn_sources_on_screen(elements, wanted))
+                learned_ports, learned_villages = _learn_sources_on_screen(elements, wanted)
+                check.sources.update(learned_ports)
+                check.source_villages.update(learned_villages)
 
         # THE LIST DECIDES WHEN IT IS FINISHED, not the parse. A screen that produced nothing
         # new may be a screen we failed to READ; only the scrollbar and a measured absence of
@@ -954,10 +957,10 @@ def _materials_needing_sources(screens, trades, good, known, learned) -> dict:
     return wanted
 
 
-def _learn_sources_on_screen(elements, wanted: dict) -> dict:
+def _learn_sources_on_screen(elements, wanted: dict) -> tuple:
     """Tap the location pin of each wanted material → read its Source panel → Back.
 
-    Returns {material: [ports]} for the ones read.  Best-effort: a material whose
+    Returns ({material: [ports]}, {material: [villages]}) for the ones read.  Best-effort: a material whose
     pin or Source panel doesn't read is simply left unlearned (the caller reports it
     as unsourced rather than the check failing)."""
     from loguru import logger
@@ -967,7 +970,7 @@ def _learn_sources_on_screen(elements, wanted: dict) -> dict:
     from actions.village_remote_reader import read_material_sources_frame
 
     pins = material_pins(elements)
-    out = {}
+    out, out_villages = {}, {}
     for material in wanted:
         pin = pins.get(material)
         if pin is None:
@@ -975,10 +978,16 @@ def _learn_sources_on_screen(elements, wanted: dict) -> dict:
         ui.tap_at(*pin, dwell="dialog", why=f"source pin for {material}")
         frame = capture_screen()
         try:
-            ports = read_material_sources_frame(frame)
+            from actions.village_remote_reader import read_material_sources_by_kind_frame
+            by_kind = read_material_sources_by_kind_frame(frame)
+            ports = list(by_kind.get("market") or [])
+            villages = list(by_kind.get("village") or [])
+            if villages:
+                out_villages[material] = villages
+                logger.info(f"[village_check] {material} ← villages {villages}")
         except Exception as exc:
             logger.warning(f"[village_check] source read for {material!r} failed: {exc}")
-            ports = []
+            ports, villages = [], []
         if ports:
             out[material] = ports
             logger.info(f"[village_check] {material} ← sources {ports}")
@@ -989,7 +998,7 @@ def _learn_sources_on_screen(elements, wanted: dict) -> dict:
         else:
             logger.warning(f"[village_check] no Source panel opened for {material!r} "
                            "— not pressing Back (would close the village panel)")
-    return out
+    return out, out_villages
 
 
 def _kb_sources() -> dict:
@@ -1143,8 +1152,15 @@ def write_back_invariants(check: VillageCheck) -> None:
         for material, need in trade.materials.items():
             old = prior.get(_norm_name(material))
             sources = check.sources.get(material) or (old.source_ports if old else []) or []
+            # `getattr` because a caller may hand in any object with `.trades` — the
+            # world-map activity passes a SimpleNamespace, and a missing field must read as
+            # "nothing learned this pass", not blow up the whole write-back.
+            learned_villages = getattr(check, "source_villages", None) or {}
+            villages = (learned_villages.get(material)
+                        or (getattr(old, "source_villages", None) if old else []) or [])
             inputs.append(RecipeInput(material=material, ratio=int(need),
-                                      source_ports=list(sources)))
+                                      source_ports=list(sources),
+                                      source_villages=list(villages)))
             seen.add(_norm_name(material))
         # MERGE, never replace.  A material list is INVARIANT — if this read did not see
         # one the KB already knows, that is a partial READ, not a recipe change.  The

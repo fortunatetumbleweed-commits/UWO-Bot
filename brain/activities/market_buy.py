@@ -166,11 +166,28 @@ def _stocked_but_unmoved(state, orders: Mapping, goods: Mapping, *,
     UNREAD IS NOT UNMOVED. A shelf missing from either reading yields no claim — the same
     rule `credit_the_shelf_drop` follows, and the reason this cannot fire on a bad parse.
     """
-    from actions.buy_materials import tile_in_stock
+    from actions.buy_materials import tile_in_stock, material_states
     was = dict(before if before is not None else (state.last_signature or ()))
     now = dict(shelf_signature(goods))
+    # A GOOD WE NO LONGER WANT CANNOT SHOW THE HOLD IS FULL. Its shelf sits unmoved because
+    # nothing bought from it, and that is the order being MET, not the hold refusing.
+    #
+    # Live 2026-09-08 at Barcelona: Iron finished at 712 of 709, its shelf did not move on
+    # the next pass, and this reported "the room is the problem" with 1,058 units in a hold
+    # of 4,952 — ending the visit while Matchlock Gun sat sold out at 173 of 355 with a
+    # working restock control and gems to spend. One `continue` is the difference between
+    # leaving a port half-supplied and refreshing for what is actually short.
+    met = set()
+    try:
+        if state.ledger is not None:
+            met = {k.lower() for k, st in material_states(state.ledger, dict(orders)).items()
+                   if (st or {}).get("state") == "met"}
+    except Exception as exc:                      # noqa: BLE001 — a filter, never a failure
+        logger.debug(f"[market] could not tell which orders are met: {exc}")
     for material in orders or {}:
         key = str(material).lower()
+        if key in met:
+            continue                              # nothing left to buy — not a room problem
         good = (goods or {}).get(key)
         if good is None or not tile_in_stock(good):
             continue                              # sold out — that IS a stock problem

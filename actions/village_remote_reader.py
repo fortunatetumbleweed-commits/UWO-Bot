@@ -73,114 +73,169 @@ def read_barter_ratios(elements, num_x_max: int = 1830, row_tol: int = 45) -> di
     return out
 
 
-def _catalogues():
-    """({stripped port name: canonical}, {stripped village name: canonical}).
+# Resolution lives in `memory.places` — a port name is KB data, and the task layer must be
+# able to ask about one without importing this module. Re-exported so existing callers here
+# and their tests are unchanged.
+from memory.places import (_catalogues, _strip_name,            # noqa: F401
+                           resolve_source_port, resolve_source_village)
 
-    Both are BAKED, complete and offline — 224 ports and 69 villages from the world-map
-    catalogue. Cached on the function so a per-material read does not reload them.
+
+def _list_panel(frame, card):
+    """The Source dialog's LEFT PANEL — the cream card the places are listed on.
+
+    MEASURED, NOT A FRACTION OF THE DIALOG (user, 2026-09-08: "it should only read the left
+    panel of the dialog"). The right two-thirds of the Source modal is a world map, and the
+    map is where every phantom came from: villages showing past the left edge, port labels
+    painted above the title bar. A fraction of the dialog's width is the same fixed-window
+    thinking that caused this, one level in.
+
+    The panel is chrome with a fixed palette and the map is not. Measured on the four
+    captured panels: the cream columns read 226-238, the map beside them 117-163, with ~60
+    points of clear air. The cut is taken between the two rather than baked, so a differently
+    sized dialog still splits at its own boundary.
     """
-    if getattr(_catalogues, "_cache", None) is None:
-        import json
-        from pathlib import Path
-        base = Path("memory/knowledge/world_map")
-
-        def _table(fname, key):
-            try:
-                raw = json.loads((base / fname).read_text(encoding="utf-8")).get(key) or {}
-            except Exception:                          # noqa: BLE001 — absent is not fatal
-                return {}
-            return {_strip_name(r.get("name")): r.get("name")
-                    for r in raw.values() if isinstance(r, dict) and r.get("name")}
-
-        _catalogues._cache = (_table("port_coordinates.json", "ports"),
-                              _table("village_coordinates.json", "villages"))
-    return _catalogues._cache
-
-
-def _strip_name(s) -> str:
-    import unicodedata
-    return "".join(c for c in unicodedata.normalize("NFD", str(s or ""))
-                   if unicodedata.category(c) != "Mn").lower().strip()
-
-
-def resolve_source_port(raw: str):
-    """The canonical PORT this Source-panel line names, or None.
-
-    THE PANEL LISTS MORE THAN PORTS, and everything it lists reads as a line of text. A
-    material's Source panel carries producing VILLAGES and section headings beside the
-    market ports, and the reader below took the lot. What that produced, live:
-
-        Matchlock Gun (13): Barcelona, Chinook, Village, Seville, Ciguayo Village, ...
-        Iron (16):          ... Production, Smelting Handbook: Uncut Ore, ...
-        Candle (14):        ... Sundry Goods Company Directory_, ...
-
-    against a truth of two ports for Matchlock and four for Iron. The missions only worked
-    because the real ports sorted to the front.
-
-    The world-map catalogue is the cross-check, and it is already baked: 224 ports and 69
-    villages, offline and complete. Accent-stripped EXACT matching does the work — 'Gijon'
-    is Gijón, 'Malaga' is Málaga, 'Male' is Malé — with no fuzzy threshold to tune.
-
-    A VILLAGE IS A REJECTION, NOT A MATCH, and it must be tested BEFORE any fuzziness: a
-    village has no market to buy from, and `correct_port_name` scores 'Sioux Village'
-    against 'Seville' at 0.60, which would file a port that does not sell the material at
-    all. That is worse than the heading it replaces — a heading sends nobody anywhere.
-    """
-    key = _strip_name(raw)
-    if not key:
+    try:
+        import numpy as _np
+        x1, y1, x2, y2 = card
+        band = _np.asarray(frame.convert("L")).astype(float)[y1 + 250:y2 - 60, x1:x2]
+        if band.size == 0:
+            return None
+        cols = band.mean(axis=0)
+        lo, hi = _np.percentile(cols, 10), _np.percentile(cols, 90)
+        if hi - lo < 40:                     # no two-tone split — do not guess at an edge
+            return None
+        cut = (lo + hi) / 2.0
+        # THE FIRST COLUMN IS THE DIALOG'S OWN BORDER, darker than the cream it frames, so
+        # the run is found rather than assumed to start at the edge.
+        bright = [i for i, v in enumerate(cols) if v >= cut]
+        if not bright:
+            return None
+        start = bright[0]
+        end = start
+        for i in bright:
+            if i - end > 12:                 # a gap wider than the border ends the panel
+                break
+            end = i
+        return (x1 + start, y1, x1 + end, y2) if end > start else None
+    except Exception:                        # noqa: BLE001 — no panel is a refusal
         return None
-    ports, villages = _catalogues()
-    if key in ports:
-        return ports[key]
-    if key in villages:
-        return None                    # a real place, and not one with a market
-    return None
 
 
-def read_material_sources(elements, list_x_max: int = 700,
-                          top_y: int = 430, bot_y: int = 860) -> list:
-    """From the material 'Source' panel (OmniParser elements): the Market port names
-    that sell it, top→bottom. The Market list is the left column (cx < list_x_max)
-    below the 'Market' header; chrome / 'Current Location' excluded.
+def source_card_box(frame):
+    """The Source dialog's own box, or None. A centred modal under a brown title bar."""
+    try:
+        from vision.region_detectors.dialog import find_title_bars, card_from_bar
+        best = None
+        for bar in find_title_bars(frame) or []:
+            card = card_from_bar(frame, bar)
+            if card is None:
+                continue
+            x1, y1, x2, y2 = card
+            if best is None or (x2 - x1) * (y2 - y1) < (best[2] - best[0]) * (best[3] - best[1]):
+                best = card                 # the innermost card is the Source modal
+        return best
+    except Exception:                        # noqa: BLE001 — no box is a refusal, not a crash
+        return None
 
-    Every line is then CHECKED AGAINST THE PORT CATALOGUE — see `resolve_source_port` for
-    why, and for what this returned before it was. A line that names no port is dropped,
-    and one that names a port under an accent-free or split spelling is canonicalised.
+
+def read_material_sources_by_kind(frame, elements, *, card=None) -> dict:
+    """{'market': [ports], 'village': [villages]} from a material's Source panel.
+
+    READ INSIDE THE DIALOG, NOT A RECTANGLE. This used to take a fixed window — `cx < 700`,
+    `430 <= cy <= 860` — which spans the dialog's left column AND THE WORLD MAP'S VILLAGE
+    LIST BEHIND IT, then sorted by y so the two interleaved. Read live 2026-08-25 for
+    Matchlock Gun, whose panel says in full "Market: Barcelona, Seville":
+
+        ['Barcelona', 'Chinook', 'Village', 'Seville', 'Ciguayo Village', 'Oriya Village',
+         'Nubia', 'Village', 'Sioux Village', 'Bari Village', 'Lusitanian Villag', ...]
+
+    Every "village" there is a row of the map list showing past the dialog's left edge —
+    Barcelona (cx 426) beside Chinook Village (cx 228), Seville (cx 404) beside Ciguayo
+    Village (cx 223). `Lusitanian Villag` is truncated because the dialog clips it, and
+    `Nubia Village` split in two because it wrapped. No village sells Matchlock Gun and the
+    panel never said one did; the window invented them. `a-box-bigger-than-its-thing`, and
+    `dialogs-are-centered-panels-are-not-left` names the gutter it leaked from.
+
+    THE CATALOGUE SAYS WHICH KIND EACH LINE IS, so the section headings need not be found —
+    which matters, because OmniParser does not reliably detect them and the material's own
+    category line repeats the same words ("Market" at cx 849 is the header, not the list).
+    A line naming a port is a market source, a line naming a village is a village source,
+    and a line naming neither is a heading, a chrome word, or a production recipe.
+
+    PRODUCTION IS DROPPED (user, 2026-09-08: "lets filter out production for now"). It is a
+    crafting feature, not a place — `Smelting Handbook: Uncut Ore - Iron` names no place and
+    falls out here for free.
+
+    A VILLAGE IS A REAL SOURCE (user: "some materials are available at both villages and
+    ports, like diamond. And some only at villages or ports").
     """
-    lines = []
+    card = card or source_card_box(frame)
+    if card is None:
+        return {}
+    panel = _list_panel(frame, card) if frame is not None else None
+    x1, y1, x2, y2 = panel or card
+    list_x_max = x2 if panel else x1 + (x2 - x1) * 0.34
+
+    rows = []
     for e in elements:
         cx, cy = _pos(e)
         lab = _label(e).strip()
-        if cx is None or cy is None or not lab:
+        if cx is None or cy is None or not lab or not any(c.isalpha() for c in lab):
             continue
-        if cx >= list_x_max or not (top_y <= cy <= bot_y):
-            continue
+        # BOTH BOUNDS. Bounding x alone still read the world map ABOVE the dialog: live
+        # 2026-09-08 on Damascus Steel, whose Market list is the single port Beirut, the
+        # reader also took 'Istanbul' (cy 32) and 'Thessaloniki' (cy 68) — port labels
+        # painted on the map behind, sitting in the same x band as the dialog's list and
+        # far above its title bar at y 167.
+        if not (x1 <= cx <= list_x_max and y1 <= cy <= y2):
+            continue                        # outside the dialog, or over on its map
         low = lab.lower()
         if low in _BARTER_CHROME or low == "icon" or "current" in low or "locati" in low:
             continue
-        if not any(c.isalpha() for c in lab):
-            continue
-        lines.append((cy, lab))
-    lines.sort()
+        rows.append((cy, lab))
+    rows.sort()
 
-    out, i = [], 0
-    raw = [lab for _cy, lab in lines]
-    while i < len(raw):
-        name = resolve_source_port(raw[i])
-        step = 1
-        if name is None and i + 1 < len(raw):
-            # A WRAPPED NAME IS TWO LINES OF ONE PORT. 'Prey Nokor' came back as 'Nokor'
-            # and 'Prey' — two entries, neither a port, and a gather leg aimed at whichever
+    def _keep(kind: str, name: str) -> None:
+        out.setdefault(kind, [])
+        if name not in out[kind]:
+            out[kind].append(name)
+
+    out: dict = {}
+    labels = [lab for _cy, lab in rows]
+    i = 0
+    while i < len(labels):
+        lab, step = labels[i], 1
+        port, village = resolve_source_port(lab), resolve_source_village(lab)
+        if port is None and village is None and i + 1 < len(labels):
+            # A WRAPPED NAME IS TWO LINES OF ONE PLACE. 'Prey Nokor' comes back as 'Nokor'
+            # and 'Prey' — two entries, neither a place, and a gather leg aimed at whichever
             # one it took first. Try the pair, both ways round, before giving up on either.
-            for pair in (f"{raw[i]} {raw[i + 1]}", f"{raw[i + 1]} {raw[i]}"):
-                name = resolve_source_port(pair)
-                if name is not None:
+            # NOTE it can also join a HEADING to a wrapped name: on the Damascus Steel
+            # panel OmniParser returns 'Village' (the section heading, cy 522), then 'Turk'
+            # and 'Village' (cy 571, the name split in two). The pair 'Village' + 'Turk'
+            # resolves to Turk Village and is right — and stays right with several villages
+            # listed, because the heading and the wrapped suffix are the same word. That is
+            # a coincidence, not a design; the catalogue is what keeps it honest.
+            for pair in (f"{lab} {labels[i + 1]}", f"{labels[i + 1]} {lab}"):
+                port, village = resolve_source_port(pair), resolve_source_village(pair)
+                if port is not None or village is not None:
                     step = 2
                     break
-        if name is not None and name not in out:
-            out.append(name)
+        if port is not None:
+            _keep("market", port)
+        elif village is not None:
+            _keep("village", village)
         i += step
     return out
+
+
+def read_material_sources(elements, *, card) -> list:
+    """The MARKET ports named inside `card`. The box is required — see the by-kind reader.
+
+    It used to take a fixed window and no box, which is the whole defect: the window fell
+    outside the dialog and read the world map behind it.
+    """
+    return list(read_material_sources_by_kind(None, elements, card=card).get("market") or [])
 
 
 # ── OmniParser frame wrappers (chromed screen ⇒ OmniParser, never raw OCR) ──────
@@ -197,5 +252,10 @@ def read_barter_ratios_frame(frame) -> dict:
 
 
 def read_material_sources_frame(frame) -> list:
-    """Read a material's Source-panel Market ports from a live frame (OmniParser)."""
-    return read_material_sources(_omni(frame))
+    """A material's Source-panel MARKET ports, from a live frame."""
+    return list(read_material_sources_by_kind(frame, _omni(frame)).get("market") or [])
+
+
+def read_material_sources_by_kind_frame(frame) -> dict:
+    """{'market': [...], 'village': [...]} for a material, from a live frame."""
+    return read_material_sources_by_kind(frame, _omni(frame))

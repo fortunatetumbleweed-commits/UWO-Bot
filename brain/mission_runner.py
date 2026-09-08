@@ -685,16 +685,38 @@ class MissionRunner:
                 other.deps = tuple(other.deps or ()) + (ident,)
 
     def _another_source(self, material: str, tried: set) -> Optional[str]:
-        """A port that sells `material`, has not been tried, and is not known scarce there."""
+        """A PORT that sells `material`, untried and not known scarce there.
+
+        PORTS ONLY. A village is a real source — some materials are sold at both, some at
+        only one — but reaching one is a barter on a different world-map tab, not a market
+        visit, and this reroute builds a `gather` leg that buys. `source_villages` is
+        recorded beside the ports for the day that leg exists; sending a buyer to a village
+        would fail at the shelf instead of failing here.
+
+        Live 2026-09-08: `gather:Chinook:Matchlock Gun`. 'Chinook' was half of 'Chinook
+        Village', which was never a source at all — it was a row of the world map's village
+        list showing behind the Source dialog, read because the reader used a fixed window
+        instead of the dialog's own box. The fleet searched the PORT list for it twenty
+        times, typed it, scrolled it, and rightly refused. Seville, two entries further
+        down and a real port that sells the gun, was never reached.
+        """
         try:
             from memory.barter_kb import load_recipe
             from memory.market_kb import season_of
+            from memory.places import resolve_source_port
             recipe = load_recipe(self.good)
             for inp in (getattr(recipe, "inputs", None) or []):
                 if str(inp.material).lower() != str(material).lower():
                     continue
                 for port in (inp.source_ports or []):
                     if str(port).lower() in tried:
+                        continue
+                    # A NAME THAT IS NOT A PORT IS NOT A DESTINATION. The catalogue is the
+                    # same one the reader checks against; a stale entry cannot become a
+                    # course again just because it is sitting in the KB.
+                    if resolve_source_port(port) is None:
+                        logger.info(f"[mission_runner] {port!r} is not a port — not routing "
+                                    f"{material} there")
                         continue
                     if season_of(port, material) == "low":
                         logger.info(f"[mission_runner] skipping {port} for {material} — "

@@ -31,6 +31,12 @@ def _panel(names, x=400, y0=440):
                             x2=x + 40, y2=y0 + 20 * i + 8, element_type="text")
             for i, n in enumerate(names)]
 
+# The Source dialog's own box, as `find_title_bars` measures it on the real frames
+# (2026-08-25, all three materials): (326, 167, 2074, 915). The reader is bounded BY THE
+# DIALOG now — a fixed window is what let the world map's village list, at cx 188-278, be
+# read as sources. See `read_material_sources_by_kind`.
+_CARD = (326, 167, 2074, 915)
+
 
 class TheLiveReadsAreCorrectedToTheTruth(unittest.TestCase):
     """Each input is the exact list the KB holds; each expectation is the game's own data."""
@@ -39,36 +45,36 @@ class TheLiveReadsAreCorrectedToTheTruth(unittest.TestCase):
         got = read_material_sources(_panel(
             ["Barcelona", "Chinook", "Village", "Seville", "Ciguayo Village", "Oriya Village",
              "Nubia", "Village", "Sioux Village", "Bari Village", "Lusitanian Villag",
-             "Yawuru", "Village"]))
+             "Yawuru", "Village"]), card=_CARD)
         self.assertEqual(got, ["Barcelona", "Seville"])
 
     def test_iron_drops_the_headings(self):
         got = read_material_sources(_panel(
             ["Amsterdam", "Chinook Village", "Barcelona", "Ciguayo Village", "Dublin",
              "Oriya Village", "Kuching", "Nubia", "Village", "Production", "Sioux Village",
-             "Smelting Handbook: Uncut Ore", "Bari Village", "Lusitanian Villag", "Yawuru"]))
+             "Smelting Handbook: Uncut Ore", "Bari Village", "Lusitanian Villag", "Yawuru"]), card=_CARD)
         self.assertEqual(sorted(got), ["Amsterdam", "Barcelona", "Dublin", "Kuching"])
 
     def test_candle(self):
         got = read_material_sources(_panel(
             ["Santa Island", "Chinook Village", "Tripoli", "Ciguayo Village", "Production",
-             "Oriya Village", "Sundry Goods Company Directory_", "Nubia", "Village"]))
+             "Oriya Village", "Sundry Goods Company Directory_", "Nubia", "Village"]), card=_CARD)
         self.assertEqual(got, ["Santa Island", "Tripoli"])
 
     def test_a_wrapped_port_name_is_rejoined(self):
         """'Prey Nokor' wrapped onto two lines. Neither half is a port, and a gather leg
         aimed at whichever came first."""
-        self.assertEqual(read_material_sources(_panel(["Faro", "Gijon", "Nokor", "Prey"])),
+        self.assertEqual(read_material_sources(_panel(["Faro", "Gijon", "Nokor", "Prey"]), card=_CARD),
                          ["Faro", "Gijón", "Prey Nokor"])
 
     def test_an_already_clean_list_is_unchanged(self):
-        self.assertEqual(read_material_sources(_panel(["Bordeaux", "Madeira", "Trabzon"])),
+        self.assertEqual(read_material_sources(_panel(["Bordeaux", "Madeira", "Trabzon"]), card=_CARD),
                          ["Bordeaux", "Madeira", "Trabzon"])
 
     def test_accents_are_restored_not_rejected(self):
         """The panel reads accent-free. Málaga is where Almond is sold."""
         self.assertEqual(read_material_sources(_panel(
-            ["Lisboa", "Malaga", "Palma", "Valencia"])),
+            ["Lisboa", "Malaga", "Palma", "Valencia"]), card=_CARD),
             ["Lisboa", "Málaga", "Palma", "Valencia"])
 
 

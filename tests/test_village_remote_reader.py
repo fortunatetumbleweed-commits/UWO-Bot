@@ -26,6 +26,12 @@ _SOURCE_ELS = [
     _el("Santo Domingo", 622, 713), _el("Sofala", 613, 765), _el("Whanganui", 433, 820),
 ]
 
+# The Source dialog's own box, as `find_title_bars` measures it on the real frames
+# (2026-08-25, all three materials): (326, 167, 2074, 915). The reader is bounded BY THE
+# DIALOG now — a fixed window is what let the world map's village list, at cx 188-278, be
+# read as sources. See `read_material_sources_by_kind`.
+_CARD = (326, 167, 2074, 915)
+
 
 class BarterRatiosTests(unittest.TestCase):
     def test_reads_output_and_material_ratios(self):
@@ -47,18 +53,18 @@ class MaterialSourcesTests(unittest.TestCase):
 
         Nothing else about this panel changes: all eight are real ports, so all eight
         survive the check in the order they were read."""
-        self.assertEqual(read_material_sources(_SOURCE_ELS), [
+        self.assertEqual(read_material_sources(_SOURCE_ELS, card=_CARD), [
             "Malé", "Atuona", "Guam", "Las Palmas", "Samarai",
             "Santo Domingo", "Sofala", "Whanganui",
         ])
 
     def test_excludes_good_category_and_market_header(self):
-        ports = read_material_sources(_SOURCE_ELS)
+        ports = read_material_sources(_SOURCE_ELS, card=_CARD)
         for chrome in ("Coral", "Jewelry", "Market"):
             self.assertNotIn(chrome, ports)
 
     def test_keeps_multiword_port_whole(self):
-        self.assertIn("Santo Domingo", read_material_sources(_SOURCE_ELS))
+        self.assertIn("Santo Domingo", read_material_sources(_SOURCE_ELS, card=_CARD))
 
 
 if __name__ == "__main__":

@@ -71,6 +71,14 @@ class RecipeInput:
     ratio: int = 1                           # nominal units consumed per round;
                                              # the game varies this daily (Stock Status)
     source_ports: list[str] = field(default_factory=list)  # from the panel's location pin
+    # A VILLAGE IS A SOURCE TOO (user, 2026-09-08: "village is a legitimate source, some
+    # materials are available at both villages and ports, like diamond. And some only at
+    # villages or ports"). Kept apart from the ports because they are reached differently —
+    # a port is a market to buy at, a village is a barter, and the world map lists them on
+    # different tabs. Flattening the two is what sent a fleet looking for 'Chinook' in the
+    # port list twenty times. Production sources are dropped at the reader: a crafting
+    # recipe is not a place anything can sail to.
+    source_villages: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return asdict(self)

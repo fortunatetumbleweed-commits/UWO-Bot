@@ -17,9 +17,7 @@
         "ratio": 188,
         "source_ports": [
           "Faro",
-          "Gijon",
-          "Nokor",
-          "Prey"
+          "Gij\u00f3n"
         ]
       }
     ],
@@ -39,9 +37,7 @@
           "ratio": 188,
           "source_ports": [
             "Faro",
-            "Gijon",
-            "Nokor",
-            "Prey"
+            "Gij\u00f3n"
           ]
         }
       ],
@@ -60,9 +56,7 @@
           "ratio": 218,
           "source_ports": [
             "Faro",
-            "Gijon",
-            "Nokor",
-            "Prey"
+            "Gij\u00f3n"
           ]
         }
       ]
@@ -101,7 +95,7 @@
         "material": "Coral",
         "ratio": 175,
         "source_ports": [
-          "Male",
+          "Mal\u00e9",
           "Atuona",
           "Guam",
           "Las Palmas",
@@ -135,7 +129,7 @@
           "material": "Coral",
           "ratio": 175,
           "source_ports": [
-            "Male",
+            "Mal\u00e9",
             "Atuona",
             "Guam",
             "Las Palmas",
@@ -172,7 +166,7 @@
       "guild": null,
       "event": null
     },
-    "notes": "Season 7 (2026-08-10 to 2026-12-09). Melanesian & Khmer: Ebony+Coral+Textiles; Malay: Ebony+Coral+Dhaka Muslin (Dhaka Muslin needs a Monopolizing Guild in Masulipatnam/Kolkata/Pegu/Pondicherry). Khmer requires Negotiation Expertise LV24. Ratios + per-round output UNKNOWN here — read live from the village barter panel. [Melanesian ratios read live 2026-08-15: 136 Ebony + 204 Coral + 180 Textiles -> 591 Box of Nutmeg/round @ Neutral.]"
+    "notes": "Season 7 (2026-08-10 to 2026-12-09). Melanesian & Khmer: Ebony+Coral+Textiles; Malay: Ebony+Coral+Dhaka Muslin (Dhaka Muslin needs a Monopolizing Guild in Masulipatnam/Kolkata/Pegu/Pondicherry). Khmer requires Negotiation Expertise LV24. Ratios + per-round output UNKNOWN here \u2014 read live from the village barter panel. [Melanesian ratios read live 2026-08-15: 136 Ebony + 204 Coral + 180 Textiles -> 591 Box of Nutmeg/round @ Neutral.]"
   },
   "camas": {
     "good": "Camas",
@@ -256,43 +250,20 @@
     "inputs": [
       {
         "material": "Iron",
-        "ratio": 102,
+        "ratio": 88,
         "source_ports": [
           "Amsterdam",
-          "Chinook Village",
           "Barcelona",
-          "Ciguayo Village",
           "Dublin",
-          "Oriya Village",
-          "Kuching",
-          "Nubia",
-          "Village",
-          "Production",
-          "Sioux Village",
-          "Smelting Handbook: Uncut Ore",
-          "Bari Village",
-          "Lusitanian Villag",
-          "Yawuru",
-          "Village"
+          "Kuching"
         ]
       },
       {
         "material": "Matchlock Gun",
-        "ratio": 51,
+        "ratio": 44,
         "source_ports": [
           "Barcelona",
-          "Chinook",
-          "Village",
-          "Seville",
-          "Ciguayo Village",
-          "Oriya Village",
-          "Nubia",
-          "Village",
-          "Sioux Village",
-          "Bari Village",
-          "Lusitanian Villag",
-          "Yawuru",
-          "Village"
+          "Seville"
         ]
       },
       {
@@ -300,19 +271,7 @@
         "ratio": 88,
         "source_ports": [
           "Santa Island",
-          "Chinook Village",
-          "Tripoli",
-          "Ciguayo Village",
-          "Production",
-          "Oriya Village",
-          "Sundry Goods Company Directory_",
-          "Nubia",
-          "Village",
-          "Sioux Village",
-          "Bari Village",
-          "Lusitanian Villag",
-          "Yawuru",
-          "Village"
+          "Tripoli"
         ]
       }
     ],
@@ -320,43 +279,20 @@
       "svear_village": [
         {
           "material": "Iron",
-          "ratio": 102,
+          "ratio": 88,
           "source_ports": [
             "Amsterdam",
-            "Chinook Village",
             "Barcelona",
-            "Ciguayo Village",
             "Dublin",
-            "Oriya Village",
-            "Kuching",
-            "Nubia",
-            "Village",
-            "Production",
-            "Sioux Village",
-            "Smelting Handbook: Uncut Ore",
-            "Bari Village",
-            "Lusitanian Villag",
-            "Yawuru",
-            "Village"
+            "Kuching"
           ]
         },
         {
           "material": "Matchlock Gun",
-          "ratio": 51,
+          "ratio": 44,
           "source_ports": [
             "Barcelona",
-            "Chinook",
-            "Village",
-            "Seville",
-            "Ciguayo Village",
-            "Oriya Village",
-            "Nubia",
-            "Village",
-            "Sioux Village",
-            "Bari Village",
-            "Lusitanian Villag",
-            "Yawuru",
-            "Village"
+            "Seville"
           ]
         },
         {
@@ -364,19 +300,7 @@
           "ratio": 88,
           "source_ports": [
             "Santa Island",
-            "Chinook Village",
-            "Tripoli",
-            "Ciguayo Village",
-            "Production",
-            "Oriya Village",
-            "Sundry Goods Company Directory_",
-            "Nubia",
-            "Village",
-            "Sioux Village",
-            "Bari Village",
-            "Lusitanian Villag",
-            "Yawuru",
-            "Village"
+            "Tripoli"
           ]
         }
       ]
@@ -386,7 +310,7 @@
     ],
     "output_per_round": {
       "Neutral": 448,
-      "Friendly": 524
+      "Friendly": 564
     },
     "preconditions": {
       "amity_min": null,
@@ -778,7 +702,7 @@
           "Hormuz",
           "Jeddah",
           "Narvik",
-          "Reykjavík"
+          "Reykjav\u00edk"
         ]
       },
       {
@@ -786,7 +710,7 @@
         "ratio": 126,
         "source_ports": [
           "Lisboa",
-          "Málaga",
+          "M\u00e1laga",
           "Palma",
           "Valencia"
         ]
@@ -810,7 +734,7 @@
             "Hormuz",
             "Jeddah",
             "Narvik",
-            "Reykjavík"
+            "Reykjav\u00edk"
           ]
         },
         {
@@ -818,7 +742,7 @@
           "ratio": 126,
           "source_ports": [
             "Lisboa",
-            "Málaga",
+            "M\u00e1laga",
             "Palma",
             "Valencia"
           ]
@@ -866,7 +790,7 @@
         "material": "Chicle",
         "ratio": 146,
         "source_ports": [
-          "Mérida",
+          "M\u00e9rida",
           "Veracruz"
         ]
       }
@@ -895,7 +819,7 @@
           "material": "Chicle",
           "ratio": 146,
           "source_ports": [
-            "Mérida",
+            "M\u00e9rida",
             "Veracruz"
           ]
         }
