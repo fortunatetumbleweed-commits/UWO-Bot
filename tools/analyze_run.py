@@ -22,7 +22,11 @@ from collections import Counter, defaultdict
 from datetime import date
 from pathlib import Path
 
-_LINE = re.compile(r"^(\d{4}-\d\d-\d\d) (\d\d:\d\d:\d\d)\.\d+ \| (\w+) \| (.*)$")
+# LOGURU PADS THE LEVEL to a fixed width, so the separator is `| INFO     |`, not
+# `| INFO |`. Matching a single space made this tool report "lines analysed: 0" on
+# every real session log while its own tests passed — they fed a format the bot has
+# never written. Tolerate the padding, and see `test_a_real_loguru_line_is_read`.
+_LINE = re.compile(r"^(\d{4}-\d\d-\d\d) (\d\d:\d\d:\d\d)\.\d+ \|\s*(\w+)\s*\| (.*)$")
 
 # `key=value` where the value is a bare True/False — the shape of a check reporting itself.
 _FLAG = re.compile(r"\b([a-z_][a-z_0-9]*)=(True|False)\b")

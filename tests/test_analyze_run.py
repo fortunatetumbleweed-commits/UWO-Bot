@@ -20,6 +20,22 @@ def _log(*lines):
     return [f"2026-08-26 {t} | {lvl} | {msg}" for t, lvl, msg in lines]
 
 
+class TheLogFormatIsTheBotsOwn(unittest.TestCase):
+    """The fixture above invented a format. Read one the bot actually wrote.
+
+    `_LINE` matched `| INFO |` while loguru writes `| INFO     |`, so every session log
+    analysed to zero lines and the tool reported "(none)" for a run full of warnings. The
+    tests passed throughout, because `_log` built the separator the regex wanted.
+    """
+
+    def test_a_real_loguru_line_is_read(self):
+        line = ("2026-09-08 11:27:14.071 | WARNING  | brain.dispatcher:step:581 - "
+                "[dispatch] something unusual happened")
+        a = analyse([line])
+        self.assertEqual(1, a["total"], "a padded level is still a level")
+        self.assertIn("something unusual happened", report(a))
+
+
 class TheSuspectHeuristic(unittest.TestCase):
 
     def test_a_flag_that_rarely_goes_one_way_is_flagged(self):
