@@ -233,13 +233,19 @@ class MarketActivity:
             # Not one of our cards. A page is not a dialog, and claiming one here would
             # answer a card we have not identified.
             return None
-        if (where in (_ctx.TRADE_GOODS_INFO, _ctx.QUANTITY_DIALOG)
-                and not isinstance(goal, TrimHold)):
-            # THE TRIM'S TWO CARDS, AND ONLY WHILE TRIMMING. It opens a good's card and the
-            # keypad over it deliberately, so while a TrimHold is running they are ours and
-            # the game rules must not close them. Under any other goal one of these is a
-            # card nobody here opened, and claiming it would be answering a dialog we cannot
-            # account for.
+        _mine = {_ctx.TRADE_GOODS_INFO: (TrimHold, Hold),   # the buy meets this one too
+                 _ctx.QUANTITY_DIALOG:  (TrimHold,)}         # only the trim types a figure
+        if where in _mine and not isinstance(goal, _mine[where]):
+            # THE TRIM'S TWO CARDS — and the BUY meets the first one too. The trim opens a
+            # good's card and the keypad over it deliberately; the buy meets the goods card
+            # by accident, when `Put In Bulk` is off and a tile tap opens it instead of
+            # bulk-loading. Both must answer it, or it stands until the leg dies ("a
+            # confirmation dialog nobody will answer", Jakarta 2026-09-08). Under any OTHER
+            # goal one of these is a card nobody here opened, and claiming it would be
+            # answering a dialog we cannot account for.
+            #
+            # The KEYPAD stays the trim's alone: it types an exact figure, and the buy takes
+            # the whole shelf with `Max`, so a keypad during a buy is a card nobody opened.
             return None
         port = self._port_name(None)
         # AN UNREADABLE PORT NAME IS "UNKNOWN", NOT "SOMEWHERE ELSE". The state is keyed to
@@ -804,7 +810,13 @@ class MarketActivity:
             detail=str(goal))
 
     def _on_goods_info(self, goal: Any, port: str) -> ActivityResult:
-        """The Trade Goods Info card. Only the trim opens one deliberately."""
+        """The Trade Goods Info card — the trim opens one deliberately, the buy meets one by
+        accident when `Put In Bulk` is off, and both have to answer it."""
+        if isinstance(goal, Hold):
+            from brain.activities.market_buy import on_goods_info
+            out = on_goods_info(self._state, goal, frame=self._frame(),
+                                tap_fn=self._tap_fn(), omni_fn=self._omni_fn())
+            return self._as_result(out, goal, port, what="buy")
         if not isinstance(goal, TrimHold):
             return ActivityResult(UNRECOGNISED, self._observed(port),
                                   detail="a goods card this goal did not open")

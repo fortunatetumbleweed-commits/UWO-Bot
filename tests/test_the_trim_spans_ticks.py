@@ -298,9 +298,32 @@ class TheActivityRoutesTheTrimsOwnScreens(unittest.TestCase):
         self.assertIsNotNone(claimed)
         h.assert_called_once()
 
-    def test_no_other_goal_claims_one(self):
+    def test_the_BUY_claims_the_goods_card_too(self):
+        """It meets one by accident, and must answer it.
+
+        This asserted that only a trim may claim the goods card. The buy meets one whenever
+        `Put In Bulk` is off — a tile tap opens the per-item card instead of loading the
+        shelf — and having no owner is what killed the Jakarta leg on 2026-09-08 with
+        "a confirmation dialog nobody will answer". The keypad is still the trim's alone.
+        """
         from brain.activities.market import Hold
         act, _ctx = self._activity("trade_goods_info")
+        with mock.patch("brain.activities.market_buy.on_goods_info",
+                        return_value={"do": "waited", "why": "Max"}), \
+             mock.patch.object(type(act), "_port_name", return_value="Faro"):
+            self.assertIsNotNone(act.on_dialog(types.SimpleNamespace(body_text=()),
+                                               Hold(orders={"Pig": 900})))
+
+    def test_but_a_goal_that_opens_neither_still_claims_neither(self):
+        from brain.activities.market import FreeHold
+        act, _ctx = self._activity("trade_goods_info")
+        self.assertIsNone(act.on_dialog(types.SimpleNamespace(body_text=()),
+                                        FreeHold(keep=("Water",))))
+
+    def test_and_the_keypad_stays_the_trims_alone(self):
+        """Only the trim types a figure; the buy takes the whole shelf with Max."""
+        from brain.activities.market import Hold
+        act, _ctx = self._activity("quantity_dialog")
         self.assertIsNone(act.on_dialog(types.SimpleNamespace(body_text=()),
                                         Hold(orders={"Pig": 900})))
 

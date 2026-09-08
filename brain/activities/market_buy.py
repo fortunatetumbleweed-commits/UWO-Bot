@@ -182,7 +182,7 @@ def _stocked_but_unmoved(state, orders: Mapping, goods: Mapping, *,
     return None
 
 
-def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn) -> dict:
+def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn, set_bulk_fn=None) -> dict:
     """One action on the purchase grid.
 
     Exactly one of: staged / committed / refreshed / waited / finished / blocked.
@@ -275,6 +275,30 @@ def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn) -
 
     buyable = buyable_now(orders, goods, state.ledger, True)
     if buyable:
+        # PUT IN BULK ON, BEFORE A TILE IS TAPPED (user, 2026-09-08: "It is faster to check
+        # Put In Bulk"). With it on a tile loads the whole stack in one tap; with it off the
+        # same tap opens the per-item Trade Goods Info card, which is Max-then-Load — three
+        # taps and two more ticks for the same result.
+        #
+        # This path never checked. `sell_down_to` turns the box OFF to trim and restores it,
+        # and the buy simply assumed it was on — so whenever anything left it off the buy met
+        # a card it had no answer for. Live 2026-09-08 at Jakarta the trim ran, found nothing
+        # to trim and so never touched the box, and the first Ebony tap opened the card:
+        # "gather:Jakarta: a confirmation dialog nobody will answer".
+        #
+        # CHECK BEFORE ACTING (Guiding Principle #6). The card is still answered when it does
+        # appear — the box may be off for reasons of its own — but it need not appear.
+        if set_bulk_fn is None:
+            from actions.market_actions import _ensure_bulk_mode as set_bulk_fn
+        try:
+            from actions.market_actions import _is_bulk_mode_on
+            if not _is_bulk_mode_on(frame):
+                set_bulk_fn(True, frame)
+                state.did("turned Put In Bulk on")
+                return {"do": "waited", "why": "Put In Bulk was off — a tile tap would open "
+                                               "the goods card instead of loading the shelf"}
+        except Exception as exc:              # noqa: BLE001 — the card path still answers it
+            logger.debug(f"[market] could not read Put In Bulk: {exc}")
         if state.last_intent == "staged" and state.last_signature == shelf_signature(goods):
             # THE CART IS EMPTY AND THE SHELF HAS NOT MOVED: the tap never landed. Unlike a
             # missing commit button, a zero cost is unambiguous, so staging again is safe.
@@ -417,3 +441,43 @@ def _worth_a_gem(state, orders: Mapping, goods: Mapping) -> bool:
         logger.debug(f"[market] could not weigh the refresh: {exc}")
         return True                               # cannot rule it out — behave as before
     return False
+
+
+def on_goods_info(state, goal, *, frame, tap_fn, omni_fn) -> dict:
+    """The Trade Goods Info card, during a BUY. Max, then Load — one per tick.
+
+    THIS CARD IS WHAT A TILE TAP GIVES YOU WITH `Put In Bulk` OFF. With it on, a tile
+    bulk-loads the whole stack and no card appears, which is why the buy never met one on the
+    dispatcher path — and why it had no answer when it did.
+
+    The handling is not new: `_sell_one_good` waits for this card and taps `Max`, and
+    `_buy_load_one_good` types a quantity and taps `Load`. Both live on the old `buy_goods` /
+    `sell_goods` flows, which the mission stopped using (user, 2026-09-08: "This dialog we
+    should have code to handle it, it was supported for sure"). This is the same two steps on
+    the tick path.
+
+    Live 2026-09-08 at Jakarta (frame 28 of trace_barter_cmd_2026-09-08T10-31-17): the card
+    came up for Ebony with `Cancel` and `Load` and a `1/158` spinner, `Put In Bulk` unchecked
+    behind it. Nothing owned it, `game_rules` correctly refused to press a lone `Cancel`, and
+    the leg died with "a confirmation dialog nobody will answer".
+
+    MAX, NOT A TYPED FIGURE. The buy already takes whole shelves — `buy_to_goal` "buys whole
+    shelves, so the hold arrives over-stocked", which is what the trims either side are for —
+    so Max is what bulk-loading would have done, without a keypad to get wrong.
+    """
+    from actions.sail_actions import _find_button
+
+    if state.last_intent == "tapped Max on the goods card":
+        load = _find_button(frame, "load")
+        if load is None:
+            return {"do": "blocked", "why": "no Load button on the goods card"}
+        tap_fn(*load)
+        state.did("tapped Load on the goods card")
+        return {"do": "staged", "why": "loading the shelf from the goods card"}
+
+    mx = _find_button(frame, "max")
+    if mx is None:
+        return {"do": "blocked", "why": "no Max button on the goods card"}
+    tap_fn(*mx)
+    state.did("tapped Max on the goods card")
+    return {"do": "waited", "why": "taking the whole shelf on the goods card"}

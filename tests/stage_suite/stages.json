@@ -41,6 +41,20 @@
   "expect": "the idle standby lock at Barcelona: full-screen, no chrome, no action verbs \u2014 it passes every test for a notice, and its exit is a SWIPE not a tap. The family CNN called it transient at 0.80.",
   "from": "/tmp/idle_lock_barcelona.png"
  },
+ "jakarta_goods_card_bulk_off": {
+  "frame": "frames/jakarta_goods_card_bulk_off.png",
+  "state": "sub_menu:purchase",
+  "port": null,
+  "expect": "Trade Goods Info card for Ebony during a BUY, with Cancel and Load and a 1/158 spinner. Put In Bulk is UNCHECKED behind it, which is why a tile tap opened this card instead of bulk-loading the shelf",
+  "from": "data/sessions/trace_barter_cmd_2026-09-08T10-31-17/frame_0028.png"
+ },
+ "jakarta_purchase_bulk_off": {
+  "frame": "frames/jakarta_purchase_bulk_off.png",
+  "state": "sub_menu:purchase",
+  "port": null,
+  "expect": "Jakarta Purchase grid with Put In Bulk UNCHECKED and Ebony wanted. Tapping a tile here opens the per-item Trade Goods Info card instead of loading the shelf",
+  "from": "data/sessions/trace_barter_cmd_2026-09-08T10-31-17/frame_0027.png"
+ },
  "market_goods_info_dialog": {
   "frame": "frames/market_goods_info_dialog.png",
   "state": "sub_menu:purchase",
