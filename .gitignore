@@ -32,7 +32,13 @@ memory/knowledge/markets/
 memory/knowledge/ports/
 memory/knowledge/scenes/
 memory/knowledge/screens/
-memory/knowledge/learned_fingerprints/
+memory/knowledge/learned_fingerprints/*
+# ...except the record of WHY the layer no longer classifies. The fingerprints
+# themselves are runtime state; the reasoning that retired them is not. Git will
+# not descend into an ignored DIRECTORY, so each level has to be re-opened.
+!memory/knowledge/learned_fingerprints/retired/
+memory/knowledge/learned_fingerprints/retired/*
+!memory/knowledge/learned_fingerprints/retired/README.md
 memory/knowledge/port_map_tap_offsets.json
 memory/discoveries/screenshots/
 
