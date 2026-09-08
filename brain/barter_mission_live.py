@@ -260,17 +260,40 @@ def current_position(coords: Mapping[str, tuple], fallback=None, tries: int = 3)
             # being where we supposedly already are. The fleet sailed to the one port the KB
             # had recorded scarce for Raisin. From the true start it inverts: Bordeaux first.
             #
-            # DEPARTED IS A DIFFERENT QUESTION AND GETS NO ANSWER. At sea the remembered name
-            # is the voyage's ORIGIN, not our position (`BotObservation.is_departed` says so
-            # in as many words), and no port is where the fleet is. `None` is honest, and the
-            # solver orders by coverage when it has no origin.
+            # AT SEA THE REMEMBERED NAME IS THE VOYAGE'S ORIGIN, not our position, and no
+            # port is where the fleet is — so that one gets no answer.
+            #
+            # BUT THE WORLD MAP IS NOT A DEPARTURE. It is a screen opened FROM somewhere, and
+            # standing in a port with the map up leaves the fleet exactly where it was. This
+            # asked `is_departed`, which counts `world_map` alongside `sea` — a fair reading
+            # of "left a settlement and en route", and the wrong question here.
+            #
+            # The plan is computed immediately after the REMOTE VILLAGE CHECK, and that check
+            # runs on the world map. So this fired on essentially every mission. Live
+            # 2026-09-08, planning Box of Nutmeg with the fleet moored at Ambon:
+            #
+            #     [mission] the fleet is between ports — placing it nowhere rather than at
+            #               the port it sailed from
+            #     graph: [... 'gather:Santo Domingo', 'gather:Masulipatnam', 'gather:Jakarta' ...]
+            #
+            # With no origin the solver cannot compare distances and orders by COVERAGE
+            # alone, which sent an Indonesian mission to the Caribbean for Coral:
+            #
+            #     real origin (Ambon) -> ['Ambon', 'Guam', 'Kolkata']
+            #     placed nowhere      -> ['Santo Domingo', 'Masulipatnam', 'Jakarta']
+            #
+            # Masulipatnam->Santo Domingo is 4,181 against 1,722 to Guam. The fleet was
+            # standing on the Ebony it was about to sail away from (user, 2026-09-08: "it
+            # should not lose origin when at a port, that info is readily available").
             best, best_age, best_how = None, None, ""
             try:
                 from brain import observation as _obs
                 cur = _obs.current()
-                if cur is not None and cur.is_departed:
-                    logger.info("[mission] the fleet is between ports — placing it nowhere "
-                                "rather than at the port it sailed from")
+                at_sea = (cur is not None
+                          and cur.last_known_base_scene in ("sea", "sea_cinematic"))
+                if at_sea:
+                    logger.info("[mission] the fleet is at sea — placing it nowhere rather "
+                                "than at the port it sailed from")
                     return fallback
                 held = (cur.last_known_settlement if cur else None) \
                     or _obs._ensure_persisted_loaded()

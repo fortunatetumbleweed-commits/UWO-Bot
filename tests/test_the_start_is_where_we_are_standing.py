@@ -38,9 +38,10 @@ def _call(*, observation, recalled=("Madeira", 21674.0), state="sub_menu"):
         return bml.current_position(COORDS, tries=1)
 
 
-def _obs(settlement, *, departed=False, age=7560.0):
-    """The live shape: a dated settlement. London was ~7,560s old against Madeira's 21,674."""
-    return types.SimpleNamespace(last_known_settlement=settlement, is_departed=departed,
+def _obs(settlement, *, scene="port_overworld", age=7560.0):
+    """The live shape: a dated settlement and the scene it was last seen in."""
+    return types.SimpleNamespace(last_known_settlement=settlement,
+                                 last_known_base_scene=scene,
                                  settlement_age_s=lambda now=None: age)
 
 
@@ -65,15 +66,48 @@ class TheFresherReadingWins(unittest.TestCase):
 
 
 class AtSeaTheFleetIsNowhere(unittest.TestCase):
-    """`is_departed` means the remembered name is the voyage's ORIGIN, not our position."""
+    """Underway, the remembered name is the voyage's ORIGIN, not our position."""
 
-    def test_a_departed_fleet_is_placed_nowhere(self):
-        self.assertIsNone(_call(observation=_obs("London", departed=True)))
+    def test_a_fleet_at_sea_is_placed_nowhere(self):
+        self.assertIsNone(_call(observation=_obs("London", scene="sea")))
+
+    def test_the_cinematic_counts_as_sea_too(self):
+        self.assertIsNone(_call(observation=_obs("London", scene="sea_cinematic")))
 
     def test_and_it_does_not_fall_back_to_the_older_record_either(self):
         """Falling through would put the fleet at a port it is demonstrably not at."""
-        self.assertIsNone(_call(observation=_obs("London", departed=True),
+        self.assertIsNone(_call(observation=_obs("London", scene="sea"),
                                 recalled=("Madeira", 30.0)))
+
+
+class TheWorldMapIsNotADeparture(unittest.TestCase):
+    """It is a screen opened FROM somewhere. Standing in a port with the map up leaves the
+    fleet exactly where it was.
+
+    The plan is computed immediately after the REMOTE VILLAGE CHECK, and that check runs on
+    the world map — so treating the map as departure fired on essentially every mission.
+    Live 2026-09-08, planning Box of Nutmeg with the fleet moored at Ambon:
+
+        [mission] the fleet is between ports — placing it nowhere rather than at the port
+                  it sailed from
+        graph: [... 'gather:Santo Domingo', 'gather:Masulipatnam', 'gather:Jakarta' ...]
+
+    With no origin the solver cannot compare distances and orders by COVERAGE alone:
+
+        real origin (Ambon) -> ['Ambon', 'Guam', 'Kolkata']
+        placed nowhere      -> ['Santo Domingo', 'Masulipatnam', 'Jakarta']
+
+    Masulipatnam->Santo Domingo is 4,181 against 1,722 to Guam, and the fleet was standing
+    on the Ebony it was about to sail away from.
+    """
+
+    def test_the_map_keeps_the_port_we_are_standing_in(self):
+        self.assertEqual(_call(observation=_obs("London", scene="world_map")),
+                         COORDS["London"])
+
+    def test_a_port_overworld_obviously_does_too(self):
+        self.assertEqual(_call(observation=_obs("London", scene="port_overworld")),
+                         COORDS["London"])
 
 
 class WhatItChangesInTheRoute(unittest.TestCase):
