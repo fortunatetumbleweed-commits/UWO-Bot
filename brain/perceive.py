@@ -818,6 +818,31 @@ def _detect_interruptors(frame, ocr_tokens: list):
                         f"[perceive] consult outcome=irrelevant — "
                         f"NOT dismissing (purpose: {analysis.purpose[:80]!r})"
                     )
+                # A DIALOG THAT BELONGS TO THE GOAL BELONGS TO THE ACTIVITY PURSUING IT.
+                #
+                # `dismissal` is Claude's "if you HAD to get rid of this, how would you" —
+                # the comment above has said so since it was written, and the code acted on
+                # it anyway. That was harmless only while the consult was BLIND: with no
+                # goal to relate anything to it could only ever answer `irrelevant`, so the
+                # branch above caught 99 of 99 consults on 2026-09-07 and this one never
+                # fired. Give it a goal and 13 of 18 fall through here instead.
+                #
+                # Live 2026-09-08 at Barcelona, five times over four minutes: the market
+                # tapped its own restock control because Iron was sold out and the goal
+                # wanted 709, and this layer tapped Cancel on the prompt that tap raised.
+                # The market owns RESTOCK_PROMPT and answers it with a blue gem; it never
+                # got the frame. Nothing may swallow what an activity owns (CLAUDE.md #4).
+                #
+                # What is left actionable is exactly what this path was built for: a thing
+                # that is NOT about the goal and is in the way — the 2026-05-15 Amsterdam
+                # `Exit Game?` confirmation. The analysis is recorded either way, and
+                # `purpose` is the better half of it for whoever does decide.
+                elif analysis is not None and analysis.relates_to_goal:
+                    logger.info(
+                        f"[perceive] the consult says this is about the goal — leaving it "
+                        f"to the activity rather than tapping {analysis.dismissal!r} "
+                        f"(purpose: {analysis.purpose[:80]!r})"
+                    )
                 elif analysis is not None and analysis.dismissal in _CONSULT_ACTIONABLE:
                     dismissal = analysis.dismissal
                     # Guard: press_back is unsafe on top-level locations.

@@ -133,18 +133,23 @@ def _append_training_record(record: dict) -> None:
 
 
 _CONSULT_PROMPT = """\
-You are analysing a UI obstruction in the mobile game "Uncharted Waters Origin" (UWO),
-an Age of Sail trading/exploration RPG.
+A bot is playing the mobile game "Uncharted Waters Origin" (UWO), an Age of Sail
+trading/exploration RPG. Something has appeared on its screen. Work out what it is.
 
-The bot's structural classifier has detected a likely obstruction on screen:
-  - kind: {kind}
-  - confidence: {classifier_confidence}
-  - bbox: {bbox}
+IT MAY BE THE BOT'S OWN DOING. A dialog that the bot's last action opened is not an
+obstruction — it is the next step of the thing the bot is in the middle of, and the bot
+should answer it, not dismiss it. Read the situation below before you decide which it is.
 
-The OCR text inside the obstruction's bounding box reads (left-to-right, top-to-bottom):
+WHAT THE BOT IS DOING
+{situation}
+
+WHAT IS NOW ON SCREEN
+  - the structural classifier calls it: {kind} (confidence {classifier_confidence})
+  - bounding box: {bbox}
+  - the text inside it, left-to-right and top-to-bottom:
 {ocr_text}
 
-Bot's current goal (most-recent first):
+Bot's goal stack (most-recent first):
 {goal_chain}
 
 Return ONLY a JSON object with this exact shape:
@@ -174,9 +179,13 @@ Rules:
   `tap_anywhere` for village popups.  Same rule for popups on
   port_overworld (top-left shows a port name, no back arrow) — back
   there opens the main menu rather than dismissing the popup.
-- `relates_to_goal` = true when the obstruction is about (or caused by) the
+- `relates_to_goal` = true when the thing on screen is about (or caused by) the
   current goal.  e.g. crew-hired overlay relates to a recruit_crew goal;
   daily login reward does NOT relate to a sell_all_cargo goal.
+  WHEN IT IS TRUE, `dismissal` IS HYPOTHETICAL. It answers "if you HAD to get rid of
+  this, how would you" — and the caller will not act on it, because a dialog belonging to
+  the bot's own work is answered by the part of the bot doing that work. Say what the
+  thing IS and let that part decide.
 - `outcome_for_goal`:
     likely_resolved   — the obstruction indicates the goal's success state
     still_blocking    — the obstruction must be dealt with before the goal advances
@@ -276,6 +285,39 @@ def _extract_json(text: str) -> Optional[dict]:
 # ── Public entry point ─────────────────────────────────────────────────────
 
 
+def _situation(goal_context) -> str:
+    """Narrate what the bot is doing, in sentences, from the published goal context.
+
+    "The prompt does not explain what the bot is trying to do, and what it has done"
+    (user, 2026-09-08). Everything here was already travelling with the activity's result —
+    the port, the ledger of have-against-want, the action just taken — and none of it
+    reached the model. A goal LABEL cannot answer "is this dialog yours?"; a situation can.
+    """
+    if goal_context is None:
+        return "  - No goal is active. Nothing the bot did is known to have caused this."
+    t = dict(getattr(goal_context, "target", None) or {})
+    lines = []
+    where, port = t.get("where"), t.get("port")
+    if where or port:
+        lines.append(f"  - Where it is: {where or 'unknown screen'}"
+                     + (f" at {port}" if port else ""))
+    if t.get("goal"):
+        lines.append(f"  - What it is trying to do: {t['goal']}")
+    progress = t.get("progress") or {}
+    if isinstance(progress, dict) and progress:
+        parts = []
+        for good, row in progress.items():
+            if isinstance(row, dict):
+                parts.append(f"{good} {row.get('have', '?')} of {row.get('want', '?')}"
+                             + (f" ({row['state']})" if row.get("state") else ""))
+        if parts:
+            lines.append("  - What it has bought so far: " + "; ".join(parts))
+    if t.get("doing"):
+        lines.append(f"  - Its most recent action, which may be what put this on screen: "
+                     f"{t['doing']}")
+    return "\n".join(lines) or "  - A goal is active but reported no detail."
+
+
 def consult_obstruction(
     frame: Image.Image,
     obstruction,                # vision.obstruction_classifier.ObstructionResult
@@ -333,6 +375,7 @@ def consult_obstruction(
         for t, cx, cy in sorted(tokens_in_bbox, key=lambda r: (r[2], r[1]))
     )
     prompt = _CONSULT_PROMPT.format(
+        situation=_situation(goal_context),
         kind=obstruction.kind,
         classifier_confidence=obstruction.confidence,
         bbox=obstruction.bbox,

@@ -416,6 +416,11 @@ class MarketActivity:
     def _observed(self, port: str) -> dict:
         """What every result carries: what this visit has done, in the task's vocabulary."""
         out = {"sold": list(self._state.sold), "port": port}
+        # WHAT WE JUST DID, in the activity's own words. `did` below is the OUTCOME verb
+        # ("refreshed"); this is the ACTION ("tapped the restock"), which is what tells a
+        # reader why the dialog now on screen is there. See `Dispatcher._publish_goal`.
+        if getattr(self._state, "last_intent", None):
+            out["acted"] = str(self._state.last_intent)
         if self._state.ledger is not None:
             try:
                 from actions.buy_materials import material_states

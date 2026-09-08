@@ -134,12 +134,29 @@ class ActivityResult:
 def _did(result) -> Optional[str]:
     """What the activity last did, from its own report. None when it did not say.
 
-    Activities already record this — `MarketState.did(...)` puts it in `observed['did']` —
-    so nothing new has to be threaded through to read it.
+    Prefers `acted` — the ACTION, "tapped the restock" — over `did`, the outcome verb,
+    "refreshed". Whoever reads a dialog needs to know which button put it there.
     """
     try:
-        return (getattr(result, "observed", None) or {}).get("did") or None
+        seen = getattr(result, "observed", None) or {}
+        return seen.get("acted") or seen.get("did") or None
     except Exception:                                # noqa: BLE001 — a label, never a failure
+        return None
+
+
+def _progress(result) -> Optional[dict]:
+    """How far the goal has got, from the activity's own ledger. None when it did not say."""
+    try:
+        seen = getattr(result, "observed", None) or {}
+        return seen.get("materials") or None
+    except Exception:                                # noqa: BLE001
+        return None
+
+
+def _where_we_are(result) -> Optional[str]:
+    try:
+        return (getattr(result, "observed", None) or {}).get("port") or None
+    except Exception:                                # noqa: BLE001
         return None
 
 
@@ -499,7 +516,9 @@ class Dispatcher:
                    if intent_name in (affordances(w, self._activities) or ())}
         return first_hop_toward(where, targets, self._activities)
 
-    def _publish_goal(self, doing: Optional[str] = None) -> None:
+    def _publish_goal(self, doing: Optional[str] = None, *,
+                      port: Optional[str] = None,
+                      progress: Optional[dict] = None) -> None:
         """Say what the bot is working on, so perception can read it.
 
         THE DISPATCHER IS THE ONLY LAYER THAT KNOWS BOTH. The task runner owns the work
@@ -519,11 +538,20 @@ class Dispatcher:
         if self.goal is None:
             set_ambient_goal(None)
             return
+        # A LABEL IS NOT A SITUATION (user, 2026-09-08). The consult used to be handed
+        # `goal='Hold'` and a dialog, and asked whether the two were related — with no way
+        # to know the bot was at a market, what it had already bought, or that its own tap
+        # is what put the dialog on the screen. It answered "decline", correctly for the
+        # question it was asked, and the bot cancelled its own restock five times running.
         target = {"goal": str(self.goal)}
         if doing:
             target["doing"] = doing
         if self._standing_in:
             target["where"] = str(self._standing_in)
+        if port:
+            target["port"] = port
+        if progress:
+            target["progress"] = progress
         set_ambient_goal(GoalContext(intent=type(self.goal).__name__, target=target))
 
     def _is_a_covering_screen(self, where) -> bool:
@@ -618,7 +646,8 @@ class Dispatcher:
         # WHAT WE ARE WORKING ON, said before anything looks. `_detect_interruptors` consults
         # Claude about a dialog and asks whether it relates to the goal; without this it was
         # asking with no goal to relate it to. See `_publish_goal`.
-        self._publish_goal(_did(self.last))
+        self._publish_goal(_did(self.last), port=_where_we_are(self.last),
+                           progress=_progress(self.last))
 
         try:
             from actions.perception import screen
@@ -1204,7 +1233,8 @@ class Dispatcher:
         # THE LOOK BELOW SHOWS WHAT THE ACTION PRODUCED, so it is read under the action that
         # produced it — a result card is only recognisable as one when "tapped Sell" is on
         # the record.
-        self._publish_goal(_did(result))
+        self._publish_goal(_did(result), port=_where_we_are(result),
+                           progress=_progress(result))
         if result.status == UNRECOGNISED:
             logger.info("[dispatch] activity is lost — perceiving, transitioning, refreshing")
             state = self._regain_bearings(state)
