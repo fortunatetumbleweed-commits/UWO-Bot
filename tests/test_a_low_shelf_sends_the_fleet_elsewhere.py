@@ -112,6 +112,73 @@ class TheRerouteActsOnWhatThePortSaid(unittest.TestCase):
             r._reroute_what_this_port_cannot_supply(leg, types.SimpleNamespace())
         self.assertIn("gather:Bordeaux:raisin", [t.id for t in r.subtasks])
 
+    def test_one_material_reroutes_ONCE_however_the_two_sides_spell_it(self):
+        """`_cannot_supply` is keyed lower-case, `_last_materials` as the market reported it.
+
+        Live 2026-09-07 at Bordeaux, the same material twice:
+
+            [mission_runner] Raisin: no other source to try — carrying on short
+            [mission_runner] raisin: no other source to try — carrying on short
+
+        Free there, because both attempts reached the same answer. With a candidate
+        available it adds two identical gather legs.
+        """
+        r = self._runner_at("Madeira",
+                            materials={"Raisin": {"have": 110, "want": 1081,
+                                                  "state": "short"}},
+                            cannot={"raisin": "Madeira"})
+        leg = self._leg("Madeira")
+        with mock.patch("brain.mission_runner.logger"):
+            r._reroute_what_this_port_cannot_supply(leg, types.SimpleNamespace())
+        self.assertEqual(len(r.subtasks), 1, f"one leg, got {[t.id for t in r.subtasks]}")
+
+    def test_the_duplicate_does_not_BURN_the_next_source(self):
+        """The real cost of the case mismatch, and it is not double logging.
+
+        Live 2026-09-07 at Madeira, both passes ran and `Bordeaux` was already in `tried` by
+        the second, so the duplicate took the NEXT candidate:
+
+            Raisin is short and Madeira cannot supply it — adding gather:Bordeaux:Raisin
+            raisin is short and Madeira cannot supply it — adding gather:Trabzon:raisin
+            gather:Trabzon:raisin needs nothing — raisin already aboard, no voyage is spent
+
+        `want` came from `_last_materials["raisin"]`, which does not exist (it is keyed
+        "Raisin"), so the leg was created asking for ZERO units and settled on the spot.
+        Raisin's third source was consumed and never visited — which is why Bordeaux, an
+        hour later, reported "no other source to try" and the mission bartered twice.
+        """
+        offered = []
+
+        def _source(material, tried):
+            for p in ("Bordeaux", "Trabzon"):
+                if p.lower() not in tried:
+                    offered.append(p)
+                    return p
+            return None
+
+        r = self._runner_at("Madeira",
+                            materials={"Raisin": {"have": 110, "want": 1081,
+                                                  "state": "short"}},
+                            cannot={"raisin": "Madeira"})
+        r._another_source = _source
+        leg = self._leg("Madeira")
+        with mock.patch("brain.mission_runner.logger"):
+            r._reroute_what_this_port_cannot_supply(leg, types.SimpleNamespace())
+        self.assertEqual(offered, ["Bordeaux"], "Trabzon must still be available to try")
+        self.assertEqual([t.id for t in r.subtasks], ["gather:Bordeaux:Raisin"])
+
+    def test_the_new_leg_asks_for_a_REAL_quantity(self):
+        """A leg asking for zero settles instantly and spends the candidate for nothing."""
+        r = self._runner_at("Madeira",
+                            materials={"Raisin": {"have": 110, "want": 1081,
+                                                  "state": "short"}},
+                            cannot={"raisin": "Madeira"})
+        leg = self._leg("Madeira")
+        with mock.patch("brain.mission_runner.logger"):
+            r._reroute_what_this_port_cannot_supply(leg, types.SimpleNamespace())
+        orders = r.subtasks[0].params["orders"]
+        self.assertEqual(list(orders.values()), [1081], f"asked for {orders}")
+
     def test_a_report_from_ANOTHER_port_does_not_reroute_this_leg(self):
         r = self._runner_at("Faro", materials={}, cannot={"raisin": "Madeira"})
         leg = self._leg("Faro")

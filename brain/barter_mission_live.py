@@ -238,12 +238,58 @@ def current_position(coords: Mapping[str, tuple], fallback=None, tries: int = 3)
         # 2026-08-22 this loop retried three times on the MAIN MENU and aborted the mission,
         # two minutes after 'Kolkata' had been confirmed twice on the overworld.
         if not screen_shows_settlement(state):
+            # TWO RECORDS OF WHERE WE ARE, AND THE FRESHER ONE WINS.
+            #
+            # `observation.last_known_settlement` and `observed_facts.recall("settlement")`
+            # are both written when the overworld paints the name, so they normally agree —
+            # but they can drift, and when they do, the question is not which module owns the
+            # fact, it is which reading is more recent. Both carry a timestamp, so ask.
+            #
+            # Live 2026-09-07, eighteen seconds apart, planning from inside LONDON's market:
+            #
+            #     18:39:37  [observation] loaded persisted settlement: 'London'
+            #     18:39:55  [mission] 'sub_menu' does not show the port name —
+            #               using 'Madeira', seen 21674s ago
+            #
+            # The route is scored `worth / (distance + 1)`, so a start of Madeira gives
+            # Madeira's own score 0.24/1 against Bordeaux's 1.0/687 — it wins by 165x for
+            # being where we supposedly already are. The fleet sailed to the one port the KB
+            # had recorded scarce for Raisin. From the true start it inverts: Bordeaux first.
+            #
+            # DEPARTED IS A DIFFERENT QUESTION AND GETS NO ANSWER. At sea the remembered name
+            # is the voyage's ORIGIN, not our position (`BotObservation.is_departed` says so
+            # in as many words), and no port is where the fleet is. `None` is honest, and the
+            # solver orders by coverage when it has no origin.
+            best, best_age, best_how = None, None, ""
+            try:
+                from brain import observation as _obs
+                cur = _obs.current()
+                if cur is not None and cur.is_departed:
+                    logger.info("[mission] the fleet is between ports — placing it nowhere "
+                                "rather than at the port it sailed from")
+                    return fallback
+                held = (cur.last_known_settlement if cur else None) \
+                    or _obs._ensure_persisted_loaded()
+                if held:
+                    age = (cur.settlement_age_s() if cur else None)
+                    best, best_age = str(held), age
+                    best_how = (f" (the place, seen {age:.0f}s ago)" if age is not None
+                                else " (the place)")
+            except Exception as exc:              # noqa: BLE001 — one record is enough
+                logger.debug(f"[mission] could not ask the place: {exc}")
+
             seen = recall("settlement")
             if seen is not None:
                 name, age = seen
+                # UNDATED LOSES TO DATED. A place we cannot date might be from any time;
+                # a reading that says how old it is can at least be compared.
+                if best is None or best_age is None or age < best_age:
+                    best, best_age = name, age
+                    best_how = f" (remembered {age:.0f}s ago)"
+            if best is not None:
                 logger.info(f"[mission] {state!r} does not show the port name — "
-                            f"using {name!r}, seen {age:.0f}s ago")
-                return _place(name, f" (remembered {age:.0f}s ago)")
+                            f"using {best!r}{best_how}")
+                return _place(best, best_how)
             logger.warning(f"[mission] {state!r} does not show the port name and none is "
                            "remembered — cannot place the fleet on the map")
             return fallback

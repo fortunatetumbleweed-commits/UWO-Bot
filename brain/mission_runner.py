@@ -611,9 +611,21 @@ class MissionRunner:
         # itself reported scarce — `season: low, good: Raisin` — and that needs no breakdown
         # to be true. At Madeira the breakdown was the one thing missing, because the shelf
         # that could not be read is what made the port scarce in the first place.
+        # MATCHED BY NAME, NOT BY SPELLING. `_cannot_supply` is keyed lower-case and
+        # `_last_materials` however the market reported it, so `"raisin" not in ["Raisin"]`
+        # was true and the same material was rerouted twice. Live 2026-09-07 at Bordeaux:
+        #
+        #     [mission_runner] Raisin: no other source to try — carrying on short
+        #     [mission_runner] raisin: no other source to try — carrying on short
+        #
+        # It cost nothing there because both attempts reached the same answer, but with a
+        # candidate available it would have added two identical gather legs.
+        seen = {str(m).lower() for m in short}
         for material, where in (getattr(self, "_cannot_supply", None) or {}).items():
-            if str(where).lower() == str(leg.location or "").lower() and material not in short:
+            if (str(where).lower() == str(leg.location or "").lower()
+                    and str(material).lower() not in seen):
                 short.append(material)
+                seen.add(str(material).lower())
         if not short:
             return
         tried = {str((getattr(t, "params", None) or {}).get("port") or t.location).lower()

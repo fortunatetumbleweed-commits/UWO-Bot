@@ -55,6 +55,52 @@ class OneTapAndNoWatching(unittest.TestCase):
         self.assertEqual(taps, [])
 
 
+class TheClaimIsActuallyREACHABLE(unittest.TestCase):
+    """It sat below the scroll branch, and the normal clear never gets there.
+
+    The claim needed `scrolled_pages` spent AND the previous tick not to have been a scroll.
+    A clear ends the other way round: scroll, look, nothing sellable, `last_intent ==
+    "scrolled"`, finished — returning before the claim. Live 2026-09-07 at London the counter
+    read 5,441/1,000 with FIVE awards pending and the chest was never tapped; the run before,
+    13,894 with thirteen.
+    """
+
+    def _finish(self, *, last_intent, scrolled_pages, points=1240):
+        import types
+        from unittest import mock
+        from brain.activities.market_sell import on_sell_page
+        from brain.market_state import MarketState
+        st = MarketState()
+        st.last_intent, st.scrolled_pages = last_intent, scrolled_pages
+        taps = []
+        goal = types.SimpleNamespace(keep=(), exclude=())
+        with mock.patch("actions.sell_goods._sell_page", return_value=[]), \
+             mock.patch("actions.sell_goods._find_sell_commit", return_value=None), \
+             mock.patch("actions.market_actions.tap_the_award_chest",
+                        side_effect=lambda *a: taps.append(1) or points):
+            out = on_sell_page(st, goal, frame=object(), capture_fn=lambda: object(),
+                               tap_fn=lambda *a: None, omni_fn=lambda _f: [])
+        return out, taps
+
+    def test_the_scroll_ending_claims_it(self):
+        """The path a real clear actually takes."""
+        out, taps = self._finish(last_intent="scrolled", scrolled_pages=1)
+        self.assertEqual(taps, [1], "the chest was never tapped on the normal ending")
+        self.assertEqual(out["do"], "waited")
+
+    def test_the_pages_spent_ending_claims_it_too(self):
+        out, taps = self._finish(last_intent=None, scrolled_pages=99)
+        self.assertEqual(taps, [1])
+
+    def test_nothing_pending_still_finishes(self):
+        out, _taps = self._finish(last_intent="scrolled", scrolled_pages=1, points=None)
+        self.assertEqual(out["do"], "finished")
+
+    def test_a_page_still_worth_scrolling_does_not_claim_yet(self):
+        _out, taps = self._finish(last_intent=None, scrolled_pages=0)
+        self.assertEqual(taps, [], "the clear is not over")
+
+
 class TheSellPageClaimsAtMostOncePerVisit(unittest.TestCase):
     """Because the second look would be at a dialog, not at the counter."""
 

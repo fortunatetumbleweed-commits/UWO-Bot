@@ -186,36 +186,47 @@ def on_sell_page(state, goal, *, frame, capture_fn, tap_fn, omni_fn) -> dict:
                 "why": (f"holding {', '.join(held)} that this pass could not price — the "
                         "hold is not empty and nothing was sold")}
 
-    if state.last_intent == "scrolled":
-        logger.info(f"[market] nothing sellable after scrolling to page "
-                    f"{state.scrolled_pages + 1} — the clear is finished")
+    # THE CLEAR IS OVER — but claim the day's award before saying so, on whichever of the
+    # two paths gets here.
+    #
+    # THE CLAIM USED TO SIT BELOW THE SCROLL BRANCH, so it needed `scrolled_pages` to be
+    # spent AND the previous tick not to have been a scroll — and the normal clear ends
+    # exactly the other way round: scroll, look, nothing sellable, `last_intent == "scrolled"`,
+    # finished. It was unreachable. Live 2026-09-07 at London the counter read 5,441/1,000
+    # with FIVE awards pending and the chest was never tapped; the run before it, 13,894 with
+    # thirteen.
+    finished = (state.last_intent == "scrolled"
+                or state.scrolled_pages >= _MAX_SELL_SCROLLS)
+    if finished:
+        # SELLING IS WHAT EARNS THE POINTS, so this is the natural moment — and it is
+        # best-effort: a claim that fails never fails the sale.
+        #
+        # ONE TAP AND HAND BACK. `get_trade_point_award` wrapped this in its own perceive
+        # loop — up to six captures and twelve seconds, re-tapping the chest if the counter
+        # had not dropped — and the counter is exactly what the reward dialog covers, so a
+        # SUCCESSFUL claim looked to it like a failed one and earned a second tap through the
+        # dialog. The dispatcher sees that dialog on the next tick and knows how to answer it.
+        if not state.award_claimed:
+            state.award_claimed = True     # one attempt per visit, whatever comes of it
+            try:
+                from actions.market_actions import tap_the_award_chest
+                points = tap_the_award_chest(frame, tap_fn, omni_fn)
+            except Exception as exc:       # noqa: BLE001 — never fail a sale over an award
+                logger.debug(f"[market] trade-point award check skipped: {exc}")
+                points = None
+            if points is not None:
+                state.did("claimed the trade-point award")
+                return {"do": "waited",
+                        "why": f"claiming the trade-point award ({points}/1,000)"}
+        if state.last_intent == "scrolled":
+            logger.info(f"[market] nothing sellable after scrolling to page "
+                        f"{state.scrolled_pages + 1} — the clear is finished")
         return {"do": "finished", "why": "nothing left to sell"}
 
-    if state.scrolled_pages < _MAX_SELL_SCROLLS:
-        state.scrolled_pages += 1
-        _scroll()
-        state.did("scrolled", page_signature(goods))
-        return {"do": "scrolled", "page": state.scrolled_pages + 1}
-    # SELLING IS WHAT EARNS THE POINTS, so this is the natural moment to claim the award —
-    # and it is best-effort: a claim that fails never fails the sale.
-    #
-    # ONE TAP AND HAND BACK. `get_trade_point_award` wrapped this in its own perceive loop —
-    # up to six captures and twelve seconds, re-tapping the chest if the counter had not
-    # dropped — and the counter is exactly what the reward dialog covers, so a SUCCESSFUL
-    # claim looked to it like a failed one and earned a second tap through the dialog. The
-    # dispatcher sees that dialog on the next tick and already knows how to answer it.
-    if not state.award_claimed:
-        state.award_claimed = True         # one attempt per visit, whatever comes of it
-        try:
-            from actions.market_actions import tap_the_award_chest
-            points = tap_the_award_chest(frame, tap_fn, omni_fn)
-        except Exception as exc:           # noqa: BLE001 — never fail a sale over an award
-            logger.debug(f"[market] trade-point award check skipped: {exc}")
-            points = None
-        if points is not None:
-            state.did("claimed the trade-point award")
-            return {"do": "waited", "why": f"claiming the trade-point award ({points}/1,000)"}
-    return {"do": "finished", "why": "nothing left to sell"}
+    state.scrolled_pages += 1
+    _scroll()
+    state.did("scrolled", page_signature(goods))
+    return {"do": "scrolled", "page": state.scrolled_pages + 1}
 
 
 def _cargo_this_pass_declined(goal, goods) -> list:
