@@ -1,4 +1,11 @@
 {
+ "ambon_ebony_sold_out": {
+  "frame": "frames/ambon_ebony_sold_out.png",
+  "state": "sub_menu:purchase",
+  "port": null,
+  "expect": "Ambon Purchase grid with Ebony SOLD OUT \u2014 tile greyed, Sold Out stamp, badge 0. The artwork-based greyness test missed it (dark brown wood stays saturated) and the buy loop tapped the dead tile twice and failed the mission",
+  "from": "data/sessions/trace_barter_cmd_2026-09-07T23-05-09/frame_0131.png"
+ },
  "barter_panel_birch_tree_selected": {
   "frame": "frames/barter_panel_birch_tree_selected.png",
   "state": "village",

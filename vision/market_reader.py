@@ -519,6 +519,10 @@ def _tile_label(cell, elements) -> str:
 # A ~60x gap, so the threshold is not delicate. Brightness agrees (18.5 vs 43.9-119.8) and is
 # kept as a second condition so a legitimately dark-but-colourful tile is not condemned.
 _SOLD_OUT_MAX_SAT = 0.10
+# The CARD BODY's brightness below which the tile is greyed out. Live tiles measured
+# 197.1-203.8 over twelve tiles on two frames; the two sold-out ones read 99.6 and 107.8.
+# The boundary sits in ~90 points of empty space on either side.
+_SOLD_OUT_MAX_CARD_BRIGHT = 150.0
 _SOLD_OUT_MAX_BRIGHT = 35.0
 
 
@@ -596,16 +600,48 @@ def _tile_has_condition_ribbon(frame, cell) -> bool:
 
 
 def _tile_looks_sold_out(frame, cell) -> bool:
-    """True when the tile's artwork is greyed — the single-frame sold-out signal."""
+    """True when the tile's CARD is greyed — the single-frame sold-out signal.
+
+    THE CARD, NOT THE ARTWORK (user, 2026-09-07: "the whole tile is greyed out, that should
+    be the most prominent determining factor").
+
+    This used to measure the thumbnail and ask for `sat <= 0.10 and brightness <= 35`. The
+    artwork is the GOOD'S OWN PICTURE, so neither number means anything across goods: dark
+    brown Ebony reads sat 0.28 / brightness 21 when SOLD OUT, while Rosewood reads 0.45 / 54
+    while perfectly in stock. The test failed Ebony on saturation and called a sold-out shelf
+    buyable.
+
+    What it cost, live 2026-09-07 at Ambon (frame 131 of trace_barter_cmd_2026-09-07T23-05-09):
+    the tile was greyed, stamped `Sold Out`, and its badge read 0, and the buy loop tapped it
+    twice, found the cart still empty, concluded "the tile is not taking taps" and failed the
+    mission. Claude's own consult on that frame said "Ebony is sold out" three times over.
+
+    The CARD BODY is chrome with a fixed palette — cream when live, grey when dead — and it
+    separates cleanly. Measured over two frames and twelve tiles:
+
+        live tiles          197.1 .. 203.8      (spread 6.7, and that includes both GATED
+                                                 tiles, which must not read as sold out)
+        Palm Oil sold out    99.6
+        Ebony sold out      107.8
+
+    ~90 points of clear air either side of the boundary, against 33 points of overlap on the
+    artwork. Saturation is dropped: the card body reads 0.09-0.14 whether live or dead, so it
+    discriminates nothing here.
+
+    Same rule as everywhere else in this file — judge the chrome, never the artwork
+    (`memory/stock-status-is-a-colour`: "never scan the whole tile, the artwork is coloured").
+    """
     try:
         import numpy as np
-        art = np.asarray(frame.convert("RGB")).astype(float)[
-            cell.y1 + 18:cell.y1 + 110, cell.x1 + 14:cell.x1 + 120]
-        if art.size == 0:
+        w, h = cell.x2 - cell.x1, cell.y2 - cell.y1
+        if w <= 0 or h <= 0:
             return False
-        mx, mn = art.max(axis=2), art.min(axis=2)
-        sat = float(((mx - mn) / np.maximum(mx, 1)).mean())
-        return sat <= _SOLD_OUT_MAX_SAT and float(art.mean()) <= _SOLD_OUT_MAX_BRIGHT
+        body = np.asarray(frame.convert("RGB")).astype(float)[
+            cell.y1 + int(0.12 * h):cell.y1 + int(0.40 * h),
+            cell.x1 + int(0.41 * w):cell.x1 + int(0.92 * w)]
+        if body.size == 0:
+            return False
+        return float(body.mean()) <= _SOLD_OUT_MAX_CARD_BRIGHT
     except Exception as exc:
         logger.debug(f"[market] grey-tile check skipped: {exc}")
         return False
