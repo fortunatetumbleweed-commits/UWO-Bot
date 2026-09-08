@@ -647,6 +647,45 @@ def _tile_looks_sold_out(frame, cell) -> bool:
         return False
 
 
+def sell_page_can_have_more_below(frame, elements=None) -> bool:
+    """Could this goods grid continue past the bottom of the screen?
+
+    A GRID THAT DOES NOT FILL THE PAGE HAS NOTHING UNDER IT (user, 2026-09-08). The grid
+    fills row-major, so a page that is not full IS the end of the list, and scrolling it
+    costs a swipe, a capture and a whole dispatcher tick to learn what the picture already
+    said. Live 2026-09-08 at Jakarta the Sell page held two tiles — Ebony and Coral, seven
+    empty cells — and the clear scrolled anyway before finishing.
+
+    Asks the SHAPE, not the cell count. Measured over the 2026-09-08 run: a full purchase
+    shelf detects 8 of its 9 tiles about as often as 9, so `len(cells) == 9` would call a
+    full page partial and stop a clear early — the failure this guards against is exactly
+    the one that ended a clear four pages deep on 2026-08-26 with the hold still aboard.
+    The row and column COUNTS are stable at 3x3 across those same frames, and every Sell
+    page in that run measured 1 row x 2 columns.
+
+    Unreadable is not the same as absent: when no grid is detected at all, say True and let
+    the caller scroll as it always has.
+    """
+    from vision.omniparser import parse_fast_cached
+    from vision.grid_detector import detect_grid
+    try:
+        if elements is None:
+            elements = parse_fast_cached(frame)
+        W, H = frame.width, frame.height
+        grid = detect_grid(elements, W, H, zone=(0.17 * W, 0.14 * H, 0.78 * W, 0.92 * H),
+                           cell_types=("button",), min_cells=1, size_tol_h=0.45)
+    except Exception as exc:                    # noqa: BLE001 — never end a clear on this
+        logger.debug(f"[sell] could not measure the grid: {exc}")
+        return True
+    if grid is None:
+        return True
+    full = grid.n_rows >= _TILE_ROWS and grid.n_cols >= _TILE_COLS
+    if not full:
+        logger.info(f"[sell] the grid is {grid.n_rows}x{grid.n_cols}, not "
+                    f"{_TILE_ROWS}x{_TILE_COLS} — it ends on this page, nothing to scroll to")
+    return full
+
+
 def read_market_page_omni(
     frame: Image.Image,
     tab: str = "purchase",

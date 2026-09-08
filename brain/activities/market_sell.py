@@ -83,6 +83,7 @@ def on_sell_page(state, goal, *, frame, capture_fn, tap_fn, omni_fn) -> dict:
     Exactly one of: staged / committed / scrolled / finished / blocked.
     """
     from actions.sell_goods import _find_sell_commit, _sell_page
+    from vision.market_reader import sell_page_can_have_more_below
 
     goods = _sell_page(frame)
     if goods is None:
@@ -195,8 +196,18 @@ def on_sell_page(state, goal, *, frame, capture_fn, tap_fn, omni_fn) -> dict:
     # finished. It was unreachable. Live 2026-09-07 at London the counter read 5,441/1,000
     # with FIVE awards pending and the chest was never tapped; the run before it, 13,894 with
     # thirteen.
+    # A PAGE THAT IS NOT FULL IS THE END OF THE LIST, so there is nothing to scroll to and
+    # the scroll-then-look-again round trip below buys nothing. Live 2026-09-08 at Jakarta
+    # the Sell grid held two tiles and seven empty cells, and the clear still spent a swipe,
+    # a capture and a tick to be told what the grid already showed.
+    #
+    # It is the same rule `read_market_all_pages` has always applied to a partial page; the
+    # clear simply never asked. Asked of the grid's SHAPE, so one undetected tile on a full
+    # shelf cannot end a clear early — see `sell_page_can_have_more_below`.
+    ends_here = not sell_page_can_have_more_below(frame, omni_fn(frame))
     finished = (state.last_intent == "scrolled"
-                or state.scrolled_pages >= _MAX_SELL_SCROLLS)
+                or state.scrolled_pages >= _MAX_SELL_SCROLLS
+                or ends_here)
     if finished:
         # SELLING IS WHAT EARNS THE POINTS, so this is the natural moment — and it is
         # best-effort: a claim that fails never fails the sale.
@@ -221,6 +232,9 @@ def on_sell_page(state, goal, *, frame, capture_fn, tap_fn, omni_fn) -> dict:
         if state.last_intent == "scrolled":
             logger.info(f"[market] nothing sellable after scrolling to page "
                         f"{state.scrolled_pages + 1} — the clear is finished")
+        elif ends_here:
+            logger.info("[market] nothing sellable and the grid ends on this page "
+                        "— the clear is finished without a scroll")
         return {"do": "finished", "why": "nothing left to sell"}
 
     state.scrolled_pages += 1
