@@ -105,12 +105,27 @@ class CannotTellIsNotNo(unittest.TestCase):
 
 class ThePortTestIsNotAListOfPortNames(unittest.TestCase):
     def test_it_asks_whether_it_is_the_other_rail(self):
-        """Naming every port in the world would be a second catalogue to keep in step."""
+        """Naming every port in the world would be a second catalogue to keep in step.
+
+        Asserted as BEHAVIOUR rather than as source text: the rule is that a village rail
+        must not read as a port one, and that survives the port test gaining a second way to
+        see a list (its rows, added 2026-09-08 when a map label bled over the search box).
+        """
+        from unittest import mock
+        from actions import sail_actions
+        with mock.patch.object(sail_actions, "_village_list_open", return_value=True), \
+             mock.patch.object(sail_actions, "search_box_present", return_value=True), \
+             mock.patch.object(sail_actions, "_rail_rows_present", return_value=True):
+            self.assertFalse(sail_actions._port_list_open(object(), elements=[]),
+                             "the village rail must never read as the port rail")
+
+    def test_and_it_names_no_ports(self):
         import inspect
         from actions import sail_actions
         src = inspect.getsource(sail_actions._port_list_open)
-        self.assertIn("not _village_list_open", src)
-        self.assertIn("search_box_present", src)
+        self.assertIn("_village_list_open", src)
+        for port in ("Bordeaux", "Madeira", "London", "Jakarta"):
+            self.assertNotIn(port, src, "a second catalogue to keep in step")
 
 
 if __name__ == "__main__":

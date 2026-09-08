@@ -152,5 +152,19 @@
   "port": null,
   "expect": "the world map on the Explore tab with the village list open \u2014 a village is chosen from here",
   "from": "data/sessions/trace_barter_cmd_2026-08-26T00-06-32/frame_0110.png"
+ },
+ "worldmap_bare_no_list": {
+  "frame": "frames/worldmap_bare_no_list.png",
+  "state": "world_map",
+  "port": null,
+  "expect": "World Map with NO list open. The same window holds 'Kuching' w=142 \u2014 same place, same width as the bled search box \u2014 so only the rows below separate the two",
+  "from": "data/sessions/trace_barter_cmd_2026-09-08T00-43-13/frame_0030.png"
+ },
+ "worldmap_port_list_open": {
+  "frame": "frames/worldmap_port_list_open.png",
+  "state": "world_map",
+  "port": null,
+  "expect": "World Map with the PORT LIST OPEN \u2014 search box plus a column of port rows (Benin, Ceuta, Stockholm...). The map label 'Kuching' bleeds over the search box so it parses as 'KSearshg' w=140, defeating both the word and width tests",
+  "from": "data/sessions/trace_barter_cmd_2026-09-08T00-43-13/frame_0032.png"
  }
 }

@@ -290,18 +290,28 @@ def test_a_port_list_is_the_first_icon():
     assert tapped[0] == (70, 184)
 
 
-def test_a_wrong_guess_moves_on_rather_than_repeating_it():
-    """The rail's icons carry NO label — OmniParser returns bare 'icon's — so position is the
-    only identity available and the next tick is the verification. Tapping the same one
-    forever is what the live run did."""
+def test_a_list_that_will_not_open_is_reported_not_walked_around():
+    """It used to walk the rail — the goal's icon, then every other one in turn.
+
+    User, 2026-09-08: "if it can not see a list, it should not try another icon, that is
+    almost always wrong." Each icon opens a DIFFERENT list, and which one this goal wants is
+    known from the goal, so a second icon is not a retry — it is a different question.
+
+    Live 2026-09-08 (frames 31-33 of trace_barter_cmd_2026-09-08T00-43-13): the port icon
+    opened the port list correctly, the next tick failed to SEE it, and walking on tapped the
+    GOODS icon and discarded the open list. The bound printed "attempt 4 of 2" while not
+    holding, and the leg stalled until the no-progress guard ended the mission.
+    """
+    from brain.activities.world_map import _MAX_LIST_TAPS
     goal = ChooseDestination(where="Svear Village", kind="village")
     act, tapped = _activity_that_records(tapped := [])
     with mock.patch("actions.sail_actions._explore_left_icons",
                     return_value=_icons(184, 289, 407, 526)):
         for _ in range(4):
             act._open_list(goal)
-    assert len(set(tapped)) > 1, "it tapped the same icon every time"
-    assert tapped[0] == (70, 289), "but it still tries the likely one first"
+    assert tapped[0] == (70, 289), "it still tries the goal's own icon"
+    assert len(set(tapped)) == 1, f"tapped more than one icon: {set(tapped)}"
+    assert len(tapped) == _MAX_LIST_TAPS, f"kept tapping: {tapped}"
 
 
 def test_a_village_is_looked_for_with_the_VILLAGE_reader():

@@ -4851,7 +4851,49 @@ def _port_list_open(frame, elements=None) -> bool:
     if elements is None:
         from vision.omniparser import parse_fast_cached
         elements = list(parse_fast_cached(frame))
-    return search_box_present(frame, elements) and not _village_list_open(frame, elements)
+    if _village_list_open(frame, elements):
+        return False
+    # THE ROWS ARE EVIDENCE TOO, and they survive what the search box does not.
+    #
+    # The box sits where a MAP LABEL can also fall, and the game draws the map through it —
+    # so the two merge in the parse. Live 2026-09-08 at frames 30-34 of
+    # trade_barter_cmd_2026-09-08T00-43-13 the window held:
+    #
+    #     frame 30, list CLOSED : 'Kuching'   w=142
+    #     frame 32, list OPEN   : 'KSearshg'  w=140     <- 'Kuching' bled over 'Search'
+    #
+    # Same place, same width, and only a garbled word between them: neither the position test
+    # nor the width test can separate those, and matching the garble would be guesswork. So
+    # the box could not be seen, `_on_map` ran over an open list, and the caller re-tapped the
+    # rail — onto a DIFFERENT icon, throwing the list away and stalling the mission.
+    #
+    # The ROWS say it plainly, and they are what `_village_list_open` has always keyed on:
+    # a list is a drawn column, a map is scattered labels. Measured on the same two frames,
+    # in the rail's band: 13 rows at regular ~50px spacing with the list open, 3 at 185 and
+    # 295 apart without it.
+    return search_box_present(frame, elements) or _rail_rows_present(elements)
+
+
+# The rail's row column, measured on trace_barter_cmd_2026-09-08T00-43-13 frames 30 and 32:
+# open, the rows sit at cx 205-281 and step down by ~50-57px; closed, the three map labels in
+# that band sit 185 and 295 apart. Six rows is well clear of both.
+_RAIL_ROWS_X = (150, 460)
+_RAIL_ROWS_Y = (180, 900)
+_RAIL_ROWS_MIN = 6
+
+
+def _rail_rows_present(elements) -> bool:
+    """True when the rail holds a COLUMN of rows — a list, rather than scattered map labels.
+
+    Identity from what is drawn, not from where one control is believed to be: the same rule
+    `_explore_left_icons` states for the icons above ("the rail is drawn, not scattered").
+    """
+    rows = [e for e in elements
+            if (getattr(e, "element_type", "") or "") != "icon"
+            and (getattr(e, "label", "") or "").strip()
+            and _RAIL_ROWS_X[0] < e.cx < _RAIL_ROWS_X[1]
+            and _RAIL_ROWS_Y[0] < e.cy < _RAIL_ROWS_Y[1]]
+    return len(rows) >= _RAIL_ROWS_MIN
 
 
 # How far apart two rail icons' centres may sit horizontally and still be one column.

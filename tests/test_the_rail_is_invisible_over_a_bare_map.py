@@ -84,14 +84,35 @@ class AnUndetectableRailIsStillReachable(unittest.TestCase):
             a._open_list(types.SimpleNamespace(kind="village"))
         self.assertEqual(taps, [_RAIL_FALLBACK_POINTS[_VILLAGE_LIST_ICON_INDEX]])
 
-    def test_a_failed_attempt_moves_to_the_next_candidate(self):
-        """The next tick judges: still no list, so try the other point."""
+    def test_a_failed_attempt_RETAPS_THE_SAME_POINT(self):
+        """It used to move to the next candidate. That is a different list, not a retry.
+
+        User, 2026-09-08: "if it can not see a list, it should not try another icon, that is
+        almost always wrong." The rail's icons are not interchangeable guesses at one thing —
+        each opens a DIFFERENT list, and which one this goal wants is already known.
+
+        Live 2026-09-08 (frames 31-33 of trace_barter_cmd_2026-09-08T00-43-13): the port icon
+        opened the port list correctly, the next tick failed to SEE it, and moving on to the
+        next point tapped the GOODS icon and threw the open list away.
+
+        One re-tap still answers a dropped tap — the game drops about one in twenty — but it
+        is the SAME point, because that is the only thing a retry can honestly mean here.
+        """
         a, taps, patched = _activity([])
         with patched:
             a._open_list(types.SimpleNamespace(kind="port"))
             a._open_list(types.SimpleNamespace(kind="port"))
         self.assertEqual(len(taps), 2)
-        self.assertNotEqual(taps[0], taps[1], "repeating the same point learns nothing")
+        self.assertEqual(taps[0], taps[1], "a different icon opens a different list")
+
+    def test_and_it_stops_rather_than_walking_the_rail(self):
+        from brain.activities.world_map import _MAX_LIST_TAPS
+        a, taps, patched = _activity([])
+        with patched:
+            for _ in range(6):
+                a._open_list(types.SimpleNamespace(kind="port"))
+        self.assertEqual(len(taps), _MAX_LIST_TAPS)
+        self.assertEqual(len(set(taps)), 1)
 
 
 if __name__ == "__main__":

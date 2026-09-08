@@ -1021,22 +1021,42 @@ class WorldMapActivity:
 
         kind = getattr(goal, "kind", None) or "port"
         first = _VILLAGE_LIST_ICON_INDEX if kind == "village" else 0
-        order = ([icons[first]] if len(icons) > first else []) + \
-                [ic for i, ic in enumerate(icons) if i != first]
-        # AN ICON THAT OPENED THE LIST IS THE RIGHT ICON. The candidates are tried in order
-        # because they carry no label, and the NEXT TICK judges each — but only the question
-        # "did the list open?" is its to judge. Live 2026-08-29 the first icon opened the port
-        # list correctly, a later step failed for its own reasons, and the retry moved on to
-        # the second icon and opened something else entirely. A failure downstream is not
-        # evidence against the icon.
+        if len(icons) <= first:
+            logger.warning(f"[world_map] no rail position for the {kind} list — handing back")
+            return
+        pick = icons[first]
+
+        # THE SAME ICON, OR NOTHING (user, 2026-09-08: "if it can not see a list, it should
+        # not try another icon, that is almost always wrong").
+        #
+        # This walked the rail: the goal's own icon first, then every other one in turn, on
+        # the theory that they carry no label so only the next tick can judge them. But the
+        # rail's icons are not interchangeable candidates for one thing — each opens a
+        # DIFFERENT list, and the one we want is known from the goal. Tapping a second is not
+        # a retry, it is asking a different question.
+        #
+        # Live 2026-09-08 (frames 31-33 of trace_barter_cmd_2026-09-08T00-43-13): the port
+        # icon at (66,171) opened the port list correctly — frame 32 shows it, search box and
+        # all — and the next tick failed to SEE it, so this moved on to the next position
+        # (70,300), the goods icon, and threw the open list away. It then reported "attempt 4
+        # of 2", the bound having no effect, and the leg stalled until the no-progress guard
+        # ended the mission.
+        #
+        # So a list that will not open is reported, not worked around. Re-tapping the SAME
+        # point is the one honest retry — the game drops about one tap in twenty — and past
+        # that the screen is refusing rather than dropping.
         if self._list_opened:
             self._list_taps = 0
-        pick = order[min(self._list_taps, len(order) - 1)]
         self._list_taps += 1
+        if self._list_taps > _MAX_LIST_TAPS:
+            logger.warning(f"[world_map] the {kind} list did not open after "
+                           f"{_MAX_LIST_TAPS} taps at {pick} — reporting rather than trying "
+                           "another icon, which would open a different list")
+            return
         logger.info(f"[world_map] opening the {kind} list — "
                     f"{'icon' if detected else 'CALIBRATED point'} {pick} "
-                    f"(attempt {self._list_taps} of {len(order)}); the rail's icons carry no "
-                    f"label, so the next tick says whether it opened")
+                    f"(attempt {self._list_taps} of {_MAX_LIST_TAPS}); the rail's icons carry "
+                    f"no label, so the next tick says whether it opened")
         self._tap_at(*pick)
 
     def _type_prefix(self, prefix: str) -> None:
@@ -1241,6 +1261,11 @@ _PREFIX_LEN = 4
 # gets `Gijo` down to `G`, which cannot exclude anything; past that the query is
 # not the problem.
 _MAX_SHORTENINGS = 3
+
+# One re-tap answers a dropped tap, which the game does about once in twenty. Past that the
+# rail is refusing, and the answer is to REPORT — never to tap a different icon, which opens
+# a different list (user, 2026-09-08).
+_MAX_LIST_TAPS = 2
 # Typing twice on the same destination means the box did not take it. Scrolling is next.
 # How far from the search box's centre still counts as the search box's own row. The field is
 # a single line; anything sharing its band is its text or its furniture, never a list row.
