@@ -48,6 +48,13 @@
   "expect": "the Purchase grid with the restock control live: timer 00:28:26, cost 29 BLUE gems \u2014 refreshing here is allowed, a red-gem cost never is",
   "from": "data/sessions/trace_gather_textiles_2026-08-18T22-08-23/frame_0002.png"
  },
+ "melanesian_textiles_is_a_material": {
+  "frame": "frames/melanesian_textiles_is_a_material.png",
+  "state": "world_map",
+  "port": null,
+  "expect": "Melanesian Village Info -> Barter -> Trade List, showing Box of Nutmeg 616 with Ebony 101, Coral 175, Textiles 175 all legible. Textiles is BOTH a material and a category word, so a word-based pill filter discarded it",
+  "from": "data/sessions/trace_barter_cmd_2026-09-07T22-37-17/frame_0013.png"
+ },
  "port_overworld_amsterdam": {
   "frame": "frames/port_overworld_amsterdam.png",
   "state": "port_overworld",
