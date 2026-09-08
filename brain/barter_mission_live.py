@@ -12,7 +12,7 @@ runner and its make_*_fn phase factories were removed 2026-08-20 (superseded and
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Mapping, Optional
 
 from loguru import logger
@@ -105,6 +105,9 @@ class TaskPlan:
     purchases: dict             # {port: {material: qty}}
     unsourced: list             # materials with no known source (read live)
     total_output: int
+    # Materials whose EVERY known source is recorded scarce this season. A finding, not a
+    # verdict — the caller decides whether that is a reason to stay home.
+    low_everywhere: list = field(default_factory=list)
 
 
 def plan_barter_task(recipe: BarterRecipe, village: str, sell_port: str,
@@ -156,7 +159,8 @@ def plan_barter_task(recipe: BarterRecipe, village: str, sell_port: str,
     return TaskPlan(good=recipe.good, village=village, sell_port=sell_port,
                     rounds=rounds, needs=needs, gather_route=gp.route,
                     purchases=purchases, unsourced=sorted(gp.unsourced),
-                    total_output=out_per_round * rounds)
+                    total_output=out_per_round * rounds,
+                    low_everywhere=sorted(gp.low_everywhere))
 
 
 def _strip_accents(s: str) -> str:

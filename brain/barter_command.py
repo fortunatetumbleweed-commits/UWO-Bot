@@ -448,7 +448,8 @@ def run_barter_command(text: str, *, cargo_capacity: Optional[int] = None,
                        cargo_used: Optional[int] = None, dry_run: bool = False,
                        cushion: Optional[float] = None,
                        clear_surplus: bool = False,
-                       from_port: Optional[str] = None) -> dict:
+                       from_port: Optional[str] = None,
+                       allow_low_stock: bool = False) -> dict:
     """Parse → remote check → plan → run the mission.  Returns a structured result;
     every early exit says exactly which step could not be completed.
 
@@ -770,7 +771,8 @@ def run_barter_command(text: str, *, cargo_capacity: Optional[int] = None,
         cmd, trade, plan, from_port=from_port,
         # What the hold was measured to contain during the surplus clear, so the gather
         # legs cover only the shortfall instead of re-checking each port.
-        already_held=(cleared or {}).get("owned") if isinstance(cleared, dict) else None)}
+        already_held=(cleared or {}).get("owned") if isinstance(cleared, dict) else None,
+        allow_low_stock=allow_low_stock)}
 
 
 # A mission is many legs and every leg is many ticks — a voyage alone is dozens. The ceiling
@@ -786,7 +788,8 @@ def _village_leg_floor() -> float:
 
 
 def _run_mission_for(cmd: BarterCommand, trade, plan, from_port: Optional[str] = None,
-                     already_held: Optional[dict] = None) -> dict:
+                     already_held: Optional[dict] = None,
+                     allow_low_stock: bool = False) -> dict:
     """Build the sub-task graph from the live plan and run it."""
     from brain.barter_mission_live import (catalogue_coords, current_position,
                                            make_live_executors, plan_barter_task)
@@ -843,6 +846,27 @@ def _run_mission_for(cmd: BarterCommand, trade, plan, from_port: Optional[str] =
         return {"ok": False, "step": "gather-plan", "task_plan": task_plan,
                 "reason": f"no known source port for {task_plan.unsourced} — the check "
                           "could not read their location pins"}
+
+    # EVERY SOURCE SCARCE IS A REASON TO STAY HOME — unless this mission is worth sailing
+    # for anyway (user, 2026-08-30: "If all ports have low stock, then just abandon the task
+    # as non-profitable for the season"; and 2026-09-07: "I would like make it a switch that
+    # can be on and off, this time it is for a special mission").
+    #
+    # Until now only the DETECTION existed: `plan_barter_task` logged "this task is not
+    # profitable now" and carried on regardless, so the rule was a warning nobody obeyed.
+    #
+    # It is deliberately narrow. `low_everywhere` needs EVERY known source of a material to
+    # be recorded scarce, within the season record's 72h life — one unvisited port is enough
+    # to keep the mission running, which is why the Hutu run of 2026-09-07 sailed correctly
+    # with Madeira and Bordeaux both low and Trabzon unknown.
+    if task_plan.low_everywhere and not allow_low_stock:
+        return {"ok": False, "step": "gather-plan", "task_plan": task_plan,
+                "reason": (f"every known source is scarce this season for "
+                           f"{task_plan.low_everywhere} — not profitable now; pass "
+                           "--ignore-low-stock to sail anyway")}
+    if task_plan.low_everywhere:
+        logger.warning(f"[barter_command] every known source is scarce for "
+                       f"{task_plan.low_everywhere} — sailing anyway, as asked")
 
     opp = Opportunity(kind="seasonal_barter", good=cmd.good, sell_port=sell_port or "",
                       village=cmd.village, rounds=plan.rounds, recipe=recipe)
