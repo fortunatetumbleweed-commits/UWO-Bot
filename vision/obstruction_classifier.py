@@ -294,6 +294,33 @@ def _detect_dialog(inventory) -> Optional[ObstructionResult]:
     and is invoked here ONLY to log when the two disagree, so we can
     review whether any of its signals are worth porting into DialogModel.
     The legacy verdict has NO behavioural effect.
+
+    THAT REVIEW IS DONE, AND THE ANSWER IS NO — nothing here is worth porting.
+    Across the whole Hutu mission of 2026-09-07 (trace_barter_cmd_2026-09-07T18-39-25)
+    the legacy heuristic fired 13 times and was WRONG 13 times; DialogModel was
+    right every time. Two shapes, one mistake:
+
+      * 12x on the market Sell page (frame 1) — `cluster_size=7`,
+        `action_row=['6%','Trade Points']`, bbox spanning the whole interior. It
+        read the RIGHT-HAND STAT PANEL as a card, because that panel ends in a row
+        of labels (Tax 6%, Trade Points) where a dialog would put its buttons.
+      * 1x on the world map with the port list open (frame 16) — `cluster_size=16`,
+        `action_row=['Bristol','409']`. It read the CLUSTER OF PORT LABELS as a card,
+        with a map label and a price-index badge as the action row.
+
+    And the phantom "buttons" are live controls, so these were not harmless: the
+    dismissal would have tapped `Trade Points` (opens a panel, mid-purchase), or
+    pressed Back from a sub-menu (the chromed title — LEAVES THE MARKET), or on the
+    map tapped `Bristol`, which SELECTS A DESTINATION. Thirteen wrong operations in
+    one 72-minute mission, one of them capable of redirecting the fleet.
+
+    Both signals are `a-box-bigger-than-its-thing` — identity from cluster geometry
+    rather than from what the elements say or which screen they are on. That is the
+    thing DialogModel exists to stop doing, so porting either would undo it.
+
+    The heuristic is therefore a second detector run per perceive that has never been
+    right here. Retiring it is a live option; it is left in place because removing it
+    is a separate decision from recording this result.
     """
     from vision.region_detectors.dialog import detect_dialog as _detect_typed
     from loguru import logger
