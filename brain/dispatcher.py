@@ -319,7 +319,8 @@ class Dispatcher:
         self._refresh = refresh          # lost -> drop what the wrong belief cached
         self._unblock = unblock          # clear an obstruction laid OVER the world
         self._dialog = dialog            # frame -> DialogModel | None (injectable for tests)
-        self._dialog_looks = 0           # consecutive ticks with a dialog still up
+        self._dialog_looks = 0           # consecutive ticks with THE SAME dialog still up
+        self._dialog_seen = None         # which dialog those looks were at
         # WHERE WE WERE, for an `unknown` that is a presentation change and not a move.
         self._standing_in: Optional[str] = None   # state an activity last worked in
         self._standing_looks = 0                  # consecutive unknowns carried on it
@@ -755,12 +756,26 @@ class Dispatcher:
 
         dialog = self._dialog_on(state)
         if dialog is not None:
-            self._dialog_looks += 1
+            # THE SAME DIALOG, NOT ANY DIALOG. The budget below exists to stop grinding at
+            # ONE screen that will not close, and this counted every tick that had a dialog
+            # on it — so a market visit's ordinary chain spent it on progress.
+            #
+            # It has been failing safe by a single look for a long time. Across the session
+            # logs the generic answer fired 69 times and THIRTY-ONE of those were at 3/3,
+            # the last look it had. Live 2026-09-09 at Bordeaux the hold was full of Birch
+            # Tree, which added a `cargo_full_notice` to the front of the chain —
+            # notice, negotiation, result, three DIFFERENT dialogs each answered
+            # successfully — and the purchase result card reached the guard at 4/3. It was
+            # reported as "a system dialog will not close" without ever being answered once.
+            here = self._dialog_signature(dialog)
+            self._dialog_looks = (self._dialog_looks + 1) if here == self._dialog_seen else 1
+            self._dialog_seen = here
             handled = self._offer_dialog(activity, dialog, state)
             if handled is not None:
                 return handled
         else:
             self._dialog_looks = 0
+            self._dialog_seen = None
 
         if activity is None:
             # AN ACTIVITY BEHIND A DIALOG HAS NOT GONE ANYWHERE (user, 2026-09-04).
@@ -862,6 +877,20 @@ class Dispatcher:
     # grind at. Each look is a fresh tick, so the re-check is the LOOP verifying the tap —
     # never a sub-loop waiting in place for its own effect.
     _MAX_DIALOG_LOOKS = 3
+
+    @staticmethod
+    def _dialog_signature(dialog) -> tuple:
+        """What tells one dialog from the next — its title and the buttons it offers.
+
+        Coarse on purpose. It has to survive a re-read of the same card (so not pixels, and
+        not a number that ticks) while separating a negotiation from a result from a cargo
+        notice, which is all the budget above needs.
+        """
+        title = getattr(getattr(dialog, "title", None), "text", None) or getattr(
+            dialog, "kind", None) or ""
+        actions = tuple(sorted(str(getattr(a, "label", "") or "").strip().lower()
+                               for a in (getattr(dialog, "actions", None) or ())))
+        return (str(title).strip().lower(), actions)
 
     def _dialog_on(self, state) -> Any:
         """The dialog covering this tick's screen, or None. Never raises."""
