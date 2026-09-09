@@ -52,6 +52,37 @@ _LOCK_PHRASES = ("slide up to unlock", "slide up to")
 # stalled the London↔Amsterdam sail).
 
 
+# THE GAME ITSELF IS UNAVAILABLE — maintenance, a patch, or a lost connection. None of
+# these is a screen to get past; the session is over and needs a person (user, 2026-09-09:
+# "the Android system dialog, which we can ignore, because it will generally shutdown the
+# game or restart, and after restart it needs to connect again, which we do not have
+# support yet").
+#
+# WORDING IS THE RIGHT SIGNAL HERE, and it is the exception that shows the rule. Elsewhere a
+# screen is identified by structure because its words are decoration; here the MESSAGE is
+# the entire fact. There is nothing structural to read: an Android dialog is a white
+# rectangle with an OK, and the patch screen is a loading bar over a seascape.
+#
+# Met twice on 2026-09-09. Each time the bot spent three ticks, a Qwen call and a Claude
+# Vision call re-identifying it, then stopped with "NOTHING CHANGED for 3 ticks
+# (state='unknown')" — true, useless, and the reason was printed on the screen the whole
+# time. Claude even read it correctly: "a new patch is available and the app is returning
+# to the patch screen".
+_UNAVAILABLE_PHRASES = (
+    "undergoing maintenance",
+    "maintenance end time",
+    "returning to the patch screen",
+    "new patch",
+    "requires an active internet connection",
+)
+
+
+def looks_like_game_unavailable(text: str) -> bool:
+    """The game is down, patching, or disconnected — not a popup to dismiss."""
+    t = (text or "").lower()
+    return any(p in t for p in _UNAVAILABLE_PHRASES)
+
+
 def looks_like_promo(text: str) -> bool:
     """Cheap, reliable promo detector from OCR text (no LLM)."""
     t = (text or "").lower()
@@ -149,6 +180,14 @@ def clear_blockers(frame=None, *, llm_fn: Optional[Callable[[str], str]] = None,
         from capture.adb_capture import capture_screen
         frame = (capture_fn or capture_screen)()
     text = _ocr_text(frame)
+
+    if looks_like_game_unavailable(text):
+        # NOT CLEARED, AND NOT CLEARABLE. Say so plainly and let the caller stop; a Back or a
+        # tap here achieves nothing and the LLM tiers below only pay to be told again.
+        why = next((p for p in _UNAVAILABLE_PHRASES if p in text.lower()), "unavailable")
+        logger.error(f"[clear_blockers] THE GAME IS NOT PLAYABLE — {why!r} is on screen. "
+                     "It needs a restart and a login, which the bot cannot do.")
+        return {"cleared": False, "kind": "game_unavailable", "why": why}
 
     if looks_like_lock_screen(text):
         wake_fn()

@@ -2097,6 +2097,19 @@ def handle_unknown_blocking(frame, ocr_tokens: list, nav_detail: str = "") -> bo
         }, source="qwen")
         return True
 
+    # THE GAME MAY SIMPLY BE GONE. Checked before Claude, because a maintenance or patch
+    # notice is not a puzzle — it is an announcement, and paying a vision model to read it
+    # bought nothing twice on 2026-09-09.
+    try:
+        from brain.unexpected_dialog import looks_like_game_unavailable
+        if looks_like_game_unavailable(" ".join(str(t[0]) for t in (ocr_tokens or []))):
+            logger.error("[perceive] THE GAME IS NOT PLAYABLE — maintenance, a patch or a "
+                         "lost connection is on screen. It needs a restart and a login, "
+                         "which the bot cannot do; stopping rather than tapping at it.")
+            return False
+    except Exception as exc:                  # noqa: BLE001 — a check, never a failure
+        logger.debug(f"[perceive] could not test for an unavailable game: {exc}")
+
     # ── Tier 2: Claude Vision ─────────────────────────────────────────────────
     logger.info("[perceive] Qwen uncertain or complex dialog — escalating to Claude Vision")
     claude = _claude_resolve_unknown(frame, description)
