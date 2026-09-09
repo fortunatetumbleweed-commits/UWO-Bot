@@ -314,11 +314,26 @@ class TheActivityRoutesTheTrimsOwnScreens(unittest.TestCase):
             self.assertIsNotNone(act.on_dialog(types.SimpleNamespace(body_text=()),
                                                Hold(orders={"Pig": 900})))
 
-    def test_but_a_goal_that_opens_neither_still_claims_neither(self):
+    def test_the_clear_out_claims_the_goods_card_because_its_own_tap_opens_it(self):
+        """It used to be asserted that `FreeHold` opens neither card. It opens this one.
+
+        A clear-out stages by tapping a tile, and with `Put In Bulk` off that tap raises the
+        Trade Goods Info card instead of loading — the same way the buy meets it. Live
+        2026-09-09 at Bordeaux the card came up on Iron, `FreeHold` was not on the owners
+        list, the market disowned a card its own tap had raised, and the dispatcher found
+        only `Cancel`: "a confirmation dialog nobody will answer". The trim leg died, 3,465
+        Birch Tree stayed aboard, and the gather that followed hit a full hold.
+        """
         from brain.activities.market import FreeHold
         act, _ctx = self._activity("trade_goods_info")
-        self.assertIsNone(act.on_dialog(types.SimpleNamespace(body_text=()),
-                                        FreeHold(keep=("Water",))))
+        with mock.patch.object(type(act), "_port_name", return_value="Bordeaux"), \
+             mock.patch.object(type(act), "_frame", return_value=object()), \
+             mock.patch.object(type(act), "_tap_fn", return_value=lambda *a: None), \
+             mock.patch.object(type(act), "_omni_fn", return_value=lambda f: []), \
+             mock.patch("brain.activities.market_buy.on_goods_info",
+                        return_value={"do": "waited", "why": "max"}):
+            self.assertIsNotNone(act.on_dialog(types.SimpleNamespace(body_text=()),
+                                               FreeHold(keep=("Water",))))
 
     def test_and_the_keypad_stays_the_trims_alone(self):
         """Only the trim types a figure; the buy takes the whole shelf with Max."""

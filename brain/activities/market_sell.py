@@ -55,6 +55,22 @@ _MAX_PRICE_READS = 2
 _CART_EMPTY = ("select the goods",)
 
 
+def _wants_the_whole_hold(goal) -> bool:
+    """A clear-out that keeps nothing — the case Load All was made for."""
+    return (type(goal).__name__ == "FreeHold"
+            and not tuple(getattr(goal, "keep", ()) or ()))
+
+
+def _load_all_button(frame):
+    """The Sell page's `Load All`, or None. Bottom strip, read not remembered."""
+    try:
+        from actions.sail_actions import _find_button
+        return _find_button(frame, "Load All", y_min=int(getattr(frame, "height", 1080) * 0.85))
+    except Exception as exc:                      # noqa: BLE001 — no button is a fallback
+        logger.debug(f"[market] could not look for Load All: {exc}")
+        return None
+
+
 def selection_for(goal: Any, goods: Sequence) -> list:
     """The goods this goal wants sold, from a page reading. The existing chooser."""
     from actions.sell_goods import select_sellable
@@ -133,13 +149,37 @@ def on_sell_page(state, goal, *, frame, capture_fn, tap_fn, omni_fn) -> dict:
                                 "the cart stayed empty — the tile is not taking taps")}
             logger.warning("[market] the cart reads EMPTY after staging — that tap did not "
                            "register; staging again")
-        for g in wanted:
-            logger.info(f"[market] stage {getattr(g, 'name', '?')} @ "
-                        f"({g.tap_x},{g.tap_y}) (profit/u "
-                        f"{getattr(g, 'profit_per_unit', '?')})")
-            tap_fn(g.tap_x, g.tap_y)
+        # THE WHOLE HOLD HAS ITS OWN BUTTON (user, 2026-09-09: "it can tap Load All on 30,
+        # that loads everything, that is used for regular trade runs"). A `FreeHold` that
+        # keeps nothing wants exactly what Load All does, in one tap instead of one per tile.
+        #
+        # And one tap is not merely faster, it is the SAFE number. Live 2026-09-09 at
+        # Bordeaux this staged four goods in a burst — (571,315), (1007,316), (1451,316),
+        # (572,556), the sell grid row by row — and `Put In Bulk` was unchecked, so the FIRST
+        # tap opened a Trade Goods Info card covering x 546-1860. The other three landed
+        # inside it, on the description and the price chart. Four taps, one intended.
+        #
+        # A loop that acts four times and looks none cannot see the world change under its
+        # first action. That is the sub-loop rule, and Load All obeys it for free.
+        if _wants_the_whole_hold(goal):
+            spot = _load_all_button(frame)
+            if spot is not None:
+                logger.info(f"[market] the goal keeps nothing — Load All @ {spot} rather "
+                            f"than staging {len(wanted)} tiles one at a time")
+                tap_fn(*spot)
+                state.did("tapped Load All", page_signature(goods))
+                return {"do": "staged", "goods": [str(getattr(g, "name", "")) for g in wanted]}
+            logger.info("[market] no Load All button found — staging tile by tile")
+
+        # ONE TILE, THEN HAND BACK. Whatever the first tap raises, the next tick sees it.
+        g = wanted[0]
+        logger.info(f"[market] stage {getattr(g, 'name', '?')} @ "
+                    f"({g.tap_x},{g.tap_y}) (profit/u "
+                    f"{getattr(g, 'profit_per_unit', '?')})"
+                    + (f" — {len(wanted) - 1} more after this" if len(wanted) > 1 else ""))
+        tap_fn(g.tap_x, g.tap_y)
         state.did("staged", page_signature(goods))
-        names = [str(getattr(g, "name", "")) for g in wanted]
+        names = [str(getattr(g, "name", ""))]
         # THE NAMES THE RESULT CARD WILL NOT CARRY. Held pending until a card confirms the
         # sale actually happened; see `MarketState.sold_pending`.
         for n in names:

@@ -233,7 +233,14 @@ class MarketActivity:
             # Not one of our cards. A page is not a dialog, and claiming one here would
             # answer a card we have not identified.
             return None
-        _mine = {_ctx.TRADE_GOODS_INFO: (TrimHold, Hold),   # the buy meets this one too
+        # `FreeHold` MEETS IT THE SAME WAY THE BUY DOES. A clear-out stages by tapping a
+        # tile, and with `Put In Bulk` off that tap opens the goods card instead of loading.
+        # Live 2026-09-09 at Bordeaux: the card came up on Iron, `FreeHold` was not on this
+        # list, the market disowned a card its own tap had raised, and the dispatcher found
+        # only `Cancel` on it — "a confirmation dialog nobody will answer". The trim leg
+        # died, 3,465 Birch Tree stayed aboard, and the gather that followed ran into a
+        # full hold.
+        _mine = {_ctx.TRADE_GOODS_INFO: (TrimHold, Hold, FreeHold),  # buy and clear meet it too
                  _ctx.QUANTITY_DIALOG:  (TrimHold,)}         # only the trim types a figure
         if where in _mine and not isinstance(goal, _mine[where]):
             # THE TRIM'S TWO CARDS — and the BUY meets the first one too. The trim opens a
@@ -817,11 +824,16 @@ class MarketActivity:
     def _on_goods_info(self, goal: Any, port: str) -> ActivityResult:
         """The Trade Goods Info card — the trim opens one deliberately, the buy meets one by
         accident when `Put In Bulk` is off, and both have to answer it."""
-        if isinstance(goal, Hold):
+        if isinstance(goal, (Hold, FreeHold)):
+            # MAX, THEN LOAD — the same two taps for both, because neither named a figure.
+            # A buy takes the whole shelf; a clear-out sells the whole holding (user,
+            # 2026-09-09: "if nothing is specified, it should assume sell all (Max)"). Only
+            # the trim types an exact number, and only the trim gets the keypad.
             from brain.activities.market_buy import on_goods_info
             out = on_goods_info(self._state, goal, frame=self._frame(),
                                 tap_fn=self._tap_fn(), omni_fn=self._omni_fn())
-            return self._as_result(out, goal, port, what="buy")
+            return self._as_result(out, goal, port,
+                                   what="buy" if isinstance(goal, Hold) else "sell")
         if not isinstance(goal, TrimHold):
             return ActivityResult(UNRECOGNISED, self._observed(port),
                                   detail="a goods card this goal did not open")
