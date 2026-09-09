@@ -186,8 +186,36 @@ def clear_blockers(frame=None, *, llm_fn: Optional[Callable[[str], str]] = None,
         return {"cleared": cleared, "kind": "announcement"}
 
     if looks_like_promo(text):
-        r = handle(frame, llm_fn=llm_fn, tap_fn=tap_fn, back_fn=back_fn)
-        return {"cleared": bool(r.get("handled")), "kind": "promo", "why": r.get("why")}
+        # BACK, THEN LOOK — the same discipline as the announcement above, and the opposite
+        # preference, because a promo takes Back and the announcement does not (user,
+        # 2026-09-09: "only 2 popups can not be dismissed with back, one is the daily news,
+        # the other is the Android system dialog").
+        #
+        # Back is style-independent, and the style changes between seasons. Hunting the X
+        # has never once produced a right coordinate on this path: (2050,100) nineteen
+        # times, (2069-2072, 295-297) ten, (2115-2118, 49) seven — every one a HUD rail
+        # icon. Live 2026-09-08 the "Moon Rabbit's Part Gift Package" card at Barcelona was
+        # tapped at (2071,297) twice, logged as dismissed twice, and never moved; one Back
+        # cleared it, still on the port overworld with no main menu. Back is safe HERE
+        # precisely because a modal is up to consume it — which is what the warning against
+        # Back elsewhere is really about.
+        import time as _t
+        from capture.adb_capture import capture_screen
+        _cap = capture_fn or capture_screen
+        back_fn()
+        logger.info("[clear_blockers] promo — pressed Back")
+        _t.sleep(0.8)
+        frame2 = _cap()
+        if looks_like_promo(_ocr_text(frame2)):
+            # STILL THERE. Now the X is worth trying, bounded to the card so it cannot be a
+            # rail button; `handle` presses Back again if it cannot find one.
+            r = handle(frame2, llm_fn=llm_fn, tap_fn=tap_fn, back_fn=back_fn)
+            _t.sleep(0.8)
+            frame2 = _cap()
+            logger.info(f"[clear_blockers] promo — retried via {r.get('action')}")
+        cleared = not looks_like_promo(_ocr_text(frame2))
+        logger.info(f"[clear_blockers] promo dismiss → cleared={cleared}")
+        return {"cleared": cleared, "kind": "promo"}
 
     return {"cleared": False, "kind": None}
 
@@ -210,21 +238,58 @@ def classify(desc: str, llm_fn: Callable[[str], str]) -> dict:
         return {}
 
 
-def find_close_x(elements, w: int, h: int):
-    """A small X/close icon in the upper-right of the CONTENT (dialog corner) —
-    not the far screen-corner HUD icons. Returns (cx, cy) or None."""
+def find_close_x(elements, w: int, h: int, within=None):
+    """The popup's own close-X, or None. `within` is the popup's box.
+
+    IT MUST BE THE POPUP'S X, NOT THE ONE NEXT TO IT. Without a box this searched a fixed
+    band — `0.50w < cx < 0.93w`, `cy < 0.32h` — and preferred the RIGHT-MOST icon in it.
+    On the port overworld that band also holds the HUD rail, so the right-most icon is a
+    rail button, not the card's X.
+
+    Live 2026-09-08 at Barcelona, the "Moon Rabbit's Part Gift Package" promo: its X sits at
+    (1764, 216) and WAS detected, but (2071, 297) is further right and won. The bot tapped
+    the rail twice, logged "dismissed promo" both times, and the popup never moved — so the
+    Back fallback below, which does work on this card, was never reached. Every close-X this
+    path has logged is one of these: (2050,100) nineteen times, (2069-2072, 295-297) ten,
+    (2115-2118, 49) seven. Not one is a promo's X.
+
+    Same shape as the Source panel and the sub-menu title: a fixed window spanning the thing
+    AND the chrome beside it, with a tie-break that picks the wrong one.
+
+    A box narrows it to the card. Without one, prefer nothing over a guess — the caller's
+    Back is style-independent and cannot land on a control.
+    """
+    if within is None:
+        return None
+    bx1, by1, bx2, by2 = within
     best = None
     for e in (elements or []):
         lab = (getattr(e, "label", "") or "").strip().lower()
         cx, cy = getattr(e, "cx", None), getattr(e, "cy", None)
         if cx is None or cy is None:
             continue
-        small = (e.x2 - e.x1) < 90 and (e.y2 - e.y1) < 90
+        if not (bx1 <= cx <= bx2 and by1 <= cy <= by2):
+            continue                                  # not this popup's
+        small = (e.x2 - e.x1) < 130 and (e.y2 - e.y1) < 130
         is_close = lab in ("x", "×", "close") or (getattr(e, "element_type", "") == "icon" and small)
-        if is_close and 0.50 * w < cx < 0.93 * w and cy < 0.32 * h:
-            if best is None or (cx > best[0]):     # prefer the right-most
+        # THE CARD'S TOP-RIGHT CORNER, measured against the card rather than the screen.
+        if is_close and cx > bx1 + 0.60 * (bx2 - bx1) and cy < by1 + 0.25 * (by2 - by1):
+            if best is None or (cx > best[0]):
                 best = (int(cx), int(cy))
     return best
+
+
+def _popup_box(frame, elements):
+    """Where the thing in the way is, from the classifier that owns that question."""
+    try:
+        from vision.screen_perception import parse_screen
+        from vision.obstruction_classifier import classify_obstruction, KIND_NONE
+        found = classify_obstruction(parse_screen(frame))
+        if found is not None and found.kind != KIND_NONE and found.bbox:
+            return tuple(found.bbox)
+    except Exception as exc:                          # noqa: BLE001 — no box is not a crash
+        logger.debug(f"[unexpected_dialog] could not box the popup: {exc}")
+    return None
 
 
 def handle(frame, elements=None, llm_fn: Optional[Callable[[str], str]] = None,
@@ -255,8 +320,15 @@ def handle(frame, elements=None, llm_fn: Optional[Callable[[str], str]] = None,
         return {"handled": False, "kind": verdict.get("kind", "unknown"),
                 "action": None, "why": verdict.get("why", "not a dismissable dialog")}
 
-    # Dismiss SAFELY: prefer the close-X, else Back. NEVER a content/purchase button.
-    x = find_close_x(elements, getattr(frame, "width", 2400), getattr(frame, "height", 1080))
+    # Dismiss SAFELY: prefer the close-X INSIDE the popup, else Back. Never a purchase.
+    #
+    # Back is what actually clears this card — verified live 2026-09-08 on the Moon Rabbit
+    # promo at Barcelona: one Back and the popup was gone, still on the port overworld, no
+    # main menu. It is consumed by the topmost modal, which is the whole reason the
+    # codebase's warning about Back (it exits the underlying screen) does not bite here —
+    # that warning is about pressing Back when nothing is up to eat it.
+    x = find_close_x(elements, getattr(frame, "width", 2400), getattr(frame, "height", 1080),
+                     within=_popup_box(frame, elements))
     if x is not None and tap_fn is not None:
         tap_fn(x[0], x[1])
         action = f"tap_close@({x[0]},{x[1]})"
@@ -266,6 +338,9 @@ def handle(frame, elements=None, llm_fn: Optional[Callable[[str], str]] = None,
     else:
         return {"handled": False, "kind": verdict.get("kind"), "action": None,
                 "why": "dismissable but no tap/back primitive provided"}
-    logger.info(f"[unexpected_dialog] dismissed {verdict.get('kind')} via {action}")
+    # ATTEMPTED, not dismissed. Nothing here has looked again, and this said "dismissed"
+    # twice at Barcelona while the promo sat on screen. The next tick re-perceives and will
+    # say whether it went; claiming it here only made the log lie.
+    logger.info(f"[unexpected_dialog] attempted to clear {verdict.get('kind')} via {action}")
     return {"handled": True, "kind": verdict.get("kind", "promo"), "action": action,
             "why": verdict.get("why", "")}

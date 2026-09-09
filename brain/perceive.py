@@ -2032,7 +2032,7 @@ def handle_unknown_blocking(frame, ocr_tokens: list, nav_detail: str = "") -> bo
     Returns True if handled (bot can continue), False if debounce hasn't
     triggered yet OR escalation is required.
     """
-    from actions.adb_actions import tap
+    from actions.adb_actions import tap, press_back as back
     from actions.sail_actions import _find_button
     import re, time as _time
 
@@ -2100,6 +2100,12 @@ def handle_unknown_blocking(frame, ocr_tokens: list, nav_detail: str = "") -> bo
     # ── Tier 2: Claude Vision ─────────────────────────────────────────────────
     logger.info("[perceive] Qwen uncertain or complex dialog — escalating to Claude Vision")
     claude = _claude_resolve_unknown(frame, description)
+    try:                                  # the viewer's LLM tab reads every consult
+        from vision.llm_trace import record as _record
+        _record("claude (unknown screen)", "What is this blocking screen and how do we "
+                "get past it?", description or "", claude, nav_detail=nav_detail)
+    except Exception:                     # noqa: BLE001 — a trace is never load-bearing
+        pass
 
     if claude:
         dismissal = claude.get("dismissal", DISMISSAL_TAP_OK_OR_X)
@@ -2110,7 +2116,30 @@ def handle_unknown_blocking(frame, ocr_tokens: list, nav_detail: str = "") -> bo
             f"dismissal={dismissal!r}  reasoning={claude.get('reasoning', '')[:60]}"
         )
 
-        if dismissal in SEMANTIC_DISMISSALS and not (tap_x and tap_y):
+        # THE MODEL NAMES THE SCREEN; IT DOES NOT AIM THE TAP (user, 2026-09-09: "try back
+        # first and see if it goes away").
+        #
+        # This used to tap `tap_x, tap_y` straight from the answer. Live 2026-09-08 at
+        # Barcelona, the "Moon Rabbit's Part Gift Package" promo: Claude returned (879, 109)
+        # and the card's close-X is at (1764, 216) — nine hundred pixels out, onto the world
+        # behind the popup. One Back cleared the same card, verified, with no side effect.
+        # A vision model is reliable at saying WHAT a screen is and unreliable at saying
+        # WHERE a pixel is, and only the first of those is worth having: the identification
+        # is what learned `moon_rabbit_s_part_gift_package_purchase`, whose record stores a
+        # METHOD and no coordinate, so the next encounter needs no LLM at all.
+        #
+        # `a-fallback-fires-when-guessing-is-worst`: the lookup replaces the guess, and a
+        # failed lookup is a refusal. Back is the refusal that still makes progress — it is
+        # consumed by the topmost modal, which is the case whenever this runs. The two
+        # popups that do not take Back are the daily news, which has its own close-X path
+        # and never reaches here, and the Android system dialog, which ends the game session
+        # either way (user, 2026-09-09).
+        if back is not None:
+            logger.info("[perceive] learned screen — pressing Back rather than tapping "
+                        f"coordinates from the model (it offered {(tap_x, tap_y)})")
+            back()
+            _time.sleep(1.0)
+        elif dismissal in SEMANTIC_DISMISSALS and not (tap_x and tap_y):
             # Semantic action with no explicit Claude-supplied coords: don't
             # auto-act.  The new interruptor record still gets saved so the
             # next encounter can reuse the keywords; but committing the
