@@ -319,8 +319,9 @@ class Dispatcher:
         self._refresh = refresh          # lost -> drop what the wrong belief cached
         self._unblock = unblock          # clear an obstruction laid OVER the world
         self._dialog = dialog            # frame -> DialogModel | None (injectable for tests)
-        self._dialog_looks = 0           # consecutive ticks with THE SAME dialog still up
-        self._dialog_seen = None         # which dialog those looks were at
+        self._last_transaction = (0, 0)  # (goods sold, units bought) at the last progress
+        self._dialog_looks = 0           # presses at ONE dialog that changed nothing
+        self._dialog_seen = None         # the dialog AND the world it was over
         # WHERE WE WERE, for an `unknown` that is a presentation change and not a move.
         self._standing_in: Optional[str] = None   # state an activity last worked in
         self._standing_looks = 0                  # consecutive unknowns carried on it
@@ -767,7 +768,18 @@ class Dispatcher:
             # notice, negotiation, result, three DIFFERENT dialogs each answered
             # successfully — and the purchase result card reached the guard at 4/3. It was
             # reported as "a system dialog will not close" without ever being answered once.
-            here = self._dialog_signature(dialog)
+            # WHAT THE BUDGET MEASURES IS A PRESS THAT DID NOT LAND, not a look at a
+            # dialog (user, 2026-09-09: "it should only have a limit when looking at the
+            # same thing that is stuck, if it has finished a successful transaction, the
+            # counter should be cleared").
+            #
+            # So it only rises when NOTHING moved: the same dialog, over the same world.
+            # A different dialog is the last answer having worked. And so is the SAME
+            # dialog over a CHANGED world — three purchases in a row each raise a Result
+            # card identical in title and buttons, and counting those as one stuck card
+            # would block the third. The screen behind it is what tells them apart: the
+            # cargo, the gold and the shelf have all moved.
+            here = (self._dialog_signature(dialog), self._screen_signature(state))
             self._dialog_looks = (self._dialog_looks + 1) if here == self._dialog_seen else 1
             self._dialog_seen = here
             handled = self._offer_dialog(activity, dialog, state)
@@ -979,6 +991,35 @@ class Dispatcher:
         except Exception as exc:              # noqa: BLE001 — a poorer read, not a broken one
             logger.debug(f"[dispatch] could not read inside the dialog: {exc}")
             return []
+
+    def _note_any_progress(self, result) -> None:
+        """A completed transaction clears every "am I stuck?" counter.
+
+        A SUCCESSFUL BUY OR SELL IS PROGRESS, AND PROGRESS IS NOT A STALL (user, 2026-09-09:
+        "like a successful buy or successful sell, then all the counters should be cleared").
+        Every counter here answers the same question — has this stopped moving? — and a
+        transaction landing is the plainest possible No. Leaving them standing is how a
+        guard fires on a run that is working: at Bordeaux on 2026-09-09 three dialogs were
+        answered, two purchases went through, and the budget still ran out because it had
+        been counting since before any of it.
+
+        Read from the activity's own report, so nothing new is threaded through: `sold`
+        grows on a sale and `bought_total` on a purchase.
+        """
+        seen = getattr(result, "observed", None) or {}
+        try:
+            now = (len(seen.get("sold") or ()), int(seen.get("bought_total") or 0))
+        except Exception:                             # noqa: BLE001 — a label, never a failure
+            return
+        if now == (0, 0) or now == self._last_transaction:
+            return
+        logger.info(f"[dispatch] a transaction landed (sold {now[0]}, bought {now[1]}) — "
+                    "clearing the stall counters, because this is not stuck")
+        self._last_transaction = now
+        self._dialog_looks, self._dialog_seen = 0, None
+        self._in_flight_looks = 0
+        self._standing_looks = 0
+        self._undrawn_looks = 0
 
     def _offer_dialog(self, activity: Activity, dialog: Any, state: Any):
         """Give the activity first refusal on the dialog; fall back to the safe exit.
@@ -1259,6 +1300,7 @@ class Dispatcher:
         village.
         """
         self.last = result
+        self._note_any_progress(result)
         # THE LOOK BELOW SHOWS WHAT THE ACTION PRODUCED, so it is read under the action that
         # produced it — a result card is only recognisable as one when "tapped Sell" is on
         # the record.

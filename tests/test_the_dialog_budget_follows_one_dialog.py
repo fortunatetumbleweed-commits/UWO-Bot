@@ -80,6 +80,55 @@ class OneDialogAtATime(unittest.TestCase):
         self.assertEqual(1, self._look(d, _dialog("Result", "Ok")))
 
 
+class ALandedTransactionClearsEveryCounter(unittest.TestCase):
+    """A successful buy or sell is progress, and progress is not a stall.
+
+    Every counter in the dispatcher answers one question — has this stopped moving? — and a
+    transaction landing is the plainest No there is. At Bordeaux three dialogs were answered
+    and two purchases went through, and the budget still ran out, because it had been
+    counting since before any of it (user, 2026-09-09).
+    """
+
+    def _dispatcher(self):
+        from brain.dispatcher import Dispatcher
+        d = Dispatcher.__new__(Dispatcher)
+        d._last_transaction = (0, 0)
+        d._dialog_looks, d._dialog_seen = 3, ("Result", ("ok",))
+        d._in_flight_looks = d._standing_looks = d._undrawn_looks = 2
+        return d
+
+    def _result(self, **observed):
+        from brain.dispatcher import ActivityResult, WORKING
+        return ActivityResult(WORKING, observed)
+
+    def test_a_purchase_clears_them_all(self):
+        d = self._dispatcher()
+        d._note_any_progress(self._result(bought_total=529, port="Bordeaux"))
+        self.assertEqual(0, d._dialog_looks)
+        self.assertIsNone(d._dialog_seen)
+        self.assertEqual((0, 0, 0), (d._in_flight_looks, d._standing_looks, d._undrawn_looks))
+
+    def test_a_sale_clears_them_all(self):
+        d = self._dispatcher()
+        d._note_any_progress(self._result(sold=["Birch Tree"], port="Bordeaux"))
+        self.assertEqual(0, d._dialog_looks)
+        self.assertEqual(0, d._in_flight_looks)
+
+    def test_a_tick_that_bought_nothing_leaves_them_standing(self):
+        """Only progress clears them; otherwise the guard would never fire at all."""
+        d = self._dispatcher()
+        d._note_any_progress(self._result(port="Bordeaux", did="scrolled"))
+        self.assertEqual(3, d._dialog_looks)
+        self.assertEqual(2, d._in_flight_looks)
+
+    def test_the_same_total_reported_twice_is_not_new_progress(self):
+        d = self._dispatcher()
+        d._note_any_progress(self._result(bought_total=529))
+        d._dialog_looks = 3
+        d._note_any_progress(self._result(bought_total=529))
+        self.assertEqual(3, d._dialog_looks, "the same purchase does not clear it twice")
+
+
 class TheSignatureSeparatesWhatItMust(unittest.TestCase):
 
     def _sig(self, dialog):
