@@ -1312,7 +1312,40 @@ class Dispatcher:
         else:
             state = self._perceive()
         self._fresh = state
-        self.goal = self._next_goal(result, state)
+        # CLEARING A COVERING SCREEN IS NOT FINISHING THE WORK. `FINISHED` from the main
+        # menu, a full-screen notice, the idle lock or an unnameable chromed screen means
+        # "I dealt with what was over the world" — it says nothing about the goal, which the
+        # screen merely interrupted (user, 2026-09-09: "mainmenu is an overlay, it does not
+        # have anything to do with the task. It should not affect the task status").
+        #
+        # The runner cannot tell: `SubTaskRunner.next_goal` reads any FINISHED as `DONE` and
+        # retires the leg. Live 2026-09-09, mid-ocean on the London route, the main menu
+        # opened over the sea:
+        #
+        #     main_menu <- ArriveAshore(what='the leg to Sans to London')
+        #     [main_menu] closing via the X @ (2216, 49)
+        #     main_menu -> finished
+        #     'sea' cannot start ENTER_BUILDING
+        #
+        # A closed menu was read as a completed voyage, the leg advanced to selling, and the
+        # next intent was to walk into a building in open water. The affordance guard refused
+        # it — so nothing was tapped — but the leg was already retired, and the mission died
+        # one step from done with the cargo aboard.
+        #
+        # The same derivation as `_afforded_here` above: from `CLEARS_SCREEN`, so no second
+        # list of screens has to be kept in step.
+        # ONLY A GOAL IN FLIGHT IS PRESERVED. With none, there is nothing to protect and
+        # the runner still has to be asked — otherwise a covering screen at the very start
+        # leaves the dispatcher goal-less for good. Caught by
+        # `test_the_task_is_not_asked_twice_for_a_screen_that_is_about_to_clear`, which
+        # drives this with no goal set and expects exactly one ask.
+        cleared = (self.goal is not None
+                   and self._is_a_covering_screen(getattr(state, "state", None)))
+        if cleared and result.status == FINISHED:
+            logger.info(f"[dispatch] {getattr(state, 'state', None)!r} was covering the "
+                        f"world — it is cleared, and {self.goal} is untouched")
+        else:
+            self.goal = self._next_goal(result, state)
 
         intent = self._to_intent(self.goal, state) if self.goal is not None else None
         where = getattr(state, "state", None)

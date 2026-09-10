@@ -45,6 +45,14 @@ _MAX_ICON = 140
 class MainMenuActivity:
     """Close the menu, then finish. Where it lands is the dispatcher's next look."""
 
+    # THE MAIN MENU IS DRAWN OVER THE WORLD, NOT A WORLD OF ITS OWN (user, 2026-09-09:
+    # "mainmenu is an overlay, it does not have anything to do with the task. It should not
+    # affect the task status"). The same marker the idle lock, a full-screen notice and an
+    # unnameable chromed screen carry, and it is what stops this activity's FINISHED being
+    # read as the GOAL's.
+    CLEARS_SCREEN = True
+
+
     name = "main_menu"
     SERVES = (STATE,)
     CAN_START = ()
