@@ -8,7 +8,7 @@ Live 2026-09-09, mid-ocean on the London route, with the barter done and the car
     [classify] → sea
     'sea' cannot start ENTER_BUILDING (it affords ['OPEN_WORLD_MAP'])
 
-`SubTaskRunner.next_goal` reads any FINISHED as `DONE` and retires the leg, so a closed menu
+`_OneGoalLeg.next_goal` reads any FINISHED as `DONE` and retires the leg, so a closed menu
 was read as a completed voyage. The leg advanced to selling and the next intent was to walk
 into a building in open water. The affordance guard refused it — nothing was tapped — but the
 leg had already been retired, and the mission died one step from done.
@@ -48,50 +48,88 @@ class TheOverlaysAreAllMarked(unittest.TestCase):
                 self.assertTrue(getattr(cls, "CLEARS_SCREEN", False))
 
 
-class AClearedOverlayLeavesTheGoalAlone(unittest.TestCase):
+class AClearedOverlayIsNotTheGoalBeingDone(unittest.TestCase):
+    """The guard lives in `step`, on the ACTIVITY — not on whatever is on screen afterwards.
 
-    def _advance(self, where, goal, status=FINISHED):
-        asked = []
-        state = _State(where)
-        d = Dispatcher(perceive=lambda: state, activities=default_activities(),
-                       next_goal=lambda r, s: (asked.append(1), None)[1],
-                       to_intent=lambda g, s: None, dispatch=lambda i: None)
-        d.goal = goal
-        d._advance(ActivityResult(status, {}), state)
-        return d.goal, len(asked)
+    `step` converts a FINISHED from a `CLEARS_SCREEN` activity into UNRECOGNISED, so the
+    runner is asked again and returns the same goal, still unfilled. That is the whole
+    mechanism, and it predates the main-menu bug: what was missing was the MARKER, not the
+    guard.
 
-    def test_the_voyage_survives_the_main_menu(self):
+    A second check was added in `_advance` on 2026-09-09 and removed on 2026-09-10. It read
+    `state` AFTER the re-perceive, so it judged whatever had appeared since rather than the
+    screen the activity ran in — see `TheCheckMustJudgeTheActivityNotTheAftermath` below.
+    """
+
+    def test_the_guard_rewrites_a_cleared_overlay_as_unrecognised(self):
+        import inspect
+        from brain.dispatcher import Dispatcher
+        src = inspect.getsource(Dispatcher.step)
+        self.assertIn('getattr(activity, "CLEARS_SCREEN", False)', src,
+                      "gated on the activity, which is the only thing that knows")
+        guard = src[src.index('if result.status == FINISHED and getattr(activity,'):]
+        self.assertIn("UNRECOGNISED", guard[:400],
+                      "a cleared overlay is reported as 'do not know where we are', "
+                      "never as the goal being done")
+
+    def test_unrecognised_keeps_the_goal_because_the_runner_re_offers_it(self):
+        """That is what UNRECOGNISED means to the runner — still going, ask me again."""
+        from brain.dispatcher import ActivityResult, UNRECOGNISED
+        from brain.mission_runner import _OneGoalLeg
         goal = object()
-        kept, asked = self._advance("main_menu", goal)
-        self.assertIs(goal, kept, "a closed menu is not a completed voyage")
-        self.assertEqual(0, asked, "the runner is not asked, so the leg is not retired")
+        r = _OneGoalLeg.__new__(_OneGoalLeg)
+        r.goal, r._asked, r.status, r.reason = goal, True, None, None
+        self.assertIs(goal, r.next_goal(ActivityResult(UNRECOGNISED, {}), None),
+                      "the same goal comes back, still unfilled")
 
-    def test_the_same_holds_for_a_notice_and_the_lock(self):
-        for where in ("transient", "idle_lock", "unrecognized_chromed_screen"):
-            with self.subTest(screen=where):
-                goal = object()
-                kept, asked = self._advance(where, goal)
-                self.assertIs(goal, kept)
-                self.assertEqual(0, asked)
+    def test_finished_from_a_real_world_still_retires_the_leg(self):
+        from brain.dispatcher import ActivityResult, FINISHED
+        from brain.mission_runner import _OneGoalLeg
+        r = _OneGoalLeg.__new__(_OneGoalLeg)
+        r.goal, r._asked, r.status, r.reason = object(), True, None, None
+        self.assertIsNone(r.next_goal(ActivityResult(FINISHED, {}), None))
 
-    def test_a_real_world_finishing_still_advances_the_task(self):
-        """Only overlays are exempt — a market or a village finishing means what it says."""
-        _kept, asked = self._advance("building:market", object())
-        self.assertEqual(1, asked, "the runner must still be asked for the next leg")
 
-    def test_only_finished_is_exempt_working_still_re_asks(self):
-        """WORKING has always meant "still going, ask me again" — that is untouched.
+class TheCheckMustJudgeTheActivityNotTheAftermath(unittest.TestCase):
+    """Live 2026-09-10: Trabzon was selected twice, the second time mid-voyage.
 
-        The exemption is narrow on purpose: it covers the one status the runner reads as
-        `DONE`, and nothing else.
-        """
-        _kept, asked = self._advance("main_menu", object(), status=WORKING)
-        self.assertEqual(1, asked)
+        09:17:05  world_map -> finished {'where': 'Trabzon'}      course set, sailing
+        09:17:13  [classify] -> transient — a full-screen notice  the departure notice
+        09:17:15  'transient' was covering the world ... untouched
+        09:17:30  OPEN_WORLD_MAP(purpose="choose port 'Trabzon'") selected AGAIN
 
-    def test_with_no_goal_the_runner_is_still_asked(self):
-        """Otherwise an overlay at the very start leaves the dispatcher goal-less for good."""
-        _kept, asked = self._advance("main_menu", None)
-        self.assertEqual(1, asked)
+    `world_map` finished legitimately and the leg was done. A departure notice arrived while
+    `_advance` was re-perceiving, and the removed check — reading the post-perceive state —
+    called that "a covering screen finished" and suppressed the ask. The completed goal was
+    frozen and re-issued.
+    """
+
+    def test_advance_no_longer_second_guesses_the_screen_it_lands_on(self):
+        import inspect
+        from brain.dispatcher import Dispatcher
+        src = inspect.getsource(Dispatcher._advance)
+        self.assertNotIn("_is_a_covering_screen", src,
+                         "judging the aftermath is what selected Trabzon twice")
+
+    def test_the_runner_is_asked_after_every_result_advance_sees(self):
+        from brain.dispatcher import ActivityResult, Dispatcher, FINISHED
+        from brain.run_goal import default_activities
+
+        class _S:
+            def __init__(self, where):
+                self.state, self.frame = where, None
+
+        for where in ("transient", "world_map", "building:market"):
+            with self.subTest(landed_on=where):
+                asked, state = [], _S(where)
+                d = Dispatcher(perceive=lambda: state, activities=default_activities(),
+                               next_goal=lambda r, s: (asked.append(1), None)[1],
+                               to_intent=lambda g, s: None, dispatch=lambda i: None)
+                d.goal = object()
+                d._advance(ActivityResult(FINISHED, {}), state)
+                self.assertEqual(1, len(asked),
+                                 "whatever is on screen now, the result came from an "
+                                 "activity `step` has already judged")
 
 
 if __name__ == "__main__":
