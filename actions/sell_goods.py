@@ -162,7 +162,20 @@ def _find_sell_commit(frame, elements):
     for c in commits:
         if "sell" in (getattr(c, "verb", "") or "").lower():
             return c
-    return commits[0] if commits else None
+    # NO BARE `commits[0]`. A failed lookup is a REFUSAL, not a guess
+    # (`a-fallback-fires-when-guessing-is-worst`), and this is a screen we MEANT to be on, so
+    # the control is anchored or it is absent — CLAUDE.md: "Expected screens are
+    # multi-anchored; positive-button search is for the UNEXPECTED ... with no goal the search
+    # degrades to 'tap whatever looks positive'".
+    #
+    # It degraded exactly that way. With the basket EMPTY the real Sell button is greyed and
+    # undetectable, so the only gold thing on the Lisboa page was the `Specialties` banner on
+    # the Almond tile — Almond being a Lisboa specialty. This returned it, the caller read
+    # "the basket is loaded", and the tap landed inside the tile: Put In Bulk staged all 1,841
+    # and the next tick sold them, during a trim whose keep list named Almond.
+    #
+    # An empty basket has no commit button, and that is the correct answer to give.
+    return None
 
 
 # How many times the sell list may be scrolled looking for more to sell. A hold deep

@@ -23,6 +23,7 @@ from dataclasses import dataclass
 from typing import List
 
 import numpy as np
+from loguru import logger
 from PIL import Image
 
 from vision.ocr import read_text
@@ -133,6 +134,33 @@ def looks_like_commit_button(w: int, h: int, yellow_frac: float) -> bool:
     return w >= MIN_ASPECT * max(h, 1) and yellow_frac >= YELLOW_MIN_FRAC
 
 
+# A GOODS TILE CONTAINS NO BUTTONS (user, 2026-09-10: "the yellow banner is not a yellow
+# button ... there are no buttons in the good tiles"). These are BANNERS painted across a
+# tile to mark what the port is known for, and they are the same gold as a commit control —
+# which is the only thing this detector goes by, since in this game a positive button is
+# identified by its background and not its wording.
+#
+# `looks_like_commit_button` was the guard, and it is a SHAPE test: it rejects the squarish,
+# weakly-yellow tile highlight. A Specialties banner defeats it by being wide and strongly
+# gold — 508x46 at 0.9-ish against a commit pill's 554x75.
+#
+# Live 2026-09-10 at Lisboa: the hold held 1,841 Almond, which is a LISBOA SPECIALTY, so its
+# Sell tile carried the banner. With the basket empty the real Sell button was greyed and
+# undetectable, this banner was the only gold thing on screen, and `_find_sell_commit`'s bare
+# `commits[0]` handed it back as the Sell button. The tap landed inside the tile, which with
+# Put In Bulk staged the whole stack, and the next tick sold all 1,841 — during a trim whose
+# keep list named Almond. It had never fired before because the trim runs BEFORE gathering,
+# so the hold normally carries goods with no relationship to this port.
+_TILE_BANNERS = frozenset([
+    "specialties", "specialty", "on sale", "onsale", "recommended", "favorites",
+])
+
+
+def _is_tile_banner(verb: str) -> bool:
+    v = (verb or "").strip().lower()
+    return bool(v) and v in _TILE_BANNERS
+
+
 def _split_verb_cost(text: str) -> tuple:
     """Classify OCR tokens: numeric-ish → cost, alphabetic → verb."""
     verb_toks, cost_toks = [], []
@@ -237,6 +265,11 @@ def detect_commit_buttons(elements, frame: Image.Image,
             v2, c2 = _split_verb_cost(read_text(frame.crop((cut, y1, x2, y2))))
             verb = verb or v2
             cost = cost or c2
+        if _is_tile_banner(verb):
+            # A LABEL, NOT A CONTROL — see `_TILE_BANNERS`. Tapping it taps the tile.
+            logger.debug(f"[commit] ignoring the {verb!r} banner at "
+                         f"({e.cx},{e.cy}) — a goods tile holds no buttons")
+            continue
         out.append(CommitButton(verb=verb, cost=cost,
                                 currency=cost_currency(arr, x1, y1, x2, y2),
                                 cx=int(getattr(e, "cx", (x1 + x2) // 2)),
