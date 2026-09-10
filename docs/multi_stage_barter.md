@@ -42,7 +42,8 @@ Groundnut, and both could make Groundnut. The play was to barter Groundnut at **
   Iron 126`). The rounds must be split; there is nowhere else to go.
 - **Across villages** — `Eagle Feather ← Pulque + Guarana`, neither made at Cheyenne.
   Routing is the lever, and geography matters: of the three villages trading American Bison,
-  the one that trades *only* Bison sits between the two that trade Moccasin.
+  the one that trades NEITHER Moccasin nor Eagle Feather sits at the fork leading to the two
+  that trade both.
 
 ---
 
@@ -120,36 +121,45 @@ Moccasin      <- American Bison  [Sioux, Cheyenne, Pawnee] + Wool (ports)
 Eagle Feather <- Pulque  [Apache, Chinook] + Guarana [Jívaro, Witoto]
 ```
 
-Four things follow, and together they are the whole argument for this design:
+Four things follow, and together they are the argument for this design:
 
-1. **Pawnee's rounds are cheap.** It has nothing better to make, so a round spent there on
-   Bison costs nothing that a round at Cheyenne or Sioux would have earned. That is the
-   assignment rule (§1) with an unambiguous answer.
-2. **The detour is nearly free**, because Pawnee lies between the two. Geography turns a
-   two-village chain into one route rather than a round trip.
-3. **Cheyenne and Sioux each face the allocation problem in full** — three goods, one shared
-   budget. This is where "which good does this village's allowance buy" cannot be dodged by
-   routing.
-4. **Eagle Feather is a three-village chain at minimum.** It takes Pulque + Guarana, and
-   neither is made where it is traded — Pulque is at `apache_village`; Guarana has no recipe
-   at all. So the highest-value good needs the deepest plan, which is the usual shape.
+1. **Pawnee is the low-CONTENTION village, not the cheap one.** It trades no Moccasin and no
+   Eagle Feather, so its rounds compete with nothing the chain wants — but it also has the
+   worst Bison ratios, and it does trade Goldenseal. "Cheap rounds" and "cheap goods" point
+   at different villages, which is exactly why assignment has to be computed rather than
+   looked up.
+2. **The detour is nearly free**, because Pawnee lies at the fork leading to the other two.
+   Geography turns a two-village chain into one route rather than a round trip.
+3. **Cheyenne and Sioux each face the allocation problem in full** — four goods, one shared
+   budget of five. This is where "which good does this village's allowance buy" cannot be
+   dodged by routing. The user's rule of thumb: at a village trading both a good and its
+   material, the amounts are usually abundant enough that one day's rounds serve both, and
+   the other village is the fallback for when they are not.
+4. **Eagle Feather is a three-village chain at minimum** — Pulque at Apache or Chinook,
+   Guarana at Jívaro or Witoto, neither made where Eagle Feather is traded. Two upstream
+   stages at two other villages, each with its own daily budget, so the deepest plan belongs
+   to the highest-value good.
 
-### Worked: Moccasin
+### Worked: Moccasin, on the measured numbers
 
-`Moccasin ← American Bison 300 + Wool 340` per round, and
-`American Bison ← Horse 150 + Hand Cannon 150 + Bullet 150` — both at Cheyenne (7 rounds,
-assumed). With capacity 4,952:
+Capacity 4,952. Moccasin yields **859/round** and takes **Bison 251 + Wool 251** at Sioux
+(Wool 291 at Cheyenne). Bison yields ~859-923/round and every village has **5 rounds**.
 
 | | |
 |---|---|
-| rounds to fill the ship with Moccasin | `ceil(4952 / output_per_round(Moccasin))` — **unknown, see §3** |
-| American Bison needed | `rounds_Moccasin x 300` |
-| rounds to make that Bison at Cheyenne | `ceil(bison / output_per_round(Bison))` — **unknown** |
-| fits at Cheyenne? | only if the two sums are `<= 7` |
+| rounds to fill the hold with Moccasin | `ceil(4952 / 859)` = **6** |
+| but a day allows | **5** — so one village cannot fill it at Neutral |
+| Bison needed for 5 rounds | `5 x 251` = **1,255** |
+| rounds to make that Bison | `ceil(1255 / ~900)` = **2** |
+| 5 (Moccasin) + 2 (Bison) at one village | **7 > 5** — does not fit |
 
-If they do not fit — which the user's experience says is the usual case — Bison is made at one
-of the other two villages first, and Cheyenne's whole allowance goes to Moccasin. The middle
-village makes that detour cheap.
+So the chain does NOT fit in one village, which is what sends Bison to Pawnee — and there the
+5 rounds go entirely to Moccasin, yielding ~4,295 of a 4,952 hold. Whether Pawnee or Sioux
+should make the Bison is the trade-off above, and it turns on the per-village yields the
+schema cannot yet hold.
+
+Amity changes this materially: a grade adds a barter and improves the ratio, so Friendly
+could put 6 rounds within reach and fill the hold at one village.
 
 ---
 
@@ -220,8 +230,9 @@ same rule the low-stock gate learned).
    each with amity, rounds and eligible goods. The learner had also been passing a name-only
    `Village` to `save_village`, which REPLACES the record, so learning a village's goods
    erased its amity and rounds; it now merges.
-5. **`Guarana` has no recipe at all**, so Eagle Feather is unplannable. `Pulque` is at
-   `apache_village`.
+5. ~~**`Guarana` has no recipe at all**~~ — **sourced 2026-09-10** to Jívaro and Witoto
+   Village, Pulque to Apache and Chinook. Neither village has been READ yet, so their yields,
+   ratios and rounds are unknown and Eagle Feather still cannot be sized.
 6. `waversioja` is an OCR-corrupt duplicate of `Naverslojd` and would be planned as a
    separate good.
 
