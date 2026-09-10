@@ -598,13 +598,27 @@ def _report_and_save(village, merged, dry_run, *, base=None):
         for material, need in t.materials.items():
             key = material.strip().lower()
             old = prior.get(key)
-            # A FRESH READ WINS, and an empty one keeps what the KB had — the pin may not
-            # have opened, and a material we failed to look up is not a material with no
-            # sources. Applied per KIND: a panel that named only villages must not wipe the
-            # ports the KB already held, and the other way round.
+            # SOURCES ACCUMULATE, they are not replaced. A NON-EMPTY READ CAN STILL BE
+            # PARTIAL — the Source panel is a list like any other and shows what fits.
+            #
+            # Live 2026-09-10: Cheyenne's panel named all three villages that barter American
+            # Bison (Sioux, Cheyenne, Pawnee); Sioux's named two. Replacing on a fresh read
+            # dropped Pawnee — the village whose whole value is that it trades Bison and
+            # nothing that competes for its rounds, which is the entire point of routing
+            # through it.
+            #
+            # Same argument as "a recipe does not lose an ingredient": a village does not
+            # stop trading a good because one panel read did not mention it. Union, keeping
+            # what the KB had first so the order stays stable.
             fresh = learned.get(key) or {}
-            ports = list(fresh.get("market") or (old.source_ports if old else []))
-            villages = list(fresh.get("village") or (old.source_villages if old else []))
+
+            def _union(known, new):
+                out = list(known or [])
+                out += [s for s in (new or []) if s not in out]
+                return out
+
+            ports = _union(old.source_ports if old else [], fresh.get("market"))
+            villages = _union(old.source_villages if old else [], fresh.get("village"))
             inputs.append(RecipeInput(material=material, ratio=int(need),
                                       source_ports=ports, source_villages=villages))
             resolved[key] = (ports, villages)
