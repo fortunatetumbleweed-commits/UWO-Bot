@@ -3078,6 +3078,20 @@ def _port_names_to_search(destination: str) -> list[str]:
     # Always include the original
     if dest_lower not in names:
         names.insert(0, dest_lower)
+    # AND THE FORM OCR ACTUALLY RETURNS. The game renders `Gijón` with its accent and the
+    # reader gives back `gijon`, so searching for the canonical name misses its own row.
+    #
+    # Live 2026-09-09, and the failure is worth the whole comment: the query `Gij` was typed,
+    # the list filtered to exactly one row, `_settle_last_typing` confirmed "the box holds
+    # 'Gij' — the search is filtered", and the very next line said "'Gijón' not found in
+    # current world map view". We had it on screen, alone, and could not see it — so the
+    # activity retyped, and the voyage ended at Porto.
+    #
+    # `Malé` misses the same way. `Málaga` happens to survive only because an alias covers it.
+    from memory.places import fold_name
+    folded = fold_name(destination)
+    if folded and folded not in names:
+        names.append(folded)
     return names
 
 

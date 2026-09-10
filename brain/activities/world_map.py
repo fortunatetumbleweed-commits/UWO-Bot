@@ -463,7 +463,14 @@ class WorldMapActivity:
         already = False
         try:
             from actions.sail_actions import search_box_holds
-            already = search_box_holds(goal.where[:_PREFIX_LEN], self._frame())
+            # THE SAME QUERY WE TYPE, or the check answers about a query nobody sent.
+            # `goal.where[:_PREFIX_LEN]` is `Gijó`; `_keyable_query` types `Gij`, because
+            # the keyboard cannot send the accent. Comparing one against the other says
+            # "not typed yet" for every accented port, and the remedy for not-yet-typed is
+            # to retype — which taps the box and CLEARS the filter that was already showing
+            # the row. Live 2026-09-09 at frames 91 and 94, twice, and the voyage ended at
+            # Porto.
+            already = search_box_holds(_keyable_query(goal.where), self._frame())
         except Exception as exc:                   # noqa: BLE001 — unknown is not "already"
             logger.debug(f"[world_map] could not read the search box: {exc}")
         if already:
