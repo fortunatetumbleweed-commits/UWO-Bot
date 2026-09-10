@@ -459,6 +459,16 @@ def _note_shelf(state, orders: Mapping, goods: Mapping) -> None:
 # over the 154 threshold and worth staying for — while Madeira returned ~110 Raisin, under
 # it, and ten refreshes there still left the barter capped at six rounds.
 #
+# THE SHELF ON ARRIVAL IS THE REFRESH YIELD. A port stocks the same amount of a good for the
+# whole season, and a refresh returns that same amount again (user, 2026-09-09: "the stock at
+# one port is always the same for the same season, when you refresh, it is always the same
+# amount"). So the quantity read off the tile is not a hopeful proxy for what a gem would
+# buy — it IS what a gem buys, every time.
+#
+# Which makes the threshold exact rather than a rule of thumb: covering the need takes
+# `ceil(outstanding / shelf)` refreshes, so "at least a seventh" is precisely "no more than
+# seven gems". Madeira's 110 against 1,081 needed ten; Faro's 457 needed three.
+#
 # The SEASON is recorded either way, so the next plan can prefer another port regardless.
 # What the threshold decides is only whether to keep buying HERE, now.
 _WORTH_WORKING_FRACTION = 7
