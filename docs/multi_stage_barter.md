@@ -80,14 +80,44 @@ wanted.
 
 ### The Plains villages — the topology this design is aimed at
 
-User-reported 2026-09-10, **not yet observed by the bot** (the KB knows only Cheyenne, and
-holds `rounds=None, eligible=[]` for it — see §3.4). To be confirmed by a remote check before
-anything plans against it:
+**Read from the game 2026-09-10** (`tools.learn_village_barter` on all three). The user's
+account was right about the shape; the read adds the numbers and two corrections.
 
 ```
-Cheyenne : American Bison, Moccasin, Eagle Feather
-Sioux    : American Bison, Moccasin, Eagle Feather
-Pawnee   : American Bison ONLY          <- and it sits BETWEEN the other two
+Cheyenne : American Bison, Moccasin, Eagle Feather, Goldenseal   5 rounds, Neutral
+Sioux    : American Bison, Moccasin, Eagle Feather, Goldenseal   5 rounds, Neutral
+Pawnee   : American Bison, Goldenseal                            5 rounds, Neutral
+                                          ^^^ not Bison ALONE — but no Moccasin, no Eagle Feather
+```
+
+**Five rounds, not seven, and Neutral amity everywhere.** Moccasin yields 859/round, so
+filling a 4,952 hold takes ~6 rounds — *no single village can fill a hold with Moccasin in a
+day at current amity*. Amity-building is a precondition of this chain, not a refinement: a
+grade adds a barter AND improves the ratio ([[amity-drives-rounds-and-ratio]]).
+
+**The materials differ per village, and they invert the easy answer:**
+
+| American Bison | Horse | Hand Cannon | Bullet | | Moccasin | Bison | Wool |
+|---|---|---|---|---|---|---|---|
+| Sioux | 126 | 126 | 126 | ← cheapest | Sioux | 251 | 251 |
+| Cheyenne | 126 | 146 | 146 | | Cheyenne | 251 | 291 |
+| Pawnee | 166 | 186 | 186 | ← ~30% dearer | | | |
+
+So Pawnee has **cheap rounds and the worst ratios**, Sioux **the best ratios and the dearest
+rounds** (its five are also wanted by Moccasin and Eagle Feather). Assignment is a real
+trade-off, not the one-line answer this doc first gave it.
+
+**And it cannot be settled yet**, which is the schema gap of §3 proved on fresh data:
+`American Bison.output_per_round` is `{'Neutral': 923}` — one key for three villages.
+Cheyenne's Bison read **859** (frame 00 of the 2026-09-10 sweep); the stored value is 923,
+from whichever village was read last. If Pawnee's dearer materials buy a higher yield, routing
+through it may win anyway — and the KB cannot represent the question.
+
+Chains now fully sourced by the same read:
+
+```
+Moccasin      <- American Bison  [Sioux, Cheyenne, Pawnee] + Wool (ports)
+Eagle Feather <- Pulque  [Apache, Chinook] + Guarana [Jívaro, Witoto]
 ```
 
 Four things follow, and together they are the whole argument for this design:
@@ -172,19 +202,24 @@ same rule the low-stock gate learned).
 
 **Cannot, and these are the real blockers — data, not algorithm:**
 
-1. **`output_per_round` is `{}` for every chained good** — Näverslöjd, Eagle Feather, American
-   Bison, Moccasin. Without it, *no* step of §2 can be computed. It needs a village visit to
-   read, and it re-rolls roughly every 6h.
-2. **`source_villages` is empty on every chained material.** `Moccasin ← American Bison` has
-   `source_ports=[]` and `source_villages=[]`, so the material reads as *unsourced*. The link
-   is derivable — `American Bison` is itself a recipe with `villages=[Cheyenne]` — but nothing
-   joins them. `actions/village_check.py` does populate `source_villages` from the material's
-   location pin; these entries predate that.
+1. ~~**`output_per_round` is `{}` for every chained good**~~ — **collected 2026-09-10** for
+   Bison, Moccasin, Eagle Feather and Goldenseal by adding the Base tab read to
+   `tools.learn_village_barter` (the grade is the key it is stored under, and the tool never
+   opened that tab). What remains is that the key is the GRADE ALONE — see "the same good is a
+   different trade at each village". Näverslöjd is still unread.
+2. ~~**`source_villages` is empty on every chained material**~~ — **fixed 2026-09-10**. The
+   learner called a wrapper that kept only `['market']`, so the village was read by the same
+   code hardened on the Damascus Steel panel and discarded a line later. One call site.
+   Note the panel read is not authoritative on its own: Cheyenne's listed all three Bison
+   villages, Sioux's listed two, so sources must UNION rather than replace. The derived join
+   (material -> recipe -> `villages`) proved the more reliable of the two and is still worth
+   building — it is what repaired the dropped Pawnee entry.
 3. **Nothing consumes it for planning.** `mission_runner.py:692` is explicit: the reroute
    builds a `gather` leg that **buys**. A material only a village trades has no path.
-4. **The village index is incomplete.** Seven villages recorded; `cheyenne_village` has
-   `rounds=None, eligible=[]`. The user reports three villages trade Bison and two trade
-   Moccasin — the KB knows one. Assignment cannot choose among villages it has never seen.
+4. ~~**The village index is incomplete**~~ — **Cheyenne, Sioux and Pawnee read 2026-09-10**,
+   each with amity, rounds and eligible goods. The learner had also been passing a name-only
+   `Village` to `save_village`, which REPLACES the record, so learning a village's goods
+   erased its amity and rounds; it now merges.
 5. **`Guarana` has no recipe at all**, so Eagle Feather is unplannable. `Pulque` is at
    `apache_village`.
 6. `waversioja` is an OCR-corrupt duplicate of `Naverslojd` and would be planned as a
