@@ -78,6 +78,32 @@ Note the intermediate stage is **not** capacity-bound: it needs exactly
 `rounds_G x ratio` units, not a full hold. Overshooting it costs rounds that the final good
 wanted.
 
+### The Plains villages — the topology this design is aimed at
+
+User-reported 2026-09-10, **not yet observed by the bot** (the KB knows only Cheyenne, and
+holds `rounds=None, eligible=[]` for it — see §3.4). To be confirmed by a remote check before
+anything plans against it:
+
+```
+Cheyenne : American Bison, Moccasin, Eagle Feather
+Sioux    : American Bison, Moccasin, Eagle Feather
+Pawnee   : American Bison ONLY          <- and it sits BETWEEN the other two
+```
+
+Four things follow, and together they are the whole argument for this design:
+
+1. **Pawnee's rounds are cheap.** It has nothing better to make, so a round spent there on
+   Bison costs nothing that a round at Cheyenne or Sioux would have earned. That is the
+   assignment rule (§1) with an unambiguous answer.
+2. **The detour is nearly free**, because Pawnee lies between the two. Geography turns a
+   two-village chain into one route rather than a round trip.
+3. **Cheyenne and Sioux each face the allocation problem in full** — three goods, one shared
+   budget. This is where "which good does this village's allowance buy" cannot be dodged by
+   routing.
+4. **Eagle Feather is a three-village chain at minimum.** It takes Pulque + Guarana, and
+   neither is made where it is traded — Pulque is at `apache_village`; Guarana has no recipe
+   at all. So the highest-value good needs the deepest plan, which is the usual shape.
+
 ### Worked: Moccasin
 
 `Moccasin ← American Bison 300 + Wool 340` per round, and
