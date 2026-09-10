@@ -617,6 +617,28 @@ Detail:
   that wording/layout changes degrade a read instead of breaking it, since the FUNCTIONALITY
   is what stays constant.  Today's per-element word matching in the left-menu detector is a
   WORKAROUND at the wrong granularity (a reward panel is one group, not five rows).
+- **★ Detecting game elements — boundaries, not boxes (DESIGN, 2026-09-10)** →
+  `docs/game_element_detection.md`.  The layer BENEATH the panel KB above: where the boxes
+  come from.  Written after two money-losing defects in one afternoon that were the same
+  failure — an element's BOUNDARY taken from OmniParser and never checked.  A tile boxed
+  SHORT (y 195-369 against a card running to 425) scales every tile-relative position too
+  low, so a correctly-read `1,841` badge was discarded for being out of band and the buy
+  loop bought to 2.1x target; a `Specialties` banner boxed ALONE is 508x46 and strongly
+  gold, i.e. a wide pill, so it passed the shape guard, was returned by a bare `commits[0]`
+  as the Sell button, and the tap staged and sold 1,841 Almond during a trim that meant to
+  keep them.  **Not an OCR problem** — the text was right both times; OmniParser is generic
+  about BOUNDARIES and CATEGORIES (`button`/`text`/`icon`, and a banner is a `button`).
+  Note the precedent this project trusts most, `DialogModel`, is **not a model** — it is
+  classical numpy structure, and market cards have the same stable grammar dialogs do.
+  Options costed: a structural TileModel (days, fixes both, no data), an anchor+pitch grid
+  (cheapest, fixes extents only), a UWO-specific trained detector (weeks, highest ceiling,
+  28,101 frames already on disk to bootstrap from, but confidently-wrong nets are harder to
+  debug than readable rules), fine-tuning OmniParser (inherits the generic classes that
+  caused this).  **Recommended: structural TileModel + the containment rule *nothing inside
+  a goods tile is a control*, encoded POSITIONALLY** — replacing the word-list exclusion in
+  `a81fe6a`, which catches `Specialties` and would miss the next banner.  And §5: the
+  invariants are needed either way, because a better detector raises the floor but does not
+  make a bad reading a refusal.  **Not decided.**
 - **★ Dialogs without sub-loops — the market as contexts (DRAFT, 2026-08-30)** →
   `docs/market_as_contexts.md`.  A UI framework's listener registry buys INVERSION OF CONTROL,
   not "no polling" — and we have no event source, so the substitute is the dispatcher's tick:
