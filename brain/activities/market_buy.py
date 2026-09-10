@@ -505,7 +505,14 @@ def _note_seasons(port: str, orders: Mapping, goods: Mapping) -> None:
             good = (goods or {}).get(str(material).lower())
             if good is None or getattr(good, "sold_out", False):
                 continue          # a sold-out tile has no readable season — see `tile_season`
-            note_season(port, str(material), getattr(good, "season", None))
+            # AND HOW MUCH, not only how scarce. The quantity is what lets the PLANNER apply
+            # the same seventh-of-the-need test this visit applies at the shelf; without it
+            # a port that would cover the need in three refreshes is refused before sailing.
+            try:
+                shelf = int(getattr(good, "available_qty", None) or 0) or None
+            except (TypeError, ValueError):
+                shelf = None
+            note_season(port, str(material), getattr(good, "season", None), shelf=shelf)
     except Exception as exc:                  # noqa: BLE001 — bookkeeping, not the buy
         logger.debug(f"[market] could not record the season: {exc}")
 

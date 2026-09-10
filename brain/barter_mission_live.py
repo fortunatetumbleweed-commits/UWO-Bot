@@ -147,9 +147,9 @@ def plan_barter_task(recipe: BarterRecipe, village: str, sell_port: str,
     sources = material_sources_from_recipe(recipe, village)
     # THE SEASON RANKS THE PORTS. A drained shelf still refreshes, at about a quarter the
     # yield, so coverage alone will happily route the fleet to one and grind it.
-    from memory.market_kb import season_of
+    from memory.market_kb import season_of, shelf_of
     gp = plan_gathering(list(needs), sources, port_coords, start, quantities=needs,
-                        season_fn=season_of)
+                        season_fn=season_of, shelf_fn=shelf_of)
     if gp.low_everywhere:
         logger.warning(f"[plan] every known source is scarce this season for "
                        f"{sorted(gp.low_everywhere)} — this task is not profitable now")

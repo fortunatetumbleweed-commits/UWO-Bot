@@ -56,13 +56,30 @@ def _season(season_fn, port: str, material: str) -> Optional[str]:
         return None
 
 
+# A seventh of the need is one round of a seven-round plan — the smallest amount that still
+# buys something the mission can use, and with a constant per-season shelf it is exactly
+# "no more than seven gems". Shared with `market_buy._WORTH_WORKING_FRACTION`.
+_WORTH_WORKING_FRACTION = 7
+
+
+def _shelf(shelf_fn, port: str, material: str) -> int:
+    """How much `port` holds of `material`, or 0 when nobody has looked."""
+    if shelf_fn is None:
+        return 0
+    try:
+        return int(shelf_fn(port, material) or 0)
+    except Exception:                         # noqa: BLE001 — unknown is not a crash
+        return 0
+
+
 def plan_gathering(needed: Sequence[str],
                    material_sources: Mapping[str, Sequence[str]],
                    port_coords: Mapping[str, tuple],
                    start: tuple,
                    quantities: Optional[Mapping[str, int]] = None,
                    cargo_capacity: Optional[int] = None,
-                   season_fn: Optional[Callable[[str, str], Optional[str]]] = None) -> GatheringPlan:
+                   season_fn: Optional[Callable[[str, str], Optional[str]]] = None,
+                   shelf_fn: Optional[Callable[[str, str], Optional[int]]] = None) -> GatheringPlan:
     """Plan a gathering route covering `needed` materials from their source ports.
 
     needed:            materials to gather.
@@ -152,11 +169,26 @@ def plan_gathering(needed: Sequence[str],
 
     # EVERY SOURCE SCARCE IS A DIFFERENT ANSWER FROM "NO SOURCE". Both leave the mission
     # unable to gather, but one is worth waiting out and the other never will be.
+    # SCARCE IS NOT THE SAME AS USELESS. A port stocks the same amount all season and a
+    # refresh returns it again, so a shelf covering a seventh of the need is at most seven
+    # gems from covering it entirely — worth sailing to, however the ribbon reads (user,
+    # 2026-09-09). The same test `market_buy` applies at the shelf, applied before setting
+    # out, so the two layers cannot disagree.
+    #
+    # Live 2026-09-10: Faro and Gijón both read `low` for Pig, and the mission refused
+    # before sailing — though Gijón had supplied three barter rounds' worth the night
+    # before. Without a quantity the planner knew only "scarce", which is not enough to
+    # decide anything.
     low_everywhere = set()
     for m in needed - unsourced:
         ports = [p for p in material_sources.get(m, ()) if p in port_coords]
-        if ports and all(_season(season_fn, p, m) == "low" for p in ports):
-            low_everywhere.add(m)
+        if not ports or not all(_season(season_fn, p, m) == "low" for p in ports):
+            continue
+        want = int((quantities or {}).get(m, 0) or 0)
+        if want > 0 and any(_shelf(shelf_fn, p, m) * _WORTH_WORKING_FRACTION >= want
+                            for p in ports):
+            continue                          # one of them still covers a round's worth
+        low_everywhere.add(m)
 
     over_cap = False
     if cargo_capacity is not None and quantities is not None:

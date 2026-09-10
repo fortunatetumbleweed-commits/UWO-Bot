@@ -147,11 +147,19 @@ def save_snapshot(snapshot: MarketSnapshot) -> None:
 SEASON_TTL_S = 72 * 3600
 
 
-def note_season(port: str, good: str, season: Optional[str], *, now: Optional[float] = None) -> None:
+def note_season(port: str, good: str, season: Optional[str], *,
+                shelf: Optional[int] = None, now: Optional[float] = None) -> None:
     """Record that `good` reads `low` / `abundant` at `port`, with the time we saw it.
 
     An ORDINARY tile (season None) CLEARS any record: the season has turned, and a stale
     "low" would keep steering the plan away from a port that has recovered.
+
+    `shelf` is HOW MUCH the port was seen to hold, and it is what makes "scarce" actionable
+    rather than merely discouraging. A port stocks the same amount all season and a refresh
+    returns that same amount again, so the number is stable and says exactly how many gems a
+    shortfall costs. Without it the planner knows a port is low and nothing more, so it
+    refuses ports that would have covered the need in three refreshes — see
+    `shelf_of` and the `low_everywhere` test in `brain/gathering_solver.py`.
     """
     if not port or not good:
         return
@@ -160,7 +168,13 @@ def note_season(port: str, good: str, season: Optional[str], *, now: Optional[fl
     seasons = dict(record.get("seasons") or {})
     key = str(good).strip().lower()
     if season:
-        seasons[key] = {"state": season, "seen_at": stamp}
+        entry = {"state": season, "seen_at": stamp}
+        if shelf is not None:
+            try:
+                entry["shelf"] = int(shelf)
+            except (TypeError, ValueError):
+                pass
+        seasons[key] = entry
     else:
         seasons.pop(key, None)
     record["port"], record["seasons"] = port, seasons
@@ -184,6 +198,26 @@ def season_of(port: str, good: str, *, now: Optional[float] = None) -> Optional[
     if age > SEASON_TTL_S:
         return None
     return entry.get("state") or None
+
+
+def shelf_of(port: str, good: str, *, now: Optional[float] = None) -> Optional[int]:
+    """How much `port` was last seen to hold of `good`, or None when unknown or EXPIRED.
+
+    Same TTL as the season it rides with: a quantity outlives its evidence exactly as a
+    season does.
+    """
+    if not port or not good:
+        return None
+    entry = (load_market(port).get("seasons") or {}).get(str(good).strip().lower())
+    if not entry or entry.get("shelf") is None:
+        return None
+    age = (time.time() if now is None else float(now)) - float(entry.get("seen_at") or 0.0)
+    if age > SEASON_TTL_S:
+        return None
+    try:
+        return int(entry["shelf"])
+    except (TypeError, ValueError):
+        return None
 
 
 def ports_where_low(good: str, *, now: Optional[float] = None) -> set:
