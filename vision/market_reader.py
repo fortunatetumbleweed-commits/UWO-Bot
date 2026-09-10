@@ -409,13 +409,34 @@ def _apply_claude_fallback(
 # buildings/port=precise via OmniParser).
 
 def _parse_tile_from_button(button, text_els, tab: str,
-                            label: Optional[str] = None) -> Optional[MarketGood]:
+                            label: Optional[str] = None,
+                            row_h: Optional[int] = None) -> Optional[MarketGood]:
     """Build a MarketGood from an OmniParser tile BUTTON + the text elements
     inside it. Name = the button label (clean); price/index/qty/etc. from the
     inner text via `_classify_token`, with y scaled to the `_TILE_H` reference so
-    the zone thresholds hold regardless of the detected tile's actual height."""
+    the zone thresholds hold regardless of the detected tile's actual height.
+
+    `row_h` is the ROW PITCH, and it is what that scaling must divide by — not the
+    detected box, which is CLIPPED often enough to have its own note upstream ("A
+    SHORT-BOXED CELL STILL OWNS A FULL ROW OF TEXT"). A short box makes every token
+    look LOWER in the tile than it is, because the same offset is divided by a smaller
+    height.
+
+    Live 2026-09-10 at Lisboa, frame 205: the Almond card runs y 195-425, but
+    OmniParser boxed only its top, y 195-369 — the `Specialties` bar and the `109%`
+    row fell outside. The owned-qty badge `1,841` sits 119px down, which against the
+    true 230 pitch scales to 119 and lands in the (80,150) band; against the clipped
+    174 it scales to 157 and misses. The badge was read correctly and thrown away for
+    being in the wrong place, `owned_qty` fell to the targeted crops, and the buy loop
+    read "short" against a hold of 1,841 and bought to 2.1x its target.
+    """
     name = re.sub(r"\s+", " ", ((button.label if label is None else label) or "").strip())
-    tile_h = max(1, button.y2 - button.y1)
+    # NEVER SHORTER THAN THE REFERENCE PITCH. A box taller than `_TILE_H` is a real tile
+    # on a taller layout and is trusted; a shorter one is the clipping above, and there
+    # is no layout in this game where a market tile is genuinely stubbier than its own
+    # text needs. With one cell on the page there is no median to appeal to, which is
+    # exactly when this bites.
+    tile_h = max(1, button.y2 - button.y1, int(row_h or 0), _TILE_H)
     text_x0 = button.x1 + _IMG_ZONE_W
 
     index_pct = price = available_qty = profit = owned_qty = None
@@ -440,8 +461,18 @@ def _parse_tile_from_button(button, text_els, tab: str,
             if price is None or pv > price:
                 price, profit = pv, int(m.group(2).translate(_SEP))
             continue
-        if tab != "purchase" and re.fullmatch(r"\d{1,4}", text) and 80 < rel_y < 150:
-            owned_qty = int(text)                 # units of this good in cargo (upper-middle badge)
+        # SEPARATORS ALLOWED, because the badge HAS one past 999 and this is the reading we
+        # already got right. OmniParser returned `'1,841'` for the Almond tile at Lisboa
+        # (2026-09-10, frame 205) — correct, in the right place, rel_y 119 — and
+        # `\d{1,4}` refused it for the comma. `owned_qty` then fell to the targeted crops,
+        # which on that page returned 7, 4, 8 and nothing, and the buy loop read "short"
+        # against a hold of 1,841 and bought to 2.1x its target.
+        #
+        # The price branch three lines up has always done `translate(_SEP)` for exactly this
+        # (`the-separator-is-whatever-ocr-saw`: '3,129' comes back as '3.129', per glyph).
+        # The owned-qty branch never did. Digits-only also capped the badge at 9,999.
+        if tab != "purchase" and re.fullmatch(r"\d[\d,.']{0,6}", text) and 80 < rel_y < 150:
+            owned_qty = int(text.translate(_SEP))  # units of this good in cargo (upper-middle badge)
             continue
         kind = _classify_token(text, rel_y)
         if kind == "timer":
@@ -762,7 +793,8 @@ def read_market_page_omni(
         if cell.h < _row_h:
             cell = _replace(cell, y2=cell.y1 + _row_h)
         cell_text = [e for e in text_els if cell.contains(e.cx, e.cy)]
-        good = _parse_tile_from_button(cell, cell_text, tab, label=_tile_label(cell, elements))
+        good = _parse_tile_from_button(cell, cell_text, tab,
+                                       label=_tile_label(cell, elements), row_h=_row_h)
         if not good:
             continue
         # Template-guided recovery: the index % sits at the bottom-left of EVERY
