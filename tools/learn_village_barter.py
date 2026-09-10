@@ -572,17 +572,21 @@ def _report_and_save(village, merged, dry_run):
             continue
         recipe = load_recipe(t.good) or BarterRecipe(good=t.good)
         prior = {i.material.strip().lower(): i for i in recipe.inputs}
-        seen, inputs = set(), []
+        seen, inputs, resolved = set(), [], {}
         for material, need in t.materials.items():
-            old = prior.get(material.strip().lower())
+            key = material.strip().lower()
+            old = prior.get(key)
             # A FRESH READ WINS, and an empty one keeps what the KB had — the pin may not
             # have opened, and a material we failed to look up is not a material with no
-            # sources.
-            ports = (learned.get(material.strip().lower())
-                     or list(old.source_ports if old else []))
+            # sources. Applied per KIND: a panel that named only villages must not wipe the
+            # ports the KB already held, and the other way round.
+            fresh = learned.get(key) or {}
+            ports = list(fresh.get("market") or (old.source_ports if old else []))
+            villages = list(fresh.get("village") or (old.source_villages if old else []))
             inputs.append(RecipeInput(material=material, ratio=int(need),
-                                      source_ports=list(ports)))
-            seen.add(material.strip().lower())
+                                      source_ports=ports, source_villages=villages))
+            resolved[key] = (ports, villages)
+            seen.add(key)
         for key, old in prior.items():
             if key not in seen:
                 logger.warning(f"[learn] {t.good}: keeping known material {old.material!r} "
@@ -590,10 +594,13 @@ def _report_and_save(village, merged, dry_run):
                 inputs.append(old)
         recipe.inputs = inputs
         recipe.village_inputs = dict(recipe.village_inputs or {})
+        # THE SAME SOURCES THE RECIPE JUST RESOLVED. This read `prior` — the sources as they
+        # stood BEFORE this sweep — so a freshly learned source landed in `inputs` and not
+        # here, and the two halves of one recipe disagreed about where a material comes from.
         recipe.village_inputs[_slug(village)] = [
             RecipeInput(material=m, ratio=int(q),
-                        source_ports=list(prior[m.strip().lower()].source_ports
-                                          if m.strip().lower() in prior else []))
+                        source_ports=list(resolved.get(m.strip().lower(), ([], []))[0]),
+                        source_villages=list(resolved.get(m.strip().lower(), ([], []))[1]))
             for m, q in t.materials.items()]
         if village not in recipe.villages:
             recipe.villages.append(village)
@@ -619,7 +626,7 @@ def _learn_sources(merged) -> dict:
     """
     from actions import ui
     from actions.village_check import _kb_sources, material_pins
-    from actions.village_remote_reader import read_material_sources_frame
+    from actions.village_remote_reader import read_material_sources_by_kind_frame
     from capture.adb_capture import capture_screen
     from vision.omniparser import parse_fast_cached
 
@@ -667,15 +674,30 @@ def _learn_sources(merged) -> dict:
         for material in here:
             ui.tap_at(*pins[material], dwell="dialog", why=f"source pin for {material}")
             try:
-                ports = read_material_sources_frame(capture_screen())
+                # BY KIND, because a CHAINED material is sourced at a VILLAGE and this tool
+                # used to throw that half away. `read_material_sources_frame` is a wrapper
+                # over this same reader that keeps only `['market']` — so the village was
+                # read correctly, by the same code hardened on the Damascus Steel panel, and
+                # discarded one line later while the caller reported "no known port".
+                #
+                # Live 2026-09-10 at Cheyenne: "'american bison': the Source panel named no
+                # known port" — Bison is made at a village, which is the whole point of it.
+                # That warning is why every chained material in the KB reads as unsourced.
+                found = read_material_sources_by_kind_frame(capture_screen()) or {}
             except Exception as exc:                   # noqa: BLE001 — one material, not the run
                 logger.warning(f"[learn] {material!r}: source panel unreadable ({exc})")
-                ports = []
-            if ports:
-                out[material] = ports
-                logger.info(f"[learn] {material}: sold at {ports}")
+                found = {}
+            ports = list(found.get("market") or [])
+            villages = list(found.get("village") or [])
+            if ports or villages:
+                out[material] = {"market": ports, "village": villages}
+                where = ", ".join(filter(None, [
+                    f"sold at {ports}" if ports else "",
+                    f"bartered at {villages}" if villages else ""]))
+                logger.info(f"[learn] {material}: {where}")
             else:
-                logger.warning(f"[learn] {material!r}: the Source panel named no known port")
+                logger.warning(f"[learn] {material!r}: the Source panel named no known "
+                               "port or village")
             # LOOKED UP IS LOOKED UP. A material whose panel named nothing is not retried on
             # the next screen — the answer was empty, not missing, and re-tapping the same
             # pin costs a tap and a Back to learn the same nothing.
