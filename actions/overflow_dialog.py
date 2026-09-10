@@ -540,8 +540,31 @@ def clear_overflow(*, output_good: str, reserves: dict, needs_per_round=None,
                 f"{[(d.name, d.qty) for d in plan]} shortfall={shortfall}")
     by_name = {_norm(f["name"]): f["tile"] for f in found}
 
+    # RIGHT TO LEFT, because DISCARDING RE-FLOWS THE ROW. The tiles here were located during
+    # the probe, before anything was dumped; emptying one removes it and every tile to its
+    # RIGHT slides left, so a coordinate taken earlier now lands on its neighbour.
+    #
+    # Live 2026-09-10 at Hutu, last round: the row was Water(623) Food(751) Pig(878)
+    # Raisin(1007) Output(1136). Pig was discarded first, Raisin slid into 878, and the tap at
+    # the remembered 1007 hit the OUTPUT tile — which is inert, so it opened nothing and
+    # logged "expected Raisin, got None". Water and Food still worked, because they sit LEFT
+    # of Pig where nothing moved. 141 Raisin were left aboard and 141 more Bambara Groundnut
+    # were dropped for want of the room they would have freed.
+    #
+    # Taking the rightmost target first makes every remaining coordinate stay valid, with no
+    # re-read: removals only ever move tiles that come after. A partial dump leaves its tile
+    # in place and shifts nothing, and a dump that FAILS shifts nothing either, so the order
+    # holds in both cases. `(y1, x1)` descending so it also holds if the row ever wraps.
+    #
+    # This is the same defect CLAUDE.md records for the sell grid — "selling re-flows the
+    # grid, so the fix is sell-page → scroll → repeat, never read-all-then-tap".
+    def _where(action):
+        tile = by_name.get(_norm(action.name))
+        el = getattr(tile, "element", None) if tile is not None else None
+        return (getattr(el, "y1", 0) or 0, getattr(el, "x1", 0) or 0)
+
     discarded = []
-    for action in plan[:max_discards]:
+    for action in sorted(plan[:max_discards], key=_where, reverse=True):
         tile = by_name.get(_norm(action.name))
         if tile is None or tile.element is None:
             logger.warning(f"[overflow] no tile for {action.name} — skipping")
