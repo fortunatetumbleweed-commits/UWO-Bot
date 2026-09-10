@@ -419,7 +419,7 @@ def plan_for_overflow(state: OverflowState, found: list, *, output_good: str,
 
 
 def clear_overflow(*, output_good: str, reserves: dict, needs_per_round=None,
-                   rounds_done: Optional[int] = None,
+                   rounds_done: Optional[int] = None, last_round: Optional[bool] = None,
                    capture_fn=None, tap_fn=None, omni_fn=None, ui_mod=None,
                    type_qty_fn=None, max_discards: int = 8) -> dict:
     """Clear an open overflow dialog: probe → plan → discard exactly → Receive.
@@ -448,10 +448,36 @@ def clear_overflow(*, output_good: str, reserves: dict, needs_per_round=None,
         return {"ok": ok, "pending_before": 0, "discarded": [], "sacrificed": 0,
                 "reason": "nothing pending — received"}
 
+    # WHILE A ROUND REMAINS, NOTHING ABOARD IS WORTH DUMPING FOR THIS. Materials are
+    # protected until the last round, the output is never a candidate, and what that leaves
+    # is surplus supply — which the fleet needs at sea and which cannot cover an overflow
+    # anyway. So the probe has nothing to find, and the card's own answer is Receive.
+    #
+    # Live 2026-09-10 at San Village, five times over: twelve probe taps and ~70s a round to
+    # plan `[('Water', 3), ('Food', 3)]` against 47 pending — six units recoverable at best,
+    # bought with supply. User: *"if it is not the last round, just receive. Just lose the 47
+    # that overflowed. Only do probe at the last round."*
+    if last_round is False:
+        ok = _receive(state, ui_mod)
+        logger.info(f"[overflow] not the last round — receiving what fits of {pending_before} "
+                    "and letting the rest go; a further round still needs the materials, and "
+                    "supply is not worth spending on the remainder")
+        return {"ok": ok, "pending_before": pending_before, "discarded": [],
+                "sacrificed": pending_before,
+                "reason": f"not the last round — {pending_before} given up rather than "
+                          "spending supply or a round's materials"}
+
     found = probe_tiles(capture_fn, tap_fn, state, omni_fn=omni_fn, ui=ui_mod)
     # Decided BEFORE anything is discarded, and logged WITH ITS REASON, because it is the
     # one judgement here that can cost a whole round's product if it is wrong either way.
-    if not _needs_map(needs_per_round):
+    if last_round:
+        # THE CALLER READ THE PANEL; THIS CARD COVERS IT. An answer taken from the barter
+        # panel beats one re-derived from the tiles in front of us — see `_is_last_round`.
+        # (`last_round is False` has already returned above, so this is the only way in.)
+        last = True
+        why = ("LAST ROUND — the village says no further round is available; dumping every "
+               "material")
+    elif not _needs_map(needs_per_round):
         last, why = None, "the recipe is unknown — materials cannot be identified"
     else:
         why = last_round_reason(found, needs_per_round, pending=pending_before,

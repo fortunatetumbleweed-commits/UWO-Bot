@@ -134,6 +134,10 @@ class VillageActivity:
         self._committed = 0
         self._taps = 0
         self._last_after = None
+        # HOW MANY ROUNDS THE PANEL FUNDED, read just before the exchange that may raise an
+        # overflow card. Carried for the same reason `_last_after` is: the card COVERS the
+        # panel, so the reading cannot be taken on the tick that needs it.
+        self._funded_rounds = None
         self._goal_key = None
         self._selects = 0
         # The game's own "daily Trade Count is spent" Notice, heard by `on_dialog` on one
@@ -402,6 +406,12 @@ class VillageActivity:
         the round did — including whether it was the last one the day allows."""
         panel = self._panel()
         _log_shortfall(panel)
+        # READ IT NOW, WHILE THE PANEL IS THE FRONT WINDOW. If this exchange fills the hold
+        # the game raises "Insufficient Empty Space" OVER the panel, and the one question the
+        # overflow handler must answer — is this the last round? — is answered here, not
+        # there. Re-deriving it from the card meant tapping every cargo tile to learn its
+        # name; see `_is_last_round`.
+        self._funded_rounds = getattr(panel, "rounds_remaining", None)
         before = _amity(panel)
         # HAND THE COMMIT WHAT WE ALREADY SAW. The previous round's `after` is this round's
         # `before` — between them only a dispatcher tick passed, and a tick that ACTED would
@@ -465,6 +475,27 @@ class VillageActivity:
         path — a dialog, a reopen, a grey button — means the screen moved for a reason we did
         not cause, and a carried reading would describe a panel that no longer exists."""
         self._last_after = None
+        self._funded_rounds = None
+
+    def _is_last_round(self) -> Optional[bool]:
+        """Is the round that just ran the last one available? None when it cannot be told.
+
+        TWO WAYS TO BE LAST, and both are read BEFORE the overflow card exists: the DAY is
+        spent, or the MATERIALS are. `_funded_rounds` was read on the tick that committed, so
+        a panel funding exactly one more round was funding THIS one — after it, none remain.
+
+        This used to be derived from the overflow card instead, by tapping every cargo tile
+        to learn its name and summing the materials. That probe is what the answer is for, so
+        deriving the answer from it put the cost before the decision that justifies it.
+        """
+        if self._committed >= _MAX_DAILY_ROUNDS:
+            return True
+        if self._funded_rounds is None:
+            return None
+        try:
+            return int(self._funded_rounds) <= 1
+        except (TypeError, ValueError):
+            return None
 
     def _on_blocked(self, goal: Barter) -> ActivityResult:
         """Exchange is GREY with the panel still OPEN, so rounds REMAIN and something is
@@ -536,7 +567,8 @@ class VillageActivity:
         pending = _call_frame_reader(self._overflow or _read_overflow, self._frame())
         jettison = (self._jettison
                     or _default_jettison(goal.good, self._recipe_for(goal.good),
-                                         rounds_done=self._committed))
+                                         rounds_done=self._committed,
+                                         last_round=self._is_last_round()))
         jettison(pending)
         return ActivityResult(WORKING, {"rounds_committed": self._committed, "did": f"jettisoned for {pending} pending"},
                               detail=str(goal))
@@ -829,7 +861,8 @@ def _default_commit(before_state=None) -> dict:
     return barter_commit_verified(refresh_fn=refresh_stale_panel, before_state=before_state)
 
 
-def _default_jettison(good: str, needs_per_round=None, rounds_done: Optional[int] = None):
+def _default_jettison(good: str, needs_per_round=None, rounds_done: Optional[int] = None,
+                      last_round: Optional[bool] = None):
     """THE ORDER OF SACRIFICE, decided in advance so nothing is escalated mid-round
     (user, 2026-08-26): dump the non-barter goods first; if that is not enough, spend supply
     down to a six-day floor; abandon barter goods only after both. Barter goods fetch very
@@ -840,13 +873,19 @@ def _default_jettison(good: str, needs_per_round=None, rounds_done: Optional[int
     away the inputs for every round still to come (user, 2026-09-04).
 
     `rounds_done` is this activity's committed count, which the overflow module needs for the
-    one last-round test it cannot read off the dialog: the day's seventh round."""
+    one last-round test it cannot read off the dialog: the day's seventh round.
+
+    `last_round` is the village's own answer, taken from the barter panel before the exchange
+    covered it. It decides whether the card is worth working at all: while a round remains
+    there is nothing aboard worth dumping for the overflow — materials are protected, the
+    output is never a candidate, and the surplus supply that is left cannot cover it and is
+    needed at sea (user, 2026-09-10: *"if it is not the last round, just receive"*)."""
     def jettison(pending: int) -> dict:
         from actions.overflow_dialog import clear_overflow
         from brain.supply_planner import supply_needed_each, VILLAGE_LEG_RESERVE_DAYS
         reserve = supply_needed_each(VILLAGE_LEG_RESERVE_DAYS)
         res = clear_overflow(output_good=good, needs_per_round=needs_per_round,
-                             rounds_done=rounds_done,
+                             rounds_done=rounds_done, last_round=last_round,
                              reserves={"water": reserve, "food": reserve})
         if res.get("sacrificed"):
             logger.warning(f"[village] {res['sacrificed']} unit(s) of {good} given up — the "
