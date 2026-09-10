@@ -396,11 +396,45 @@ def parse_trade_list(elements) -> list[VillageTrade]:
 
 def merge_trade_screens(screens: list[list[VillageTrade]]) -> list[VillageTrade]:
     """Accumulate scrolled Trade List screens.  A screen that STARTS with a continuation
-    (good=='') appends its materials to the last good seen so far; duplicate goods merge."""
+    (good=='') appends its materials to the good ABOVE them; duplicate goods merge.
+
+    ORPHANS AT THE TOP OF A SCREEN BELONG TO THE GOOD BEFORE THE SCREEN'S FIRST NAMED ONE,
+    which is not always the last good seen. Two ways a screen can open with unowned material
+    rows, and they need opposite answers:
+
+      * the previous screen was CUT OFF mid-recipe, so these continue its last good; or
+      * the screens OVERLAP and the owner has scrolled off the TOP, its name clipped away —
+        so these belong to a good ALREADY READ, sitting above the screen's first named good.
+
+    The old rule assumed the first case and silently did the second wrong, which made the
+    overlap that exists to stop materials being LOST the thing that duplicated them onto the
+    wrong recipe. Live 2026-09-10 at Cheyenne: the list runs
+    `Goldenseal 1,073 -> Chicle 182, Corn 157, Gold Dust 182 -> American Bison 859`; screen 0
+    read all of it, so `last` was American Bison; screen 1 was the same rows scrolled a
+    little, with Goldenseal's NAME clipped off the top. Its orphans went to American Bison,
+    which came out of the read with FIVE materials instead of three — Corn (as 'Touu') and
+    Gold Dust, both Goldenseal's, at Goldenseal's own ratios.
+
+    Position answers both cases with one rule, because the panel is a linear list: the good
+    immediately preceding the screen's first named good. When that good has not been seen
+    before, there is nothing above it in the accumulation and the last good seen is right,
+    which is the cut-off case.
+
+    A recipe cannot GAIN an ingredient any more than it can lose one — see `_target_complete`
+    for the other half of that invariant.
+    """
     order: list[str] = []
     acc: dict[str, VillageTrade] = {}
     last: Optional[str] = None
     for screen in screens:
+        # WHO OWNS ROWS THAT COME BEFORE THIS SCREEN'S FIRST NAMED GOOD. Decided per screen,
+        # before walking it, because the answer is about what sits ABOVE the screen.
+        head_owner = last
+        first_named = next((t.good for t in screen if t.good), None)
+        if first_named is not None and first_named in acc:
+            i = order.index(first_named)
+            head_owner = order[i - 1] if i > 0 else None
+        seen_named = False
         for t in screen:
             if t.good:
                 if t.good not in acc:
@@ -408,8 +442,13 @@ def merge_trade_screens(screens: list[list[VillageTrade]]) -> list[VillageTrade]
                     order.append(t.good)
                 acc[t.good].materials.update(t.materials)
                 last = t.good
-            elif last:                                    # continuation rows
-                acc[last].materials.update(t.materials)
+                seen_named = True
+            else:
+                # Past the first named good, an orphan is a row whose NAME failed to read
+                # inside this screen, so it continues the good above it here.
+                owner = last if seen_named else head_owner
+                if owner:
+                    acc[owner].materials.update(t.materials)
     return [acc[g] for g in order]
 
 
