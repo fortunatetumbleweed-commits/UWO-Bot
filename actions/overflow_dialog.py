@@ -266,7 +266,17 @@ def probe_tiles(capture_fn, tap_fn, state: OverflowState, *, omni_fn, ui,
         ui.tap_element(tile.element, dwell="dialog", why=f"identify the {tile.qty}-unit tile")
         dc = read_discard(omni_fn(capture_fn()))
         if dc is None or not dc.name:
-            logger.warning(f"[overflow] tile {tile.qty} did not identify — leaving it alone")
+            # ONE TILE ALWAYS LANDS HERE, AND IT IS NOT A FAULT: the game makes the tile of
+            # the good being RECEIVED inert, so tapping the barter output opens nothing
+            # (user, 2026-09-10: "that is the groundnut, so tapping it has no effect").
+            # Verified across five overflows at San Village — frames 362/392/422/446/476 tap
+            # the 2,917 Bambara Groundnut tile dead centre and 363/393/423/447/477 show the
+            # card unchanged, while the Water tap on 364 opens its dialog on 365.
+            #
+            # Nothing is opened, so nothing needs cancelling, and the outcome is right either
+            # way: `build_cargo` excludes the output by name. The cost is one wasted probe.
+            logger.warning(f"[overflow] tile {tile.qty} did not identify — leaving it alone "
+                           "(the output good's tile is inert; any other is a bad read)")
             if dc is not None and dc.cancel is not None:
                 ui.tap_element(dc.cancel, dwell="dialog", why="cancel an unidentified tile")
             continue
