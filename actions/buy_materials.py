@@ -1858,6 +1858,7 @@ def read_cargo_good(frame, good_name, elements=None, min_score=0.70, min_margin=
 
 
 def _read_cargo_used_cap(frame):
+    import re as _re
     """(used, capacity) from the 'N/M' cargo-load counter in the cart panel (RIGHT side), or None.
     Reliable OCR, unlike per-good available_qty."""
     from actions.sail_actions import _ocr_frame
@@ -1868,7 +1869,21 @@ def _read_cargo_used_cap(frame):
         # `[\d,]`, which a period breaks: '3.129/4,952' (live frame 236, 2026-09-05) could
         # only match '129/4,952', so the hold read 129 of 3,129 and the leg stopped two
         # barter rounds short. See utils.digits.
-        pair = parse_pair(w)
+        # WHAT IS STAGED IS NOT YET HELD. While a tile is in the cart the counter reads
+        # `4,572(+280)/4,952` — held, plus pending, of capacity — and `parse_pair` returns
+        # None for it, because the bracket sits between the number and the slash.
+        #
+        # That is every reading taken DURING a purchase, which is exactly when the ledger
+        # needs one. `_credit_the_cargo_rise` got `cargo_before=None`, made no claim, and the
+        # ledger was dropped — so the hold could only be learned by switching to the Sell tab
+        # and reading the whole grid back. Live 2026-09-10, seven purchases and eight trips
+        # to the Sell tab, once per buy (user: "the bot is checking by tapping the Sell panel
+        # after every buy... it should record it as market buy").
+        #
+        # The HELD figure is the one to take: the pending units are not bought yet, and after
+        # the purchase the bracket is gone and the same number includes them. Same family as
+        # the separator fix above — the counter has a form, and the parser has to know it.
+        pair = parse_pair(_re.sub(r"\([^)]*\)", "", w))
         if pair and x > 1850:                    # cart panel, not Trade Points (left)
             cur, cap = pair
             if cap >= 500 and (best is None or cap > best[1]):   # largest cap = cargo hold
