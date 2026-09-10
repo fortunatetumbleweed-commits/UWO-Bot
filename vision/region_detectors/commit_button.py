@@ -278,4 +278,40 @@ def detect_commit_buttons(elements, frame: Image.Image,
     # OmniParser flakiness: no yellow BUTTON bbox this frame → reconstruct from text.
     if not out:
         out = _detect_from_text(elements, arr, frame, min_yellow)
-    return out
+    return _drop_anything_inside_a_goods_tile(out, frame)
+
+
+def _drop_anything_inside_a_goods_tile(commits: List[CommitButton],
+                                       frame: Image.Image) -> List[CommitButton]:
+    """A GOODS TILE CONTAINS NO CONTROLS (user, 2026-09-10).
+
+    Said POSITIONALLY, which is the durable form. The word list above catches `Specialties`
+    and would miss the next banner; a card's boundary catches every gold thing painted on
+    one — banners, price bars, highlights — because they are all LABELS, and a tap on any of
+    them is a tap on the tile.
+
+    `detect_goods_tiles` measures the cards from the frame rather than asking OmniParser,
+    which is the point: the box that caused this was OmniParser's, and it was wrong.
+
+    Only run when there is a candidate to test, since it costs ~70ms.
+    """
+    if not commits:
+        return commits
+    try:
+        from vision.region_detectors.goods_tiles import detect_goods_tiles, tile_containing
+        tiles = detect_goods_tiles(frame)
+    except Exception as exc:                      # noqa: BLE001 — never fail a detection
+        logger.debug(f"[commit] goods-tile check unavailable: {exc}")
+        return commits
+    if not tiles:
+        return commits
+    kept = []
+    for c in commits:
+        tile = tile_containing(tiles, c.cx, c.cy)
+        if tile is not None:
+            logger.info(f"[commit] {c.label!r} at ({c.cx},{c.cy}) is INSIDE the goods card "
+                        f"x[{tile.x1},{tile.x2}] y[{tile.y1},{tile.y2}] — a tile holds no "
+                        "controls, so this is a label")
+            continue
+        kept.append(c)
+    return kept
