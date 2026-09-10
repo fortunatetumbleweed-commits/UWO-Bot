@@ -102,6 +102,46 @@ class MoveViaLocationInfo:
         return f"move to {self.where!r} via Location Info"
 
 
+def _keyable_query(name: str, limit: int | None = None) -> str:
+    """The best thing we can actually type to filter the list down to `name`.
+
+    THE SEARCH MATCHES A SUBSTRING, NOT A PREFIX (user, 2026-09-09: "for Malaga you can type
+    laga or lag, it searches for the sub string"). Verified live on the world map: typing
+    `laga` left one row, `Málaga`. So the query need not start the name — it only has to
+    appear in it, which is what makes an accented name reachable at all.
+
+    AND IT MUST BE TYPEABLE. `adb shell input text` cannot carry a non-ASCII character; the
+    input service hands the Binder a null array and throws, which is not a failed search but
+    a dead run:
+
+        typing 'Gijó' (prefix of 'Gijón')
+        ADB error: java.lang.NullPointerException: Attempt to get length of null array
+
+    Live 2026-09-09, one leg short of Gijón with the Pig aboard.
+
+    CUTTING, NEVER STRIPPING. The game filters on ITS spelling, which keeps the accent, so
+    `Gijo` matches nothing — character four is `ó`, not `o`. The longest run of ASCII inside
+    the name is both typeable and a true substring of what the game holds:
+
+        Gijón -> 'Gij'      Málaga -> 'laga'     Ávila -> 'vila'
+        Malé  -> 'Mal'      Lübeck -> 'beck'     Mérida -> 'rida'
+
+    A name with no ASCII in it at all yields '', and the caller scrolls instead — an empty
+    query would CLEAR the filter, which is worse than never typing.
+    """
+    limit = _PREFIX_LEN if limit is None else limit   # defined below the class
+    runs, current = [], ""
+    for ch in str(name or ""):
+        if ch.isascii():
+            current += ch
+        else:
+            runs.append(current)
+            current = ""
+    runs.append(current)
+    best = max(runs, key=len) if runs else ""
+    return best.strip()[:limit]
+
+
 class WorldMapActivity:
     """Read the tab, find the place, commit. One step per call."""
 
@@ -329,7 +369,8 @@ class WorldMapActivity:
         # the destination, only filter less. An accent can sit anywhere in a name — `Málaga`
         # fails at two, `Ávila` at one — so this walks down rather than guessing a safe length.
         if self._typed and self._shortenings < _MAX_SHORTENINGS:
-            shorter = goal.where[:max(1, _PREFIX_LEN - self._shortenings - 1)]
+            shorter = _keyable_query(goal.where,
+                                     limit=max(1, _PREFIX_LEN - self._shortenings - 1))
             self._shortenings += 1
             logger.info(f"[world_map] the filter for {goal.where!r} came back empty — its "
                         f"name is spelled differently in the game (an accent, most likely), "
@@ -431,8 +472,14 @@ class WorldMapActivity:
         if (not already and self._typed < _MAX_TYPED
                 and self._type_attempts < _MAX_TYPE_ATTEMPTS):
             self._type_attempts += 1
-            prefix = goal.where[:_PREFIX_LEN]
-            logger.info(f"[world_map] typing {prefix!r} (prefix of {goal.where!r}) "
+            prefix = _keyable_query(goal.where)
+            if not prefix:
+                logger.info(f"[world_map] nothing in {goal.where!r} can be typed — "
+                            "scrolling the list instead")
+                self._open_list(goal)
+                return ActivityResult(WORKING, {"did": "opened the destination list"},
+                                      detail=str(goal))
+            logger.info(f"[world_map] typing {prefix!r} (of {goal.where!r}) "
                         f"— attempt {self._type_attempts}/{_MAX_TYPE_ATTEMPTS}, "
                         f"{self._typed}/{_MAX_TYPED} landed")
             self._pending_query = prefix
@@ -1060,7 +1107,15 @@ class WorldMapActivity:
         self._tap_at(*pick)
 
     def _type_prefix(self, prefix: str) -> None:
-        """Tap the search box and type a PREFIX, at a human interval (anti-cheat)."""
+        """Tap the search box and type the query, at a human interval (anti-cheat).
+
+        `_keyable_query` decides WHAT to type; this only sends it. The guard stays because a
+        non-ASCII character reaching the input service ends the run rather than the search.
+        """
+        if not prefix or not prefix.isascii():
+            logger.warning(f"[world_map] refusing to type {prefix!r} — the keyboard cannot "
+                           "send it, and an empty query would clear the filter")
+            return
         if self._type is not None:
             self._type(prefix)
             return
