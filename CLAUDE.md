@@ -583,6 +583,23 @@ Detail:
   (+66.6M ducats); see `memory/project_village_find_worldmap_2026-08-20.md`.
   ⚠️ Unvalidated live surface: the Village Info panel navigation and the main-menu
   fleet read (`actions/fleet_status.py`) — supervise the first run.
+- **★ Multi-stage barter — one command for a whole chain (DESIGN, 2026-09-10)** →
+  `docs/multi_stage_barter.md`.  `barter Moccasin` / `barter Eagle Feather` should run the
+  chain, not one stage.  The planner cannot: `plan_barter_rounds` sizes ONE good at ONE
+  village against hold space and materials, and is HANDED `rounds_remaining` — but in a chain
+  **rounds are the binding constraint**, and the daily allowance belongs to the VILLAGE, shared
+  by everything it trades (`a-villages-rounds-are-one-budget`).  So a round spent on the final
+  good beats one spent on its intermediate: spend a village's rounds on the best good it can
+  make and source the intermediate elsewhere — the user's Groundnut-at-San-then-seasonal-at-Hutu
+  play, and why of the three villages trading American Bison the Bison-only one, sitting between
+  the two Moccasin villages, is the useful one.  Plan BACKWARDS from the final stage, which is
+  today's barter (capacity-bound, maximised); upstream stages need an exact quantity, not a
+  full hold.  **The blockers are DATA, not algorithm**: `output_per_round` is `{}` for every
+  chained good (Näverslöjd, Eagle Feather, American Bison, Moccasin), `source_villages` is
+  empty on every chained material so they read as unsourced, and the village index knows one
+  Cheyenne against the five villages this needs.  **Not decided**; the three deferred overflow
+  fixes wait on it, because the dump rule inverts mid-chain — at Svear, Birch Tree is both the
+  output and the next stage's material.
 - **★ Event selling — FIRST LIVE SALE 2026-08-24 (branch `even_selling`)** → flow and cues in
   `docs/trade_system.md` ("Selling into a Bazaar").  The fleet hubs at London, reads the
   **Trade Event Schedule** (`vision/trade_event_reader.py`, times are **Korean UTC+9**), and
