@@ -130,6 +130,35 @@ def _header(elements, text: str):
     return None
 
 
+def _dialog_span(elements, headers) -> Optional[tuple]:
+    """The dialog's left and right edges in x, measured — never assumed.
+
+    WHAT THE DIALOG COVERS CANNOT BE DETECTED; ONLY THE GUTTERS BESIDE IT CAN. So every
+    element that does not belong to this card comes from the screen behind it, showing past
+    one edge or the other — and a dialog is CENTRED (`docs/dialogs_are_windows.md`), which
+    makes the two edges one fact. The section headers sit at the dialog's inner left margin
+    and the TITLE is centred in it, so mirroring the first about the second gives both.
+
+    This is the bug that made it worth measuring. `read_overflow` filtered candidate tiles by
+    Y alone, so the Barter screen's Trade Count chip at x[399,506] — 150px clear of the
+    dialog's edge at 559 — was collected as a cargo tile. Probing it tapped OUTSIDE the
+    dialog, which DISMISSED it, and every action afterwards ran against a screen that no
+    longer had one: the discards read nothing and logged "cancelling" with no dialog to
+    cancel, and Receive tapped a remembered coordinate on bare screen. Live 2026-09-10 at San
+    Village, five overflows, 235 units of Bambara Groundnut lost.
+    """
+    title = next((e for e in elements or []
+                  if OVERFLOW_TITLE in _label(e).lower()), None)
+    lefts = [h.x1 for h in headers if h is not None]
+    if title is None or not lefts:
+        return None                       # nothing to measure from — do not invent an edge
+    left = min(lefts)
+    centre = (title.x1 + title.x2) / 2.0
+    if centre <= left:
+        return None                       # the title is not where a centred title can be
+    return left, centre + (centre - left)
+
+
 def read_overflow(elements) -> Optional[OverflowState]:
     """Parse the overflow dialog. Sections are located by their HEADERS, and the tiles
     by which header they sit under — the dialog's absolute position is never assumed."""
@@ -142,6 +171,14 @@ def read_overflow(elements) -> Optional[OverflowState]:
 
     pending_hdr = _header(elements, "received trade")
     cargo_hdr = _header(elements, "cargo")
+
+    # INSIDE THE CARD, OR IT IS NOT THE CARD'S. Judged on the element's CENTRE rather than
+    # its edges: a tile's own border sits a few pixels outside the header text it lines up
+    # with (measured 553 against 559), and a centre needs no slack to forgive that.
+    span = _dialog_span(elements, (pending_hdr, cargo_hdr))
+    if span is not None:
+        lo, hi = span
+        numeric = [e for e in numeric if lo <= (e.x1 + e.x2) / 2.0 <= hi]
 
     # 'Received Trade Goods' holds ONE tile: the pending output.
     if pending_hdr is not None:
