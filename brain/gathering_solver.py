@@ -72,6 +72,30 @@ def plan_gathering(needed: Sequence[str],
                        then run unordered (by coverage) rather than the plan failing.
     """
     needed = set(needed)
+    # TWO SPELLINGS OF ONE PORT MUST NOT BE TWO PORTS. `port_coords` arrives keyed
+    # accent-STRIPPED (`Gijon`, from `catalogue_coords`, so an accent-free map read matches)
+    # while a recipe holds the canonical accented name (`Gijón`). Every `in` and `==` below
+    # compared the two directly.
+    #
+    # Live 2026-09-09: Gijón fell out of the coordinate map, so Pig's sources shrank to Faro
+    # alone — Faro is recorded scarce, `all()` over one port is trivially true, and the
+    # mission refused to sail for "every known source is scarce". Gijón had no season record
+    # at all; it was UNREAD, not scarce, and it was the leg the fleet was on its way to.
+    #
+    # Folded for matching, and the RECIPE's name is kept as the identity: it is the game's
+    # own spelling, and what the search box has to be given (see `_keyable_query`).
+    from memory.places import fold_name
+    _by_fold = {fold_name(k): v for k, v in port_coords.items()}
+    _known = {}                              # canonical source name -> (x, y)
+    for _ports in material_sources.values():
+        for _p in _ports:
+            hit = _by_fold.get(fold_name(_p))
+            if hit is not None:
+                _known[_p] = hit
+    for _k, _v in port_coords.items():       # ports nobody sources from, still routable
+        _known.setdefault(_k, _v)
+    port_coords = _known
+
     # Materials with no known/reachable source can't be covered.
     unsourced = {m for m in needed
                  if not any(p in port_coords for p in material_sources.get(m, ()))}

@@ -173,11 +173,10 @@ def load_village_catalogue() -> dict:
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 def _strip_diacritics(s: str) -> str:
-    decomposed = unicodedata.normalize("NFD", s)
-    pre = decomposed.replace("ø", "o").replace("Ø", "O") \
-                    .replace("ł", "l").replace("Ł", "L")
-    return "".join(c for c in unicodedata.normalize("NFD", pre)
-                   if unicodedata.category(c) != "Mn")
+    # This one carried the o-slash and l-stroke that the normal forms leave alone, and it
+    # was the only one that did. That knowledge now lives in `fold_name` for everybody.
+    from memory.places import fold_name
+    return fold_name(s)
 
 
 def _is_event_banner(text: str) -> bool:

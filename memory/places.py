@@ -35,6 +35,40 @@ def _catalogues():
     return _catalogues._cache
 
 
+# LETTERS NFD WILL NOT DECOMPOSE. `ø` and `ł` are not accented o and l — they are their own
+# letters, so the unicode normal forms leave them alone and a name keeps a non-ASCII
+# character however hard it is folded. `Vardø` is the one in our port catalogue; `ł` earns
+# its place from the map reader, which met it before this moved here.
+_SPECIAL_LETTERS = {"ø": "o", "Ø": "O", "ł": "l", "Ł": "L", "đ": "d", "Đ": "D",
+                    "ß": "ss", "æ": "ae", "Æ": "AE", "œ": "oe", "Œ": "OE"}
+
+
+def fold_name(s) -> str:
+    """One place name, flattened for COMPARISON — accent-free, case-free, trimmed.
+
+    ONE FOLD, NOT NINE. Nine of these had grown across brain/, actions/, vision/ and
+    memory/, and they disagreed: NFD in four, NFKD in three, `.lower()` in some and
+    `.casefold()` in others, and only the map reader's handled `ø`. A name that survives one
+    fold and not another is how the same port becomes two, which is exactly what happened.
+
+    Live 2026-09-09: `catalogue_coords` keys ports accent-STRIPPED (`Gijon`) while a recipe
+    holds the canonical accented name (`Gijón`), and `plan_gathering` tested one against the
+    other with `in`. Gijón fell out of the coordinate map, so Pig's sources shrank to Faro
+    alone, Faro is recorded scarce, and `all()` over one port declared Pig scarce EVERYWHERE.
+    The mission refused to sail on a sample of one, with the other source silently discarded
+    — and Gijón had no season record at all, being unread rather than scarce.
+
+    FOR COMPARISON ONLY. Never type this at the game or show it to a player: the game keeps
+    its accents, so `Gijo` matches nothing in its own search (see `_keyable_query`).
+    """
+    import unicodedata
+    text = str(s or "")
+    for ch, rep in _SPECIAL_LETTERS.items():
+        text = text.replace(ch, rep)
+    return "".join(c for c in unicodedata.normalize("NFKD", text)
+                   if not unicodedata.combining(c)).casefold().strip()
+
+
 def _strip_name(s) -> str:
     import unicodedata
     return "".join(c for c in unicodedata.normalize("NFD", str(s or ""))

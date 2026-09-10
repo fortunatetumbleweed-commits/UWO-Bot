@@ -168,8 +168,8 @@ def _strip_accents(s: str) -> str:
     Source panel reads port names WITHOUT accents (OmniParser 'Male'), but the
     catalogue stores them accented ('malé') — normalise both sides to match."""
     import unicodedata
-    return "".join(c for c in unicodedata.normalize("NFKD", s or "")
-                   if not unicodedata.combining(c)).lower()
+    from memory.places import fold_name          # one fold, shared — see its docstring
+    return fold_name(s)
 
 
 @_facade
