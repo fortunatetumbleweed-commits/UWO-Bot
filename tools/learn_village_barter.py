@@ -288,6 +288,28 @@ def learn(village: str, dry_run: bool = False) -> int:
     if _find_button(frame, "barter", x_min=_PANEL_X_MIN) is None:
         logger.error("[learn] Village Info panel did not open (no Barter tab)")
         return 1
+
+    # THE BASE TAB FIRST, because the two numbers a chain plan turns on are only there:
+    # the day's ROUNDS (`Daily Barter Progress`, e.g. 0/7) and the AMITY GRADE, which is the
+    # key `output_per_round` is stored under. This tool read neither — so every good it
+    # learned came back with `output_per_round={}` and every village with
+    # `barter_rounds_total=None`, while the mission's own check (`write_back_invariants`)
+    # records both. Same panel, one extra tab.
+    #
+    # The panel reopens on whichever tab it was last left on, so this is not a step that can
+    # be assumed to have happened (the mission learned that live 2026-08-29).
+    base = {}
+    if ui.tap_text(frame, "base", x_min=_PANEL_X_MIN, dwell="dialog",
+                   why="Village Info → Base tab (rounds + amity)"):
+        from actions.village_check import parse_base_tab
+        base = parse_base_tab(list(parse_fast_cached(capture_screen()))) or {}
+        logger.info(f"[learn] base: amity={base.get('amity_grade')} "
+                    f"rounds={base.get('barters_used')}/{base.get('barters_total')}")
+    else:
+        logger.warning("[learn] could not open the Base tab — rounds and amity stay unknown, "
+                       "and without the grade the yields cannot be keyed")
+
+    frame = capture_screen()
     if not ui.tap_text(frame, "barter", x_min=_PANEL_X_MIN, dwell="dialog",
                        why="Village Info → Barter tab"):
         logger.error("[learn] could not tap the Barter tab")
@@ -330,7 +352,7 @@ def learn(village: str, dry_run: bool = False) -> int:
                 if t.obtain and not prev.obtain:
                     prev.obtain = t.obtain
     merged = sorted(by_good.values(), key=lambda t: t.good)
-    _report_and_save(village, merged, dry_run)
+    _report_and_save(village, merged, dry_run, base=base)
     return 0 if merged else 1
 
 
@@ -537,7 +559,7 @@ def _one_pass(village, ui, capture_screen, parse_fast_cached,
     return out
 
 
-def _report_and_save(village, merged, dry_run):
+def _report_and_save(village, merged, dry_run, *, base=None):
     from loguru import logger
     if not merged:
         logger.error("[learn] nothing parsed — frames saved in " + FRAME_DIR)
@@ -556,7 +578,7 @@ def _report_and_save(village, merged, dry_run):
     # rather than replace (a material list is invariant — a read that misses one is a
     # partial READ, not a recipe change), and keep a per-village input list.
     from memory.barter_kb import (BarterRecipe, RecipeInput, Village, load_recipe,
-                                  save_recipe, save_village, _slug)
+                                  load_village, save_recipe, save_village, _slug)
 
     # WHERE EACH MATERIAL IS SOLD, learned by tapping its location pin (user, 2026-09-04).
     # The trade list marks every material row with one; its Source panel names the ports.
@@ -604,9 +626,31 @@ def _report_and_save(village, merged, dry_run):
             for m, q in t.materials.items()]
         if village not in recipe.villages:
             recipe.villages.append(village)
+        # THE YIELD, KEYED BY AMITY GRADE — exactly as `write_back_invariants` records it, so
+        # the two paths agree. Without the Base tab this tool never had the grade, so every
+        # good it taught the KB carried `output_per_round={}` — and that is the one number a
+        # chain plan starts from ("how many rounds fill the hold").
+        grade = (base or {}).get("amity_grade")
+        if grade and t.obtain:
+            recipe.output_per_round[grade] = int(t.obtain)
         save_recipe(recipe)
         written += 1
-    save_village(Village(name=village))
+
+    # MERGE, NEVER REPLACE. `save_village` overwrites the whole record, and this passed a
+    # name-only Village — so learning a village's goods ERASED its amity and its daily
+    # rounds. Run against Hutu it would have dropped `barter_rounds_total=7` to None, and the
+    # rounds are the budget the whole chain plan is allocated from.
+    known = load_village(village) or Village(name=village)
+    known.eligible_goods = [t.good for t in merged if t.good] or known.eligible_goods
+    for field, value in (("amity", (base or {}).get("amity_grade")),
+                         ("amity_points", ((base or {}).get("amity_points") or (None,))[0]),
+                         ("barter_rounds_total", (base or {}).get("barters_total"))):
+        if value is not None:                  # an unread tab must not clear what is known
+            setattr(known, field, value)
+    used, total = (base or {}).get("barters_used"), (base or {}).get("barters_total")
+    if used is not None and total is not None:
+        known.barter_rounds_remaining = max(0, int(total) - int(used))
+    save_village(known)
     print(f"\nKB updated: {written} recipe(s) for {village}")
 
 
