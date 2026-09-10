@@ -93,6 +93,24 @@ class MarketState:
     # separate bug that re-seeded the ledger on almost every tick.
     awaiting_credit: Optional[Tuple] = None
 
+    # THE SHELF BEFORE THE CART WAS LOADED — because THE GAME DECREMENTS THE TILE AT
+    # STAGING, NOT AT PURCHASE. `awaiting_credit` used to snapshot the shelf on the tick
+    # that taps Purchase, which is one tick too late: the units are already out of the tile
+    # by then, and the drop across the purchase itself is zero.
+    #
+    # Live 2026-09-10 at Gijón: Pig read 308, the tile was tapped, the next tick read 205
+    # and took ITS reading as the baseline, the confirm card said "103 Pig" and the result
+    # card confirmed the buy — and the drop measured 205 -> 205 = 0. The cargo-total
+    # fallback was blind too, the hold being already at 4,952/4,952 (the overflow notice
+    # said "exceed capacity by 103 slots") and a counter at its cap cannot rise. So the
+    # ledger learned nothing, read Pig `have: 0` against a want of 1,254, and the mission
+    # made its rerouting decision on that zero.
+    #
+    # Set on the tick that stages, consumed on the tick that commits. If the game did NOT
+    # move the tile at staging this is simply equal to the post-stage reading, so widening
+    # the window costs nothing and closes the case where it does.
+    shelf_before_cart: Optional[Tuple] = None
+
     # Per-control attempt counts — the retry bound, replacing every `for attempt in range`.
     # The bound lives here because the GOAL's lifetime is the right lifetime for it.
     attempts: dict = field(default_factory=dict)

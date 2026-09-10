@@ -241,7 +241,13 @@ def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn, s
         # screen, it rises with every purchase, and it does not care whether the shelf is
         # legible (user, 2026-09-07: "it should be reading the pigs now in the cargo, it
         # increases after every purchase").
-        state.awaiting_credit = (shelf_signature(goods), _safe_total(frame))
+        #
+        # MEASURED FROM BEFORE THE CART WAS LOADED, not from here — staging is what moves
+        # the tile, so a baseline read on this tick has already lost the units it is meant
+        # to count. See `shelf_before_cart`.
+        state.awaiting_credit = (state.shelf_before_cart or shelf_signature(goods),
+                                 _safe_total(frame))
+        state.shelf_before_cart = None
         tap_fn(commit.cx, commit.cy)
         return {"do": "committed", "cost": staged_cost}
 
@@ -331,6 +337,12 @@ def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn, s
                                 "stayed empty — the tile is not taking taps")}
             logger.warning("[market] the cart is still empty after staging — that tap did "
                            "not register; staging again")
+        # THE SHELF AS IT STANDS NOW, BEFORE A TILE IS TAPPED — `goods` was read from this
+        # tick's frame, above, so this is the last look at the tile with its units still on
+        # it. Only the FIRST staging tick of a cart may set it: a re-stage after a tap that
+        # did not land must not overwrite the real baseline with a moved shelf.
+        if state.shelf_before_cart is None:
+            state.shelf_before_cart = shelf_signature(goods)
         tapped = []
         for material in buyable:
             tile = _find_material_tile(els, material)
