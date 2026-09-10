@@ -247,6 +247,7 @@ def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn, s
 
     orders = dict(getattr(goal, "orders", {}) or {})
     _note_seasons(port, orders, goods)
+    _note_shelf(state, orders, goods)
 
     # A PURCHASE JUST COMPLETED? The shelf will have dropped. Credit it before deciding
     # anything else, or the goal test runs on a ledger that has not heard about the last buy.
@@ -354,7 +355,12 @@ def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn, s
         # Madeira ~110 Raisin; ten refreshes and 45 minutes still left Raisin short, capping
         # the barter at 6 rounds. Report it and let the mission choose, rather than paying
         # eleven gems at a time to find out.
-        if _season_here(port, empty[0]) == "low":
+        # A SEVENTH OF THE NEED IS WORTH STAYING FOR. The season is already recorded — by
+        # `_note_seasons`, on sight — so the next plan can prefer another port either way.
+        # What is decided here is only whether to keep working THIS one, and a port that
+        # covers a round is worth another gem (user, 2026-09-09).
+        if (_season_here(port, empty[0]) == "low"
+                and not _a_port_worth_working(state, empty[0], orders)):
             # BUY WHAT IS HERE AND LEAVE (user, 2026-09-07: "if the stock is low, instead of
             # refreshing, just buy what is at the market and leave the market and report low
             # stock"). Everything buyable was staged above; only an empty shelf reaches here,
@@ -364,9 +370,18 @@ def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn, s
             # one-frame fluke. Live 2026-09-07 at Madeira the ribbon read `low` on every one
             # of six looks across nine minutes — the reading is not the doubtful part. The two
             # gems bought ~110 Raisin apiece and delayed the report that matters.
+            seen = int((getattr(state, "shelf_seen", None) or {}).get(empty[0].lower(), 0))
+            logger.info(f"[{port}] {empty[0]!r} is scarce here and this port held only "
+                        f"{seen} — under a seventh of what is still needed, so buying what "
+                        "was on the shelf and reporting rather than paying for more")
             return {"do": "finished", "season": "low", "good": empty[0],
-                    "why": (f"{empty[0]!r} is scarce here this season — buying what is on the "
-                            "shelf and reporting rather than paying for a quarter-rate refill")}
+                    "why": (f"{empty[0]!r} is scarce here this season and the shelf held "
+                            f"{seen} — under a seventh of the need, so this port is not "
+                            "worth another refresh")}
+        if _season_here(port, empty[0]) == "low":
+            logger.info(f"[{port}] {empty[0]!r} is scarce here, but the shelf held "
+                        f"{int((getattr(state, 'shelf_seen', None) or {}).get(empty[0].lower(), 0))}"
+                        " — at least a seventh of what is needed, so it is worth refreshing")
         # ONE TAP, THEN HAND BACK. This used to call `refresh_market`, which captured a fresh
         # frame, tapped the control, captured again to find the Replenish-Stock OK by OCR,
         # tapped that, captured a third time to verify the tile, and could SLEEP up to 90
@@ -411,6 +426,59 @@ def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn, s
         return {"do": "refreshed", "good": empty[0]}
 
     return {"do": "finished", "why": "nothing here is still wanted"}
+
+
+def _note_shelf(state, orders: Mapping, goods: Mapping) -> None:
+    """Remember the MOST this port was seen to hold of each wanted material.
+
+    Recorded on sight, for the same reason the season is: the decision that needs it comes
+    later, and by then the shelf has been emptied and reads 0 — which says nothing about
+    whether the port was worth working.
+    """
+    seen = getattr(state, "shelf_seen", None)
+    if seen is None:
+        return
+    for material in orders or {}:
+        good = (goods or {}).get(str(material).lower())
+        try:
+            qty = int(getattr(good, "available_qty", 0) or 0)
+        except (TypeError, ValueError):
+            continue
+        key = str(material).lower()
+        if qty > seen.get(key, 0):
+            seen[key] = qty
+
+
+# A PORT IS WORTH WORKING IF IT COVERS A SEVENTH OF WHAT IS LEFT (user, 2026-09-09: "we only
+# record it as low stock and abandon buying if the stock is less than 1/7 of the need...
+# But we continue to buy if it has more than 1/7 of needed materials").
+#
+# A seventh is one barter round's worth of a seven-round plan, which is the smallest amount
+# that still buys something the mission can use. The numbers this replaces are its own
+# argument: live 2026-09-06 Faro returned ~457 Pig a refresh against a need of 1,081 — well
+# over the 154 threshold and worth staying for — while Madeira returned ~110 Raisin, under
+# it, and ten refreshes there still left the barter capped at six rounds.
+#
+# The SEASON is recorded either way, so the next plan can prefer another port regardless.
+# What the threshold decides is only whether to keep buying HERE, now.
+_WORTH_WORKING_FRACTION = 7
+
+
+def _a_port_worth_working(state, material: str, orders: Mapping) -> bool:
+    """Did this port hold at least a seventh of what is still needed of `material`?"""
+    seen = int((getattr(state, "shelf_seen", None) or {}).get(str(material).lower(), 0))
+    try:
+        from actions.buy_materials import material_states
+        if state.ledger is None:
+            return seen > 0
+        row = material_states(state.ledger, dict(orders)).get(material) or {}
+        outstanding = int(row.get("want", 0)) - int(row.get("have", 0))
+    except Exception as exc:                      # noqa: BLE001 — a judgement, never a crash
+        logger.debug(f"[market] could not weigh the shelf against the need: {exc}")
+        return seen > 0
+    if outstanding <= 0:
+        return False                              # nothing left to want here
+    return seen * _WORTH_WORKING_FRACTION >= outstanding
 
 
 def _note_seasons(port: str, orders: Mapping, goods: Mapping) -> None:

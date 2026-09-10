@@ -45,6 +45,12 @@ class MarketState:
     sold_pending: List[str] = field(default_factory=list)
     ledger: Any = None
 
+    # THE MOST THIS PORT WAS SEEN TO HOLD, per material, this visit. Read on sight beside
+    # the season, and kept because the decision that needs it comes LATER — by the time the
+    # shelf has been emptied it reads 0, and 0 says nothing about whether the port was worth
+    # working. See `_a_port_worth_working` in `market_buy`.
+    shelf_seen: Dict[str, int] = field(default_factory=dict)
+
     # Where we are in a grid that does not fit on one page.
     scrolled_pages: int = 0
 
