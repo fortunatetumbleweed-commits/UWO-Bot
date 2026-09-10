@@ -109,6 +109,41 @@ village makes that detour cheap.
   `Birch Tree {Neutral: 448, Friendly: 495}`. Amity is an input to the plan, not a detail.
 - `barter_rounds_total` per village.
 
+### The same good is a different trade at each village
+
+Not only the ratios — the **materials themselves** can differ by village (user, 2026-09-10).
+`village_inputs` is keyed by village and can carry that. **`output_per_round` cannot**: it is a
+flat `{amity_grade: qty}` map on the recipe, shared by every village that trades the good.
+
+Box of Nutmeg is the case to test against:
+
+```
+villages:         ['Melanesian Village', 'Malay Village', 'Khmer Village']
+village_inputs:   { melanesian_village: [...] }          <- one of the three
+output_per_round: { 'Neutral': 591, 'Friendly': 679, 'Trusting': 616 }
+```
+
+Three villages, one yield map. Choosing among them means comparing yields, and the yields are
+stored so that they cannot be told apart.
+
+Bambara Groundnut is the case where both villages HAVE been read, and it shows assignment is a
+real choice with a real answer: San and Hutu both yield 988, but San wants **Pig 218/round**
+against Hutu's **188**. Same output, 16% less Pig — Hutu dominates San for this good outright,
+and nothing in the bot notices. (Only two recipes in the KB name more than one village today:
+these two.)
+
+There is a symptom of that collapse already in the data: **Trusting 616 < Friendly 679**, where
+a higher amity grade should improve the ratio (`amity-drives-rounds-and-ratio`). Two
+explanations, not yet separated — the grades are not ordered as assumed, or those readings came
+from *different villages* and were merged as interchangeable. The second would make the anomaly
+a direct consequence of the flat key. **Read the grade order off a village panel before
+believing either.**
+
+So `output_per_round` wants the same treatment `village_inputs` already has:
+`{village: {amity_grade: qty}}`. Migration must not invent a village for existing entries —
+a yield whose village is unknown is unknown, and an unmeasured village counts for nothing (the
+same rule the low-stock gate learned).
+
 **Cannot, and these are the real blockers — data, not algorithm:**
 
 1. **`output_per_round` is `{}` for every chained good** — Näverslöjd, Eagle Feather, American
