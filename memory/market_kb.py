@@ -56,6 +56,11 @@ class MarketGood:
     # with the good, so seeing it here says Almond IS a specialty good -- it does NOT say
     # Lisboa produces Almond, and it is no guide to where a material should be sourced.
     #
+    # What it is FOR: specialties generally fetch better profit when sold at OTHER ports
+    # (user, 2026-09-10). So it is a hint for choosing what to carry on a trade run, not an
+    # input to gathering. INFORMATION ONLY -- nothing reads it yet, and it should not be
+    # wired into a decision until there is a reason to.
+    #
     # Recorded as a FIELD rather than discarded as chrome. Until now the banner was only
     # ever something to exclude: it cost a mis-tap that sold 1,841 Almond, and the one thing
     # it says was never read. Being good-scoped, it belongs with the good in the KB rather
