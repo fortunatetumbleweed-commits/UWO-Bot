@@ -42,8 +42,13 @@ CARD_W, CARD_H = 431, 234
 X0, Y0, PITCH_X, PITCH_Y = 358, 198, 437, 242
 
 
+# A SOLD-OUT tile is the same cream at half the light — measured rgb(109,104,98) at Ambon,
+# the game's ~1.98 dim factor. Matched by hue, since dimming scales the channels together.
+DIM = (109, 104, 98)
+
+
 def _page(n_cards: int, *, rows: int = 1, furniture: bool = False,
-          side_panel: bool = False) -> Image.Image:
+          side_panel: bool = False, dim_last: bool = False) -> Image.Image:
     """A market page: dark ground, cream cards on the measured pitch."""
     a = np.full((H, W, 3), DARK, dtype=np.uint8)
     placed = 0
@@ -52,7 +57,8 @@ def _page(n_cards: int, *, rows: int = 1, furniture: bool = False,
             if placed >= n_cards:
                 break
             x, y = X0 + c * PITCH_X, Y0 + r * PITCH_Y
-            a[y:y + CARD_H, x:x + CARD_W] = CREAM
+            a[y:y + CARD_H, x:x + CARD_W] = (DIM if (dim_last and placed == n_cards - 1)
+                                             else CREAM)
             # A thumbnail: dark-ish, but an IMAGE, and only part of the card's height.
             a[y + 10:y + 140, x + 10:x + 140] = (120, 110, 100)
             if furniture and placed == n_cards - 1:
@@ -104,6 +110,19 @@ class TheCardsAreMeasuredFromTheFrame(unittest.TestCase):
         tiles = detect_goods_tiles(_page(3, side_panel=True))
         self.assertEqual(len(tiles), 3)
         self.assertTrue(all(t.w > t.h for t in tiles))
+
+    def test_A_SOLD_OUT_TILE_IS_STILL_A_TILE(self):
+        """The game dims a sold-out card. A fixed colour missed it and the page came back a
+        good short — `Ebony` was simply absent at Ambon, so nothing could call it sold out."""
+        tiles = detect_goods_tiles(_page(3, dim_last=True))
+        self.assertEqual(len(tiles), 3)
+        self.assertEqual([t.w for t in tiles], [CARD_W] * 3)
+
+    def test_the_background_is_not_a_dim_card(self):
+        """Dim cream is WARM (b < r); the ground is neutral (b == r). That is what the ratio
+        test separates, and why brightness alone could not."""
+        a = np.full((H, W, 3), (56, 54, 56), dtype=np.uint8)   # the lighter background
+        self.assertEqual(detect_goods_tiles(Image.fromarray(a)), [])
 
     def test_an_empty_page_yields_nothing(self):
         self.assertEqual(detect_goods_tiles(Image.new("RGB", (W, H), DARK)), [])

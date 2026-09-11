@@ -535,6 +535,35 @@ def _parse_tile_from_button(button, text_els, tab: str,
     return good
 
 
+def _name_inside(cell, elements) -> str:
+    """The good's name, from the OmniParser BUTTON lying inside a MEASURED card.
+
+    A measured card carries no label of its own — `detect_goods_tiles` reads pixels, not
+    text. So take the words from the parse and the box from the pixels, which plays each to
+    its strength: OmniParser reads `Almond` and `1,841` correctly and boxes the card wrong.
+
+    Prefer a button that names a GOOD over one naming the banner or the category. Both sit
+    inside the card, and a specialty tile is routinely reported twice — once as the good,
+    once as `Specialties` painted across it (Kolkata 2026-08-22: the banner won the slot, the
+    Textiles tile read as 'Specialties', and the bot re-bought 920 units it already held).
+    """
+    best = ""
+    for e in elements or ():
+        if getattr(e, "element_type", "") != "button":
+            continue
+        if not cell.contains(getattr(e, "cx", -1), getattr(e, "cy", -1)):
+            continue
+        lab = (getattr(e, "label", "") or "").strip()
+        low = lab.lower()
+        if not lab or low in _BADGES:
+            continue
+        if low in _CATEGORIES:
+            best = best or lab          # a fallback, never a preference
+            continue
+        return lab
+    return best
+
+
 def _tile_label(cell, elements) -> str:
     """The tile's good name, preferring a detection that is NOT the yellow banner.
 
@@ -720,11 +749,18 @@ def sell_page_can_have_more_below(frame, elements=None) -> bool:
     from vision.omniparser import parse_fast_cached
     from vision.grid_detector import detect_grid
     try:
-        if elements is None:
-            elements = parse_fast_cached(frame)
         W, H = frame.width, frame.height
-        grid = detect_grid(elements, W, H, zone=(0.17 * W, 0.14 * H, 0.78 * W, 0.92 * H),
-                           cell_types=("button",), min_cells=1, size_tol_h=0.45)
+        zone = (0.17 * W, 0.14 * H, 0.78 * W, 0.92 * H)
+        # MEASURED, for the same reason the reader is: this counts CARDS to decide whether
+        # the page is full, and a count taken from OmniParser's boxes is a count of however
+        # many it happened to box. Falls back to the element grid when the cream is not found.
+        from vision.region_detectors.goods_tiles import measure_goods_grid
+        grid = measure_goods_grid(frame, zone=zone)
+        if grid is None:
+            if elements is None:
+                elements = parse_fast_cached(frame)
+            grid = detect_grid(elements, W, H, zone=zone,
+                               cell_types=("button",), min_cells=1, size_tol_h=0.45)
     except Exception as exc:                    # noqa: BLE001 — never end a clear on this
         logger.debug(f"[sell] could not measure the grid: {exc}")
         return True
@@ -773,8 +809,23 @@ def read_market_page_omni(
     # OmniParser (432x181 against 435x231 neighbours, Bremen 2026-08-24). Width still
     # identifies the column, so only the height tolerance is loosened. Without this the Box
     # of Nutmeg at 211% was filtered out of a live bazaar and the page read as "no Spices".
-    grid = detect_grid(elements, W, H, zone=zone, cell_types=("button",),
-                       min_cells=(1 if tab != "purchase" else 4), size_tol_h=0.45)
+    # MEASURED CELLS FIRST. `detect_grid` groups OmniParser's BOXES, so it inherits their
+    # errors — and a card's box is what caused 2026-09-10's overbuy: the Lisboa Almond card
+    # runs y 198-432 and OmniParser boxed y 195-369, which scaled the owned badge out of its
+    # band and read a hold of 1,841 as `have: 0`. `measure_goods_grid` finds the cards in the
+    # pixels, so the boundary is the card's own.
+    #
+    # The element path stays as the fallback rather than being deleted: it is what runs if the
+    # cream ever moves, and a reader that returns nothing is worse than one reading a box that
+    # is merely imperfect.
+    from vision.region_detectors.goods_tiles import measure_goods_grid
+    grid = measure_goods_grid(frame, zone=zone)
+    measured = grid is not None
+    if measured:
+        logger.debug(f"[{tab}] measured grid {grid.n_rows}x{grid.n_cols} from the frame")
+    else:
+        grid = detect_grid(elements, W, H, zone=zone, cell_types=("button",),
+                           min_cells=(1 if tab != "purchase" else 4), size_tol_h=0.45)
     if grid is None:
         logger.info(f"[{tab}] omni: no goods grid detected")
         return []
@@ -793,8 +844,8 @@ def read_market_page_omni(
         if cell.h < _row_h:
             cell = _replace(cell, y2=cell.y1 + _row_h)
         cell_text = [e for e in text_els if cell.contains(e.cx, e.cy)]
-        good = _parse_tile_from_button(cell, cell_text, tab,
-                                       label=_tile_label(cell, elements), row_h=_row_h)
+        label = _name_inside(cell, elements) if measured else _tile_label(cell, elements)
+        good = _parse_tile_from_button(cell, cell_text, tab, label=label, row_h=_row_h)
         if not good:
             continue
         # Template-guided recovery: the index % sits at the bottom-left of EVERY
@@ -832,9 +883,26 @@ def read_market_page_omni(
         if tab != "purchase":
             q = _read_owned_qty(frame, cell)
             if q is not None:
-                if good.owned_qty is not None and int(good.owned_qty) != int(q):
-                    owned_candidates[good.name] = [int(q), int(good.owned_qty)]
-                good.owned_qty = q
+                if good.owned_qty is None:
+                    good.owned_qty = q            # the page had none — fill the gap
+                elif int(good.owned_qty) != int(q):
+                    # THE PAGE READING WINS NOW, and the precedence is inverted deliberately.
+                    #
+                    # The specialist crop was written because the page parse could not be
+                    # trusted on this badge, and BOTH reasons are gone: the token is matched
+                    # with its separator, and the cell is MEASURED rather than taken from a
+                    # box that was routinely clipped. What is left is a thresholded crop that
+                    # discards its own confidence — the comment below already records it
+                    # reading Candle's 148 as 2148 — against a parse of the whole card.
+                    #
+                    # Live 2026-09-10 at Lisboa: page `1,841`, specialist `841`. The
+                    # specialist dropped the leading digit and, winning unconditionally,
+                    # handed the buy loop a hold 1,000 short of the truth.
+                    #
+                    # The disagreement still goes to `_reconcile_owned_against_the_hold`,
+                    # which checks both against what the hold can contain — neither reader
+                    # is being trusted blindly, only ordered.
+                    owned_candidates[good.name] = [int(good.owned_qty), int(q)]
         goods.append(good)
 
     if tab != "purchase" and owned_candidates:

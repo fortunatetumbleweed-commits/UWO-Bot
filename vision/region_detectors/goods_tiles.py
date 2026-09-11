@@ -55,10 +55,35 @@ import numpy as np
 from loguru import logger
 from PIL import Image
 
-# The card body, measured identically at Lisboa and San Village. The tolerance is per
-# channel and generous: the point of this detector is that the classes are far apart.
-_CREAM = np.array([216, 206, 196])
-_CREAM_TOL = 40
+# The card body, measured identically at Lisboa and San Village: rgb(216, 206, 196).
+#
+# MATCHED BY ITS HUE, NOT ITS BRIGHTNESS, because the game DIMS a sold-out tile — measured
+# rgb(109, 104, 98) at Ambon, which is the same colour at half the light (the ~1.98 dim
+# factor `DialogModel` also measures). A fixed colour missed those cards entirely and the
+# page came back one good short; `Ebony` simply was not there.
+#
+# Cream is WARM — b < g < r — and dimming scales all three channels together, so the ratios
+# survive it where the values do not:
+#
+#     full card    216,206,196     g/r 0.954   b/r 0.907
+#     dimmed card  109,104, 98     g/r 0.954   b/r 0.899
+#     background    38, 36, 38     g/r 0.947   b/r 1.000   <- neutral, not warm
+#     background    56, 54, 56     g/r 0.964   b/r 1.000
+#
+# So `b/r` alone separates card from ground with a gulf, and the brightness floor only keeps
+# near-black noise out of the ratio.
+_G_OVER_R, _B_OVER_R = 0.954, 0.903
+_RATIO_TOL = 0.045
+_MIN_CARD_LUM = 80
+
+
+def _card_body(arr: np.ndarray) -> np.ndarray:
+    """Mask of card-body pixels — the cream, at any brightness the game dims it to."""
+    r = np.maximum(arr[:, :, 0], 1)
+    g, b = arr[:, :, 1], arr[:, :, 2]
+    return ((arr.mean(axis=2) >= _MIN_CARD_LUM)
+            & (np.abs(g / r - _G_OVER_R) <= _RATIO_TOL)
+            & (np.abs(b / r - _B_OVER_R) <= _RATIO_TOL))
 
 # A GAP CONTAINS NO CARD. That is the whole test, and it is a statement rather than a tuned
 # number — which is why this is the measure used instead of darkness. Measured on the Madeira
@@ -90,11 +115,18 @@ _ZONE = (0.17, 0.14, 0.78, 0.92)
 
 @dataclass(frozen=True)
 class GoodsTile:
-    """One goods card, with the boundary the frame actually shows."""
+    """One goods card, with the boundary the frame actually shows.
+
+    `label` is left for the caller to fill from whatever read the text. This detector finds
+    BOUNDARIES and says nothing about content — which is the division of labour that makes
+    it worth having: OmniParser reads text well and boxes it badly, so take the box from the
+    pixels and the words from the parse.
+    """
     x1: int
     y1: int
     x2: int
     y2: int
+    label: str = ""
 
     @property
     def w(self) -> int:
@@ -190,7 +222,7 @@ def detect_goods_tiles(frame: Image.Image, *,
     # edge falls at 0.17W = 408 and the leftmost card starts at 358, so cropping SHORTENS the
     # very boundary this detector exists to measure. `read_market_page_omni` can crop because
     # it filters ELEMENTS, whose boxes survive the cut; pixels do not.
-    cream = np.abs(arr - _CREAM).max(axis=2) < _CREAM_TOL
+    cream = _card_body(arr)
 
     # NO MORPHOLOGY. `_carve` separates regions by itself — the right-hand panel is parted
     # from the goods by the same background column a card is parted from its neighbour — so
@@ -226,3 +258,40 @@ def tile_containing(tiles: Sequence[GoodsTile], x: float, y: float) -> Optional[
         if t.contains(x, y):
             return t
     return None
+
+
+@dataclass(frozen=True)
+class GoodsGrid:
+    """The cards as a grid, shaped like `grid_detector.GridModel` so it can stand in.
+
+    `n_rows`/`n_cols` are what the scroll test asks for — "is this a full 3x3 page, or does
+    the hold simply end here?" — so they are COUNTED from the cards rather than inferred.
+    """
+    cells: List[GoodsTile]
+    n_rows: int
+    n_cols: int
+
+    def in_reading_order(self) -> List[GoodsTile]:
+        return list(self.cells)
+
+
+def measure_goods_grid(frame: Image.Image, *,
+                       zone: Optional[Tuple[int, int, int, int]] = None) -> Optional[GoodsGrid]:
+    """`detect_goods_tiles`, arranged into rows and columns. None when there are no cards.
+
+    Rows are grouped on the card top, with a tolerance of a third of a card: cards in one row
+    agree on `y1` to within a pixel or two (measured 198/198/198 and 439/439/439), and the
+    next row is a full pitch away, so nothing marginal is being decided here.
+    """
+    tiles = detect_goods_tiles(frame, zone=zone)
+    if not tiles:
+        return None
+    tol = max(8, min(t.h for t in tiles) // 3)
+    rows: List[List[GoodsTile]] = []
+    for t in tiles:                                # already sorted (y1, x1)
+        if rows and abs(t.y1 - rows[-1][0].y1) <= tol:
+            rows[-1].append(t)
+        else:
+            rows.append([t])
+    return GoodsGrid(cells=[t for r in rows for t in r],
+                     n_rows=len(rows), n_cols=max(len(r) for r in rows))
