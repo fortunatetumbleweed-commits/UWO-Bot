@@ -45,6 +45,7 @@ _TILE_H       = 230    # tile pitch vertically — measured: Whisky name y=221,
 _TILE_COLS    = 3
 _TILE_ROWS    = 3      # 3 full rows visible per page
 _IMG_ZONE_W   = 160    # item thumbnail width inside tile — skip for name OCR
+_IMG_ZONE_FRAC = 160 / 431   # the same split as a fraction of a MEASURED card (431 wide)
 _BOTTOM_ZONE  = 80     # tile-relative y threshold: above → name/category zone;
                        # at/below → price/qty zone (qty at rel_y≈83, price at ≈169)
 
@@ -441,7 +442,11 @@ def _parse_tile_from_button(button, text_els, tab: str,
     # text needs. With one cell on the page there is no median to appeal to, which is
     # exactly when this bites.
     tile_h = max(1, button.y2 - button.y1, int(row_h or 0), _TILE_H)
-    text_x0 = button.x1 + _IMG_ZONE_W
+    # THE THUMBNAIL IS A FRACTION OF THE CARD, not 160 absolute pixels. This line decides
+    # whether a number is the shelf's STOCK (left of it, on the artwork) or the PRICE (right
+    # of it), so a card of a different width would mis-sort every number on it. 160 of the
+    # measured 431 is 0.371, which is what the constant has always meant.
+    text_x0 = button.x1 + int(_IMG_ZONE_FRAC * max(1, button.x2 - button.x1))
 
     index_pct = price = available_qty = profit = owned_qty = None
     sold_out = False
@@ -949,7 +954,7 @@ def read_market_page_omni(
     # page, got None, and skipped Candle as unreadable. Both were individually right. Fill the
     # gaps HERE, while this frame's tiles are still where they were, and every caller gets the
     # combined read instead of each choosing.
-    fill_missing_quantities(frame, goods)
+    fill_missing_quantities(frame, goods, cells=(grid.cells if measured else None))
     if tab != "purchase":
         fill_missing_prices(frame, goods)
 
@@ -1046,14 +1051,23 @@ def read_market_page_claude(
 # ── Multi-page helpers (unchanged interface) ───────────────────────────────────
 
 
+def _cell_for(cells, x, y):
+    """The measured card a tap point falls in, or None when the cards were not measured."""
+    for c in cells or ():
+        if c.contains(x, y):
+            return c
+    return None
+
+
 # The quantity badge sits in the lower-right of a tile's THUMBNAIL, which is left of the
 # label. Offsets from the tile's tap point, measured on Barcelona sell pages 2026-08-27.
+# FALLBACK ONLY now — used when the cards could not be measured.
 _TILE_QTY_BOX = (-215, -120, -40, 40)
 # x4, because x2 was not enough for the smallest badge measured (`Lemon Oil 1`).
 _TILE_QTY_SCALE = 4
 
 
-def fill_missing_quantities(frame, goods, *, read_text_fn=None):
+def fill_missing_quantities(frame, goods, *, read_text_fn=None, cells=None):
     """Re-read `owned_qty` for goods the page read left as None, from EACH GOOD'S OWN TILE.
 
     A whole-frame parse is silent about the smallest badges, and upscaling the WHOLE FRAME is
@@ -1079,8 +1093,20 @@ def fill_missing_quantities(frame, goods, *, read_text_fn=None):
         if x is None or y is None:
             continue
         try:
-            tile = frame.crop((max(0, x + dx1), max(0, y + dy1),
-                               max(0, x + dx2), min(frame.height, y + dy2)))
+            # FROM THE CARD WHEN THE CARD IS KNOWN. The offsets below are from the tile's
+            # TAP POINT, which is the last crop in this reader still not tied to a measured
+            # boundary — and it is the one with the worst record: it returned 7, 4 and 8 for
+            # a hold of 1,841 while the buy loop read "short" and bought to 2.1x target.
+            #
+            # The window is also looser than it needs to be. Centred on a 431x234 card it
+            # spans y 195-355 against the badge's own region of 296-352, so it takes in the
+            # name row and any stray digit there. Given the card, ask for the badge's region.
+            box = _cell_for(cells, x, y)
+            if box is not None:
+                tile = frame.crop(box.rel_region(0.0, 0.42, 0.37, 0.66))
+            else:
+                tile = frame.crop((max(0, x + dx1), max(0, y + dy1),
+                                   max(0, x + dx2), min(frame.height, y + dy2)))
             tile = tile.resize((tile.width * _TILE_QTY_SCALE, tile.height * _TILE_QTY_SCALE))
             digits = [t for t in (read_text_fn(tile) or "").replace(",", "").split()
                       if t.isdigit()]
