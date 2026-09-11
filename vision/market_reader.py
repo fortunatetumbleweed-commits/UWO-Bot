@@ -63,6 +63,10 @@ _BADGES = frozenset([
     "specialties", "specialty", "on sale", "onsale", "recommended",
     "favorites",
 ])
+# The subset that marks a SPECIALTY GOOD. The rest of `_BADGES` are promotional ("On Sale",
+# "Recommended") and are about this port on this day; a specialty is not -- it travels with
+# the good (user, 2026-09-10).
+_SPECIALTY_WORDS = frozenset(["specialties", "specialty"])
 
 _SKIP_WORDS = frozenset([
     "purchase", "sell", "trade", "goods", "sale", "load", "bulk",
@@ -441,6 +445,7 @@ def _parse_tile_from_button(button, text_els, tab: str,
 
     index_pct = price = available_qty = profit = owned_qty = None
     sold_out = False
+    specialty = False
     category = ""
     trend = "unknown"
     # Text in the tile's upper zone, right of the thumbnail — the good's name sits on the TOP
@@ -492,6 +497,11 @@ def _parse_tile_from_button(button, text_els, tab: str,
                     available_qty = v
             elif price is None or v > price:
                 price = v
+        elif kind == "badge":
+            # KEPT, NOT DROPPED. This branch did not exist: a badge fell through the chain
+            # and the banner was discarded, so the one thing it actually tells you — that
+            # this port PRODUCES this good — was never recorded.
+            specialty = specialty or text.strip().lower() in _SPECIALTY_WORDS
         elif kind == "trend":
             trend = _TREND_MAP[text.lower()]
         elif kind == "category":
@@ -506,6 +516,9 @@ def _parse_tile_from_button(button, text_els, tab: str,
     # tile came back named "Specialties", so the hold read as 0 Textiles and the bot re-bought
     # 920 units it was already carrying for 235,520 ducats. A banner is never a good's name.
     if name.lower() in _BADGES:
+        # The banner won the tile's label — which is itself evidence of a specialty, so take
+        # the fact before dropping the word.
+        specialty = specialty or name.lower() in _SPECIALTY_WORDS
         name = ""
     # Fall back to the tile's own text: the TOP line of the upper zone.
     if len(name) < 3 and top_tokens:
@@ -522,7 +535,7 @@ def _parse_tile_from_button(button, text_els, tab: str,
     tile_cy = (button.y1 + button.y2) // 2
     good = MarketGood(
         name=name, category=category, index_pct=index_pct, trend=trend,
-        sold_out=sold_out, available_qty=available_qty,
+        sold_out=sold_out, available_qty=available_qty, specialty=specialty,
         tap_x=tile_cx, tap_y=tile_cy,
     )
     if tab == "purchase":
@@ -562,6 +575,23 @@ def _name_inside(cell, elements) -> str:
             continue
         return lab
     return best
+
+
+def _specialty_inside(cell, elements) -> bool:
+    """Does a "Specialties" banner lie on this card?
+
+    Asked of EVERY element, not just the text ones: on the Purchase page OmniParser reports
+    the banner as `text` and the tile parser sees it, but on the SELL page it reports it as a
+    `button` — measured at Lisboa, `button 'Specialties' x[360,783] y[336,374]` — which the
+    token loop never walks. The flag came back False on the very card whose banner sold 1,841
+    Almond -- read on the Purchase page and missed on the Sell page, for a fact that is the
+    same on both because it belongs to the GOOD and not to the port.
+    """
+    for e in elements or ():
+        lab = (getattr(e, "label", "") or "").strip().lower()
+        if lab in _SPECIALTY_WORDS and cell.contains(getattr(e, "cx", -1), getattr(e, "cy", -1)):
+            return True
+    return False
 
 
 def _tile_label(cell, elements) -> str:
@@ -848,6 +878,7 @@ def read_market_page_omni(
         good = _parse_tile_from_button(cell, cell_text, tab, label=label, row_h=_row_h)
         if not good:
             continue
+        good.specialty = good.specialty or _specialty_inside(cell, elements)
         # Template-guided recovery: the index % sits at the bottom-left of EVERY
         # cell (congruent layout). OmniParser's tiny-text detection is flaky, so
         # when it's missing, re-read exactly that sub-region instead of guessing.

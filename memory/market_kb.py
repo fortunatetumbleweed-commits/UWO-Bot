@@ -51,6 +51,17 @@ class MarketGood:
     # stock level: an empty shelf is restocked by a blue gem, a scarce season is not, so this
     # is asked only of a tile that is NOT sold out (see `vision.market_reader.tile_season`).
     season: Optional[str] = None
+    # A PROPERTY OF THE GOOD, not of this port (user, 2026-09-10: *"a specialty is always a
+    # specialty, does not matter where you sell"*). The gold "Specialties" banner travels
+    # with the good, so seeing it here says Almond IS a specialty good -- it does NOT say
+    # Lisboa produces Almond, and it is no guide to where a material should be sourced.
+    #
+    # Recorded as a FIELD rather than discarded as chrome. Until now the banner was only
+    # ever something to exclude: it cost a mis-tap that sold 1,841 Almond, and the one thing
+    # it says was never read. Being good-scoped, it belongs with the good in the KB rather
+    # than in a per-port snapshot -- the same fact will come back from every port that
+    # stocks it.
+    specialty: bool = False
     profit_per_unit: Optional[int] = None  # sell tab: per-unit profit baked with distance (negative = loss)
     is_loss: bool = False                # sell tab: selling here loses money (profit < 0)
     owned_qty: Optional[int] = None      # sell tab: units of this good currently in cargo

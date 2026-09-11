@@ -293,5 +293,9 @@ def measure_goods_grid(frame: Image.Image, *,
             rows[-1].append(t)
         else:
             rows.append([t])
+    # ROW-MAJOR. Cards in a row agree on `y1` only to within a pixel or two, so a global
+    # sort on (y1, x1) can interleave them and the page comes back in a shuffled order.
+    for r in rows:
+        r.sort(key=lambda t: t.x1)
     return GoodsGrid(cells=[t for r in rows for t in r],
                      n_rows=len(rows), n_cols=max(len(r) for r in rows))
