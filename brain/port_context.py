@@ -87,7 +87,7 @@ def classify(frame, *, elements=None, rows=None, tabs=None, nameplates=None) -> 
         return BUILDING_LIST
 
     if tabs is None:
-        tabs = _tabs(frame)
+        tabs = _tabs(frame, elements)
     if tabs:
         return OTHER_TAB
 
@@ -121,8 +121,27 @@ def selected_tab(frame, tabs=None) -> Optional[int]:
     return selected_tab_index(frame, tabs if tabs is not None else _tabs(frame))
 
 
-def _tabs(frame) -> list:
+def _tabs(frame, elements=None) -> list:
+    """The tab strip, from the panel that owns it.
+
+    `vision.region_detectors.overworld_panel` finds the strip as part of the whole element,
+    anchored on the season row, so it survives the camera-cutout shift that moves every
+    calibrated band. Checked against both worlds on 2026-09-11: its tab points are IDENTICAL
+    to the older `_tab_strip_candidates`, which derives its search band from the minimap crop,
+    and `selected_tab_index` agrees on both — so this is the same reading from one owner
+    rather than a second one.
+
+    FALLING BACK IS NOT BELT-AND-BRACES. The panel needs its season row, and a port still
+    drawing has not got one yet; the older reader looks only at the strip's band and can
+    answer sooner. A miss here means "no tabs", which routes to NO_PANEL — a reason to look
+    again, never a reason to tap.
+    """
     from actions.sail_actions import _tab_strip_candidates
+    from vision.region_detectors.overworld_panel import detect_overworld_panel
+
+    panel = detect_overworld_panel(frame, elements)
+    if panel is not None and panel.tabs:
+        return list(panel.tab_points)
     return _tab_strip_candidates(frame) or []
 
 
