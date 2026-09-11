@@ -100,6 +100,20 @@ def _card_body(arr: np.ndarray) -> np.ndarray:
 _GAP_CREAM_FRAC = 0.01
 # Smaller than any real card, in either axis. Only to drop speckle.
 _MIN_W, _MIN_H = 120, 80
+# A CARD IS A WIDE CARD, not merely "not portrait". Measured 431x234, i.e. 1.84:1 and 0.18 of
+# the frame's width.
+#
+# `w < h` and a 120px floor were too loose by a hair, and it cost a live run. The main menu's
+# icon buttons are 121x121 -- one pixel over the floor, and a perfect square is not LESS wide
+# than tall, so four of them passed as goods cards. Every control inside one was then refused
+# as "a label inside a tile", on a screen that has no goods at all.
+#
+# 2026-09-10: supply_verify looped until the mission gave up, having read every market on the
+# voyage correctly. A safety rule that fires where there is nothing to be safe about is just
+# a new failure, which is the third time this detector has needed that lesson -- after the
+# left rail and the dialog.
+_MIN_ASPECT = 1.5
+_MIN_W_FRAC = 0.10
 # AND NOT BIGGER THAN A CARD CAN BE. The market shows a THREE-COLUMN grid, so a card spans
 # about a third of the content area — measured 431x234 on 2400x1080, i.e. 0.18 x 0.22.
 #
@@ -233,9 +247,9 @@ def detect_goods_tiles(frame: Image.Image, *,
         w, h = bx2 - bx1, by2 - by1
         if w < _MIN_W or h < _MIN_H:
             continue
-        # A CARD IS LANDSCAPE. This is what keeps the tall cream side panels out without
-        # guessing where they start — a property of the layout, not a tuned number.
-        if w < h:
+        # A CARD IS A WIDE CARD. Keeps out the tall cream side panels AND the square menu
+        # icons, both by the layout's own proportions rather than a tuned number.
+        if w < _MIN_ASPECT * h or w < _MIN_W_FRAC * W:
             continue
         if w > _MAX_W_FRAC * W or h > _MAX_H_FRAC * H:
             continue                              # a panel or a dialog, not a card

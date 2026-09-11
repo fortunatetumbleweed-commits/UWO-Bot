@@ -47,6 +47,12 @@ X0, Y0, PITCH_X, PITCH_Y = 358, 198, 437, 242
 DIM = (109, 104, 98)
 
 
+# The market's own trading controls. Their presence is what says this screen HAS goods, so
+# a fixture that omits them is not a market page and the veto rightly declines to run.
+MARKET_CHROME = [types.SimpleNamespace(label="Put In Bulk", element_type="text",
+                                       x1=380, y1=1000, x2=600, y2=1040, cx=490, cy=1020)]
+
+
 def _page(n_cards: int, *, rows: int = 1, furniture: bool = False,
           side_panel: bool = False, dim_last: bool = False) -> Image.Image:
     """A market page: dark ground, cream cards on the measured pitch."""
@@ -127,6 +133,19 @@ class TheCardsAreMeasuredFromTheFrame(unittest.TestCase):
     def test_an_empty_page_yields_nothing(self):
         self.assertEqual(detect_goods_tiles(Image.new("RGB", (W, H), DARK)), [])
 
+    def test_THE_MAIN_MENUS_ICONS_ARE_NOT_CARDS(self):
+        """Square cream buttons, 121x121, measured on the live main menu.
+
+        They cleared the old bounds by a hair: one pixel over the 120 floor, and a perfect
+        square is not LESS wide than tall so `w < h` let them through. Four passed as goods
+        cards, every control inside one was refused, and supply_verify looped until the
+        mission gave up -- on a screen with no goods on it at all."""
+        a = np.full((H, W, 3), DARK, dtype=np.uint8)
+        for i in range(5):
+            x = 1606 + i * 133
+            a[270:391, x:x + 121] = CREAM
+        self.assertEqual(detect_goods_tiles(Image.fromarray(a)), [])
+
     def test_A_DIALOG_IS_NOT_A_CARD(self):
         """A dialog is cream, landscape and centred in the content area — everything a card
         is. Only its SCALE tells them apart, and the grid being three columns is what makes
@@ -135,6 +154,24 @@ class TheCardsAreMeasuredFromTheFrame(unittest.TestCase):
         a = np.full((H, W, 3), DARK, dtype=np.uint8)
         a[161:972, 543:1857] = CREAM              # the measured overflow card, 1314x811
         self.assertEqual(detect_goods_tiles(Image.fromarray(a)), [])
+
+
+class OnlyTheMarketHasGoods(unittest.TestCase):
+    """The screen decides whether the question is even asked."""
+
+    def test_OFF_THE_MARKET_NOTHING_IS_VETOED(self):
+        """Same banner, same card, no market chrome — so no veto (user: "if it is not market
+        activity, then just do not look for goods")."""
+        import vision.region_detectors.commit_button as cb
+        banner = types.SimpleNamespace(label="Specialties", element_type="button",
+                                       x1=432, y1=280, x2=780, y2=330, cx=606, cy=305)
+        page = _page(1)
+        with mock.patch.object(cb, "_TILE_BANNERS", frozenset()), \
+             mock.patch.object(cb, "read_text", return_value="Specialties"), \
+             mock.patch.object(cb, "looks_like_commit_button", return_value=True), \
+             mock.patch.object(cb, "yellow_fraction", return_value=0.9):
+            kept = cb.detect_commit_buttons([banner], page)     # no MARKET_CHROME
+        self.assertEqual([c.verb for c in kept], ["Specialties"])
 
 
 class NothingInsideACardIsAControl(unittest.TestCase):
@@ -160,7 +197,7 @@ class NothingInsideACardIsAControl(unittest.TestCase):
              mock.patch.object(cb, "read_text", return_value="Specialties"), \
              mock.patch.object(cb, "looks_like_commit_button", return_value=True), \
              mock.patch.object(cb, "yellow_fraction", return_value=0.9):
-            self.assertEqual(cb.detect_commit_buttons([banner], page), [])
+            self.assertEqual(cb.detect_commit_buttons([banner] + MARKET_CHROME, page), [])
 
     def test_a_real_commit_button_outside_the_cards_survives(self):
         import vision.region_detectors.commit_button as cb
@@ -170,7 +207,8 @@ class NothingInsideACardIsAControl(unittest.TestCase):
         with mock.patch.object(cb, "read_text", return_value="Sell"), \
              mock.patch.object(cb, "looks_like_commit_button", return_value=True), \
              mock.patch.object(cb, "yellow_fraction", return_value=0.9):
-            self.assertEqual([c.verb for c in cb.detect_commit_buttons([sell], page)], ["Sell"])
+            self.assertEqual([c.verb for c in cb.detect_commit_buttons([sell] + MARKET_CHROME, page)],
+                             ["Sell"])
 
 
 if __name__ == "__main__":

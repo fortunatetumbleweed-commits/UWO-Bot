@@ -278,12 +278,43 @@ def detect_commit_buttons(elements, frame: Image.Image,
     # OmniParser flakiness: no yellow BUTTON bbox this frame → reconstruct from text.
     if not out:
         out = _detect_from_text(elements, arr, frame, min_yellow)
-    return _drop_anything_inside_a_goods_tile(out, frame)
+    return _drop_anything_inside_a_goods_tile(out, frame, elements)
+
+
+# ONLY THE MARKET HAS GOODS (user, 2026-09-10: *"right now only market has goods, if it is
+# not market activity, then just do not look for goods"*). So the question is not "does this
+# look like a card" but "am I on the market's goods page", and it is asked FIRST.
+#
+# Answered from the market's own TRADING controls, which exist because goods are being
+# traded — not from wording that happens to be there. Measured: both appear on the Purchase
+# and Sell pages and on neither the main menu nor the overflow card.
+#
+# Read from the elements rather than from the dispatcher's activity on purpose: a vision
+# detector that needed to be told which activity is running would be reaching up a layer.
+_MARKET_GOODS_CUES = ("put in bulk", "apply load ratio")
+
+
+def _is_the_market_goods_page(elements) -> bool:
+    """Is this the one screen in the game that has goods on it?"""
+    labs = {(getattr(e, "label", "") or "").strip().lower() for e in elements or ()}
+    return any(c in labs for c in _MARKET_GOODS_CUES)
 
 
 def _drop_anything_inside_a_goods_tile(commits: List[CommitButton],
-                                       frame: Image.Image) -> List[CommitButton]:
+                                       frame: Image.Image,
+                                       elements=None) -> List[CommitButton]:
     """A GOODS TILE CONTAINS NO CONTROLS (user, 2026-09-10).
+
+    ASKED ONLY ON THE MARKET'S GOODS PAGE (user, 2026-09-10: *"main menu has no goods, so
+    first it should not try to find goods"*, and *"only market has goods"*). What may exist
+    on a screen follows from WHICH screen it is; every other guard here is a property of a
+    card, which is the wrong question where there are no cards.
+
+    It was not academic. The main menu's icon buttons are 121x121 squares and four of them
+    passed as goods cards: one pixel over the size floor, and a perfect square is not LESS
+    wide than tall, so the landscape test let them through. Tightening the proportions fixes
+    those four; asking the right question first means the next screen's furniture never gets
+    the chance. It also saves the ~70ms measurement on every screen that is not a market.
 
     Said POSITIONALLY, which is the durable form. The word list above catches `Specialties`
     and would miss the next banner; a card's boundary catches every gold thing painted on
@@ -302,6 +333,20 @@ def _drop_anything_inside_a_goods_tile(commits: List[CommitButton],
         tiles = detect_goods_tiles(frame)
     except Exception as exc:                      # noqa: BLE001 — never fail a detection
         logger.debug(f"[commit] goods-tile check unavailable: {exc}")
+        return commits
+    if not _is_the_market_goods_page(elements):
+        if tiles:
+            # SAID, NOT SWALLOWED (user, 2026-09-10: *"if somehow something is recognized as
+            # a good in a different activity, then there is something wrong"*). Nothing is
+            # vetoed here — off the market a card cannot be real — but a silent skip would
+            # hide the thing worth knowing: either the detector is wrong about this screen,
+            # or the screen is not the one we think we are on. The main menu's 121x121 icons
+            # read as four cards before the proportions were tightened, and it took a stalled
+            # mission to notice.
+            logger.warning(f"[commit] {len(tiles)} goods-card shape(s) found OFF the market "
+                           f"— {[(t.w, t.h) for t in tiles][:4]}. Only the market has goods, "
+                           "so this is a defect in the reader or in where we think we are; "
+                           "ignoring them here either way")
         return commits
     if not tiles:
         return commits
