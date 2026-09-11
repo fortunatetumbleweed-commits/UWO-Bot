@@ -1,0 +1,21 @@
+{
+  "purpose": "Confirmation dialog asking the bot to spend 74 Gems to replenish market stock (43 of 50 replenishes remaining this period), opened by the bot's own tap on the restock button",
+  "full_text": "Replenish Stock? (Does not affect market price) Remaining: 43/50 — Cost: 74 Gems. Cancel | OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "c27347fe07cb6f95",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T22:03:22.820052+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Confirmation dialog asking the bot to spend 74 Gems to replenish market stock (43 of 50 replenishes remaining this period), opened by the bot's own tap on the restock button",
+    "full_text": "Replenish Stock? (Does not affect market price) Remaining: 43/50 — Cost: 74 Gems. Cancel | OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

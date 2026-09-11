@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is showing the Raisin cargo card (1,081 units at 102% price, 1,520 gold each) as part of the hold/sell interface — this is the bot reading its current hold contents at Faro",
+  "full_text": "Raisin | Luxuries | 1,081 | 102% | 1,520 (932)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "e778d45db346dda3",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T01:49:14.507007+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Sell screen is showing the Raisin cargo card (1,081 units at 102% price, 1,520 gold each) as part of the hold/sell interface — this is the bot reading its current hold contents at Faro",
+    "full_text": "Raisin | Luxuries | 1,081 | 102% | 1,520 (932)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "medium"
+  }
+}

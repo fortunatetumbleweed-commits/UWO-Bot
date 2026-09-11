@@ -1,0 +1,21 @@
+{
+  "purpose": "Confirmation dialog asking whether to spend 55 diamonds to replenish the Duck livestock stock (45/50 remaining) at the market — this is a restock prompt, not related to Raisin or Pig",
+  "full_text": "Replenish Stock? (Does not affect market price) Remaining: 45/50. Cost: 55 diamonds. [Cancel] [OK]",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "ecac20fda5d51f8a",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T15:40:43.451538+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Confirmation dialog asking whether to spend 55 diamonds to replenish the Duck livestock stock (45/50 remaining) at the market — this is a restock prompt, not related to Raisin or Pig",
+    "full_text": "Replenish Stock? (Does not affect market price) Remaining: 45/50. Cost: 55 diamonds. [Cancel] [OK]",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

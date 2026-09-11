@@ -1,0 +1,21 @@
+{
+  "purpose": "A Weekly Reward popup has appeared showing x3 of a reward item (likely Barter Licenses or similar), triggered as a result of completing the barter action at Berber Village",
+  "full_text": "Weekly Reward x3",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "medium",
+  "obstruction_kind": "overlay",
+  "structural_hash": "1b32f23268607d95",
+  "goal_intent": "Barter",
+  "cached_at": "2026-09-11T20:21:27.702144+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "A Weekly Reward popup has appeared showing x3 of a reward item (likely Barter Licenses or similar), triggered as a result of completing the barter action at Berber Village",
+    "full_text": "Weekly Reward x3",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Confirmation dialog asking the bot to approve the sale of 1841 units of Almond as a Specialties Luxury good for a total price of 204,351 gold (including a +46,025 surcharge, 0 tax)",
+  "full_text": "Confirm Sales — Trade Goods: Almond (Luxuries, Specialties) x1841 — Sales Cost: 158,326 | Tax 6%: 0 | Surcharge: +46,025 | Price: 204,351 — Total Sales: 158,326 | +46,025 | 204,351 — [Cancel] [OK]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "0438738cee5c8a13",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-10T22:52:00.812143+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Confirmation dialog asking the bot to approve the sale of 1841 units of Almond as a Specialties Luxury good for a total price of 204,351 gold (including a +46,025 surcharge, 0 tax)",
+    "full_text": "Confirm Sales — Trade Goods: Almond (Luxuries, Specialties) x1841 — Sales Cost: 158,326 | Tax 6%: 0 | Surcharge: +46,025 | Price: 204,351 — Total Sales: 158,326 | +46,025 | 204,351 — [Cancel] [OK]",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

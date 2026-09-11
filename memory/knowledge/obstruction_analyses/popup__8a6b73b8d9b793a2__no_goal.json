@@ -1,0 +1,21 @@
+{
+  "purpose": "Minimap/compass panel (C/HW) showing wind, current, and weather conditions for the Atlantic Ocean sailing area — not a dismissable popup but a persistent HUD panel partially overlapping the play area",
+  "full_text": "C/HW | Pac | 4.6 | clear | TaylorFP | ~ | 3-",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "8a6b73b8d9b793a2",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T18:14:22.050153+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Minimap/compass panel (C/HW) showing wind, current, and weather conditions for the Atlantic Ocean sailing area — not a dismissable popup but a persistent HUD panel partially overlapping the play area",
+    "full_text": "C/HW | Pac | 4.6 | clear | TaylorFP | ~ | 3-",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

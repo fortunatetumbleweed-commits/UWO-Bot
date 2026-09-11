@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase result confirmation showing the cost, discount applied, and final amount paid for a bulk trade goods purchase just completed at Barcelona",
+  "full_text": "Result — Purchase Cost: 404,705 | Tax: 0 | Discount: -77,942 | Total Amount: 326,763 | Balance: 71,645,494,373 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "1f732096a95deb0d",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-09T20:12:48.859829+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase result confirmation showing the cost, discount applied, and final amount paid for a bulk trade goods purchase just completed at Barcelona",
+    "full_text": "Result — Purchase Cost: 404,705 | Tax: 0 | Discount: -77,942 | Total Amount: 326,763 | Balance: 71,645,494,373 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

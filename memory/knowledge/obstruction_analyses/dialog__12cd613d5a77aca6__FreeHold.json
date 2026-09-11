@@ -1,0 +1,21 @@
+{
+  "purpose": "Sale confirmation dialog showing 141 Raisins (Luxuries) to be sold for 224,754 gold after 6% tax deduction and surcharge, requiring the player to confirm or cancel the transaction",
+  "full_text": "Confirm Sales — Trade Goods: Raisin (Luxuries, qty 141) | Sales Cost: 179,352 | Tax 6%: -8,742 | Surcharge: +54,144 | Price: 224,754 — Total Sales: 179,352 | -8,742 | +54,144 | 224,754 — [Cancel] [Ok]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "12cd613d5a77aca6",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-10T21:53:48.801490+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Sale confirmation dialog showing 141 Raisins (Luxuries) to be sold for 224,754 gold after 6% tax deduction and surcharge, requiring the player to confirm or cancel the transaction",
+    "full_text": "Confirm Sales — Trade Goods: Raisin (Luxuries, qty 141) | Sales Cost: 179,352 | Tax 6%: -8,742 | Surcharge: +54,144 | Price: 224,754 — Total Sales: 179,352 | -8,742 | +54,144 | 224,754 — [Cancel] [Ok]",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

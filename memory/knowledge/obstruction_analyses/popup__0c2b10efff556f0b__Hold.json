@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is open showing the current hold contents — Raisin (950 units, 101% price, profit/loss -570) and Pig (1081 units, 106% price) — this is the hold read result the bot just triggered",
+  "full_text": "Raisin Luxuries 950 101% 53 (-570)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "0c2b10efff556f0b",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T18:34:05.892418+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Sell screen is open showing the current hold contents — Raisin (950 units, 101% price, profit/loss -570) and Pig (1081 units, 106% price) — this is the hold read result the bot just triggered",
+    "full_text": "Raisin Luxuries 950 101% 53 (-570)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "The right-side panel shows the active quest/chronicle list, with the Admiral Chronicle quest highlighted, requiring the player to complete an Anonymous Threatening Letter Request from the Istanbul Union",
+  "full_text": "10 | 27.1 | Samarai | 48,149.49 | Tropical May Daytime | 4th Anniversar... | Bella's Voyage... | The Starlit Vo... | Admiral Chronicle: Complete Anonymous Threatening Letter Request from Istanbul Union (0/1) | Sell Box of Nutmeg at Jakarta — 10h left (0/50) | Proceed with another Relationship Chronicle",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "8b3aaaf51eb78997",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T04:16:16.203069+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The right-side panel shows the active quest/chronicle list, with the Admiral Chronicle quest highlighted, requiring the player to complete an Anonymous Threatening Letter Request from the Istanbul Union",
+    "full_text": "10 | 27.1 | Samarai | 48,149.49 | Tropical May Daytime | 4th Anniversar... | Bella's Voyage... | The Starlit Vo... | Admiral Chronicle: Complete Anonymous Threatening Letter Request from Istanbul Union (0/1) | Sell Box of Nutmeg at Jakarta — 10h left (0/50) | Proceed with another Relationship Chronicle",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

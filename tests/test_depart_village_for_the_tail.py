@@ -72,16 +72,34 @@ class DepartingForTheTail(unittest.TestCase):
         self.assertTrue(ok)
         self.assertLessEqual(backs, 1)
 
-    def test_a_screen_that_does_not_change_is_pressed_ONCE(self):
-        """The dispatcher does not repeat an action whose effect it has not observed.
+    def test_a_screen_that_does_not_change_is_pressed_TWICE_AND_NO_MORE(self):
+        """One retry, then it stops (user, 2026-09-04).
 
-        The old loop pressed Back up to four times at a screen that never moved, because it
-        had no way to tell a slow transition from a missed tap. The dispatcher does: it holds
-        the intent in flight until the state changes. One press, then it waits and looks.
+        This asserted ONE press, on the reasoning that a second Back at a village lands at
+        SEA and loses the village. What changed is the reading of that cost, not the risk:
+        EXIT_BUILDING is dispatched when leaving IS the goal, so "lost the village" and "left
+        the village" are the same event, and the guard was protecting nothing at the only
+        moment it fires.
+
+        It cost a finished mission to find out. Live at San Village: four rounds committed,
+        4,455 Bambara Groundnut aboard, one swallowed Back, and three unchanged ticks later
+        the run failed with the fleet still standing in the village.
+
+        The bound is what matters and it is unchanged in spirit. The old loop pressed Back up
+        to four times at a screen that never moved; this presses once more, only on an
+        OBSERVED-unchanged screen, and the stall guard still ends it. 40 unchanging looks must
+        still produce 2 presses, not 40 — that is the assertion carrying the original lesson.
         """
         ok, backs = _depart(["village"] * 40)
         self.assertFalse(ok)
-        self.assertEqual(backs, 1, "an unchanging screen is not pressed again")
+        self.assertEqual(backs, 2, "one retry, then the stall guard — never the old loop")
+
+    def test_the_retry_is_not_a_loop(self):
+        """The property the original test was really defending: presses do not scale with
+        looks. Forty unchanged observations buy exactly one extra Back."""
+        _, few = _depart(["village"] * 5)
+        _, many = _depart(["village"] * 40)
+        self.assertEqual(few, many, "presses grew with the number of looks")
 
     def test_an_unreadable_state_stops_it(self):
         """Never press Back blind: that is how the fleet lost the village twice."""

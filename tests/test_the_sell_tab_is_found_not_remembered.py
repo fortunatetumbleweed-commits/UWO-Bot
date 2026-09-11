@@ -109,59 +109,85 @@ if __name__ == "__main__":
 class TheStagedCartRaisesAConfirmAndItIsAnswered(unittest.TestCase):
     """Switching tabs with goods staged makes the game ask before it will switch.
 
-    Live 2026-09-01 at Tripoli: the trim tapped Sell, the game asked "Moving to another menu
-    will empty the cart. Continue?", `_on_sell_tab` correctly said no, and `ensure_sell_tab`
-    refused — so the leg failed over a question nobody answered. The dispatcher cleared the
-    dialog seconds later and the switch completed, with the mission already dead.
+    THE DIALOG BELONGS TO THE DISPATCHER (user, 2026-09-07: "The dialog should be checked by
+    the dispatcher, and dispatch to the activity, not being perceived and handled by the
+    activity"). This primitive used to answer it itself, which meant a private
+    perceive-decide-act inside a primitive and a SECOND dialog reader — configured differently
+    from the dispatcher's, and worse: live 2026-09-07 at Faro it found no OK on a card the
+    dispatcher classifies as `confirm_dialog` with an `Ok`, called it a dropped tap, and
+    re-tapped Sell behind the modal four times.
 
-    A dialog the bot's OWN action provoked is COMPLETED, not left for someone else.
+    The 2026-09-01 incident this class was written for — the leg FAILING over a question
+    nobody answered — is now prevented by the shape rather than by answering here: the caller
+    hands back instead of failing, the dispatcher perceives the card and offers it to the
+    activity, and the next tick taps Sell again.
     """
 
-    def _run(self, *, on_sell, cart_ok):
+    def _run(self, *, on_sell, cart_ok=None):
         seq = list(on_sell)
         taps = []
         with mock.patch("actions.buy_materials._on_sell_tab", side_effect=lambda f: seq.pop(0)), \
-             mock.patch("actions.buy_materials._sell_menu_item", return_value=(65, 274)), \
-             mock.patch("actions.buy_materials._cart_confirm_ok", return_value=cart_ok):
+             mock.patch("actions.buy_materials._sell_menu_item", return_value=(65, 274)):
             ok = ensure_sell_tab(_frame, lambda *a: taps.append(a), 0.0)
         return ok, taps
 
-    def test_the_confirm_is_answered_and_the_switch_completes(self):
-        ok, taps = self._run(on_sell=[False, False, True], cart_ok=(1200, 700))
-        self.assertTrue(ok)
-        self.assertIn((1200, 700), taps, "the confirm our own tap raised must be completed")
+    def test_the_confirm_is_LEFT_FOR_THE_DISPATCHER(self):
+        """It reports the tab did not open; it does not reach into the dialog itself."""
+        ok, taps = self._run(on_sell=[False, False])
+        self.assertFalse(ok, "a tab that did not open is a refusal, not a success")
+        self.assertEqual(taps, [(65, 274)], "answered a dialog the dispatcher owns")
 
-    def test_without_a_confirm_it_still_refuses(self):
-        # Three checks either way: before the tap, after it, and the final verify.
-        ok, taps = self._run(on_sell=[False, False, False], cart_ok=None)
-        self.assertFalse(ok)
-        self.assertEqual(taps, [(65, 274)], "no dialog found means no extra tap")
+    def test_it_taps_ONCE_because_the_second_tap_lands_outside_the_modal(self):
+        """The retry this asserted for two days is what broke the run.
+
+        The argument for it was real — the game drops about one tap in twenty, and Faro on
+        2026-09-04 lost a mission to exactly that. But the frames settle where the retry
+        belongs. Live 2026-09-07 at Faro, frames 8-11 of
+        trace_barter_cmd_2026-09-07T15-00-05, four times over:
+
+            frame 8   tap (174,276) on the Sell rail item
+            frame 9   the tap LANDED — title 'Sell', and over it the game asked
+                      "Moving to another menu will empty the cart. Continue?" [Cancel] [Ok]
+            frame 10  `_on_sell_tab` said no, so it logged "the tap was dropped" and
+                      re-tapped the rail at (68,276)
+            frame 11  back on Purchase, no dialog, cart intact
+
+        The rail is OUTSIDE the modal, so the retry dismissed the card as a Cancel. The
+        dispatcher re-perceived between calls and found nothing, because the retry had
+        cleared the thing it needed to see.
+
+        The dropped tap is still retried — by the next tick, against a screen somebody has
+        looked at. That costs a tick instead of a modal.
+        """
+        ok, taps = self._run(on_sell=[False, False], cart_ok=None)
+        self.assertFalse(ok, "a tab that did not open is a refusal, not a success")
+        self.assertEqual(taps, [(65, 274)])
+
+    def test_the_only_thing_it_taps_is_the_menu_item(self):
+        """With no nameable dialog the one thing tapped is the Sell menu item itself."""
+        _, taps = self._run(on_sell=[False, False], cart_ok=None)
+        self.assertEqual(set(taps), {(65, 274)})
 
     def test_an_already_open_sell_page_asks_nothing(self):
-        ok, taps = self._run(on_sell=[True], cart_ok=(1200, 700))
+        ok, taps = self._run(on_sell=[True])
         self.assertTrue(ok)
         self.assertEqual(taps, [])
 
 
 class ItNeverAnswersADialogItCannotName(unittest.TestCase):
-    """A blind OK is how a bot confirms a purchase nobody chose."""
+    """A blind OK is how a bot confirms a purchase nobody chose — and it is no longer a
+    question this file can get wrong, because this file no longer reads dialogs at all.
 
-    def _ok_for(self, labels):
-        els = [types.SimpleNamespace(label=l) for l in labels]
-        with mock.patch("vision.omniparser.parse_fast_cached", return_value=els), \
-             mock.patch("actions.market_actions._dialog_ok_pos", return_value=(1200, 700)):
-            from actions.buy_materials import _cart_confirm_ok
-            return _cart_confirm_ok(_frame())
+    `_cart_confirm_ok` read the empty-the-cart confirm here so `ensure_sell_tab` could answer
+    it. That was a second dialog reader, configured differently from the dispatcher's and
+    worse, and it is gone. The property now lives where every dialog is judged: the
+    dispatcher classifies the card, the activity is offered it, and `game_rules` takes the
+    positive option only for a card it can name. Measured on the frame that caused this —
+    frame 9 of trace_barter_cmd_2026-09-07T15-00-05 — `market_context` says `confirm_dialog`,
+    `detect_dialog` offers ['Ok', 'Cancel'], and `game_rules` answers 'Ok'.
+    """
 
-    def test_the_empty_cart_confirm_is_recognised(self):
-        self.assertEqual(
-            self._ok_for(["Moving to another menu will empty the cart. Continue?",
-                          "Cancel", "OK"]), (1200, 700))
-
-    def test_a_purchase_confirm_is_left_alone(self):
-        self.assertIsNone(self._ok_for(["Purchase 709 Candle for 77,420?", "Cancel", "OK"]),
-                          "answering this would spend money nobody approved")
-
-    def test_a_dialog_with_only_one_of_the_two_words_is_left_alone(self):
-        self.assertIsNone(self._ok_for(["Your cart is ready", "OK"]))
-        self.assertIsNone(self._ok_for(["Empty the warehouse?", "OK"]))
+    def test_the_confirm_is_answered_by_the_dispatchers_reader_not_this_one(self):
+        import actions.buy_materials as bm
+        self.assertFalse(hasattr(bm, "_cart_confirm_ok"),
+                         "a second dialog reader is how the two disagree")

@@ -1,0 +1,21 @@
+{
+  "purpose": "A numeric entry dialog has appeared asking the player to specify the quantity of Textiles to load for sale, showing a keypad with the current value of 1",
+  "full_text": "Trade Goods Info — Textiles (Fabrics, Specialties, quantity 1536). Calculation: Sales Cost 3,317 | -197 | +1,034 | Final Sales Price 4,154. Description: A textile made by using cotton. It is very hygroscopic and soft, used for a variety of purposes. Prices: Max Price 3,444 | Min Price 2,774 | Final Sales Price 4,154. Enter Number: [keypad 1–9, 0, Max] | Current input: 1 | Quantity: 1/1,536. Success Rate 76.2% | on Sales -1,051,739. Cancel | Load",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "b80340b6c1f478c4",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T18:07:35.491092+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A numeric entry dialog has appeared asking the player to specify the quantity of Textiles to load for sale, showing a keypad with the current value of 1",
+    "full_text": "Trade Goods Info — Textiles (Fabrics, Specialties, quantity 1536). Calculation: Sales Cost 3,317 | -197 | +1,034 | Final Sales Price 4,154. Description: A textile made by using cotton. It is very hygroscopic and soft, used for a variety of purposes. Prices: Max Price 3,444 | Min Price 2,774 | Final Sales Price 4,154. Enter Number: [keypad 1–9, 0, Max] | Current input: 1 | Quantity: 1/1,536. Success Rate 76.2% | on Sales -1,051,739. Cancel | Load",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

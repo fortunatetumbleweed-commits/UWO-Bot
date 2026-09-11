@@ -1,0 +1,21 @@
+{
+  "purpose": "Lorenzo Pinto (trade advisor) is offering to negotiate the purchase price of a good down by 21.5%, prompting the bot to choose whether to spend negotiation attempts for a chance at a lower price",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 28,808 → 21,060 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Lorenzo Pinto says: In my opinion, we can buy this for 21.5% less. Would you like to negotiate? Options: No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "d073cf6b91d250ea",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T14:14:12.176994+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Lorenzo Pinto (trade advisor) is offering to negotiate the purchase price of a good down by 21.5%, prompting the bot to choose whether to spend negotiation attempts for a chance at a lower price",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 28,808 → 21,060 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Lorenzo Pinto says: In my opinion, we can buy this for 21.5% less. Would you like to negotiate? Options: No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

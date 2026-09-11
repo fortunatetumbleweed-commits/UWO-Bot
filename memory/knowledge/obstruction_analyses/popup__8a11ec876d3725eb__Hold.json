@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase tab at Antalya is now showing its available goods list (Sugar Beet, Mutton, Rose, Kutnu, etc.) — this is the normal purchase screen the bot just navigated to, not an obstruction.",
+  "full_text": "00:06:39 | 49 diamonds | Sugar Beet Food 633 — 101% 226 gold | Mutton Food 639 — 103% 269 gold | Rose Perfume 177 — 110% 707 gold | Kutnu Fabrics 194 — Specialties — Unlock Condition (0/1)",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "8a11ec876d3725eb",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T02:34:30.781597+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase tab at Antalya is now showing its available goods list (Sugar Beet, Mutton, Rose, Kutnu, etc.) — this is the normal purchase screen the bot just navigated to, not an obstruction.",
+    "full_text": "00:06:39 | 49 diamonds | Sugar Beet Food 633 — 101% 226 gold | Mutton Food 639 — 103% 269 gold | Rose Perfume 177 — 110% 707 gold | Kutnu Fabrics 194 — Specialties — Unlock Condition (0/1)",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "high"
+  }
+}

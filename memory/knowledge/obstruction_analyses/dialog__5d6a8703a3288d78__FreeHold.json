@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade result screen confirming the successful bulk sale of Raisins, showing profit, tax, surcharge, and updated gold balance after the transaction",
+  "full_text": "Result — Mate Trade EXP: 2,357 | Contribution: 0 | Obtained Trade Point: 0 | Trade Fame: 0 | Sales Cost: 376,371 | Tax: -34,029 | Surcharge: 124,830 | Profit: 306,877 | Total Amount: 467,172 | Balance: 72,452,060,258 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "5d6a8703a3288d78",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-09T23:19:01.105420+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade result screen confirming the successful bulk sale of Raisins, showing profit, tax, surcharge, and updated gold balance after the transaction",
+    "full_text": "Result — Mate Trade EXP: 2,357 | Contribution: 0 | Obtained Trade Point: 0 | Trade Fame: 0 | Sales Cost: 376,371 | Tax: -34,029 | Surcharge: 124,830 | Profit: 306,877 | Total Amount: 467,172 | Balance: 72,452,060,258 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

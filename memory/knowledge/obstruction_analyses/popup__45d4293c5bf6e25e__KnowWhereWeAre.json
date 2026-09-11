@@ -1,0 +1,21 @@
+{
+  "purpose": "The port navigation panel listing all available facilities in Antalya (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) is open, confirming the bot is inside Antalya port overworld with full location context visible",
+  "full_text": "Summer Aug 14:00 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "45d4293c5bf6e25e",
+  "goal_intent": "KnowWhereWeAre",
+  "cached_at": "2026-09-11T02:29:53.577557+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The port navigation panel listing all available facilities in Antalya (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) is open, confirming the bot is inside Antalya port overworld with full location context visible",
+    "full_text": "Summer Aug 14:00 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "high"
+  }
+}

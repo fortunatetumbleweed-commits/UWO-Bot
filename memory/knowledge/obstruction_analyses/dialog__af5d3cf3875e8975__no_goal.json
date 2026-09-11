@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade Goods Info panel showing Textiles (Fabrics/Specialties) price breakdown, with a per-unit sale price of 4,154 gold after tax and surcharge adjustments, allowing the player to load a quantity for selling",
+  "full_text": "Trade Goods Info — Textiles (Fabrics, Specialties) [quantity: 1536]. Description: A textile made by using cotton. It is very hygroscopic and soft, used for a variety of purposes. Calculation: Sales Cost 3,317 | Tax -197 | Surcharge +1,034 | Per Price 4,154. Current Price 3,317 | Max Price 3,444 | Min Price 2,774. Quantity: 1/1,536. Final Sales Price: 4,154. Buttons: Cancel | Load.",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "af5d3cf3875e8975",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T18:07:07.636471+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade Goods Info panel showing Textiles (Fabrics/Specialties) price breakdown, with a per-unit sale price of 4,154 gold after tax and surcharge adjustments, allowing the player to load a quantity for selling",
+    "full_text": "Trade Goods Info — Textiles (Fabrics, Specialties) [quantity: 1536]. Description: A textile made by using cotton. It is very hygroscopic and soft, used for a variety of purposes. Calculation: Sales Cost 3,317 | Tax -197 | Surcharge +1,034 | Per Price 4,154. Current Price 3,317 | Max Price 3,444 | Min Price 2,774. Quantity: 1/1,536. Final Sales Price: 4,154. Buttons: Cancel | Load.",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

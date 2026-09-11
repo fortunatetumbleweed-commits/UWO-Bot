@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase screen is displaying the market inventory at Tripoli, showing available trade goods including Turnip, Pickle, and Darbuka with a Specialties timer expiring 10/12/2026 — this is the normal purchase sub-menu view, not a blocking popup; the bot is mid-flow trying to hold Candle which appears sold out",
+  "full_text": "00:27:16 | 28 diamonds | Turnip Food 783 units 102% 148 gold | Pickle Luxuries 263 units 99% 373 gold | Darbuka Crafts 0 units Specialties available from 10/12/2026 00:00:00",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "5d4d4b3ba064b218",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-09T21:01:52.725141+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase screen is displaying the market inventory at Tripoli, showing available trade goods including Turnip, Pickle, and Darbuka with a Specialties timer expiring 10/12/2026 — this is the normal purchase sub-menu view, not a blocking popup; the bot is mid-flow trying to hold Candle which appears sold out",
+    "full_text": "00:27:16 | 28 diamonds | Turnip Food 783 units 102% 148 gold | Pickle Luxuries 263 units 99% 373 gold | Darbuka Crafts 0 units Specialties available from 10/12/2026 00:00:00",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

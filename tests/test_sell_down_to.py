@@ -98,6 +98,9 @@ class _Harness:
                             set_bulk_fn=self.set_bulk, type_qty_fn=self.type_qty,
                             commit_fn=self.commit, react_fn=self.react,
                             find_button_fn=self.find_button, overlay_fn=self.overlay,
+                            # These tests are about TRIMMING; being on the Sell tab is a
+                            # precondition with its own tests below.
+                            ensure_sell_tab_fn=lambda *a, **k: True,
                             settle=0)
 
 
@@ -258,3 +261,60 @@ class PostLoadCheckTests(unittest.TestCase):
         res = h.run({"Ebony": 700})
         self.assertTrue(res["ok"], res.get("reason"))
         self.assertEqual(res["trimmed"], {"Ebony": 981})
+
+
+class ItMustBeLOOKINGAtTheHoldBeforeItSaysAnythingAboutIt(unittest.TestCase):
+    """The trim read the PURCHASE page and called the hold trimmed.
+
+    Live 2026-09-04 at Madeira (frame 277 of trace_barter_cmd_2026-09-04T17-35-01 — title
+    "Purchase", the shop's stock in the middle, the fleet's 3,237 Pig in the panel on the
+    right):
+
+        [Madeira] nothing over-stocked — leaving the market untouched (hold {})
+        trim skipped at Madeira: Raisin: not on the sell page
+        trim skipped at Madeira: Pig: not on the sell page
+
+    and the leg reported ok. The whole 1,476-unit Pig surplus then sailed to the village.
+
+    TWO INDEPENDENT HOLES, both closed here. `sell_goods` and `_read_owned_via_sell` have
+    always switched to the Sell tab and refused without it; `sell_down_to` alone never did.
+    And `_sell_page` returns None for "I was not looking at the hold" against [] for "I was,
+    and it holds nothing" — a distinction it was given on 2026-09-01 for exactly this failure
+    — which `or []` then threw away one call later.
+    """
+
+    def _trim(self, *, on_sell, page):
+        return sell_down_to("Madeira", {"Pig": 1260, "Raisin": 1260},
+                            capture_fn=lambda: object(),
+                            tap_fn=lambda *a: None,
+                            read_page_fn=lambda _f: page,
+                            set_bulk_fn=lambda *a, **k: True,
+                            ensure_sell_tab_fn=lambda *a, **k: on_sell,
+                            settle=0)
+
+    def test_it_refuses_when_the_sell_tab_was_never_reached(self):
+        res = self._trim(on_sell=False, page=[])
+        self.assertFalse(res["ok"], "a Purchase-page read must not report the hold trimmed")
+        self.assertIn("Sell grid", res["reason"])
+
+    def test_an_UNREADABLE_page_is_not_an_empty_hold(self):
+        """None from `_sell_page` means the grid was never read. `or []` made that
+        indistinguishable from a hold with nothing over-stocked."""
+        res = self._trim(on_sell=True, page=None)
+        self.assertFalse(res["ok"])
+        self.assertIn("could not be read", res["reason"])
+
+    def test_it_says_WHICH_goods_it_could_not_speak_for(self):
+        for page in ([], None):
+            with self.subTest(page=page):
+                res = self._trim(on_sell=(page is not None), page=page)
+                skipped = " ".join(res.get("skipped") or ())
+                self.assertIn("Pig", skipped)
+                self.assertIn("Raisin", skipped)
+
+    def test_a_GENUINELY_empty_hold_still_reads_as_nothing_to_trim(self):
+        """[] means "I looked, and there is nothing" — that must stay a success, or every
+        already-trimmed leg becomes a failure."""
+        res = self._trim(on_sell=True, page=[])
+        self.assertTrue(res["ok"])
+        self.assertEqual(res["trimmed"], {})

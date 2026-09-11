@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is displaying available trade goods (Ebony as a Specialty, and Coral) at this port, showing current market prices and demand percentages before the player confirms a sale",
+  "full_text": "Ebony (Wares) quantity 422 | Coral (Jewelry) quantity 231 | Specialties | Ebony: 96% demand, price 106 (-1,292) | Coral: 98% demand, price 11,995 (1,842)",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "04b30cab77e7973e",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T04:28:46.413960+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Sell screen is displaying available trade goods (Ebony as a Specialty, and Coral) at this port, showing current market prices and demand percentages before the player confirms a sale",
+    "full_text": "Ebony (Wares) quantity 422 | Coral (Jewelry) quantity 231 | Specialties | Ebony: 96% demand, price 106 (-1,292) | Coral: 98% demand, price 11,995 (1,842)",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

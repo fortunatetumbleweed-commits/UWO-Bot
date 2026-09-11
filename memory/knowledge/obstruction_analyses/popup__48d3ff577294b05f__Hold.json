@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is showing the current hold contents — Raisin (1,081 units, Luxuries) and Pig (492 units, Livestock) available to sell at this port, with their current price and surplus/deficit info",
+  "full_text": "Raisin Luxuries 1,081 93% 50 (-538)",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "48d3ff577294b05f",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T02:21:57.721712+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Sell screen is showing the current hold contents — Raisin (1,081 units, Luxuries) and Pig (492 units, Livestock) available to sell at this port, with their current price and surplus/deficit info",
+    "full_text": "Raisin Luxuries 1,081 93% 50 (-538)",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "medium"
+  }
+}

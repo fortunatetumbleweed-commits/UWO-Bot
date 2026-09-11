@@ -102,6 +102,46 @@ class MoveViaLocationInfo:
         return f"move to {self.where!r} via Location Info"
 
 
+def _keyable_query(name: str, limit: int | None = None) -> str:
+    """The best thing we can actually type to filter the list down to `name`.
+
+    THE SEARCH MATCHES A SUBSTRING, NOT A PREFIX (user, 2026-09-09: "for Malaga you can type
+    laga or lag, it searches for the sub string"). Verified live on the world map: typing
+    `laga` left one row, `Málaga`. So the query need not start the name — it only has to
+    appear in it, which is what makes an accented name reachable at all.
+
+    AND IT MUST BE TYPEABLE. `adb shell input text` cannot carry a non-ASCII character; the
+    input service hands the Binder a null array and throws, which is not a failed search but
+    a dead run:
+
+        typing 'Gijó' (prefix of 'Gijón')
+        ADB error: java.lang.NullPointerException: Attempt to get length of null array
+
+    Live 2026-09-09, one leg short of Gijón with the Pig aboard.
+
+    CUTTING, NEVER STRIPPING. The game filters on ITS spelling, which keeps the accent, so
+    `Gijo` matches nothing — character four is `ó`, not `o`. The longest run of ASCII inside
+    the name is both typeable and a true substring of what the game holds:
+
+        Gijón -> 'Gij'      Málaga -> 'laga'     Ávila -> 'vila'
+        Malé  -> 'Mal'      Lübeck -> 'beck'     Mérida -> 'rida'
+
+    A name with no ASCII in it at all yields '', and the caller scrolls instead — an empty
+    query would CLEAR the filter, which is worse than never typing.
+    """
+    limit = _PREFIX_LEN if limit is None else limit   # defined below the class
+    runs, current = [], ""
+    for ch in str(name or ""):
+        if ch.isascii():
+            current += ch
+        else:
+            runs.append(current)
+            current = ""
+    runs.append(current)
+    best = max(runs, key=len) if runs else ""
+    return best.strip()[:limit]
+
+
 class WorldMapActivity:
     """Read the tab, find the place, commit. One step per call."""
 
@@ -162,6 +202,9 @@ class WorldMapActivity:
         self._panel_for = panel_for_fn
         self._capture = capture_fn
         self._typed = 0            # typings that LANDED in the box
+        self._shortenings = 0      # a filter that came back empty, retyped shorter
+        self._panel_closes = 0     # another place's panel, closed so the map
+                                   # can be searched — bounded like the rest
         self._type_attempts = 0    # typings SENT — the backstop against a
                                    # keyboard that never accepts anything
         self._pending_query = None
@@ -196,6 +239,8 @@ class WorldMapActivity:
             self._goal_key, self._typed, self._scrolls = key, 0, 0
             self._type_attempts, self._pending_query = 0, None
             self._kb_clears = 0
+            self._panel_closes = 0
+            self._shortenings = 0
             self._kb_hygiene = 0
             self._last_rail_sig = None
             self._list_taps = 0
@@ -302,6 +347,40 @@ class WorldMapActivity:
             self._tap_at(*found)
             return ActivityResult(WORKING, {"did": f"tapped {goal.where} on the map"},
                                   detail=str(goal))
+        # A QUERY WE TYPED THAT FOUND NOTHING IS A WRONG QUERY, NOT A CLOSED LIST.
+        #
+        # The game filters on ITS spelling and we type OURS, and the two differ wherever the
+        # name carries an accent: the port is `Gijón`, our KB and the map OCR both flatten it
+        # to `Gijon`, and the prefix `Gijo` matches nothing because character four is `ó`.
+        # The list then holds ZERO rows — and an empty list looks exactly like no list, so
+        # this branch re-opened it, which TOGGLES the rail shut. Live 2026-09-06:
+        #
+        #     typing 'Gijo' (prefix of 'Gijon') — attempt 1/4, 0/2 landed
+        #     'Gijon' is not on screen — opening the list          (x3)
+        #     NOTHING CHANGED for 3 ticks ... choose port 'Gijon'
+        #
+        # The box read `gijo` with the rows below it empty and the map showing through. Every
+        # "is the list open?" check says no, because they all look for the search FIELD and
+        # the parse returned only the 58px word we typed — undetectable exactly when it
+        # matters. So the screen cannot answer this one; our own RECORDED INTENT can. We know
+        # we typed, and we know nothing came back.
+        #
+        # Shortening is the remedy because a shorter prefix is a SUPERSET: it cannot exclude
+        # the destination, only filter less. An accent can sit anywhere in a name — `Málaga`
+        # fails at two, `Ávila` at one — so this walks down rather than guessing a safe length.
+        if self._typed and self._shortenings < _MAX_SHORTENINGS:
+            shorter = _keyable_query(goal.where,
+                                     limit=max(1, _PREFIX_LEN - self._shortenings - 1))
+            self._shortenings += 1
+            logger.info(f"[world_map] the filter for {goal.where!r} came back empty — its "
+                        f"name is spelled differently in the game (an accent, most likely), "
+                        f"so retyping the shorter {shorter!r} "
+                        f"({self._shortenings}/{_MAX_SHORTENINGS})")
+            self._pending_query = shorter
+            self._typed = self._type_attempts = 0
+            self._type_prefix(shorter)
+            return ActivityResult(WORKING, {"did": f"typed {shorter!r}"}, detail=str(goal))
+
         logger.info(f"[world_map] {goal.where!r} is not on screen — opening the list")
         self._open_list(goal)
         return ActivityResult(WORKING, {"did": "opened the destination list"}, detail=str(goal))
@@ -384,7 +463,14 @@ class WorldMapActivity:
         already = False
         try:
             from actions.sail_actions import search_box_holds
-            already = search_box_holds(goal.where[:_PREFIX_LEN], self._frame())
+            # THE SAME QUERY WE TYPE, or the check answers about a query nobody sent.
+            # `goal.where[:_PREFIX_LEN]` is `Gijó`; `_keyable_query` types `Gij`, because
+            # the keyboard cannot send the accent. Comparing one against the other says
+            # "not typed yet" for every accented port, and the remedy for not-yet-typed is
+            # to retype — which taps the box and CLEARS the filter that was already showing
+            # the row. Live 2026-09-09 at frames 91 and 94, twice, and the voyage ended at
+            # Porto.
+            already = search_box_holds(_keyable_query(goal.where), self._frame())
         except Exception as exc:                   # noqa: BLE001 — unknown is not "already"
             logger.debug(f"[world_map] could not read the search box: {exc}")
         if already:
@@ -393,8 +479,14 @@ class WorldMapActivity:
         if (not already and self._typed < _MAX_TYPED
                 and self._type_attempts < _MAX_TYPE_ATTEMPTS):
             self._type_attempts += 1
-            prefix = goal.where[:_PREFIX_LEN]
-            logger.info(f"[world_map] typing {prefix!r} (prefix of {goal.where!r}) "
+            prefix = _keyable_query(goal.where)
+            if not prefix:
+                logger.info(f"[world_map] nothing in {goal.where!r} can be typed — "
+                            "scrolling the list instead")
+                self._open_list(goal)
+                return ActivityResult(WORKING, {"did": "opened the destination list"},
+                                      detail=str(goal))
+            logger.info(f"[world_map] typing {prefix!r} (of {goal.where!r}) "
                         f"— attempt {self._type_attempts}/{_MAX_TYPE_ATTEMPTS}, "
                         f"{self._typed}/{_MAX_TYPED} landed")
             self._pending_query = prefix
@@ -496,6 +588,58 @@ class WorldMapActivity:
         self._switch_to_barter()
         return ActivityResult(WORKING, {"did": "read the base tab"}, detail=str(goal))
 
+    def _write_back(self, goal, trades) -> None:
+        """Persist what a COMPLETE remote read learned, exactly as the on-site check does.
+
+        The remote path never did. `village_check.write_back_invariants` is called when the
+        fleet reads a village it is standing in; a read taken from the world map produced the
+        same knowledge and threw it away — so `_run_mission_for`'s `load_recipe`, whose own
+        comment says "written back by the check moments ago", found nothing.
+
+        Live 2026-09-04, the first mission for a good the KB had never seen: Berber Village
+        read cleanly (Argan Oil, 651 from 73 Myrrh + 146 Mutton + 146 Almond), the plan was
+        built from it — 7 rounds, 2,940 units of material — and the run then died on
+
+            FAILED at step plan: no recipe for 'Argan Oil' even after the check wrote back
+
+        with recipes.json still holding the same thirteen goods it started with. Every run
+        against an unknown good would have failed the same way, and every run against a known
+        one hid it, because the KB already had what the write-back would have added.
+
+        ONLY ON A COMPLETE READ. A partial list is refused above and must not be persisted
+        either — materials are invariant, so a short read is a reading failure, and writing it
+        would teach the KB a recipe with an ingredient missing.
+
+        Never fatal: this is bookkeeping about a reading that has already succeeded, so a
+        failure here is logged and the check still stands.
+        """
+        try:
+            from actions.village_check import write_back_invariants
+            write_back_invariants(self._as_check(goal, trades))
+        except Exception as exc:                       # noqa: BLE001 — bookkeeping only
+            logger.warning(f"[world_map] {goal.village}: could not write the check back to "
+                           f"the KB ({exc}) — the mission still has this reading")
+
+    def _as_check(self, goal, trades):
+        """The duck `write_back_invariants` reads: trades, village and the Base tab."""
+        from types import SimpleNamespace
+        base = dict(self._base or {})
+        used, total = base.get("barters_used"), base.get("barters_total")
+        remaining = None
+        if used is not None and total is not None:
+            remaining = max(0, int(total) - int(used))
+        return SimpleNamespace(
+            village=goal.village, trades=list(trades),
+            # SOURCE PORTS ARE NOT SOMETHING A REMOTE READ CAN KNOW — they are learned at
+            # markets, not from the village panel. Empty is honest, and `write_back_invariants`
+            # already falls back to whatever the KB holds rather than clearing it.
+            sources={},
+            amity_grade=base.get("amity_grade"),
+            # `write_back_invariants` reads amity_points as a SEQUENCE — `(pts or (None,))[0]`.
+            amity_points=((base.get("amity_points"),)
+                          if base.get("amity_points") is not None else None),
+            barters_used=used, barters_total=total, rounds_remaining=remaining)
+
     def _on_village_info_barter(self, goal) -> ActivityResult:
         """ONE SCREEN OF THE TRADE LIST PER TICK, then one scroll.
 
@@ -535,6 +679,7 @@ class WorldMapActivity:
             trades = self._merge_screens()
             logger.info(f"[world_map] {goal.village}: read complete after "
                         f"{len(self._screens)} screen(s)")
+            self._write_back(goal, trades)
             return ActivityResult(FINISHED,
                                   {"village": goal.village, "trades": trades,
                                    "base": dict(self._base),
@@ -578,11 +723,55 @@ class WorldMapActivity:
         """
         where = getattr(goal, "where", None)
         for_us = self._panel_is_for(where)
+
+        # A BARE `Move` NAMES NOTHING, SO UNKNOWN IS A REFUSAL HERE (live 2026-09-05).
+        #
+        # "Unknown is not no" is right for a CITY: its panel is the city's, the control says
+        # "Go to City", and refusing an unreadable panel would strand a correct departure.
+        # A saved route has neither — its commit control says only `Move`, so if the panel
+        # cannot be confirmed as ours then NOTHING on the screen ties the tap to the
+        # destination, and pressing it sails wherever the panel already pointed.
+        #
+        # At Hutu the route list was opened over route 2's panel. `location_panel_is_for`
+        # crops the CITY panel's region and matches the destination's FIRST WORD — 'Sans' of
+        # 'Sans to London' — so on a route panel it read nothing, returned None, and the bare
+        # Move went in. The fleet sailed 'sailing route 2': ETA 39 days on 6 days of supply,
+        # and the activity reported FINISHED for 'Sans to London'.
+        kind = getattr(goal, "kind", "port")
+        if kind == "route" and for_us is not True:
+            logger.warning(f"[world_map] the open panel cannot be confirmed as the route "
+                           f"{where!r} (reads {for_us!r}) — a bare 'Move' names nothing, so "
+                           "this would commit whichever route is already selected")
+            return ActivityResult(BLOCKED, {"where": where, "why": "route not confirmed"},
+                                  detail=f"cannot confirm the open panel is {where!r}")
         if for_us is False:
-            # NOT ours. Sailing from here goes somewhere nobody chose, so hand back and let
-            # the map be searched again rather than committing to whatever is open.
-            logger.warning(f"[world_map] the open Location Info panel is not {where!r} — "
-                           "not committing a departure we did not ask for")
+            # NOT ours. Sailing from here goes somewhere nobody chose — but REFUSING IS NOT
+            # ENOUGH, because nothing else closes it.
+            #
+            # Live 2026-09-06, the Seville leg. A stale Marseille panel was already open when
+            # the activity took control; this branch reported BLOCKED, `sail_runner` counted
+            # the attempt and dispatched again, met the IDENTICAL screen, and the leg died
+            # after two:
+            #
+            #     the open Location Info panel is not 'Seville' — not committing
+            #     could not set a course for 'Seville' after 2 attempts
+            #
+            # "Hand back and let the map be searched again" was the intent, and it does not
+            # follow from handing back: the search cannot run while the panel covers it. So
+            # take the ONE action that changes the screen — close it — and hand back, which
+            # is the pattern this activity exists to follow. The map's own state dies with it
+            # (`memory/world-map-state-dies-with-the-map`), so nothing is lost by closing.
+            if self._panel_closes < _MAX_PANEL_CLOSES:
+                self._panel_closes += 1
+                logger.warning(f"[world_map] the open Location Info panel is not {where!r} — "
+                               f"closing it so the map can be searched "
+                               f"({self._panel_closes}/{_MAX_PANEL_CLOSES})")
+                self._close_panel()
+                return ActivityResult(WORKING, {"where": where,
+                                                "did": "closed another place's panel"},
+                                      detail=f"Location Info was open for another place")
+            logger.warning(f"[world_map] the Location Info panel is still not {where!r} after "
+                           f"{_MAX_PANEL_CLOSES} closes — reporting rather than tapping on")
             return ActivityResult(BLOCKED, {"where": where, "why": "panel is another place"},
                                   detail=f"Location Info is open, but not for {where!r}")
         if not self._commit_departure(where):
@@ -590,6 +779,21 @@ class WorldMapActivity:
                                   detail="Location Info is open but has no Move button")
         return ActivityResult(FINISHED, {"where": where,
                                          "via": "location_info"}, detail=str(goal))
+
+    def _close_panel(self) -> None:
+        """Close whatever panel is over the map, through the seam already declared.
+
+        `back_fn` has been a constructor argument with no caller since the activity was
+        written; this is the case it was for. On the world map Back closes the panel, and if
+        it closes the MAP too that is equally fine — the map reopens on the Port tab and
+        holds no state worth keeping.
+        """
+        if self._back is not None:
+            self._back()
+            return
+        from actions import ui
+        ui.back(why="a Location Info panel for another place is covering the map")
+
 
     def _panel_is_for(self, where) -> Optional[bool]:
         """Whether the open panel belongs to `where`. None when it cannot be read — unknown
@@ -627,12 +831,38 @@ class WorldMapActivity:
     def _ensure_tab(self, tab: str, goal) -> bool:
         if self._require_tab is not None:
             return bool(self._require_tab(tab))
-        from actions.sail_actions import require_world_map_tab
+        from actions.sail_actions import active_world_map_tab, require_world_map_tab
         # Pass the tick's frame: the guard READS which tab is live, and reading it from a
         # screen taken after the one we were routed on is how a guard ends up answering about
         # a different moment than the decision it guards.
-        return bool(require_world_map_tab(tab, why=f"the {goal.kind} list lives on it",
-                                          frame=self._frame()))
+        frame = self._frame()
+        was_already_lit = active_world_map_tab(frame) == tab
+        ok = bool(require_world_map_tab(tab, why=f"the {goal.kind} list lives on it",
+                                        frame=frame))
+
+        # SWITCHING TABS IS A SCREEN CHANGE, SO THE TICK'S FRAME IS SPENT (live 2026-09-05).
+        #
+        # `_tick_frame` exists so every reader in one tick answers about the SAME screen —
+        # right, until something in that tick CHANGES the screen. This runs before the
+        # context is classified and before any handler, so after a switch the whole rest of
+        # the tick was reading the tab we just left.
+        #
+        # At Hutu, taking the route home: the tick opened on the PORT tab, this switched to
+        # Route, and everything downstream still read the port screen. The classifier called
+        # it MAP_OPEN instead of ROUTE_LIST; `_find_on_screen` OCR'd 32 tokens with no route
+        # in them and reported 'Sans to London' not on screen (it was on screen, and matches
+        # fuzzily — the frame was simply the wrong one); `_open_list` then took the PORT
+        # rail's icon at (69,170) and tapped it into the route list that had appeared, where
+        # that point is the divider between 'Sailing Route 2' and 'san to london'. It
+        # selected the row above, the bare Move committed it, and the fleet sailed a 39-day
+        # route on 6 days of supply.
+        #
+        # Dropping the frame costs one capture and only when a switch actually happened.
+        if ok and not was_already_lit:
+            logger.info("[world_map] the tab changed, so the tick's frame is spent — "
+                        "re-reading rather than deciding from the tab we just left")
+            self._tick_frame = None
+        return ok
 
     def _find_on_screen(self, where: str, kind: str = "port", *, in_list: bool = False):
         """(cx, cy) of `where` if it is already visible, else None.
@@ -759,14 +989,16 @@ class WorldMapActivity:
 
         The row is identified by POSITION, not by what it says — what it says is the problem.
         """
+        # ONE TEST, SHARED. This band and `_find_port_on_world_map`'s exclusion were two
+        # copies of the same rule and they disagreed — the reader's looked for the search
+        # FIELD, which is only findable when the box is empty, so on 2026-09-06 it failed to
+        # exclude a box holding 'gijo' and this backstop then discarded the real 'Gijon' with
+        # it. Both now ask `sail_actions.is_the_search_box`, which answers by POSITION.
         try:
-            from actions.sail_actions import _map_search_box
-            box = _map_search_box(frame)
+            from actions.sail_actions import is_the_search_box
+            return is_the_search_box(frame, getattr(el, "cx", 0), el.cy)
         except Exception:
             return False
-        if not box:
-            return False
-        return abs(el.cy - box[1]) <= _SEARCH_BOX_BAND
 
     def _tap_at(self, x, y) -> None:
         if self._tap is not None:
@@ -799,6 +1031,29 @@ class WorldMapActivity:
         if self._open_list_fn is not None:
             self._open_list_fn()
             return
+
+        # THE ROUTE TAB HAS NO LIST ICON — ITS LIST *IS* THE TAB (user, 2026-09-05: "it
+        # should not try to tap the Port icon when it is on another tab, because the port
+        # list icon is only on the Port tab").
+        #
+        # The rail's icons belong to whichever tab is lit: index 0 opens the PORT list,
+        # index 1 the Explore/village list. A route goal falls through to `else 0` and so
+        # aims at the PORT icon — a control that does not exist on the Route tab. There the
+        # saved routes are already listed, so that coordinate is over the LIST, and tapping
+        # it cannot open anything; it can only select a row.
+        #
+        # Live 2026-09-05 it landed on the divider between 'Sailing Route 2' and 'san to
+        # london', selected the row above, and the bare `Move` that appeared as a RESULT of
+        # that selection was then taken for a destination panel and pressed. The fleet sailed
+        # a 39-day route on 6 days of supply.
+        #
+        # Nothing to open means nothing to tap: hand back, and the next tick classifies the
+        # list that is already there (ROUTE_LIST) and searches it by name.
+        if (getattr(goal, "kind", None) or "port") == "route":
+            logger.info("[world_map] the Route tab lists its routes itself — there is no list "
+                        "icon to open, so looking again rather than tapping the port rail")
+            return
+
         from actions.sail_actions import (_explore_left_icons, _RAIL_FALLBACK_POINTS,
                                           _VILLAGE_LIST_ICON_INDEX)
 
@@ -820,26 +1075,54 @@ class WorldMapActivity:
 
         kind = getattr(goal, "kind", None) or "port"
         first = _VILLAGE_LIST_ICON_INDEX if kind == "village" else 0
-        order = ([icons[first]] if len(icons) > first else []) + \
-                [ic for i, ic in enumerate(icons) if i != first]
-        # AN ICON THAT OPENED THE LIST IS THE RIGHT ICON. The candidates are tried in order
-        # because they carry no label, and the NEXT TICK judges each — but only the question
-        # "did the list open?" is its to judge. Live 2026-08-29 the first icon opened the port
-        # list correctly, a later step failed for its own reasons, and the retry moved on to
-        # the second icon and opened something else entirely. A failure downstream is not
-        # evidence against the icon.
+        if len(icons) <= first:
+            logger.warning(f"[world_map] no rail position for the {kind} list — handing back")
+            return
+        pick = icons[first]
+
+        # THE SAME ICON, OR NOTHING (user, 2026-09-08: "if it can not see a list, it should
+        # not try another icon, that is almost always wrong").
+        #
+        # This walked the rail: the goal's own icon first, then every other one in turn, on
+        # the theory that they carry no label so only the next tick can judge them. But the
+        # rail's icons are not interchangeable candidates for one thing — each opens a
+        # DIFFERENT list, and the one we want is known from the goal. Tapping a second is not
+        # a retry, it is asking a different question.
+        #
+        # Live 2026-09-08 (frames 31-33 of trace_barter_cmd_2026-09-08T00-43-13): the port
+        # icon at (66,171) opened the port list correctly — frame 32 shows it, search box and
+        # all — and the next tick failed to SEE it, so this moved on to the next position
+        # (70,300), the goods icon, and threw the open list away. It then reported "attempt 4
+        # of 2", the bound having no effect, and the leg stalled until the no-progress guard
+        # ended the mission.
+        #
+        # So a list that will not open is reported, not worked around. Re-tapping the SAME
+        # point is the one honest retry — the game drops about one tap in twenty — and past
+        # that the screen is refusing rather than dropping.
         if self._list_opened:
             self._list_taps = 0
-        pick = order[min(self._list_taps, len(order) - 1)]
         self._list_taps += 1
+        if self._list_taps > _MAX_LIST_TAPS:
+            logger.warning(f"[world_map] the {kind} list did not open after "
+                           f"{_MAX_LIST_TAPS} taps at {pick} — reporting rather than trying "
+                           "another icon, which would open a different list")
+            return
         logger.info(f"[world_map] opening the {kind} list — "
                     f"{'icon' if detected else 'CALIBRATED point'} {pick} "
-                    f"(attempt {self._list_taps} of {len(order)}); the rail's icons carry no "
-                    f"label, so the next tick says whether it opened")
+                    f"(attempt {self._list_taps} of {_MAX_LIST_TAPS}); the rail's icons carry "
+                    f"no label, so the next tick says whether it opened")
         self._tap_at(*pick)
 
     def _type_prefix(self, prefix: str) -> None:
-        """Tap the search box and type a PREFIX, at a human interval (anti-cheat)."""
+        """Tap the search box and type the query, at a human interval (anti-cheat).
+
+        `_keyable_query` decides WHAT to type; this only sends it. The guard stays because a
+        non-ASCII character reaching the input service ends the run rather than the search.
+        """
+        if not prefix or not prefix.isascii():
+            logger.warning(f"[world_map] refusing to type {prefix!r} — the keyboard cannot "
+                           "send it, and an empty query would clear the filter")
+            return
         if self._type is not None:
             self._type(prefix)
             return
@@ -1036,6 +1319,15 @@ class WorldMapActivity:
 
 # A prefix, not the whole name: OCR mangles accents and the game filters as you type.
 _PREFIX_LEN = 4
+# How far the prefix may be walked back when the filter comes back empty. Three
+# gets `Gijo` down to `G`, which cannot exclude anything; past that the query is
+# not the problem.
+_MAX_SHORTENINGS = 3
+
+# One re-tap answers a dropped tap, which the game does about once in twenty. Past that the
+# rail is refusing, and the answer is to REPORT — never to tap a different icon, which opens
+# a different list (user, 2026-09-08).
+_MAX_LIST_TAPS = 2
 # Typing twice on the same destination means the box did not take it. Scrolling is next.
 # How far from the search box's centre still counts as the search box's own row. The field is
 # a single line; anything sharing its band is its text or its furniture, never a list row.
@@ -1059,6 +1351,10 @@ _MAX_FREE_TAPS = 1
 
 _MAX_TYPED = 2              # typings that must LAND before we fall back to scrolling
 _MAX_TYPE_ATTEMPTS = 4      # ...and how many may be SENT trying to land them
+# Another place's panel, closed so the map can be searched. TWO, because a stale panel
+# is cleared by one Back and a second says the Back is not landing — at which point it
+# is a fact to report, not something to grind at.
+_MAX_PANEL_CLOSES = 2
 _MAX_KB_CLEARS = 2
 # Putting the keyboard away as routine hygiene BEFORE reading or tapping, budgeted apart
 # from _MAX_KB_CLEARS above. That one is the poisoned-query recovery and resets the typing

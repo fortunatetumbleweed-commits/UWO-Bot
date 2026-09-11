@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade Goods Info dialog for Mutton showing current sell price (20 gold per unit) with quantity selector, opened by the bot tapping the Mutton tile to stage it for the hold-trim sell operation",
+  "full_text": "Trade Goods Info — Mutton (Food) — 1278 in hold. Description: The meat of a sheep. Recipes vary depending on region and culture. Prices: Current Price 16, Max Price 17, Min Price 15. Calculation: Sales Cost 16, Tax 0, Surcharge +4, Per Price 20. Quantity: 1/1,278. Min | Max. Final Sales Price: 20. Cancel | Load.",
+  "dismissal": "tap_accept",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "5495b74ca2bc453e",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-11T19:58:03.519427+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade Goods Info dialog for Mutton showing current sell price (20 gold per unit) with quantity selector, opened by the bot tapping the Mutton tile to stage it for the hold-trim sell operation",
+    "full_text": "Trade Goods Info — Mutton (Food) — 1278 in hold. Description: The meat of a sheep. Recipes vary depending on region and culture. Prices: Current Price 16, Max Price 17, Min Price 15. Calculation: Sales Cost 16, Tax 0, Surcharge +4, Per Price 20. Quantity: 1/1,278. Min | Max. Final Sales Price: 20. Cancel | Load.",
+    "dismissal": "tap_accept",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

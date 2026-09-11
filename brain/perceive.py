@@ -22,8 +22,11 @@
 
 from __future__ import annotations
 
+import json
 import time
+from datetime import datetime
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Optional
 
 from loguru import logger
@@ -161,6 +164,54 @@ def _is_top_level_screen(frame) -> bool:
 # straddling the daily reset still catches the real popup.
 _DAILY_NEWS_NO_SUPPRESS_TTL_S: float = 3600.0
 _daily_news_no_suppress_until: float = 0.0
+
+# ── Once a day, and the day is Korean ──────────────────────────────────────────
+#
+# "Daily news shows up exactly one time a day, and it only happens when there is a world
+# change... if it is not a new day (Korean time), and it has been closed before, it should
+# not check it" (user, 2026-09-08).
+#
+# This REPLACES the hour TTL above as the real answer to the same question. A one-hour guess
+# was standing in for a fact the game states plainly: the news is once per Korean day. A
+# session straddling 00:00 KST now sees the new day exactly, and a session that has already
+# met the news cannot raise a second one however the pixels fall — and a FALSE POSITIVE is
+# the expensive failure here (user, 2026-08-22), because dismissing a phantom means tapping
+# a disc on somebody's transaction.
+#
+# NOT A PERFORMANCE FIX, and it was proposed as one. The 285s this check cost on 2026-09-08
+# was the OmniParser pass it was forced to redo because `parse_screen` cleared the frame
+# cache on entry; with that clear gone the whole check measures 0.00s on an already-parsed
+# frame. What is left is the correctness half, which is why this is still here.
+#
+# The world-change half of the rule is not expressible at this layer: interruptors are
+# detected BEFORE the screen is classified, so there is no world here to compare. The day
+# record subsumes it in practice — once the day's news is closed, no world change can raise
+# another one until the Korean date rolls over.
+_DAILY_NEWS_SEEN_PATH = Path("memory/knowledge/state/daily_news_seen.json")
+
+
+def _korean_today() -> str:
+    """Today's date on the game's clock. The schedule is Korean and this machine is not."""
+    from vision.trade_event_reader import KST      # one definition of Korean time, not two
+    return datetime.now(KST).date().isoformat()
+
+
+def _daily_news_already_met_today() -> bool:
+    """Has the news already appeared on today's Korean date?"""
+    try:
+        seen = json.loads(_DAILY_NEWS_SEEN_PATH.read_text()).get("date_kst")
+    except Exception:                              # noqa: BLE001 — absent, empty or corrupt
+        return False
+    return bool(seen) and seen == _korean_today()
+
+
+def _remember_daily_news_met() -> None:
+    """Record that today's news has been raised, so nothing raises a second one."""
+    try:
+        _DAILY_NEWS_SEEN_PATH.parent.mkdir(parents=True, exist_ok=True)
+        _DAILY_NEWS_SEEN_PATH.write_text(json.dumps({"date_kst": _korean_today()}, indent=2))
+    except Exception as exc:                       # noqa: BLE001 — never fail a tick on this
+        logger.debug(f"[perceive] could not record the daily news: {exc}")
 
 
 def _element_under_point(frame, x: int, y: int):
@@ -415,6 +466,14 @@ def _has_daily_news_close_x(frame) -> bool:
             return False
     except Exception as exc:
         logger.debug(f"[perceive] daily_news action-button guard skipped: {exc}")
+
+    # ONCE A KOREAN DAY. Placed after the cheap size/dim test so a popup on screen is still
+    # measured — this declines to CALL it the daily news, and the generic obstruction path
+    # still deals with whatever is actually there.
+    if _daily_news_already_met_today():
+        logger.info("[perceive] a large dimmed popup, but today's daily news has already "
+                    "been met (Korean date) — this is something else")
+        return False
 
     _DAILY_NEWS_CLOSE_SEEN[0] = (close.cx, close.cy)
     logger.info(f"[perceive] daily_news close-X detected @ ({close.cx},{close.cy})")
@@ -759,6 +818,31 @@ def _detect_interruptors(frame, ocr_tokens: list):
                         f"[perceive] consult outcome=irrelevant — "
                         f"NOT dismissing (purpose: {analysis.purpose[:80]!r})"
                     )
+                # A DIALOG THAT BELONGS TO THE GOAL BELONGS TO THE ACTIVITY PURSUING IT.
+                #
+                # `dismissal` is Claude's "if you HAD to get rid of this, how would you" —
+                # the comment above has said so since it was written, and the code acted on
+                # it anyway. That was harmless only while the consult was BLIND: with no
+                # goal to relate anything to it could only ever answer `irrelevant`, so the
+                # branch above caught 99 of 99 consults on 2026-09-07 and this one never
+                # fired. Give it a goal and 13 of 18 fall through here instead.
+                #
+                # Live 2026-09-08 at Barcelona, five times over four minutes: the market
+                # tapped its own restock control because Iron was sold out and the goal
+                # wanted 709, and this layer tapped Cancel on the prompt that tap raised.
+                # The market owns RESTOCK_PROMPT and answers it with a blue gem; it never
+                # got the frame. Nothing may swallow what an activity owns (CLAUDE.md #4).
+                #
+                # What is left actionable is exactly what this path was built for: a thing
+                # that is NOT about the goal and is in the way — the 2026-05-15 Amsterdam
+                # `Exit Game?` confirmation. The analysis is recorded either way, and
+                # `purpose` is the better half of it for whoever does decide.
+                elif analysis is not None and analysis.relates_to_goal:
+                    logger.info(
+                        f"[perceive] the consult says this is about the goal — leaving it "
+                        f"to the activity rather than tapping {analysis.dismissal!r} "
+                        f"(purpose: {analysis.purpose[:80]!r})"
+                    )
                 elif analysis is not None and analysis.dismissal in _CONSULT_ACTIONABLE:
                     dismissal = analysis.dismissal
                     # Guard: press_back is unsafe on top-level locations.
@@ -773,10 +857,16 @@ def _detect_interruptors(frame, ocr_tokens: list):
                     # Claude recommended press_back; bot back-pressed
                     # out of the village to sea.
                     if dismissal == "press_back" and _is_top_level_screen(frame):
+                        # WHICH top-level screen, because the downgrade is only safe where
+                        # a dialog-shaped popup really is present. On a bare overworld there
+                        # is nothing to close, and tap_close_x falls through to a blind
+                        # corner tap that lands on the hamburger — see `_dismiss_close_button`.
+                        _where = getattr(frame, "_nav_state", None) or "unknown"
                         logger.info(
                             "[perceive] consult recommended press_back on a "
                             "top-level screen (village/port/sea) — downgrading "
-                            "to tap_close_x to avoid exiting the location"
+                            f"to tap_close_x to avoid exiting the location "
+                            f"(screen={_where!r}, obstruction={obstruction!r})"
                         )
                         dismissal = "tap_close_x"
                     found.append(f"_consult:{dismissal}")
@@ -1179,6 +1269,11 @@ def _dismiss_close_button(frame, iid: str, position) -> None:
                     f"@ {seen} (KB says {position})")
         tap(int(seen[0]), int(seen[1]))
         _telem("dismiss_close_button", "detected")
+        if iid == "daily_news":
+            # WE HAVE NOW MET TODAY'S NEWS. Recorded at the tap, not at the detection: it is
+            # closing it that spends the day's one appearance, and recording earlier would
+            # blind us to a popup still sitting on the screen.
+            _remember_daily_news_met()
         time.sleep(1.0)
         return
 
@@ -1214,11 +1309,31 @@ def _dismiss_close_button(frame, iid: str, position) -> None:
         # Last-resort heuristic.  Likely wrong when popups are stacked —
         # the KB should declare close_position for any popup hitting this
         # path more than once.
+        # SAY WHAT IS UNDER THE FINGER BEFORE IT LANDS. This fallback is blind — 0.92W x
+        # 0.08H, which on a 2400x1080 frame is (2208, 86) — and on an OVERWORLD that corner
+        # is the hamburger, so the "dismissal" OPENS the main menu.
+        #
+        # Live 2026-09-10 at Antalya: a consult recommended press_back on the port overworld,
+        # the guard above downgraded it to tap_close_x, nothing close-shaped was found, and
+        # this fired. The menu opened, the dispatcher then routed ReadHold to the activity
+        # that owns the main-menu screen, that activity closed it, ashore reopened it, and
+        # supply_verify ping-ponged eight times until the mission gave up.
+        #
+        # Logging only, for now: naming the element makes the next occurrence self-evident
+        # instead of a coordinate nobody recognises.
+        fx, fy = int(frame.width * 0.92), int(frame.height * 0.08)
+        under = None
+        try:
+            under = _element_under_point(frame, fx, fy)
+        except Exception as exc:                  # noqa: BLE001 — a log line, never the flow
+            logger.debug(f"[perceive] could not look under the corner: {exc}")
         logger.warning(
             f"[perceive] No close button found for {iid!r} and no KB position — "
-            "tapping screen-corner fallback (may close the wrong popup)"
+            f"tapping screen-corner fallback @ ({fx}, {fy})"
+            + (f", which is {under!r}" if under else ", which reads as nothing")
+            + " (may close the wrong popup — on an overworld this corner is the hamburger)"
         )
-        tap(int(frame.width * 0.92), int(frame.height * 0.08))
+        tap(fx, fy)
         _telem("dismiss_close_button", "noop")
     time.sleep(1.0)
 
@@ -1943,7 +2058,7 @@ def handle_unknown_blocking(frame, ocr_tokens: list, nav_detail: str = "") -> bo
     Returns True if handled (bot can continue), False if debounce hasn't
     triggered yet OR escalation is required.
     """
-    from actions.adb_actions import tap
+    from actions.adb_actions import tap, press_back as back
     from actions.sail_actions import _find_button
     import re, time as _time
 
@@ -2008,9 +2123,28 @@ def handle_unknown_blocking(frame, ocr_tokens: list, nav_detail: str = "") -> bo
         }, source="qwen")
         return True
 
+    # THE GAME MAY SIMPLY BE GONE. Checked before Claude, because a maintenance or patch
+    # notice is not a puzzle — it is an announcement, and paying a vision model to read it
+    # bought nothing twice on 2026-09-09.
+    try:
+        from brain.unexpected_dialog import looks_like_game_unavailable
+        if looks_like_game_unavailable(" ".join(str(t[0]) for t in (ocr_tokens or []))):
+            logger.error("[perceive] THE GAME IS NOT PLAYABLE — maintenance, a patch or a "
+                         "lost connection is on screen. It needs a restart and a login, "
+                         "which the bot cannot do; stopping rather than tapping at it.")
+            return False
+    except Exception as exc:                  # noqa: BLE001 — a check, never a failure
+        logger.debug(f"[perceive] could not test for an unavailable game: {exc}")
+
     # ── Tier 2: Claude Vision ─────────────────────────────────────────────────
     logger.info("[perceive] Qwen uncertain or complex dialog — escalating to Claude Vision")
     claude = _claude_resolve_unknown(frame, description)
+    try:                                  # the viewer's LLM tab reads every consult
+        from vision.llm_trace import record as _record
+        _record("claude (unknown screen)", "What is this blocking screen and how do we "
+                "get past it?", description or "", claude, nav_detail=nav_detail)
+    except Exception:                     # noqa: BLE001 — a trace is never load-bearing
+        pass
 
     if claude:
         dismissal = claude.get("dismissal", DISMISSAL_TAP_OK_OR_X)
@@ -2021,7 +2155,30 @@ def handle_unknown_blocking(frame, ocr_tokens: list, nav_detail: str = "") -> bo
             f"dismissal={dismissal!r}  reasoning={claude.get('reasoning', '')[:60]}"
         )
 
-        if dismissal in SEMANTIC_DISMISSALS and not (tap_x and tap_y):
+        # THE MODEL NAMES THE SCREEN; IT DOES NOT AIM THE TAP (user, 2026-09-09: "try back
+        # first and see if it goes away").
+        #
+        # This used to tap `tap_x, tap_y` straight from the answer. Live 2026-09-08 at
+        # Barcelona, the "Moon Rabbit's Part Gift Package" promo: Claude returned (879, 109)
+        # and the card's close-X is at (1764, 216) — nine hundred pixels out, onto the world
+        # behind the popup. One Back cleared the same card, verified, with no side effect.
+        # A vision model is reliable at saying WHAT a screen is and unreliable at saying
+        # WHERE a pixel is, and only the first of those is worth having: the identification
+        # is what learned `moon_rabbit_s_part_gift_package_purchase`, whose record stores a
+        # METHOD and no coordinate, so the next encounter needs no LLM at all.
+        #
+        # `a-fallback-fires-when-guessing-is-worst`: the lookup replaces the guess, and a
+        # failed lookup is a refusal. Back is the refusal that still makes progress — it is
+        # consumed by the topmost modal, which is the case whenever this runs. The two
+        # popups that do not take Back are the daily news, which has its own close-X path
+        # and never reaches here, and the Android system dialog, which ends the game session
+        # either way (user, 2026-09-09).
+        if back is not None:
+            logger.info("[perceive] learned screen — pressing Back rather than tapping "
+                        f"coordinates from the model (it offered {(tap_x, tap_y)})")
+            back()
+            _time.sleep(1.0)
+        elif dismissal in SEMANTIC_DISMISSALS and not (tap_x and tap_y):
             # Semantic action with no explicit Claude-supplied coords: don't
             # auto-act.  The new interruptor record still gets saved so the
             # next encounter can reuse the keywords; but committing the
@@ -2412,78 +2569,6 @@ _NOOP_SKIP_THRESHOLD = 3     # skip subsequent attempts after this many
 # A DIALOG THAT KEEPS COMING BACK GETS ITS OWN BUTTON PRESSED (user, 2026-09-02).
 #
 # An obstruction nobody recognises is normally left alone — the bot reports it and carries on
-# — and that is right for a popup sitting harmlessly over a world. It is wrong for a MODAL,
-# which answers nothing until it is answered, and blocks every attempt to do something else.
-#
-# Live 2026-09-02 at Madeira: a staged cart made Back raise "Moving to another menu will empty
-# the cart. Continue?". No interruptor matched, the Claude consult could not run (no API key),
-# so nothing answered it — and Back, the only thing the bot kept trying, is that dialog's
-# CANCEL. It raised and cancelled the same dialog four times and the mission died on it. The
-# market top menu was one OK away, and from there the buy could have been retried.
-#
-# So: seen this many times with nothing able to answer it, press its own positive button.
-# CLAUDE.md reserves the positive-button search for exactly this case — "something unexpected
-# interrupted a goal the bot was PURSUING and had already COMMITTED an action toward" — and
-# gold is what makes it identifiable: measured on that dialog, OK is 0.32 yellow and Cancel
-# is 0.000, so the colour picks the answer with nothing left to guess.
-_UNANSWERED_SIGHTINGS = 0
-_ANSWER_IT_ANYWAY_AFTER = 2
-
-# How far BELOW the obstruction's own bbox its buttons may sit. The detector's box covers the
-# title and body and stops above the button row — on that dialog it ended at y=676 with OK at
-# y=826 — so a strictly-inside search finds nothing to press. Scoped rather than frame-wide
-# because the market's own gold Purchase button is also on screen, and pressing THAT would
-# spend money the task never asked to spend.
-_BUTTONS_BELOW_BBOX_PX = 260
-
-
-def _answer_it_anyway(frame, bbox) -> bool:
-    """Press the positive button of an obstruction nothing could answer. True if pressed.
-
-    LAST RESORT, and deliberately narrow:
-
-      * only the GOLD button — `detect_commit_buttons` measures the yellow background that
-        makes a positive button positive in this game, so Cancel (0.000) can never be
-        chosen over OK (0.32). Wording is not consulted; POSITIVE_LABELS matching on words
-        is what once tapped 'Trade Info' and a panel title.
-      * only NEAR THIS OBSTRUCTION — inside its bbox, or within `_BUTTONS_BELOW_BBOX_PX`
-        beneath it, because the box stops above the button row. Frame-wide, the market's own
-        gold Purchase button is a candidate, and pressing it spends money nobody asked to
-        spend.
-      * only after the caller has seen the thing repeatedly with no answer, so a popup that
-        would have cleared itself never reaches here.
-
-    It reports what it pressed rather than what it achieved: the next perceive says whether
-    the screen moved, which is the same contract every other action here follows.
-    """
-    try:
-        from vision.omniparser import parse_fast_cached
-        from vision.region_detectors.commit_button import detect_commit_buttons
-        from actions.ui import tap_at
-    except Exception as exc:
-        logger.debug(f"[perceive] answer-anyway unavailable: {exc}")
-        return False
-
-    buttons = detect_commit_buttons(parse_fast_cached(frame), frame)
-    if bbox is not None:
-        x1, y1, x2, y2 = bbox
-        buttons = [b for b in buttons
-                   if x1 <= b.cx <= x2 and y1 <= b.cy <= y2 + _BUTTONS_BELOW_BBOX_PX]
-    if not buttons:
-        logger.warning("[perceive] a dialog keeps coming back and has no gold button to "
-                       "press — leaving it for the caller rather than tapping blind")
-        return False
-
-    best = max(buttons, key=lambda b: getattr(b, "yellow_frac", 0.0))
-    logger.warning(
-        f"[perceive] this obstruction has come back {_UNANSWERED_SIGHTINGS}x with nothing "
-        f"able to answer it — pressing its own positive button "
-        f"{getattr(best, 'verb', '') or '(gold)'!r} @ ({best.cx},{best.cy}) "
-        f"[yellow={getattr(best, 'yellow_frac', 0)}]")
-    tap_at(best.cx, best.cy, why="answering a dialog nothing else could clear")
-    return True
-
-
 def _signature_for_dismissal(tokens) -> str:
     """Cheap signature of the OCR tokens — used to decide if a dismissal
     actually changed the screen."""
@@ -2518,7 +2603,6 @@ def dismiss_interruptors(frame=None):
     the screen: a recovery acts on the world underneath, and causing transitions belongs
     to the dispatcher alone.
     """
-    global _UNANSWERED_SIGHTINGS
     from capture.adb_capture import capture_screen as _cap
     from actions.sail_actions import _ocr_frame
     from vision.obstruction_classifier import KIND_NONE
@@ -2553,13 +2637,32 @@ def dismiss_interruptors(frame=None):
                     "— not firing it: a recovery acts on the world, and perception does not "
                     "act. It is the dispatcher's to run, as a goal or a dialog answer."
                 )
-            if obstruction is not None and obstruction.kind != KIND_NONE:
-                _UNANSWERED_SIGHTINGS += 1
-                if _UNANSWERED_SIGHTINGS >= _ANSWER_IT_ANYWAY_AFTER:
-                    if _answer_it_anyway(frame, obstruction_bbox):
-                        _UNANSWERED_SIGHTINGS = 0
-                        frame = _cap()          # it changed; the next round sees the change
-                        continue
+            # AN UNANSWERABLE OBSTRUCTION IS THE DISPATCHER'S, NOT OURS (user, 2026-09-04).
+            #
+            # This used to press the obstruction's own gold button after seeing it twice.
+            # The rule stated twenty lines above is why it no longer does: dismissing an
+            # interruptor restores the world that was already there, and that is perception's
+            # to do — but PRESSING A BUTTON IS NOT ALWAYS A DISMISSAL, and there is no way to
+            # tell from a bbox and a colour which one it will be.
+            #
+            # Live 2026-09-05 at London it was not. The port overworld's quest/trend ticker
+            # was flagged `kind='popup'`, its yellow banners scored as gold buttons
+            # (0.47-0.67), and the yellowest — 'Major Trend Oc__' — was pressed. That is not
+            # a film over a world: it NAVIGATED, from the port overworld to the world map
+            # with the Trade Event Schedule open. Perception moved the fleet, which is the
+            # one thing this module may not do, and the mission stalled on a leg that wanted
+            # a market.
+            #
+            # THE DISPATCHER ALREADY ANSWERS DIALOGS, and better: `_offer_dialog` requires a
+            # real DialogModel — a brown title bar and a card — then asks
+            # `game_rules.answer_dialog`, which knows the named rules and refuses to spend
+            # red gems. Measured on the two frames, that is exactly the discrimination this
+            # needed: the Madeira cart confirm IS a dialog, the London ticker is not.
+            #
+            # The Madeira case this was written for is not reopened: the dispatcher path
+            # covers it. It used to be covered twice, by a second reader inside
+            # `ensure_sell_tab` — which is exactly how two readers came to disagree, so that
+            # one is gone and this is the only one.
             break
 
         # Fix D: pre-screen any interruptors whose dismissal has been a
@@ -2579,8 +2682,6 @@ def dismiss_interruptors(frame=None):
                     "OCR signature."
                 )
                 continue
-            # Something knows this one, so the escalation above is not warranted.
-            _UNANSWERED_SIGHTINGS = 0
             logger.info(f"[perceive] Interruptor detected: {iid!r} — dismissing")
             pre_sig = _signature_for_dismissal(tokens)
             _dismiss_interruptor(iid, frame, obstruction_bbox=obstruction_bbox)
@@ -4000,6 +4101,9 @@ def _perceive_uncached(frame=None) -> PerceiveResult:
                 parent_building=parent_building,
                 elements=op_elements,
                 task_hint=task_hint,
+                # so the prompt can drop the phone's own status bar and the account
+                # watermark — see `_above_the_device_strip`
+                frame_h=getattr(frame, "height", 0),
             )
             if l25_result:
                 l25_detail = l25_result.get("detail")

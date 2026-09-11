@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase result screen confirming that Anchovy (or another item) was bought for a total of 135,980 gold after a discount was applied, showing the post-purchase balance",
+  "full_text": "Result. Purchase Cost: 156,520. Tax: 7,670. Discount: -28,210. Total Amount: 135,980. Balance: 77,516,600,657. OK.",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "59cec49ac6404edf",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T19:23:50.007393+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase result screen confirming that Anchovy (or another item) was bought for a total of 135,980 gold after a discount was applied, showing the post-purchase balance",
+    "full_text": "Result. Purchase Cost: 156,520. Tax: 7,670. Discount: -28,210. Total Amount: 135,980. Balance: 77,516,600,657. OK.",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

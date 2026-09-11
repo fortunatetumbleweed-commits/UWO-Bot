@@ -1,0 +1,21 @@
+{
+  "purpose": "The port of Antalya has been selected, revealing the port's location menu listing all available facilities (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) — this is the destination-selection result popup that appears when a port is chosen on the world map.",
+  "full_text": "Summer Aug 18:44 | Harbor | Market | Shipyard | Bank | Inn | Sanctuary | Union | Bureau",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "3bbc266aec1a2753",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-11T02:32:16.234300+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The port of Antalya has been selected, revealing the port's location menu listing all available facilities (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) — this is the destination-selection result popup that appears when a port is chosen on the world map.",
+    "full_text": "Summer Aug 18:44 | Harbor | Market | Shipyard | Bank | Inn | Sanctuary | Union | Bureau",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "high"
+  }
+}

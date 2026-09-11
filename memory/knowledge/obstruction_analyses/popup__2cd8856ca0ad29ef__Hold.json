@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell submenu is open showing goods available to sell (Myrrh and Almond as port specialties), not the hold/cargo contents — the bot navigated to the Sell tab instead of reading the hold inventory",
+  "full_text": "Myrrh Medicine 476 Specialties 102% 1,387 (680) | Almond Luxuries 1,052 Specialties 94% 4,318 (3,272)",
+  "dismissal": "press_back",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "2cd8856ca0ad29ef",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T01:38:48.677067+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The Sell submenu is open showing goods available to sell (Myrrh and Almond as port specialties), not the hold/cargo contents — the bot navigated to the Sell tab instead of reading the hold inventory",
+    "full_text": "Myrrh Medicine 476 Specialties 102% 1,387 (680) | Almond Luxuries 1,052 Specialties 94% 4,318 (3,272)",
+    "dismissal": "press_back",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

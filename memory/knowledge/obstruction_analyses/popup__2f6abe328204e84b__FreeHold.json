@@ -1,0 +1,21 @@
+{
+  "purpose": "The sell tab is now showing the Matchlock Gun cargo item card (173 units, selling at 102% for 98 gold each, down 885 from base), which is part of the normal sell interface the bot just navigated to — not an obstruction but the expected sell screen state",
+  "full_text": "Matchlock Gun | Firearms | 173 units | 102% | 98 (-885)",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "2f6abe328204e84b",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-08T22:08:01.801409+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The sell tab is now showing the Matchlock Gun cargo item card (173 units, selling at 102% for 98 gold each, down 885 from base), which is part of the normal sell interface the bot just navigated to — not an obstruction but the expected sell screen state",
+    "full_text": "Matchlock Gun | Firearms | 173 units | 102% | 98 (-885)",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

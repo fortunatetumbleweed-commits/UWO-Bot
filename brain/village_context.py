@@ -36,6 +36,7 @@ BARTER_PANEL_BLOCKED = "barter_panel_blocked"
 EXCHANGE_CONFIRM = "exchange_confirm"
 BARTER_RESULT = "barter_result"
 OVERFLOW_PROMPT = "overflow_prompt"
+DISCARD_NOTICE = "discard_notice"
 
 CONTEXT_STATES = (
     VILLAGE_TOP_MENU,
@@ -45,6 +46,7 @@ CONTEXT_STATES = (
     EXCHANGE_CONFIRM,
     BARTER_RESULT,
     OVERFLOW_PROMPT,
+    DISCARD_NOTICE,
 )
 
 # The left menu identifies the village interior. `perceive` already matches on this vocab.
@@ -54,7 +56,16 @@ _VILLAGE_MENU_WORDS = ("barter", "gifting", "loot", "recruit")
 # here and completed — never dismissed (CLAUDE.md, dialog handling).
 _CONFIRM_TITLES = ("barter calculations",)
 _RESULT_TITLES = ("exchange complete", "barter result", "acquired")
-_OVERFLOW_WORDS = ("overflow", "exceeds", "cargo is full")
+# THE OVERFLOW CARD IS RECOGNISED BY ITS STRUCTURE — see
+# `vision.region_detectors.overflow_cards`, which owns the question because the same pair of
+# cards appears in the market's own cargo-full cases.
+#
+# This used to be `_OVERFLOW_WORDS = ("overflow", "exceeds", "cargo is full")`: three phrases
+# the game has never drawn. It says "Insufficient Empty Space". So `_on_overflow` — which
+# holds the last-round dumping policy — was UNREACHABLE for the life of the project, and
+# every overflow was discarded in silence. Live 2026-09-05 at San Village that was 360 units
+# on one card and 400 on another. `docs/dialogs_are_windows.md` recorded the miss as the
+# motivation for the window model and the keyword list was never changed. FC-3.
 # The panel's own prompt when it is OPEN with nothing chosen. It has no `good` and no `out`
 # at that moment, so the good/out test below reads it as CLOSED — which is exactly the
 # assumption Guiding Principle #3 warns about: one signal treated as THE signal. The prompt
@@ -82,7 +93,13 @@ def classify(frame, *, elements=None, panel=None, exchange_live=None) -> str:
         return BARTER_RESULT
     if any(t in text for t in _CONFIRM_TITLES):
         return EXCHANGE_CONFIRM
-    if any(w in text for w in _OVERFLOW_WORDS):
+    from vision.region_detectors.overflow_cards import is_discard_notice, is_overflow_card
+    # THE NOTICE FIRST: it opens OVER the overflow card, so both are on screen and only the
+    # innermost is live. Reading the overflow underneath and dumping into it would answer a
+    # card that is not taking input.
+    if is_discard_notice(text):
+        return DISCARD_NOTICE
+    if is_overflow_card(text):
         return OVERFLOW_PROMPT
 
     # THE RAW READING, not the derived state. `_read_panel_state()` returns a
@@ -102,13 +119,26 @@ def classify(frame, *, elements=None, panel=None, exchange_live=None) -> str:
         return BARTER_PANEL_NO_GOOD
 
     if _panel_is_up(panel):
-        if not selected_good(panel):
-            return BARTER_PANEL_NO_GOOD
         if exchange_live is None:
             # THE FRAME WE WERE GIVEN, not another capture. Re-shooting here asks the panel
             # a question about a screen the caller has not seen (per-frame perception
             # sharing), and costs a capture+parse on every village tick.
             exchange_live = _read_exchange_live(frame)
+        if not selected_good(panel):
+            # AN UNREADABLE NAME IS NOT AN EMPTY PANEL, and a live Exchange proves it.
+            #
+            # The game says "Select Trade Good." when nothing is chosen, and that prompt is
+            # tested ABOVE — so reaching here means the game did NOT say it. All that is
+            # missing is our reading of the name, and the button is the game's own verdict on
+            # whether the selected good can be traded (`village._why_it_stopped`: "a greyed
+            # Exchange means done... a live Exchange means there is more to do").
+            #
+            # Live 2026-09-05 at Berber this looped without end. Argan Oil's name would not
+            # OCR on any frame, so `_select_trade_good` selected it, answered "selected Argan
+            # Oil" — via the same Exchange rule, one layer down — and then the very next tick
+            # classified the panel as NO_GOOD again and threw the selection away. Six taps a
+            # minute, no rounds, for as long as it was left running.
+            return BARTER_PANEL_READY if exchange_live else BARTER_PANEL_NO_GOOD
         return BARTER_PANEL_READY if exchange_live else BARTER_PANEL_BLOCKED
 
     # No panel. Are we still in the village at all? The left menu says so — and this is the

@@ -1,0 +1,21 @@
+{
+  "purpose": "Another player's ship (TaylorFP, flagged as a pirate/enemy) has appeared nearby on the open sea, likely triggering a proximity or encounter notification overlay showing their fleet info and distance",
+  "full_text": "Patron +1 | 淡墨桜 | TaylorFP | 27.6 | 2↑ | 1▼",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "eb23dae773be0bcf",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-10T02:18:23.292923+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Another player's ship (TaylorFP, flagged as a pirate/enemy) has appeared nearby on the open sea, likely triggering a proximity or encounter notification overlay showing their fleet info and distance",
+    "full_text": "Patron +1 | 淡墨桜 | TaylorFP | 27.6 | 2↑ | 1▼",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

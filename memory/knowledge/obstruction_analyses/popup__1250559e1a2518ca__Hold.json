@@ -1,0 +1,21 @@
+{
+  "purpose": "The purchase tab is now showing available goods at Tripoli, including Candle at 102% price for 203 gold — this is the normal purchase screen the bot needs to buy Candles from, not an obstruction",
+  "full_text": "Turnip Food 783 units 102% 148 gold | Pickle Luxuries 263 units 91% 343 gold | Darbuka Crafts Specialties available from 10/12/2026/00:00:00 | Timer 00:06:45 | Diamonds 5",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "1250559e1a2518ca",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-09T20:56:55.715715+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The purchase tab is now showing available goods at Tripoli, including Candle at 102% price for 203 gold — this is the normal purchase screen the bot needs to buy Candles from, not an obstruction",
+    "full_text": "Turnip Food 783 units 102% 148 gold | Pickle Luxuries 263 units 91% 343 gold | Darbuka Crafts Specialties available from 10/12/2026/00:00:00 | Timer 00:06:45 | Diamonds 5",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "low"
+  }
+}

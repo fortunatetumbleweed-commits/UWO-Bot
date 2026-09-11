@@ -1,0 +1,21 @@
+{
+  "purpose": "A numeric keypad dialog has appeared to let the player enter how many Pigs to load/sell, overlaying the Trade Goods Info panel for Pig (Livestock) which shows a final sales price of 755 gold",
+  "full_text": "Trade Goods Info — Pig (Livestock) quantity: 1812. Calculation: Sales Cost 595, -30, +190, Final Sales Price 755. Enter Number: 1. Description: A domesticated version of the [wild boar]. Widely raised for its meat. Prices: Max Price 630, Min Price 531. Final Sales Price 755. Success Rate 76.2%. Cancel | Load",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "8fcaab77be60cc6e",
+  "goal_intent": null,
+  "cached_at": "2026-09-07T23:19:39.560213+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A numeric keypad dialog has appeared to let the player enter how many Pigs to load/sell, overlaying the Trade Goods Info panel for Pig (Livestock) which shows a final sales price of 755 gold",
+    "full_text": "Trade Goods Info — Pig (Livestock) quantity: 1812. Calculation: Sales Cost 595, -30, +190, Final Sales Price 755. Enter Number: 1. Description: A domesticated version of the [wild boar]. Widely raised for its meat. Prices: Max Price 630, Min Price 531. Final Sales Price 755. Success Rate 76.2%. Cancel | Load",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

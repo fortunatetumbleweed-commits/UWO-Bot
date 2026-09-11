@@ -1,0 +1,21 @@
+{
+  "purpose": "The purchase screen is displaying the normal market inventory at Tripoli, showing available trade goods (Turnip, Pickle, Darbuka) with prices and quantities — this is the active purchase sub-menu, not a popup obstruction",
+  "full_text": "00:29:55 | 40 diamonds | Turnip Food 783 units 102% 148 gold | Pickle Luxuries 263 units 99% 373 gold | Darbuka Crafts 0 units Specialties available from 10/12/2026/00:00:00",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "4a1642a01c0876e5",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-09T21:02:37.239905+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The purchase screen is displaying the normal market inventory at Tripoli, showing available trade goods (Turnip, Pickle, Darbuka) with prices and quantities — this is the active purchase sub-menu, not a popup obstruction",
+    "full_text": "00:29:55 | 40 diamonds | Turnip Food 783 units 102% 148 gold | Pickle Luxuries 263 units 99% 373 gold | Darbuka Crafts 0 units Specialties available from 10/12/2026/00:00:00",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "low"
+  }
+}

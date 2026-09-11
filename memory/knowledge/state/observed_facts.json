@@ -1,28 +1,10 @@
 {
   "fleet_capacity": {
-    "at": 1788550913.64255,
+    "at": 1789157013.321944,
     "value": 4952
   },
-  "mission_progress": {
-    "at": 1788550921.364396,
-    "value": {
-      "good": "Bambara Groundnut",
-      "phase": "bartering",
-      "recipe": {
-        "good": "Bambara Groundnut",
-        "materials": {
-          "Pig": 249,
-          "Raisin": 249
-        },
-        "obtain": 1036
-      },
-      "rounds": 3,
-      "rounds_remaining": 7,
-      "village": "Hutu Village"
-    }
-  },
   "settlement": {
-    "at": 1788536028.878461,
-    "value": "Lisboa"
+    "at": 1789093795.7921321,
+    "value": "Antalya"
   }
 }

@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade confirmation dialog showing the final breakdown of a multi-item cargo sale (Coral, Ebony, Textiles) including taxes, surcharges, and total revenue before committing the transaction",
+  "full_text": "Confirm Sales — Trade Goods | Sales Cost | Tax 6% | Surcharge | Price — Coral (Jewelry, qty 128): 104,960 | 0 | +29,184 | 134,144 — Ebony (Wares, qty 125) [Specialties]: 439,250 | -21,875 | +122,000 | 539,375 — Textiles (Fabrics, qty 127) [Specialties]: 421,259 | -25,019 | +131,318 | 527,558 — Total Sales: 965,469 | -46,894 | +282,502 | 1,201,077 — [Cancel] [OK]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "e6e84cc955ab9b3c",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T18:08:53.827368+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade confirmation dialog showing the final breakdown of a multi-item cargo sale (Coral, Ebony, Textiles) including taxes, surcharges, and total revenue before committing the transaction",
+    "full_text": "Confirm Sales — Trade Goods | Sales Cost | Tax 6% | Surcharge | Price — Coral (Jewelry, qty 128): 104,960 | 0 | +29,184 | 134,144 — Ebony (Wares, qty 125) [Specialties]: 439,250 | -21,875 | +122,000 | 539,375 — Textiles (Fabrics, qty 127) [Specialties]: 421,259 | -25,019 | +131,318 | 527,558 — Total Sales: 965,469 | -46,894 | +282,502 | 1,201,077 — [Cancel] [OK]",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

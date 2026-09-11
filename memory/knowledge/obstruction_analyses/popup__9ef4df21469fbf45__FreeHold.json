@@ -1,0 +1,21 @@
+{
+  "purpose": "The sell panel is showing the Raisin cargo card (950 units at 100% market saturation, selling for 1,098 gold with a +475 profit), which appeared as part of the bot opening the sell tab to begin offloading unwanted goods",
+  "full_text": "Raisin Luxuries 950 100% 1,098 (475)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "9ef4df21469fbf45",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-10T18:24:52.210667+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The sell panel is showing the Raisin cargo card (950 units at 100% market saturation, selling for 1,098 gold with a +475 profit), which appeared as part of the bot opening the sell tab to begin offloading unwanted goods",
+    "full_text": "Raisin Luxuries 950 100% 1,098 (475)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "The purchase screen is showing the normal market goods panel at Tripoli, including a Specialties item (Darbuka) with an availability date of 10/12/2026 — this is the standard purchase sub-menu view, not a popup obstruction.",
+  "full_text": "Turnip Food 783 102% 148 | Pickle Luxuries 263 373 | Darbuka Crafts Specialties available from 10/12/2026 00:00:00 | Timer 00:29:07 | Blue diamonds: 39 | Cargo slot showing 990",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "11d60d8fa7f74b18",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-09T21:03:24.651904+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The purchase screen is showing the normal market goods panel at Tripoli, including a Specialties item (Darbuka) with an availability date of 10/12/2026 — this is the standard purchase sub-menu view, not a popup obstruction.",
+    "full_text": "Turnip Food 783 102% 148 | Pickle Luxuries 263 373 | Darbuka Crafts Specialties available from 10/12/2026 00:00:00 | Timer 00:29:07 | Blue diamonds: 39 | Cargo slot showing 990",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "medium"
+  }
+}

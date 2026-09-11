@@ -33,6 +33,16 @@ _PILL_HALF_H       = 16          # vertical half-window around the timer row
 # coord would not.
 _REFRESH_ICON_FROM_TIMER = 96
 
+# The header band the restock pill is drawn in, and what makes a pill a pill. Measured over
+# four consecutive frames at Antalya: bright runs 1375-1422 and 1424-1578, i.e. a ~200px pill
+# split by the ↻ glyph. The filter button further right measures 26 and 23 wide, well under
+# the minimum.
+_BAND_Y0, _BAND_Y1 = 120, 200
+_WHITE_COL_FRACTION = 0.35
+_MIN_RUN_PX = 15
+_PILL_JOIN_GAP_PX = 40
+_PILL_MIN_W = 120
+
 
 @dataclass
 class RestockButton:
@@ -63,40 +73,87 @@ def _gem_currency(arr: np.ndarray, x1: int, y1: int, x2: int, y2: int) -> str:
 
 def find_restock_button(frame: Image.Image,
                         ocr_fn: Optional[Callable] = None) -> Optional[RestockButton]:
-    """Locate the Purchase-grid restock refresh button, or None if no timer is shown
-    (market not refreshable / not on the Purchase grid). Anchors on the OCR timer, then
-    finds the WHITE pill to its right. ocr_fn(frame, min_conf) -> [(word,conf,x,y)]."""
-    if ocr_fn is None:
-        from actions.sail_actions import _ocr_frame as ocr_fn
-    toks = ocr_fn(frame, min_conf=0.2)
-    timer = next(((w.strip(), int(x), int(y)) for w, _c, x, y in toks
-                  if 120 < y < 220 and _TIMER_RE.match(w.strip().replace(" ", ""))), None)
-    if timer is None:
-        return None
-    text, tx, ty = timer
+    """Locate the Purchase-grid restock refresh button, or None if it is not on screen.
 
+    THE TIMER IS NOT A GATE (user, 2026-09-05: "right now the timer should not be used at
+    all... it should not interfere with the refresh").
+
+    This anchored on the OCR'd countdown and returned None when the regex did not match. The
+    countdown is incidental text that happens to sit beside the button, and OCR is noisy on
+    it — measured on two consecutive frames of one unchanged screen:
+
+        frame 294  '00.00.51'    matches   -> button found
+        frame 295  '00.00:.42'   no match  -> None
+
+    One stray colon. `refresh_market` then reported "no restock control", `buy_to_goal` read
+    that as a market that cannot be refreshed and broke out, and the Antalya leg stopped at
+    595 Mutton of 1,015 — three barter rounds lost with the ↻ on screen at 3 blue gems.
+
+    So the PILL is the anchor now: a white rounded rectangle in the header band, which is
+    what the button actually is. It reads identically on all four of those frames
+    (1375-1578), while the text beside it did not.
+
+    The timer is still read when it happens to parse, and reported for the log and for a
+    future caller that would rather wait out a nearly-expired countdown than spend a gem.
+    Nothing depends on it.
+    """
     arr = np.asarray(frame.convert("RGB"))
-    y0, y1 = ty - _PILL_HALF_H, ty + _PILL_HALF_H
-    x0, x1 = tx + _PILL_X0, tx + _PILL_X1
-    h, w = arr.shape[:2]
-    y0, y1, x0, x1 = max(0, y0), min(h, y1), max(0, x0), min(w, x1)
-    strip = arr[y0:y1, x0:x1]
-    if strip.size == 0:
+    band = arr[_BAND_Y0:_BAND_Y1, :, :]
+    white = (band[:, :, 0] > 200) & (band[:, :, 1] > 200) & (band[:, :, 2] > 200)
+    col = white.mean(axis=0)
+
+    # Contiguous bright runs, then merge the ones separated by a thin dark line: the ↻ glyph
+    # splits the pill in two (measured 1375-1422 and 1424-1578 — a 2px gap).
+    runs, start_i = [], None
+    for i, v in enumerate(col):
+        if v > _WHITE_COL_FRACTION and start_i is None:
+            start_i = i
+        elif v <= _WHITE_COL_FRACTION and start_i is not None:
+            if i - start_i >= _MIN_RUN_PX:
+                runs.append([start_i, i])
+            start_i = None
+    if start_i is not None and len(col) - start_i >= _MIN_RUN_PX:
+        runs.append([start_i, len(col)])
+    if not runs:
         return None
-    # White pill = columns that are mostly bright (the rounded white rectangle).
-    white = (strip[:, :, 0] > 200) & (strip[:, :, 1] > 200) & (strip[:, :, 2] > 200)
-    col_white = white.mean(axis=0)                      # fraction white per column
-    cols = np.where(col_white > 0.35)[0]
-    if len(cols) < 20:                                  # no clear pill → not refreshable
+
+    pills, current = [], list(runs[0])
+    for r in runs[1:]:
+        if r[0] - current[1] <= _PILL_JOIN_GAP_PX:
+            current[1] = r[1]
+        else:
+            pills.append(current)
+            current = list(r)
+    pills.append(current)
+
+    pill = max(pills, key=lambda p: p[1] - p[0])
+    if (pill[1] - pill[0]) < _PILL_MIN_W:
+        return None                      # no pill this wide → not the restock control
+
+    # THE ↻ ICON IS THE TAP TARGET, not the pill centre and not the gem cost — a centre-tap
+    # on the gem did nothing (verified live 2026-08-17). It sits in the pill's first segment,
+    # left of the dark glyph that splits it.
+    first = next((r for r in runs if r[0] >= pill[0]), pill)
+    cx = (first[0] + min(first[1], pill[1])) // 2
+    cy = (_BAND_Y0 + _BAND_Y1) // 2
+
+    # Blue gems only; a red-gem cost is real money and is refused upstream.
+    currency = _gem_currency(arr, pill[0], cy - 14, pill[1], cy + 14)
+    if currency not in ("blue_gem", "red_gem"):
+        # NO COST ON IT MEANS IT IS NOT THE RESTOCK CONTROL. Other screens have wide white
+        # areas in this band — the village barter panel and the hold view both produce one —
+        # and the gem is what makes this button that button. Returning it as 'unknown' left
+        # the caller to refuse it for the wrong reason.
         return None
-    pill_x0, pill_x1 = int(cols.min()) + x0, int(cols.max()) + x0
-    # Tap the ↻ REFRESH ICON — NOT the pill centre / gem-cost, which is a no-op
-    # (verified live 2026-08-17: a centre-tap on the gem did nothing). The circular-
-    # arrow icon is the actual button; tapping it opens a "spend N blue gems?" confirm.
-    # Anchor the icon on the OCR'd TIMER (robust across ports: Malé +92, Masulipatnam
-    # +101) rather than the noisy pill edge.
-    cx = tx + _REFRESH_ICON_FROM_TIMER
-    # The blue-gem cost icon is the only coloured thing on the white pill — scan the
-    # whole pill (blue >> red → blue_gem; refuse red = real money).
-    currency = _gem_currency(arr, pill_x0, ty - 14, pill_x1, ty + 14)
-    return RestockButton(cx=cx, cy=ty, currency=currency, timer=text)
+
+    timer = None
+    try:
+        if ocr_fn is None:
+            from actions.sail_actions import _ocr_frame as ocr_fn
+        toks = ocr_fn(frame, min_conf=0.2)
+        timer = next((w.strip() for w, _c, x, y in toks
+                      if _BAND_Y0 < y < _BAND_Y1 and _TIMER_RE.match(w.strip().replace(" ", ""))),
+                     None)
+    except Exception:                    # noqa: BLE001 — a label, never a gate
+        timer = None
+    return RestockButton(cx=cx, cy=cy, currency=currency, timer=timer)

@@ -1,0 +1,21 @@
+{
+  "purpose": "Edmund Gilbert is offering to negotiate the purchase price of Herb Salt down by 21.5% (from 135,980 to 100,230 gold), with a 76.2% success rate and multiple negotiation attempts remaining — the bot must choose to use 1 chance, use all remaining chances, or decline",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 135,980 → 100,230 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Edmund Gilbert: Hmm, I think we can purchase this for 21.5% less. Would you like to negotiate? No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "b8e8befdd1e62031",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T19:12:49.212624+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Edmund Gilbert is offering to negotiate the purchase price of Herb Salt down by 21.5% (from 135,980 to 100,230 gold), with a 76.2% success rate and multiple negotiation attempts remaining — the bot must choose to use 1 chance, use all remaining chances, or decline",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 135,980 → 100,230 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Edmund Gilbert: Hmm, I think we can purchase this for 21.5% less. Would you like to negotiate? No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import Mapping, Optional, Sequence
+from typing import Callable, Mapping, Optional, Sequence
 
 
 @dataclass
@@ -28,10 +28,48 @@ class GatheringPlan:
     unsourced: set = field(default_factory=set)    # materials with no known source port
     total_distance: float = 0.0
     over_capacity: bool = False                    # total units needed exceed the hold
+    # Materials whose EVERY known source port is scarce this season. Not a failure to plan —
+    # a fact about the world, and the one case where giving up early is the right answer
+    # (user: "if all ports have low stock, then just abandon the task as non-profitable for
+    # the season"). The caller decides; the solver only reports.
+    low_everywhere: set = field(default_factory=set)
 
 
 def _dist(a, b) -> float:
     return math.hypot(a[0] - b[0], a[1] - b[1])
+
+
+# What a material is worth at a port where it is SCARCE this season, against 1.0 for an
+# ordinary shelf. Measured, not chosen: Faro returned ~457 Pig per blue-gem refresh and
+# Madeira ~110 Raisin on 2026-09-06, and 110/457 is 0.24.
+_LOW_SEASON_WEIGHT = 0.24
+
+
+def _season(season_fn, port: str, material: str) -> Optional[str]:
+    """What the KB remembers about this good's season here. Unknown on any trouble —
+    a planner must not fail because a record could not be read."""
+    if season_fn is None:
+        return None
+    try:
+        return season_fn(port, material)
+    except Exception:                         # noqa: BLE001 — no season is not an error
+        return None
+
+
+# A seventh of the need is one round of a seven-round plan — the smallest amount that still
+# buys something the mission can use, and with a constant per-season shelf it is exactly
+# "no more than seven gems". Shared with `market_buy._WORTH_WORKING_FRACTION`.
+_WORTH_WORKING_FRACTION = 7
+
+
+def _shelf(shelf_fn, port: str, material: str) -> int:
+    """How much `port` holds of `material`, or 0 when nobody has looked."""
+    if shelf_fn is None:
+        return 0
+    try:
+        return int(shelf_fn(port, material) or 0)
+    except Exception:                         # noqa: BLE001 — unknown is not a crash
+        return 0
 
 
 def plan_gathering(needed: Sequence[str],
@@ -39,7 +77,9 @@ def plan_gathering(needed: Sequence[str],
                    port_coords: Mapping[str, tuple],
                    start: tuple,
                    quantities: Optional[Mapping[str, int]] = None,
-                   cargo_capacity: Optional[int] = None) -> GatheringPlan:
+                   cargo_capacity: Optional[int] = None,
+                   season_fn: Optional[Callable[[str, str], Optional[str]]] = None,
+                   shelf_fn: Optional[Callable[[str, str], Optional[int]]] = None) -> GatheringPlan:
     """Plan a gathering route covering `needed` materials from their source ports.
 
     needed:            materials to gather.
@@ -49,6 +89,30 @@ def plan_gathering(needed: Sequence[str],
                        then run unordered (by coverage) rather than the plan failing.
     """
     needed = set(needed)
+    # TWO SPELLINGS OF ONE PORT MUST NOT BE TWO PORTS. `port_coords` arrives keyed
+    # accent-STRIPPED (`Gijon`, from `catalogue_coords`, so an accent-free map read matches)
+    # while a recipe holds the canonical accented name (`Gijón`). Every `in` and `==` below
+    # compared the two directly.
+    #
+    # Live 2026-09-09: Gijón fell out of the coordinate map, so Pig's sources shrank to Faro
+    # alone — Faro is recorded scarce, `all()` over one port is trivially true, and the
+    # mission refused to sail for "every known source is scarce". Gijón had no season record
+    # at all; it was UNREAD, not scarce, and it was the leg the fleet was on its way to.
+    #
+    # Folded for matching, and the RECIPE's name is kept as the identity: it is the game's
+    # own spelling, and what the search box has to be given (see `_keyable_query`).
+    from memory.places import fold_name
+    _by_fold = {fold_name(k): v for k, v in port_coords.items()}
+    _known = {}                              # canonical source name -> (x, y)
+    for _ports in material_sources.values():
+        for _p in _ports:
+            hit = _by_fold.get(fold_name(_p))
+            if hit is not None:
+                _known[_p] = hit
+    for _k, _v in port_coords.items():       # ports nobody sources from, still routable
+        _known.setdefault(_k, _v)
+    port_coords = _known
+
     # Materials with no known/reachable source can't be covered.
     unsourced = {m for m in needed
                  if not any(p in port_coords for p in material_sources.get(m, ()))}
@@ -79,7 +143,20 @@ def plan_gathering(needed: Sequence[str],
             # the fleet to Atuona at 5,948 instead of Masulipatnam at 294. Dropping the
             # distance term is not the same as guessing at it.
             d = _dist(cur, coords) if cur is not None else 0.0
-            score = len(new) if cur is None else len(new) / (d + 1.0)
+            # A MATERIAL THAT IS SCARCE HERE THIS SEASON IS WORTH LESS THAN ONE.
+            #
+            # Coverage alone treats every shelf as equal, so the plan will happily send the
+            # fleet to a drained port and refresh it — the refresh always "works", it just
+            # pays a quarter rate. Live 2026-09-06: Faro returned ~457 Pig per refresh and
+            # Madeira ~110 Raisin for the same 11 gems, and Raisin still finished 655 short,
+            # capping the barter at 6 rounds instead of 7.
+            #
+            # The weight IS that ratio (110/457 ~ 0.24), so a low-season port has to cover
+            # about four times as many materials to beat an ordinary one — which is the
+            # trade-off the numbers actually describe, not a knob.
+            worth = sum(_LOW_SEASON_WEIGHT if _season(season_fn, port, m) == "low" else 1.0
+                        for m in new)
+            score = worth if cur is None else worth / (d + 1.0)
             if score > best_score:
                 best, best_score, best_new, best_d = port, score, new, d
         if best is None:
@@ -90,13 +167,36 @@ def plan_gathering(needed: Sequence[str],
         total += best_d
         cur = port_coords[best]
 
+    # EVERY SOURCE SCARCE IS A DIFFERENT ANSWER FROM "NO SOURCE". Both leave the mission
+    # unable to gather, but one is worth waiting out and the other never will be.
+    # SCARCE IS NOT THE SAME AS USELESS. A port stocks the same amount all season and a
+    # refresh returns it again, so a shelf covering a seventh of the need is at most seven
+    # gems from covering it entirely — worth sailing to, however the ribbon reads (user,
+    # 2026-09-09). The same test `market_buy` applies at the shelf, applied before setting
+    # out, so the two layers cannot disagree.
+    #
+    # Live 2026-09-10: Faro and Gijón both read `low` for Pig, and the mission refused
+    # before sailing — though Gijón had supplied three barter rounds' worth the night
+    # before. Without a quantity the planner knew only "scarce", which is not enough to
+    # decide anything.
+    low_everywhere = set()
+    for m in needed - unsourced:
+        ports = [p for p in material_sources.get(m, ()) if p in port_coords]
+        if not ports or not all(_season(season_fn, p, m) == "low" for p in ports):
+            continue
+        want = int((quantities or {}).get(m, 0) or 0)
+        if want > 0 and any(_shelf(shelf_fn, p, m) * _WORTH_WORKING_FRACTION >= want
+                            for p in ports):
+            continue                          # one of them still covers a round's worth
+        low_everywhere.add(m)
+
     over_cap = False
     if cargo_capacity is not None and quantities is not None:
         over_cap = sum(quantities.get(m, 0) for m in covered) > cargo_capacity
 
     return GatheringPlan(route=route, covered=covered,
                          unsourced=unsourced | uncovered,
-                         total_distance=total, over_capacity=over_cap)
+                         total_distance=total, over_capacity=over_cap, low_everywhere=low_everywhere)
 
 
 def assign_purchases(route: Sequence[str],

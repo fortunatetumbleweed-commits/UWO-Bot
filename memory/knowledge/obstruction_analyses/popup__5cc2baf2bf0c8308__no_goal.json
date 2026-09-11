@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase confirmation summary showing the cost breakdown (base price, tax, discount) and total amount deducted for buying Sapphire jewelry in bulk, with the player's remaining gold balance displayed",
+  "full_text": "Result — Purchase Cost: 3,208,416 | Tax: 154,812 | Discount: -625,860 | Total Amount: 2,737,368 | Balance: 70,942,031,102 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "5cc2baf2bf0c8308",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T17:52:04.055919+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase confirmation summary showing the cost breakdown (base price, tax, discount) and total amount deducted for buying Sapphire jewelry in bulk, with the player's remaining gold balance displayed",
+    "full_text": "Result — Purchase Cost: 3,208,416 | Tax: 154,812 | Discount: -625,860 | Total Amount: 2,737,368 | Balance: 70,942,031,102 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

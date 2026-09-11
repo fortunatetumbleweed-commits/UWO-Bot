@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase tab of the market is now open, showing available goods for sale including Pig and other commodities — this is the next step in acquiring Pig stock toward the hold goal",
+  "full_text": "Purchase tab open. Sherry (Liquor) 89 stock, 101% price 679. Egg (Food) 755 stock, 96% price 149. Pig (Livestock) 246 stock, 100% price 272. Parsley (Spices) 272 stock, 107% price 359. Cargo 2,068/4,952. Timer 00:10:01. Nego Chance 63.7%, Success Rate 76.2%, Tax 6%.",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "3f0171e50dc3a3bb",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T01:48:50.133065+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase tab of the market is now open, showing available goods for sale including Pig and other commodities — this is the next step in acquiring Pig stock toward the hold goal",
+    "full_text": "Purchase tab open. Sherry (Liquor) 89 stock, 101% price 679. Egg (Food) 755 stock, 96% price 149. Pig (Livestock) 246 stock, 100% price 272. Parsley (Spices) 272 stock, 107% price 359. Cargo 2,068/4,952. Timer 00:10:01. Nego Chance 63.7%, Success Rate 76.2%, Tax 6%.",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

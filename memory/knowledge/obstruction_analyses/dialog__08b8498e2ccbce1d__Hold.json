@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase result summary showing the bot successfully bought goods (likely Azurite/dye) at a total cost of 28,808 gold after tax and discount, confirming the transaction completed without negotiation",
+  "full_text": "Result — Purchase Cost: 32,812 | Tax: 2,600 | Discount: -6,604 | Total Amount: 28,808 | Balance: 76,734,878,007 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "08b8498e2ccbce1d",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T14:14:36.068786+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase result summary showing the bot successfully bought goods (likely Azurite/dye) at a total cost of 28,808 gold after tax and discount, confirming the transaction completed without negotiation",
+    "full_text": "Result — Purchase Cost: 32,812 | Tax: 2,600 | Discount: -6,604 | Total Amount: 28,808 | Balance: 76,734,878,007 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

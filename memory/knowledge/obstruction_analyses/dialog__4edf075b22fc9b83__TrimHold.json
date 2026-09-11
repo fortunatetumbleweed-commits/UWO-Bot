@@ -1,0 +1,21 @@
+{
+  "purpose": "Sale result summary showing the bot just sold Iron at a loss of 146,382 gold, with a total payout of 16,186 gold, updating the balance to 71,745,974,937 gold",
+  "full_text": "Result — Mate Trade EXP: 5, Contribution: 0, Obtained Trade Point: 0, Trade Fame: 0, Sales Cost: 12,554, Tax: 0, Surcharge: 3,632, Loss: -146,382, Total Amount: 16,186, Balance: 71,745,974,937 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "4edf075b22fc9b83",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-08T23:55:57.437009+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Sale result summary showing the bot just sold Iron at a loss of 146,382 gold, with a total payout of 16,186 gold, updating the balance to 71,745,974,937 gold",
+    "full_text": "Result — Mate Trade EXP: 5, Contribution: 0, Obtained Trade Point: 0, Trade Fame: 0, Sales Cost: 12,554, Tax: 0, Surcharge: 3,632, Loss: -146,382, Total Amount: 16,186, Balance: 71,745,974,937 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

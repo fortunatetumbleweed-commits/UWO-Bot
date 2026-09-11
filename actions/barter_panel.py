@@ -43,8 +43,9 @@ def _no_panel_failure() -> dict:
             "screen": detail, "submenu": submenu}
 
 
-def _open_barter_panel() -> bool:
-    """Open the village's Barter sub-menu. True when the screen confirms we are on it.
+def _open_barter_panel(frame=None) -> bool:
+    """Tap the village's Barter menu item. ONE TAP on `frame`, and the next tick says whether
+    it opened.
 
     Goes through the LEFT MENU REGION, not a frame-wide label search. A chromed screen has a
     known layout (user, 2026-08-23): title top-left, the menu item list directly below it on
@@ -57,49 +58,39 @@ def _open_barter_panel() -> bool:
     `vision.region_detectors.left_menu` is the canonical reader for that region and also
     reports `is_locked` / `is_selected`, so this needs no geometry of its own.
 
-    Confirmed by the TITLE, which in this game is always the sub-menu currently selected
-    (`actions.ui.active_submenu`) — so "did the tap work?" is answered by reading, not
-    assuming.
+    Returns True when the tap went out, "unavailable" when the item wears the red ribbon that
+    means the day's rounds are spent, and False when there is no Barter item to tap.
+
+    WHAT IT NO LONGER DOES, and why none of it is lost:
+
+      * It captured its own screen and asked `on_submenu` whether we were already on the
+        panel. The dispatcher classified the screen to route us here, so the answer is
+        already known — asking again re-perceives, and a second reading of one source is not
+        a second source.
+      * It re-read the left menu up to three times, 1.5s apart, capturing again each time.
+        That retry was added on 2026-08-24 for a San Village read of `[]` that was not
+        transient at all: `detect_left_menu` was judging reward widgets by box width and
+        threw the real menu away every time. Three looks failed identically. Its own comment
+        records the conclusion — "a cushion, not a cure" — and the dispatcher's next tick is
+        the same cushion, without holding the tick open for four and a half seconds.
+      * It captured AFTER the tap to confirm the title, and checked that frame for the
+        daily-count Notice. Both are now the dispatcher's: the title is next tick's context,
+        and the Notice is a dialog, which `VillageActivity.on_dialog` claims.
     """
-    import time as _t
     from actions import ui
-    from actions.ui import on_submenu
-    from capture.adb_capture import capture_screen
     from vision.omniparser import parse_fast_cached
     from vision.region_detectors.left_menu import detect_left_menu
     try:
-        frame = capture_screen()
-        if on_submenu("barter", frame):
-            return True                      # already there — do not tap again
-
-        # ONE EMPTY FRAME IS NOT PROOF THE MENU IS ABSENT: the menu animates in, and a
-        # standby gate can cover it for a moment, so a single capture can land on nothing.
-        #
-        # NB on history: this retry was added on 2026-08-24 believing a San Village read of
-        # [] was transient. It was NOT — `detect_left_menu` was judging reward widgets by box
-        # width, OmniParser boxed three of the five rows full-width in that capture, and the
-        # real menu was discarded every single time. Three looks failed identically. The
-        # actual fix was in the detector (identify by association, not dimension).
-        # The retry is kept because animation and gates are real, but it is a cushion, not a
-        # cure — a read that fails repeatedly means the DETECTOR is wrong, not the timing.
-        item = None
-        for attempt in range(_MENU_READ_ATTEMPTS):
-            # PASS THE FRAME. The lock is a RED RIBBON, and only the pixels say so — the
-            # wording (`Cannot Exchange` here, `Unavailable` elsewhere) is not dependable.
-            menu = detect_left_menu(list(parse_fast_cached(frame)), frame.width,
-                                    frame.height, frame=frame)
-            item = menu.find("Barter") if menu else None
-            if item is not None:
-                break
-            if attempt < _MENU_READ_ATTEMPTS - 1:
-                logger.info(f"[mission.barter] left menu read as "
-                            f"{menu.labels() if menu else None} — re-perceiving "
-                            f"({attempt + 2}/{_MENU_READ_ATTEMPTS})")
-                _t.sleep(1.5)
-                frame = capture_screen()
+        if frame is None:                    # no tick frame — the caller is not a handler
+            from capture.adb_capture import capture_screen
+            frame = capture_screen()
+        # PASS THE FRAME. The lock is a RED RIBBON, and only the pixels say so — the wording
+        # (`Cannot Exchange` here, `Unavailable` elsewhere) is not dependable.
+        menu = detect_left_menu(list(parse_fast_cached(frame)), frame.width, frame.height,
+                                frame=frame)
+        item = menu.find("Barter") if menu else None
         if item is None:
-            logger.warning(f"[mission.barter] no 'Barter' item in the left menu after "
-                           f"{_MENU_READ_ATTEMPTS} looks "
+            logger.warning(f"[mission.barter] no 'Barter' item in the left menu "
                            f"(menu reads {menu.labels() if menu else None})")
             return False
         if item.get("is_locked"):
@@ -112,20 +103,7 @@ def _open_barter_panel() -> bool:
             return "unavailable"
 
         ui.tap_element(item, why="village → Barter", dwell="dialog")
-        after = capture_screen()
-        opened = on_submenu("barter", after)
-        if not opened and daily_barters_used_up(after):
-            # THE SAME FACT, ANSWERED THE OTHER WAY. The `is_locked` check above reads the
-            # game's answer BEFORE the tap, off the ribbon. Live 2026-08-30 at Svear the item
-            # was not locked at all: the tap went through and the game answered AFTER it, with
-            # a Notice. One detector saw nothing, so the run looped — tap, notice, dismiss,
-            # tap — until it stalled. Both readings mean the day is spent and the fleet should
-            # leave, so both return the same word.
-            logger.info("[mission.barter] the game says the daily Trade Count is spent — the "
-                        "bartering is finished and the fleet should leave")
-            return "unavailable"
-        logger.info(f"[mission.barter] Barter panel opened: {opened}")
-        return opened
+        return True
     except Exception as exc:
         logger.warning(f"[mission.barter] could not open the Barter panel: {exc}")
         return False
@@ -300,7 +278,8 @@ def _select_trade_good(good: str, recipe: Optional[Mapping[str, int]] = None) ->
             # The tap above told the repository the screen moved, so this captures. That is
             # the ONLY reason to capture here, and now it is the repository's decision rather
             # than this loop's habit.
-            reading = read_barter_panel(screen().get(why="barter tile read-back").frame)
+            read_frame = screen().get(why="barter tile read-back").frame
+            reading = read_barter_panel(read_frame)
             if reading is None:
                 break
             if _panel_signature(reading) != last_sig:
@@ -316,6 +295,39 @@ def _select_trade_good(good: str, recipe: Optional[Mapping[str, int]] = None) ->
         if _panel_matches(reading, good, recipe):
             logger.info(f"[mission.barter] selected {good!r} via the {label!r} tile")
             return True
+
+        # THE LIVE EXCHANGE BUTTON IS THE GAME'S OWN VERDICT, and it settles the case our
+        # reading cannot (user, 2026-09-05: "if the bot sees the yellow Exchange button, it
+        # should just tap it to barter, that is the deciding factor, it does not really need
+        # any other info to stop it").
+        #
+        # `village._why_it_stopped` already says this for the END of a barter — "a greyed
+        # Exchange means done even when the materials look sufficient; a live Exchange means
+        # there is more to do even when they do not". The same authority answers the START.
+        #
+        # Live 2026-09-05 at Berber, the first tile WAS Argan Oil and this rejected it:
+        #
+        #     good=None out=751 materials=[('Medicine', 588, 73), ('Food', 595, 126)]
+        #
+        # `out=751` is Argan Oil's own yield and those two rows are this mission's own cargo
+        # at its own ratios — 588 Myrrh and 595 Mutton, gathered and trimmed over three ports.
+        # Only the NAME failed to OCR, and `_panel_matches` could not fall back to the recipe
+        # because the panel labels its rows by CATEGORY ('Medicine', 'Food'), never by
+        # material. So a tile carrying our materials was called "not Argan Oil", and a
+        # finished gather died with everything it needed aboard.
+        #
+        # ONLY WHEN OUR OWN READING IS INCONCLUSIVE. A panel that NAMES another good has
+        # positively identified itself, and the next tile is the right move; the game would
+        # happily light Exchange for a good we did not come for if we had its materials too.
+        # An unreadable name is the one case where we have no verdict of our own, and there
+        # the game's is better than nothing.
+        named = (getattr(reading, "selected_good", None) or "").strip()
+        if not named and _exchange_still_live(read_frame):
+            logger.info(f"[mission.barter] the {label!r} tile did not read back a name, but "
+                        "Exchange is LIVE — the game says this tile can be bartered, and "
+                        "that outranks a name we could not read")
+            return True
+
         logger.info(f"[mission.barter] the {label!r} tile is "
                     f"{reading.selected_good!r}, not {good!r} — trying the next")
         return False
@@ -364,6 +376,35 @@ def _select_trade_good(good: str, recipe: Optional[Mapping[str, int]] = None) ->
 _STRIP_PITCH_TOL_FRACTION = 0.35
 
 
+# A goods thumbnail is a square of roughly 130px. Small enough to admit a box the parser has
+# clipped, large enough to exclude the quantity/status glyphs that sit inside and beneath it.
+_TILE_MIN_PX = 60
+
+
+def _is_tile_body(e) -> bool:
+    """Whether `e` is a goods thumbnail — the only part of a tile that selects.
+
+    An `icon` in the band still qualifies on type alone, exactly as before and without
+    needing a box. What is NEW is the second clause: a thumbnail-sized box of any class.
+    OmniParser returned San Village's two thumbnails as BUTTONS carrying their stock
+    quantity, so the icon-typed search found none, and the caller fell through to anchoring
+    on the status chip BELOW the tile — an inert control it then tapped forty times.
+    """
+    if not (350 < (getattr(e, "cy", 0) or 0) < 480):
+        return False
+    if getattr(e, "element_type", "") == "icon":
+        return True
+    x1, x2 = getattr(e, "x1", None), getattr(e, "x2", None)
+    y1, y2 = getattr(e, "y1", None), getattr(e, "y2", None)
+    if None in (x1, x2, y1, y2):
+        return False                     # no box, no size test — not a body we can trust
+    return (x2 - x1) >= _TILE_MIN_PX and (y2 - y1) >= _TILE_MIN_PX
+
+# How far up from the thumbnail's bottom edge to aim, as a fraction of its height. Bounded
+# below by the lock banner across the middle and above by the chips beneath the tile.
+_TAP_ABOVE_BOTTOM_FRACTION = 0.28
+
+
 def _tradable_tiles(elements) -> list:
     """The goods tiles: an icon with a CATEGORY label directly beneath it.
 
@@ -372,48 +413,63 @@ def _tradable_tiles(elements) -> list:
     are found by pairing each category label with the icon above it, so nothing here is a
     fixed coordinate.
     """
-    icons = [e for e in elements
-             if getattr(e, "element_type", "") == "icon" and 350 < e.cy < 480]
+    # THE TILE BODY IS NOT ALWAYS AN `icon` ELEMENT, and requiring one is what made the tap
+    # land on nothing. At San Village 2026-09-04 OmniParser returned BOTH thumbnails as
+    # BUTTONS carrying their stock quantity — `button '91' (357,356)-(490,495)` — so `icons`
+    # came back empty, the anchor fell through to the status chip below, and the bot tapped
+    # the inert 'Abundant' badge at (424,509) once every eight seconds. The user watching it:
+    # "it indeed tapped but there was no response."
+    #
+    # What identifies the body is WHERE IT IS AND HOW BIG IT IS — a thumbnail-sized box in the
+    # icon band, in the label's column — not which class the parser happened to assign it.
+    # The cx pairing below is what keeps the left menu out: 'Loot' also lands in this band,
+    # at cx=179 against the strip's 423+, and is rejected on column.
+    # A COLUMN IS A TILE IF ANY OF ITS PARTS IS SEEN (user, 2026-09-05: "the exact string is
+    # not that important, it is an indicator of the existence of the tile. so it is better to
+    # not fail just because a word is not found").
+    #
+    # This walked the CATEGORY LABELS and hung an icon and a chip off each, so a tile whose
+    # label failed to OCR was dropped however plainly its thumbnail was drawn — the mirror of
+    # the bug that lost Argan Oil, where an unrecognised chip WORD did the dropping.
+    #
+    # Each of the three says the same thing — "a good is offered in this column" — and none is
+    # reliably present: OmniParser gave three labels and two icons at Hutu on 2026-08-30, and
+    # none at all on the frame that mattered. So group everything by COLUMN and let any part
+    # stand for the tile. What the parts still supply is DETAIL: the icon its extent, so the
+    # tap lands on the thumbnail; the chip and label their words, as hints that order the
+    # walk and never gate it.
+    icons = [e for e in elements if _is_tile_body(e)]
+    chips = [e for e in elements
+             if (getattr(e, "label", "") or "").strip() and 485 < e.cy < 530]
     labels = [e for e in elements
-              if (getattr(e, "label", "") or "").strip() and 530 < e.cy < 580]
-    status = [e for e in elements
-              if (getattr(e, "label", "") or "").strip().lower()
-              in ("insufficient", "depleted", "sufficient", "abundant")]
+              if (getattr(e, "label", "") or "").strip() and 530 <= e.cy < 580]
+
+    columns: dict = {}
+    for part, kind in ([(e, "icon") for e in icons] + [(e, "chip") for e in chips]
+                       + [(e, "label") for e in labels]):
+        key = next((k for k in columns if abs(k - part.cx) <= _COLUMN_TOL_PX), part.cx)
+        columns.setdefault(key, {}).setdefault(kind, part)
+
     out = []
-    for lab in labels:
-        icon = min(icons, key=lambda e: abs(e.cx - lab.cx), default=None)
-        if icon is not None and abs(icon.cx - lab.cx) > 80:
-            icon = None
-        st = min(status, key=lambda e: abs(e.cx - lab.cx), default=None)
-        if st is not None and abs(st.cx - lab.cx) > 80:
-            st = None
-        # THE CATEGORY LABEL PROVES THE TILE; THE ICON ONLY REFINES IT. Requiring an icon
-        # DROPPED the tile when OmniParser did not emit one — and it often does not: measured
-        # live 2026-08-30 at Hutu Village, three tiles on screen produced three category
-        # labels, three status chips, and only TWO icon elements. On the frame that mattered
-        # it produced none at all, so this returned [], and the caller reported "'Bambara
-        # Groundnut' is not on offer today" about a panel offering it, with six barter rounds
-        # unspent and both materials aboard.
+    for cx, parts in columns.items():
+        icon, chip, label = parts.get("icon"), parts.get("chip"), parts.get("label")
+        # TWO STACKED PARTS, OR A THUMBNAIL. One word at the right height is not a tile — the
+        # detail panel carries text at the category's height too, and a lone 'Negotiate' is
+        # what this used to reject with "a label with nothing under it is not a tile".
         #
-        # The row already decides the tap height (see `_aim_below_the_banner`, which takes the
-        # MEDIAN extent precisely because a single box comes back short when something
-        # overlaps it). A missing box is the same problem one step further on, and the same
-        # answer serves: keep the tile, let the row place it.
-        if icon is None and st is None:
-            continue                      # a label with nothing under it is not a tile
-        anchor = icon if icon is not None else st
-        out.append({"cx": lab.cx, "cy": anchor.cy,
-                    "y1": getattr(icon, "y1", None) if icon is not None else None,
-                    "y2": getattr(icon, "y2", None) if icon is not None else None,
-                    "category": (lab.label or "").strip(),
-                    "status": (st.label or "").strip() if st is not None else ""})
-    # LEFT TO RIGHT, as they are drawn. Built from OmniParser's element order these came out
-    # arbitrary — at Svear on 2026-08-26 the strip was walked 2nd, 4th, 1st, 3rd, so the good
-    # the mission wanted was tried third instead of first. The category hint below is only a
-    # hint, and for a good absent from _GOOD_CATEGORY it is None, which left the order
-    # entirely to chance.
+        # What that rule got wrong was WHICH part had to be present, not that corroboration
+        # was needed: it demanded the label specifically, so a tile whose label failed to OCR
+        # vanished. Any two of the three prove the column, and a thumbnail alone is enough by
+        # itself because `_is_tile_body` has already checked its band, its size and its shape.
+        if not icon and len([x for x in (chip, label) if x]) < 2:
+            continue
+        anchor = icon or chip or label
+        out.append({"cx": (label or icon or chip).cx, "cy": anchor.cy,
+                    "y1": getattr(icon, "y1", None), "y2": getattr(icon, "y2", None),
+                    "category": (getattr(label, "label", "") or "").strip(),
+                    "status": (getattr(chip, "label", "") or "").strip()})
     out.sort(key=lambda t: t["cx"])
-    return _aim_below_the_banner(_strip_row(out))
+    return _aim_below_the_banner(_strip_row(_under_the_banner(out, elements)))
 
 
 def _aim_below_the_banner(tiles: list) -> list:
@@ -430,6 +486,18 @@ def _aim_below_the_banner(tiles: list) -> list:
     The row decides, not each icon. Tiles share one vertical extent, and an individual box
     can come back short when something overlaps it — on that same frame the info tip clipped
     tile 4's icon, whose own box would have put the tap at y=442, back inside the banner.
+
+    ONLY THE THUMBNAIL SELECTS (user, 2026-09-04: "only tapping at the icon works, not on
+    the text"). The chips beneath it are their own controls — measured at San Village the
+    thumbnail spans y 361-486, the stock chip 491-527 and the category chip 532-570 — and a
+    tap on one of those does nothing at all, silently.
+
+    So the aim is bounded on BOTH sides, and 15% from the bottom was too little clearance:
+    it put the tap on the tile's bottom border beside the stock quantity. 28% sits below the
+    banner (which ends ~63% down) and well inside the artwork:
+
+        San   thumbnail 356-495, banner none      -> 456, clear of the '11' glyph
+        Svear thumbnail 366-514, banner 420-460   -> 473, below the banner
     """
     bottoms = [t["y2"] for t in tiles if t.get("y2") is not None]
     tops = [t["y1"] for t in tiles if t.get("y1") is not None]
@@ -437,10 +505,65 @@ def _aim_below_the_banner(tiles: list) -> list:
         if bottoms and tops:
             y1 = sorted(tops)[len(tops) // 2]
             y2 = sorted(bottoms)[len(bottoms) // 2]
-            t["tap_y"] = int(y2 - (y2 - y1) * 0.15)
+            t["tap_y"] = int(y2 - (y2 - y1) * _TAP_ABOVE_BOTTOM_FRACTION)
         else:
+            # NO ROW GEOMETRY AT ALL. `t["cy"]` is the tile's own anchor, which is the
+            # thumbnail whenever one was found — never the status chip, which is what this
+            # fell through to at San and tapped 40 times to no effect.
             t["tap_y"] = t["cy"]
     return tiles
+
+
+# The widest a real gap between neighbouring tiles gets. Measured across every panel seen:
+# 135, 135, 136 (Svear), 136 (Berber), 135 (San). 'Negotiate' sat 1,401 away.
+_STRIP_MAX_PITCH_PX = 260
+
+# The goods panel, measured from the banner's own left edge. A four-good strip reaches cx 829
+# against a banner starting at 365, so ~600px covers every panel seen; the detail panel's
+# controls sit at 1,900+. The slack absorbs a tile drawn a little left of its heading.
+_BANNER_LEFT_SLACK_PX = 60
+_BANNER_PANEL_WIDTH_PX = 700
+
+# How far apart two parts may sit and still belong to the same tile column. Measured: a
+# thumbnail, its chip and its label share a cx to within a pixel or two; neighbouring
+# columns are ~135 apart.
+_COLUMN_TOL_PX = 80
+
+
+def _under_the_banner(tiles: list, elements) -> list:
+    """Keep only the tiles that sit under the 'Tradable Trade Goods' banner.
+
+    THE STRIP HAS A HEADING, AND IT SAYS WHERE THE STRIP IS (user, 2026-09-05: "why is
+    Negotiation ever considered? it is far from the tiles, the tiles are under the Tradeable
+    Trade Goods banner, the negotiate button is in the right panel").
+
+    Everything above filters by HEIGHT alone — icons in one band, labels in another — with no
+    horizontal bound at all, so any element at the right height anywhere across a 2,400px
+    screen is a candidate. That is how the detail panel's 'Negotiate' at cx=1960 became a
+    goods tile at Berber on 2026-09-05 and was tapped twice.
+
+    `_strip_row` can reject it statistically, by spacing, and does. This asks the structural
+    question instead: is it in the panel at all? The banner is drawn at the strip's own left
+    edge, and the goods run rightwards from there — so a candidate LEFT of it is the left menu
+    and one far to its right is another panel.
+
+    The width allowance is generous on purpose: the banner's own box is narrower than the
+    strip it heads (365-683 against tiles reaching cx 829 on a four-good panel), so this
+    bounds the panel, not the heading. Absent the banner nothing is dropped — an unreadable
+    heading is not evidence about where the tiles are.
+    """
+    banner = next((e for e in elements
+                   if "tradable" in (getattr(e, "label", "") or "").strip().lower()), None)
+    if banner is None or getattr(banner, "x1", None) is None:
+        return tiles
+    left = banner.x1 - _BANNER_LEFT_SLACK_PX
+    right = banner.x1 + _BANNER_PANEL_WIDTH_PX
+    kept = [t for t in tiles if left <= t["cx"] <= right]
+    if len(kept) != len(tiles):
+        logger.info(f"[mission.barter] ignoring "
+                    f"{[t['category'] for t in tiles if t not in kept]} — outside the "
+                    f"'Tradable Trade Goods' panel (cx {left}-{right})")
+    return kept or tiles
 
 
 def _strip_row(tiles: list) -> list:
@@ -458,21 +581,50 @@ def _strip_row(tiles: list) -> list:
     `sail_actions._tab_strip_candidates`: a row is a row because it is evenly spaced, not
     because it is near the top.
     """
-    if len(tiles) < 3:
+    if len(tiles) < 2:
         return tiles
+    if len(tiles) == 2:
+        # A PAIR IS STILL A ROW. This bailed below three, so on a two-good panel the guard
+        # never ran — and at Berber on 2026-09-05 'Negotiate', 1,400px away in the detail
+        # panel, was accepted as a goods tile and TAPPED, twice. Neighbours in the strip sit
+        # about one tile apart; nothing else on the panel is that close.
+        span = tiles[1]["cx"] - tiles[0]["cx"]
+        return tiles if span <= _STRIP_MAX_PITCH_PX else tiles[:1]
     gaps = [b["cx"] - a["cx"] for a, b in zip(tiles, tiles[1:])]
-    typical = sorted(gaps)[len(gaps) // 2]           # the median gap IS the strip's pitch
-    if typical <= 0:
+    # THE PITCH IS WHICHEVER SPACING EXPLAINS THE MOST TILES. Neither the median nor the
+    # minimum gap does: both describe the gaps, and what we want is the one that describes
+    # the STRIP.
+    #
+    #   median — three candidates and one stray give gaps [134, 1402], and the median is
+    #            1402, so the stray's spacing becomes the rule and the real pair reads as the
+    #            outlier. Live 2026-09-05 at Berber that cut Argan Oil out of its own strip
+    #            and left 'Negotiate' in it, which the mission then tapped twice.
+    #   minimum — two strays 56px apart make 56 the pitch, and a four-tile strip at 135
+    #            becomes four runs of one.
+    #
+    # So try each observed gap as a candidate and keep the run it produces, longest wins.
+    # Ties go to the TIGHTER pitch, because the goods strip is the closest-packed row on the
+    # panel and everything else is further off.
+    def _run_for(pitch):
+        tol = max(_STRIP_PITCH_TOL_FRACTION * pitch, 12)
+        runs, current = [], [tiles[0]]
+        for gap, tile in zip(gaps, tiles[1:]):
+            if abs(gap - pitch) <= tol:
+                current.append(tile)
+            else:
+                runs.append(current)
+                current = [tile]
+        runs.append(current)
+        return max(runs, key=len)
+
+    candidates = sorted({g for g in gaps if g > 0})
+    if not candidates:
         return tiles
-    runs, current = [], [tiles[0]]
-    for gap, tile in zip(gaps, tiles[1:]):
-        if abs(gap - typical) <= max(_STRIP_PITCH_TOL_FRACTION * typical, 12):
-            current.append(tile)
-        else:
-            runs.append(current)
-            current = [tile]
-    runs.append(current)
-    best = max(runs, key=len)
+    best, typical = None, candidates[0]
+    for pitch in candidates:
+        run = _run_for(pitch)
+        if best is None or len(run) > len(best):
+            best, typical = run, pitch
     if len(best) < len(tiles):
         dropped = [t["category"] for t in tiles if t not in best]
         logger.info(f"[mission.barter] ignoring {dropped} — outside the goods strip "

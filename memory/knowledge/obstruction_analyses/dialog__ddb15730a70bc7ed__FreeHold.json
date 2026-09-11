@@ -1,0 +1,21 @@
+{
+  "purpose": "A trade confirmation dialog is asking the player to confirm the sale of Coral (Jewelry), Ebony (Wares/Specialties), and Textiles (Fabrics/Specialties) for a total price of 7,326,099 gold after taxes and surcharges, in order to free up cargo hold space.",
+  "full_text": "Confirm Sales — Trade Goods | Sales Cost | Tax 11% | Surcharge | Price — Coral (Jewelry) [184]: 2,113,424 | -55,936 | +589,536 | 2,647,024 — Ebony (Wares) [Specialties][123]: 1,896,783 | -245,385 | +527,301 | 2,178,699 — Textiles (Fabrics) [Specialties][184]: 2,122,808 | -284,648 | +662,216 | 2,500,376 — Total Sales: 6,133,015 | -585,969 | +1,779,053 | 7,326,099 — [Cancel] [OK]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "ddb15730a70bc7ed",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-08T21:12:38.153385+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A trade confirmation dialog is asking the player to confirm the sale of Coral (Jewelry), Ebony (Wares/Specialties), and Textiles (Fabrics/Specialties) for a total price of 7,326,099 gold after taxes and surcharges, in order to free up cargo hold space.",
+    "full_text": "Confirm Sales — Trade Goods | Sales Cost | Tax 11% | Surcharge | Price — Coral (Jewelry) [184]: 2,113,424 | -55,936 | +589,536 | 2,647,024 — Ebony (Wares) [Specialties][123]: 1,896,783 | -245,385 | +527,301 | 2,178,699 — Textiles (Fabrics) [Specialties][184]: 2,122,808 | -284,648 | +662,216 | 2,500,376 — Total Sales: 6,133,015 | -585,969 | +1,779,053 | 7,326,099 — [Cancel] [OK]",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "high"
+  }
+}

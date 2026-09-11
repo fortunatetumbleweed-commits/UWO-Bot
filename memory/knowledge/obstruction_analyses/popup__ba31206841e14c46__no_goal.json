@@ -1,0 +1,21 @@
+{
+  "purpose": "A trade item card for Coral (Jewelry) is highlighted in the Sell screen, showing quantity 231, sell rate 95%, and a base price of 14,715 with a market fluctuation of +4,562 — this is a selectable cargo item the player can choose to sell, not a blocking popup",
+  "full_text": "Coral Jewelry 231 95% 14,715 (4,562)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "ba31206841e14c46",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T13:20:09.579627+00:00",
+  "visit_count": 10,
+  "raw_api_response": {
+    "purpose": "A trade item card for Coral (Jewelry) is highlighted in the Sell screen, showing quantity 231, sell rate 95%, and a base price of 14,715 with a market fluctuation of +4,562 — this is a selectable cargo item the player can choose to sell, not a blocking popup",
+    "full_text": "Coral Jewelry 231 95% 14,715 (4,562)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

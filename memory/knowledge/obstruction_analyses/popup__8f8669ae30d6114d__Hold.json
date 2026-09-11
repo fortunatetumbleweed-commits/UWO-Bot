@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase Result dialog confirming the bot just bought 775 units of Pork, showing cost 92,904 gold with a 17,346 discount applied for a total of 75,558 gold paid, leaving a balance of 76,733,470,423 gold",
+  "full_text": "Result — Purchase Cost: 92,904 | Tax: 0 | Discount: -17,346 | Total Amount: 75,558 | Balance: 76,733,470,423 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "8f8669ae30d6114d",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T15:37:12.797262+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase Result dialog confirming the bot just bought 775 units of Pork, showing cost 92,904 gold with a 17,346 discount applied for a total of 75,558 gold paid, leaving a balance of 76,733,470,423 gold",
+    "full_text": "Result — Purchase Cost: 92,904 | Tax: 0 | Discount: -17,346 | Total Amount: 75,558 | Balance: 76,733,470,423 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

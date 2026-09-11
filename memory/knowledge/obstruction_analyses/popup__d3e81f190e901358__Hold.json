@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase tab in the market at Gijón is now open, showing available goods including Pig (Livestock) at 257 gold (100% stock) and other items; this is the expected next screen after opening the purchase tab to buy Pig",
+  "full_text": "00:09:41 | Pig Livestock 294 units 100% 257 gold | Pork Food 775 units 95% 188 gold | Raspberry Luxuries 363 units 96% 274 gold | Turron Luxuries Specialties 10/12/2026/00:00:00",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "d3e81f190e901358",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T15:22:15.582953+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase tab in the market at Gijón is now open, showing available goods including Pig (Livestock) at 257 gold (100% stock) and other items; this is the expected next screen after opening the purchase tab to buy Pig",
+    "full_text": "00:09:41 | Pig Livestock 294 units 100% 257 gold | Pork Food 775 units 95% 188 gold | Raspberry Luxuries 363 units 96% 274 gold | Turron Luxuries Specialties 10/12/2026/00:00:00",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

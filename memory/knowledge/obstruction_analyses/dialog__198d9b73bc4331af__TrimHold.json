@@ -1,0 +1,21 @@
+{
+  "purpose": "Numeric keypad dialog for entering the quantity of Raisins to load, opened so the bot can type 1081 as the target purchase quantity",
+  "full_text": "Enter Number [input field showing: 1] — keypad with digits 0-9, Max button, Cancel, Load. Trade Goods Info: Raisin (Luxuries, qty 1096). Final Sales Price 1,520. Min Price 1,081, Max Price 1,296.",
+  "dismissal": "tap_accept",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "198d9b73bc4331af",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-10T01:45:19.347346+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Numeric keypad dialog for entering the quantity of Raisins to load, opened so the bot can type 1081 as the target purchase quantity",
+    "full_text": "Enter Number [input field showing: 1] — keypad with digits 0-9, Max button, Cancel, Load. Trade Goods Info: Raisin (Luxuries, qty 1096). Final Sales Price 1,520. Min Price 1,081, Max Price 1,296.",
+    "dismissal": "tap_accept",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

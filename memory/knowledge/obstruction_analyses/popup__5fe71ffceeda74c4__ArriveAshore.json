@@ -1,0 +1,21 @@
+{
+  "purpose": "Another player's ship (TaylorFP, ranked Patron) and the Vespucci Assaulters fleet are visible on the open sea near the bot's vessel — this is the minimap/HUD panel showing nearby players and wind/heading data, not a blocking popup",
+  "full_text": "C/HW 27.6 | Patron TaylorFP | 14",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "5fe71ffceeda74c4",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-09T21:13:00.869817+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Another player's ship (TaylorFP, ranked Patron) and the Vespucci Assaulters fleet are visible on the open sea near the bot's vessel — this is the minimap/HUD panel showing nearby players and wind/heading data, not a blocking popup",
+    "full_text": "C/HW 27.6 | Patron TaylorFP | 14",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

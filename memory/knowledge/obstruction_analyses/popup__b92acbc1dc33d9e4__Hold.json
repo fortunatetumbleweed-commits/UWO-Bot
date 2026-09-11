@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase shop screen is visible showing Pig is sold out, which is the state after the bot declined the negotiation — no dialog or popup is blocking, this is just the normal purchase menu with Pig marked as sold out",
+  "full_text": "00:10:12 | 24 diamonds | Sherry Liquor (89) 96% 646 | Egg Food (755) 96% 149 | Pig Livestock Sold Out 99% 269 | Parsley Spices (272) 102% 342",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "b92acbc1dc33d9e4",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-09T23:48:37.037709+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The Purchase shop screen is visible showing Pig is sold out, which is the state after the bot declined the negotiation — no dialog or popup is blocking, this is just the normal purchase menu with Pig marked as sold out",
+    "full_text": "00:10:12 | 24 diamonds | Sherry Liquor (89) 96% 646 | Egg Food (755) 96% 149 | Pig Livestock Sold Out 99% 269 | Parsley Spices (272) 102% 342",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

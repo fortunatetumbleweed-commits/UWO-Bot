@@ -1,0 +1,21 @@
+{
+  "purpose": "The sell panel is showing the Matchlock Gun item card selected/highlighted in the market's sell tab, displaying its quantity (519), market rate (102%), and sell price (98 gold, down 866 from base) — this is the normal sell interface the bot just opened, not an obstruction",
+  "full_text": "Matchlock Gun — Firearms — Quantity: 519 — Market rate: 102% — Price: 98 (-866)",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "46baad8360ae802e",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-08T23:51:42.019650+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The sell panel is showing the Matchlock Gun item card selected/highlighted in the market's sell tab, displaying its quantity (519), market rate (102%), and sell price (98 gold, down 866 from base) — this is the normal sell interface the bot just opened, not an obstruction",
+    "full_text": "Matchlock Gun — Firearms — Quantity: 519 — Market rate: 102% — Price: 98 (-866)",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

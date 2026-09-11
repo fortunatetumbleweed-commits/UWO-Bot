@@ -392,8 +392,8 @@ _SHORT_READ_RATIO = 0.85
 def _strip(text: str) -> str:
     """Casefolded and accent-free, for asking whether one name sits inside another."""
     import unicodedata
-    return "".join(c for c in unicodedata.normalize("NFD", text or "")
-                   if unicodedata.category(c) != "Mn").casefold()
+    from memory.places import fold_name          # one fold, shared — see its docstring
+    return fold_name(text)
 
 
 def _match_margin(raw: str, match: str) -> float:

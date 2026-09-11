@@ -1,0 +1,21 @@
+{
+  "purpose": "The market is prompting the player to spend 135 Ducats to replenish the stock of a trade good (14 units remain out of 50 available slots), which does not affect the market price",
+  "full_text": "Replenish Stock? (Does not affect market price) Remaining: 36/50. Cost: 135 Ducats. Cancel | OK",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "d791ef86ccab1fc5",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T13:32:17.544881+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The market is prompting the player to spend 135 Ducats to replenish the stock of a trade good (14 units remain out of 50 available slots), which does not affect the market price",
+    "full_text": "Replenish Stock? (Does not affect market price) Remaining: 36/50. Cost: 135 Ducats. Cancel | OK",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

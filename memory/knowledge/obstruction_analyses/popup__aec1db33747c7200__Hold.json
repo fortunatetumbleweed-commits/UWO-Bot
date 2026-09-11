@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase tab at the Gijón market is now open, showing available goods including Pig (Livestock) at 294 units in stock, which is what the bot needs to buy in order to hold ~1081 Pig",
+  "full_text": "Purchase screen showing: Bullet (Firearms) 260 stock 96% 405g | Pig (Livestock) 294 stock 99% 254g | Pork (Food) 775 stock 106% 209g | Duck (Livestock) 399 stock 96% 138g | Raspberry (Luxuries) 363 stock 105% 300g | Turron (Luxuries) 0 stock Specialties available 10/12/2026/00:00:00 | Cargo 2314/4952 | Timer 00:05:08 | Nego Chance 63.7% Success Rate 76.2% Tax 0%",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "aec1db33747c7200",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T02:26:49.009823+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase tab at the Gijón market is now open, showing available goods including Pig (Livestock) at 294 units in stock, which is what the bot needs to buy in order to hold ~1081 Pig",
+    "full_text": "Purchase screen showing: Bullet (Firearms) 260 stock 96% 405g | Pig (Livestock) 294 stock 99% 254g | Pork (Food) 775 stock 106% 209g | Duck (Livestock) 399 stock 96% 138g | Raspberry (Luxuries) 363 stock 105% 300g | Turron (Luxuries) 0 stock Specialties available 10/12/2026/00:00:00 | Cargo 2314/4952 | Timer 00:05:08 | Nego Chance 63.7% Success Rate 76.2% Tax 0%",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

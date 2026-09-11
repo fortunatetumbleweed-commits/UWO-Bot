@@ -78,8 +78,8 @@ def fold_name(s: str) -> str:
     sail_actions has to bridge the same 'Male'/'Malé' gap.
     """
     import unicodedata
-    return "".join(c for c in unicodedata.normalize("NFKD", s or "")
-                   if not unicodedata.combining(c)).lower().strip()
+    from memory.places import fold_name          # one fold, shared — see its docstring
+    return fold_name(s)
 
 
 _SCALE_CACHE_PATH = Path("memory/knowledge/world_map/calibration.json")

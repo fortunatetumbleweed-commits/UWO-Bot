@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen panel is showing available trade goods (Coral/Jewelry and Textiles/Fabrics) with their quantities and market prices, and the right-side cargo panel shows 128 units of Coral selected for sale at a loss of 1,395,989 gold",
+  "full_text": "Coral (Jewelry) qty 1,409 at 108% price 1,048 (-10,877 vs base); Textiles (Fabrics) qty 1,536 at 104% price 4,154 (3,087 vs base). Specialties category. Cargo 4,710/4,952. Selected: 128 Coral. Nego. Chance 63.7%, Success Rate 76.2%, Trade Points 0P, Tax 6%, Profit/Loss on Sales: -1,395,989. Sell price 134,144.",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "7a0f89fd8848315f",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T18:05:06.397185+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The Sell screen panel is showing available trade goods (Coral/Jewelry and Textiles/Fabrics) with their quantities and market prices, and the right-side cargo panel shows 128 units of Coral selected for sale at a loss of 1,395,989 gold",
+    "full_text": "Coral (Jewelry) qty 1,409 at 108% price 1,048 (-10,877 vs base); Textiles (Fabrics) qty 1,536 at 104% price 4,154 (3,087 vs base). Specialties category. Cargo 4,710/4,952. Selected: 128 Coral. Nego. Chance 63.7%, Success Rate 76.2%, Trade Points 0P, Tax 6%, Profit/Loss on Sales: -1,395,989. Sell price 134,144.",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

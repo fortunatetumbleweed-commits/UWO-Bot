@@ -1,0 +1,21 @@
+{
+  "purpose": "The port navigation menu for Benghazi has opened, showing available facilities (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Bureau, Fortune Teller) — the bot has successfully arrived ashore and the port overlay is now displayed.",
+  "full_text": "Shipyard — Summer Aug 16:46 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Bureau, Fortune Teller",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "f9f604afca4e53f5",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-11T19:31:47.490770+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The port navigation menu for Benghazi has opened, showing available facilities (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Bureau, Fortune Teller) — the bot has successfully arrived ashore and the port overlay is now displayed.",
+    "full_text": "Shipyard — Summer Aug 16:46 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Bureau, Fortune Teller",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "high"
+  }
+}

@@ -64,3 +64,87 @@ class TheKeywordsMatchTheGame(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TheSameDialogRaisedByATabSwitch(unittest.TestCase):
+    """LIVE 2026-09-07 at Faro. Same card, a different way in, and a different failure.
+
+    Bordeaux raised it with a Back. Here `ensure_sell_tab` tapped 'Sell' with 454 Pig staged
+    and the hold 52 units over capacity, and the game asked the same question. Frames 8-11 of
+    trace_barter_cmd_2026-09-07T15-00-05, four times over:
+
+        frame 8   tap (174,276) on the Sell rail item
+        frame 9   the tap LANDED — title 'Sell', the Notice over it       <- THIS FRAME
+        frame 10  `_on_sell_tab` said no, so it logged "the tap was dropped" and re-tapped
+                  the rail at (68,276)
+        frame 11  back on Purchase, no dialog, cart intact
+
+    The card was never undetectable. The retry tap is OUTSIDE the modal, so it dismissed the
+    card as a Cancel — and the dispatcher, which re-perceived between calls, found nothing
+    left to see. What was missing was not a reader but the chance to use one.
+    """
+    STAGE = "tests/stage_suite/frames/faro_cart_confirm_on_tab_switch.png"
+
+    def _frame(self):
+        if not os.path.exists(self.STAGE):
+            self.skipTest("stage frame not available")
+        from PIL import Image
+        return Image.open(self.STAGE)
+
+    def _read(self):
+        from vision.omniparser import parse_fast_cached
+        from vision.region_detectors.dialog import detect_dialog
+        im = self._frame()
+        els = list(parse_fast_cached(im))
+        return im, els, detect_dialog(els, im.width, im.height, frame=im)
+
+    def test_the_dispatcher_classifies_it(self):
+        import brain.market_context as ctx
+        im, _els, _d = self._read()
+        self.assertEqual(ctx.classify(im), ctx.CONFIRM_DIALOG)
+
+    def test_the_card_offers_Ok_and_Cancel(self):
+        _im, _els, d = self._read()
+        self.assertEqual([getattr(a, "label", a) for a in (d.actions or [])],
+                         ["Ok", "Cancel"])
+
+    def test_the_rule_answers_Ok(self):
+        """Ok empties the cart and completes the switch — and we are here to TRIM, with the
+        hold already over capacity, so the cart is the thing we do not want."""
+        from brain.game_rules import answer_dialog
+        _im, _els, d = self._read()
+        opts = [getattr(a, "label", a) for a in (d.actions or [])]
+        self.assertEqual(answer_dialog(opts, d.body_text), "Ok")
+
+    def test_the_market_activity_claims_it_and_taps_Ok_inside_the_card(self):
+        from unittest import mock
+        from brain.activities.market import FreeHold, MarketActivity
+        im, els, d = self._read()
+        taps = []
+        act = MarketActivity(capture_fn=lambda: im, tap_fn=lambda x, y: taps.append((x, y)),
+                             omni_fn=lambda _f: els)
+        with mock.patch.object(MarketActivity, "_port_name", return_value="Faro"):
+            claimed = act.on_dialog(d, FreeHold(keep=("Water", "Food", "Pig", "Raisin")))
+        self.assertIsNotNone(claimed, "the game rules must not get this card first")
+        self.assertEqual(len(taps), 1)
+        x, y = taps[0]
+        x0, y0, x1, y1 = d.bbox
+        self.assertTrue(x0 <= x <= x1 and y0 <= y <= y1,
+                        f"tapped {taps[0]} outside the card {d.bbox} — which is what a tap "
+                        "outside does: it CANCELS, and the evidence is gone")
+
+
+class TheSellTabHandsBackRatherThanTappingAgain(unittest.TestCase):
+    """The retry is what destroyed the card, so the primitive taps once and reports."""
+
+    def test_it_taps_the_menu_item_exactly_once(self):
+        from unittest import mock
+        from PIL import Image
+        from actions.buy_materials import ensure_sell_tab
+        taps = []
+        blank = Image.new("RGB", (2400, 1080))
+        with mock.patch("actions.buy_materials._on_sell_tab", return_value=False), \
+             mock.patch("actions.buy_materials._sell_menu_item", return_value=(65, 274)):
+            ok = ensure_sell_tab(lambda: blank, lambda *a: taps.append(a), 0.0)
+        self.assertFalse(ok)
+        self.assertEqual(taps, [(65, 274)])

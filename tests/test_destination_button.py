@@ -168,3 +168,69 @@ class SelectWorldMapTabSmokeTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SanVillageRenderRace(unittest.TestCase):
+    """The San Village departure that failed live on 2026-09-04.
+
+    Session trace_barter_cmd_2026-09-04T17-35-01, frames 331-334. The fleet found San
+    Village in the rail and tapped it, then handed back BLOCKED — "Location Info is open but
+    has no Move button" — twice, and the mission died one tap short of the village.
+
+    The button was there. It renders a beat after the panel, and the frame the handler acted
+    on caught it MID-RENDER, where OCR split it and dropped a character:
+
+        frame 331/332  no button in the bottom bar at all
+        frame 333      'Move to' + 'Villags'      <- the frame the bot decided on
+        frame 334      "'Move to Village"          <- a second later, perfect
+
+    Frame 333 failed on an ASYMMETRY: the verb was matched with fuzzy_contains and the noun
+    with a plain substring test, so one lost 'e' sank a pair whose other half read perfectly.
+    """
+
+    def test_the_frame_the_bot_actually_failed_on(self):
+        """'Villags' — one dropped character — must still pair with 'Move to'."""
+        toks = [_tok("Move to", 0.95, 1108, 1011),
+                _tok("Villags", 0.90, 1239, 1011)]
+        self.assertIsNotNone(_find_destination_button(toks),
+                             "the noun match is not OCR-tolerant")
+
+    def test_the_noun_is_as_tolerant_as_the_verb(self):
+        """Both halves are one button and one OCR risk. A test that only mangles the verb
+        passes on the old code too, which is why this mangles each in turn."""
+        for verb, noun in (("Move to", "Villags"), ("Move ta", "Village"),
+                           ("Move ta", "Villaqe"), ("Go ta", "Village")):
+            with self.subTest(verb=verb, noun=noun):
+                toks = [_tok(verb, 0.9, 1108, 1011), _tok(noun, 0.9, 1239, 1011)]
+                self.assertIsNotNone(_find_destination_button(toks))
+
+    def test_KNOWN_LIMIT_city_is_too_short_to_fuzzy_match(self):
+        """'city' is 4 characters and fuzzy_contains matches targets under 5 EXACTLY, by
+        design — fuzzing short tokens gives false positives ('map' ~ 'tap'). So a mangled
+        'Citv' still misses while a mangled 'Villags' now matches.
+
+        Recorded rather than fixed: the live failure was a village, and loosening the global
+        short-token rule to buy one more noun would spend that safety everywhere it is used.
+        A city panel whose noun mis-OCRs will still need the merged form or another look."""
+        toks = [_tok("Go to", 0.9, 1108, 1011), _tok("Citv", 0.9, 1239, 1011)]
+        self.assertIsNone(_find_destination_button(toks))
+        toks = [_tok("Go to", 0.9, 1108, 1011), _tok("City", 0.9, 1239, 1011)]
+        self.assertIsNotNone(_find_destination_button(toks))
+
+    def test_the_merged_form_keeps_the_chevron_OCR_artifact(self):
+        """Fully rendered, the game flanks the button with chevrons and OCR glues the left
+        one on as an apostrophe: "'Move to Village" (frame 334)."""
+        toks = [_tok("'Move to Village", 0.95, 1128, 1008)]
+        self.assertEqual(_find_destination_button(toks), (1128, 1008))
+
+    def test_a_still_unrendered_button_is_not_invented(self):
+        """Frames 331/332 have no button. Tolerance must not become hallucination — the
+        bottom bar's own controls are not a destination commit."""
+        toks = [_tok("My Location", 0.95, 132, 1009),
+                _tok("Invest", 0.95, 331, 1010),
+                _tok("Trade Event", 0.95, 131, 934)]
+        self.assertIsNone(_find_destination_button(toks))
+
+    def test_tolerance_does_not_match_an_unrelated_pair(self):
+        toks = [_tok("Move to", 0.9, 1108, 1011), _tok("Harbor", 0.9, 1239, 1011)]
+        self.assertIsNone(_find_destination_button(toks))

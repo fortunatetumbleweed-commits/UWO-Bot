@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase confirmation summary showing the cost breakdown (base price, tax, discount, and total) for a bulk trade goods buy, confirming the transaction is ready to finalise",
+  "full_text": "Result — Purchase Cost: 72,270 | Tax: 3,520 | Discount: -13,090 | Total Amount: 62,700 | Balance: 69,672,524,697 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "06b9fc118701f0ed",
+  "goal_intent": null,
+  "cached_at": "2026-09-07T23:52:19.756688+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase confirmation summary showing the cost breakdown (base price, tax, discount, and total) for a bulk trade goods buy, confirming the transaction is ready to finalise",
+    "full_text": "Result — Purchase Cost: 72,270 | Tax: 3,520 | Discount: -13,090 | Total Amount: 62,700 | Balance: 69,672,524,697 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

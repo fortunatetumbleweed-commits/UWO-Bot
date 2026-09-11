@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase screen at Trabzon is now showing the available goods list after the restock prompt was answered — this is the normal purchase sub-menu view, not a blocking popup; the bot is now ready to buy Raisin to reach the ~1081 hold target",
+  "full_text": "00:29:54 190 | Carpet Fabrics 177 101% 1,091 | Pomegranate Food 641 94% 280 | Peony Medicine 491 97% 314 | Kutnu Fabrics Specialties 10/26/2026/00:00:00",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "250a69b5e948a244",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T14:47:09.809579+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase screen at Trabzon is now showing the available goods list after the restock prompt was answered — this is the normal purchase sub-menu view, not a blocking popup; the bot is now ready to buy Raisin to reach the ~1081 hold target",
+    "full_text": "00:29:54 190 | Carpet Fabrics 177 101% 1,091 | Pomegranate Food 641 94% 280 | Peony Medicine 491 97% 314 | Kutnu Fabrics Specialties 10/26/2026/00:00:00",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

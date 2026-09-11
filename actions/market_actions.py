@@ -36,6 +36,7 @@ from PIL import Image
 from actions.adb_actions import tap, press_back
 from capture.adb_capture import capture_screen
 from config.settings import MARKET_COORDS, MARKET_CONTENT_REGION
+from utils.digits import SEPARATORS as _SEP
 
 # KB dialog confirmation helper — avoids repeating `from brain.kb import control`
 # at every call site. Returns the keyword tuple for a dialog confirmation check.
@@ -363,10 +364,10 @@ def _read_cargo_capacity(frame: Image.Image) -> Tuple[int, int]:
     from vision.ocr import _get_reader
 
     def _parse_slash_number(text: str) -> Optional[Tuple[int, int]]:
-        m = re.search(r'([\d,]+)\s*/\s*([\d,]+)', text)
+        m = re.search(r"(\d[\d,.']*)\s*/\s*(\d[\d,.']*)", text)
         if m:
-            used  = int(m.group(1).replace(',', ''))
-            total = int(m.group(2).replace(',', ''))
+            used  = int(m.group(1).translate(_SEP))
+            total = int(m.group(2).translate(_SEP))
             if 100 <= total <= 200_000:
                 return used, total
         return None
@@ -521,10 +522,10 @@ class SellResult:
 def _parse_number(s: str) -> Optional[int]:
     """Parse a number string that may have commas, +/- signs."""
     import re
-    m = re.search(r'[\d,]+', s.replace("+", "").replace("-", ""))
+    m = re.search(r"\d[\d,.']*", s.replace("+", "").replace("-", ""))
     if m:
         try:
-            return int(m.group().replace(",", ""))
+            return int(m.group().translate(_SEP))
         except ValueError:
             pass
     return None
@@ -2680,6 +2681,31 @@ def _read_trade_points(elements):
         if m:
             return int(m.group(1).replace(",", "")), e
     return None, None
+
+
+def tap_the_award_chest(frame, tap_fn, omni_fn) -> Optional[int]:
+    """Claim the Trade Point award on THIS frame. One tap, no verifying, no waiting.
+
+    The counter reads 'N/1,000' and the chest sits at the right end of its row; N ≥ 1,000
+    means an award is pending. Returns the points that were showing, or None when there is
+    nothing to claim (counter not visible, or below 1,000).
+
+    `get_trade_point_award` does the same thing surrounded by a verify loop — up to six
+    captures and twelve seconds — and that loop is the bug rather than the safety net: the
+    claim opens a reward dialog which OCCLUDES the counter, so "the points did not drop" is
+    exactly what a SUCCESSFUL claim looks like from inside it, and the second attempt taps
+    the chest again through the dialog. The dispatcher already perceives every tick and
+    already has a handler for the dialog, so the honest primitive is this: tap once, say
+    what was showing, and let the next tick see what happened.
+    """
+    points, counter = _read_trade_points(omni_fn(frame))
+    if points is None or points < 1000:
+        return None
+    # Chest centre = counter right end less ~half the chest width (it spans the last ~80px).
+    tx, ty = counter.x2 - 49, (counter.y1 + counter.y2) // 2
+    logger.info(f"[trade-award] {points}/1,000 → tapping the award chest @ ({tx},{ty})")
+    tap_fn(tx, ty)
+    return points
 
 
 def get_trade_point_award(*, capture_fn=None, tap_fn=None, omni_fn=None,

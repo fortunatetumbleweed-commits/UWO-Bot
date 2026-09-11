@@ -53,15 +53,18 @@ class LastKnownHold(unittest.TestCase):
         self.assertIsNone(_last_known_hold())
 
     def test_the_plan_can_use_it_when_the_market_is_unreachable(self):
-        """3 rounds fundable from a remembered hold, where None gave 0."""
+        """Rounds fundable from a remembered hold, against far fewer without it."""
         from brain.barter_quantity import plan_barter_rounds
         needs = {"Ebony": 152, "Coral": 228, "Textiles": 228}
         observed_facts.remember("hold", HOLD)
         with_memory = plan_barter_rounds(679, needs, 7, 715,
                                          materials_on_hand=_last_known_hold(), cushion=0.15)
         without = plan_barter_rounds(679, needs, 7, 715, cushion=0.15)
-        self.assertEqual(without.rounds, 0)
-        self.assertEqual(with_memory.rounds, 3)
+        # 1, not 0: 715 free buys one unfunded round's 608 of material outright. The point
+        # stands on the GAP — remembering the hold is worth 3 extra rounds here.
+        self.assertEqual(without.rounds, 1)
+        self.assertEqual(with_memory.rounds, 4)
+        self.assertGreaterEqual(with_memory.rounds - without.rounds, 3)
 
 
 if __name__ == "__main__":

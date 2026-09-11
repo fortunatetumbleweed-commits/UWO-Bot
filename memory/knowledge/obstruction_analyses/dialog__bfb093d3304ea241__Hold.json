@@ -1,0 +1,21 @@
+{
+  "purpose": "The game is asking the bot to confirm restocking a trade good (Duck) back up toward its stock cap of 50, costing 36 gems, which does not affect market price",
+  "full_text": "Replenish Stock? (Does not affect market price) Remaining: 47/50 [cost: 36 gems] Ok / Cancel",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "bfb093d3304ea241",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T15:35:12.795629+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The game is asking the bot to confirm restocking a trade good (Duck) back up toward its stock cap of 50, costing 36 gems, which does not affect market price",
+    "full_text": "Replenish Stock? (Does not affect market price) Remaining: 47/50 [cost: 36 gems] Ok / Cancel",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

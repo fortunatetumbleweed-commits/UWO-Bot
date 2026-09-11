@@ -1,0 +1,21 @@
+{
+  "purpose": "The barter trade completed but the cargo hold is full (4,952/4,952), so the received Bambara Groundnuts (54 units) cannot be stored and will be discarded unless the bot taps Receive to acknowledge",
+  "full_text": "Insufficient Empty Space. Cannot receive item due to insufficient space. Please organize your Cargo Hold. Unreceived trade goods will be discarded. Received Trade Goods: 54. Cargo: 4,952/4,952 (100%). Receive.",
+  "dismissal": "tap_accept",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "a4fac7a86daaa763",
+  "goal_intent": "Barter",
+  "cached_at": "2026-09-10T19:14:23.890321+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The barter trade completed but the cargo hold is full (4,952/4,952), so the received Bambara Groundnuts (54 units) cannot be stored and will be discarded unless the bot taps Receive to acknowledge",
+    "full_text": "Insufficient Empty Space. Cannot receive item due to insufficient space. Please organize your Cargo Hold. Unreceived trade goods will be discarded. Received Trade Goods: 54. Cargo: 4,952/4,952 (100%). Receive.",
+    "dismissal": "tap_accept",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is displaying available trade goods (Coral, Textiles) with their current market prices and specialty bonuses, waiting for the player to select goods to sell",
+  "full_text": "Coral (Jewelry) quantity 169, price 97% — 11,947 (669). Textiles (Fabrics) quantity 1,280, price 108% — 120 (-947). Textiles marked as Specialties.",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "964f2275bbb0d82d",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T17:24:34.626525+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Sell screen is displaying available trade goods (Coral, Textiles) with their current market prices and specialty bonuses, waiting for the player to select goods to sell",
+    "full_text": "Coral (Jewelry) quantity 169, price 97% — 11,947 (669). Textiles (Fabrics) quantity 1,280, price 108% — 120 (-947). Textiles marked as Specialties.",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

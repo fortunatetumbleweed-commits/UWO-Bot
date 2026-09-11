@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase panel showing available trade goods (Mace, Ebony, Rosewood, T'nalak) at this port, with T'nalak locked behind an unlock condition — this is the standard market purchase screen, not a transient popup obstruction",
+  "full_text": "00:11:14 | 49 diamonds | Mace (Spices) 103% 1,311 gold — Specialties | Ebony (Wares) 94% 1,223 gold — Specialties | Rosewood (Wares) 99% 736 gold | T'nalak (Fabrics) — Specialties — Unlock Condition (0/1)",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "95dff2e5c82587a8",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T05:43:43.644546+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The Purchase panel showing available trade goods (Mace, Ebony, Rosewood, T'nalak) at this port, with T'nalak locked behind an unlock condition — this is the standard market purchase screen, not a transient popup obstruction",
+    "full_text": "00:11:14 | 49 diamonds | Mace (Spices) 103% 1,311 gold — Specialties | Ebony (Wares) 94% 1,223 gold — Specialties | Rosewood (Wares) 99% 736 gold | T'nalak (Fabrics) — Specialties — Unlock Condition (0/1)",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

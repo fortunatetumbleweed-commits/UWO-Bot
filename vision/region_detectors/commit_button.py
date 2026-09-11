@@ -23,6 +23,7 @@ from dataclasses import dataclass
 from typing import List
 
 import numpy as np
+from loguru import logger
 from PIL import Image
 
 from vision.ocr import read_text
@@ -133,6 +134,33 @@ def looks_like_commit_button(w: int, h: int, yellow_frac: float) -> bool:
     return w >= MIN_ASPECT * max(h, 1) and yellow_frac >= YELLOW_MIN_FRAC
 
 
+# A GOODS TILE CONTAINS NO BUTTONS (user, 2026-09-10: "the yellow banner is not a yellow
+# button ... there are no buttons in the good tiles"). These are BANNERS painted across a
+# tile to mark what the port is known for, and they are the same gold as a commit control —
+# which is the only thing this detector goes by, since in this game a positive button is
+# identified by its background and not its wording.
+#
+# `looks_like_commit_button` was the guard, and it is a SHAPE test: it rejects the squarish,
+# weakly-yellow tile highlight. A Specialties banner defeats it by being wide and strongly
+# gold — 508x46 at 0.9-ish against a commit pill's 554x75.
+#
+# Live 2026-09-10 at Lisboa: the hold held 1,841 Almond, which is a LISBOA SPECIALTY, so its
+# Sell tile carried the banner. With the basket empty the real Sell button was greyed and
+# undetectable, this banner was the only gold thing on screen, and `_find_sell_commit`'s bare
+# `commits[0]` handed it back as the Sell button. The tap landed inside the tile, which with
+# Put In Bulk staged the whole stack, and the next tick sold all 1,841 — during a trim whose
+# keep list named Almond. It had never fired before because the trim runs BEFORE gathering,
+# so the hold normally carries goods with no relationship to this port.
+_TILE_BANNERS = frozenset([
+    "specialties", "specialty", "on sale", "onsale", "recommended", "favorites",
+])
+
+
+def _is_tile_banner(verb: str) -> bool:
+    v = (verb or "").strip().lower()
+    return bool(v) and v in _TILE_BANNERS
+
+
 def _split_verb_cost(text: str) -> tuple:
     """Classify OCR tokens: numeric-ish → cost, alphabetic → verb."""
     verb_toks, cost_toks = [], []
@@ -237,6 +265,11 @@ def detect_commit_buttons(elements, frame: Image.Image,
             v2, c2 = _split_verb_cost(read_text(frame.crop((cut, y1, x2, y2))))
             verb = verb or v2
             cost = cost or c2
+        if _is_tile_banner(verb):
+            # A LABEL, NOT A CONTROL — see `_TILE_BANNERS`. Tapping it taps the tile.
+            logger.debug(f"[commit] ignoring the {verb!r} banner at "
+                         f"({e.cx},{e.cy}) — a goods tile holds no buttons")
+            continue
         out.append(CommitButton(verb=verb, cost=cost,
                                 currency=cost_currency(arr, x1, y1, x2, y2),
                                 cx=int(getattr(e, "cx", (x1 + x2) // 2)),
@@ -245,4 +278,85 @@ def detect_commit_buttons(elements, frame: Image.Image,
     # OmniParser flakiness: no yellow BUTTON bbox this frame → reconstruct from text.
     if not out:
         out = _detect_from_text(elements, arr, frame, min_yellow)
-    return out
+    return _drop_anything_inside_a_goods_tile(out, frame, elements)
+
+
+# ONLY THE MARKET HAS GOODS (user, 2026-09-10: *"right now only market has goods, if it is
+# not market activity, then just do not look for goods"*). So the question is not "does this
+# look like a card" but "am I on the market's goods page", and it is asked FIRST.
+#
+# Answered from the market's own TRADING controls, which exist because goods are being
+# traded — not from wording that happens to be there. Measured: both appear on the Purchase
+# and Sell pages and on neither the main menu nor the overflow card.
+#
+# Read from the elements rather than from the dispatcher's activity on purpose: a vision
+# detector that needed to be told which activity is running would be reaching up a layer.
+_MARKET_GOODS_CUES = ("put in bulk", "apply load ratio")
+
+
+def _is_the_market_goods_page(elements) -> bool:
+    """Is this the one screen in the game that has goods on it?"""
+    labs = {(getattr(e, "label", "") or "").strip().lower() for e in elements or ()}
+    return any(c in labs for c in _MARKET_GOODS_CUES)
+
+
+def _drop_anything_inside_a_goods_tile(commits: List[CommitButton],
+                                       frame: Image.Image,
+                                       elements=None) -> List[CommitButton]:
+    """A GOODS TILE CONTAINS NO CONTROLS (user, 2026-09-10).
+
+    ASKED ONLY ON THE MARKET'S GOODS PAGE (user, 2026-09-10: *"main menu has no goods, so
+    first it should not try to find goods"*, and *"only market has goods"*). What may exist
+    on a screen follows from WHICH screen it is; every other guard here is a property of a
+    card, which is the wrong question where there are no cards.
+
+    It was not academic. The main menu's icon buttons are 121x121 squares and four of them
+    passed as goods cards: one pixel over the size floor, and a perfect square is not LESS
+    wide than tall, so the landscape test let them through. Tightening the proportions fixes
+    those four; asking the right question first means the next screen's furniture never gets
+    the chance. It also saves the ~70ms measurement on every screen that is not a market.
+
+    Said POSITIONALLY, which is the durable form. The word list above catches `Specialties`
+    and would miss the next banner; a card's boundary catches every gold thing painted on
+    one — banners, price bars, highlights — because they are all LABELS, and a tap on any of
+    them is a tap on the tile.
+
+    `detect_goods_tiles` measures the cards from the frame rather than asking OmniParser,
+    which is the point: the box that caused this was OmniParser's, and it was wrong.
+
+    Only run when there is a candidate to test, since it costs ~70ms.
+    """
+    if not commits:
+        return commits
+    try:
+        from vision.region_detectors.goods_tiles import detect_goods_tiles, tile_containing
+        tiles = detect_goods_tiles(frame)
+    except Exception as exc:                      # noqa: BLE001 — never fail a detection
+        logger.debug(f"[commit] goods-tile check unavailable: {exc}")
+        return commits
+    if not _is_the_market_goods_page(elements):
+        if tiles:
+            # SAID, NOT SWALLOWED (user, 2026-09-10: *"if somehow something is recognized as
+            # a good in a different activity, then there is something wrong"*). Nothing is
+            # vetoed here — off the market a card cannot be real — but a silent skip would
+            # hide the thing worth knowing: either the detector is wrong about this screen,
+            # or the screen is not the one we think we are on. The main menu's 121x121 icons
+            # read as four cards before the proportions were tightened, and it took a stalled
+            # mission to notice.
+            logger.warning(f"[commit] {len(tiles)} goods-card shape(s) found OFF the market "
+                           f"— {[(t.w, t.h) for t in tiles][:4]}. Only the market has goods, "
+                           "so this is a defect in the reader or in where we think we are; "
+                           "ignoring them here either way")
+        return commits
+    if not tiles:
+        return commits
+    kept = []
+    for c in commits:
+        tile = tile_containing(tiles, c.cx, c.cy)
+        if tile is not None:
+            logger.info(f"[commit] {c.label!r} at ({c.cx},{c.cy}) is INSIDE the goods card "
+                        f"x[{tile.x1},{tile.x2}] y[{tile.y1},{tile.y2}] — a tile holds no "
+                        "controls, so this is a label")
+            continue
+        kept.append(c)
+    return kept

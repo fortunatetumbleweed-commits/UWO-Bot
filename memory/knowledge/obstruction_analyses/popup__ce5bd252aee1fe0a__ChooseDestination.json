@@ -1,0 +1,21 @@
+{
+  "purpose": "Another player's ship (TaylorFP, ranked Patron) is sailing nearby in the same sea zone, visible as an on-screen nameplate overlay — this is a normal multiplayer presence indicator, not a dialog or blocking popup.",
+  "full_text": "Patron TaylorFP",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "ce5bd252aee1fe0a",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-11T03:05:00.246560+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Another player's ship (TaylorFP, ranked Patron) is sailing nearby in the same sea zone, visible as an on-screen nameplate overlay — this is a normal multiplayer presence indicator, not a dialog or blocking popup.",
+    "full_text": "Patron TaylorFP",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

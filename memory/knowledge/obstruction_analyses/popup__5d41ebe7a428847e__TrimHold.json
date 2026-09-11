@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell sub-menu is showing the current cargo hold contents with Pig (492 units) and Raisin (1,081 units) available to sell, reflecting the state of the hold as the bot works toward trimming to target quantities",
+  "full_text": "Raisin Luxuries 1,081 100% 1,134 (546)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "5d41ebe7a428847e",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-10T02:28:52.821962+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The Sell sub-menu is showing the current cargo hold contents with Pig (492 units) and Raisin (1,081 units) available to sell, reflecting the state of the hold as the bot works toward trimming to target quantities",
+    "full_text": "Raisin Luxuries 1,081 100% 1,134 (546)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

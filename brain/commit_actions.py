@@ -28,7 +28,7 @@
 from __future__ import annotations
 
 import time
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Sequence
 
 from loguru import logger
 
@@ -345,16 +345,57 @@ def _yellow_commit_button(elements, frame, goal_keywords: Optional[Iterable[str]
     if not commits:
         return None
     if goal_keywords:
+        # A FILTER THAT GIVES UP IS NOT A FILTER. This kept `matched` only when it found
+        # something and otherwise fell through to `commits[0]` — so being asked for a button
+        # this screen does not have meant tapping whatever gold thing it did have.
+        #
+        # Live 2026-09-07 at San Village, frame 222 of trace_barter_cmd_2026-09-07T15-20-16.
+        # The barter round produced 379 Bambara Groundnut into a hold at 4,952/4,952 and the
+        # game asked what to do about it:
+        #
+        #     Insufficient Empty Space — "Cannot receive item due to insufficient space.
+        #     Please organize your Cargo Hold. Unreceived trade goods will be discarded."
+        #     Cargo: 223 water, 213 food, 1,812 Pig, 2,704 Groundnut          [Receive]
+        #
+        # Asked for `exchange`, this matched nothing, dropped the filter, and tapped
+        # `Receive` — accepting what fit and discarding 379 units of the product, while
+        # 1,812 Pig that no remaining round could use (the Raisin was gone) sat in the hold.
+        # The card is a QUESTION about what to jettison, not a confirmation, and answering it
+        # belongs to the activity that knows the barter's materials — which never saw it.
         kws = [k.lower() for k in goal_keywords]
-        matched = [c for c in commits if c.verb and any(k in c.verb.lower() for k in kws)]
-        if matched:
-            commits = matched
+        from brain.commit_actions import UNIVERSAL_COMMIT_LABELS as _U
+        commits = [c for c in commits
+                   if c.verb and (any(k in c.verb.lower() for k in kws)
+                                  or any(u in c.verb.lower() for u in _U))]
+        if not commits:
+            return None
     c = commits[0]
     import types
     return types.SimpleNamespace(
         label=(c.verb or (f"commit ({c.cost})" if c.cost else "commit")),
         cx=int(c.cx), cy=int(c.cy),
     )
+
+
+def _open_modal(frame, elements):
+    """The card covering this screen, or None. Best effort; never raises into a tap loop."""
+    try:
+        from vision.region_detectors.dialog import detect_dialog
+        d = detect_dialog(list(elements), frame.width, frame.height, frame=frame)
+        return d if (d is not None and getattr(d, "bbox", None)) else None
+    except Exception as exc:                    # noqa: BLE001 — a miss means "no card known"
+        logger.debug(f"[commit] could not read the card: {exc}")
+        return None
+
+
+def _within(card, btn) -> bool:
+    """Is this button inside the card? Unknown reads as OUTSIDE — this licenses a tap, so
+    "cannot tell" must not mean "go ahead"."""
+    try:
+        x0, y0, x1, y1 = card.bbox
+        return x0 <= int(btn.cx) <= x1 and y0 <= int(btn.cy) <= y1
+    except Exception:                           # noqa: BLE001
+        return False
 
 
 def commit_via_positive_taps(
@@ -425,6 +466,19 @@ def commit_via_positive_taps(
         # would pick a type-selector or tab instead.  Fall back to the
         # text-verb search when no yellow commit is present (dialogs, etc.).
         btn = _yellow_commit_button(elements, frame, goal_keywords)
+
+        # A BUTTON BEHIND A MODAL IS NOT REACHABLE, and tapping at it is the gesture that
+        # DISMISSES the modal — indistinguishable in the log from a misfire, and it destroys
+        # the card before anyone can read it. Live 2026-09-07 at San Village the overflow
+        # card was up and the text search below found the barter panel's own `Exchange`
+        # sitting behind it; with the yellow filter now refusing the card's `Receive`, that
+        # is the button this loop would have reached for next.
+        _card = _open_modal(frame, elements)
+        if _card is not None and btn is not None and not _within(_card, btn):
+            logger.info(f"[commit] {getattr(btn, 'label', btn)!r} is behind an open card — "
+                        "stopping rather than tapping through it")
+            break
+
         if btn is None:
             if goal_keywords:
                 btn = find_positive_button_for_context(
@@ -435,6 +489,10 @@ def commit_via_positive_taps(
                 btn = find_positive_button(
                     elements, frame_w=frame.width, frame_h=frame.height,
                 )
+            if _card is not None and btn is not None and not _within(_card, btn):
+                logger.info(f"[commit] the text search reached {getattr(btn, 'label', btn)!r} "
+                            "behind the open card — stopping rather than tapping through it")
+                break
             # The text search matches on words, and "trade" is a word that appears on
             # several controls that commit nothing. Require the game's yellow background
             # before treating a text match as a positive button.
@@ -494,8 +552,39 @@ def commit_via_positive_taps(
         tapped.append(key)
         time.sleep(settle_secs)
 
-    logger.warning(
-        f"[commit] reached max_taps={max_taps} without closing cycle — "
-        f"transaction may not have settled"
-    )
+    else:
+        # ONLY A LOOP THAT RAN OUT OF TURNS IS A RUNAWAY. Every `break` above is a deliberate
+        # stop — the cycle closed, or the card is not ours to answer — and reporting those as
+        # "may not have settled" made a correct refusal read like a failure.
+        if max_taps > 1:
+            logger.warning(
+                f"[commit] reached max_taps={max_taps} without closing cycle — "
+                f"transaction may not have settled"
+            )
     return tapped
+
+
+def tap_one_positive(*, goal_keywords: Sequence[str] = (), capture_fn=None,
+                     tap_fn=None) -> bool:
+    """Press the positive control ONCE and hand back. True when a tap went in.
+
+    THE ONE-SHOT FORM, for a caller inside the dispatcher's cycle. `commit_via_positive_taps`
+    keeps pressing until the cycle closes, which is right for an escalation path that owns
+    the screen until it settles — and wrong for an activity handler, which must do one thing
+    and return so the dispatcher can look again.
+
+    Live 2026-09-05 at San Village (FC-3, `docs/market_as_contexts.md`): the village's
+    `_on_confirm` called the looping form, iteration 1 tapped `OK`, the game raised
+    "Insufficient Empty Space", and iteration 2 tapped its `Receive` — then `OK` on
+    "Unclaimed trade goods will be discarded". Three screens, one handler call, no tick
+    between them, so the village's own `overflow_prompt` handler never ran and 360 units were
+    discarded. Nothing in that loop was careless; holding control across a capture is what
+    swallows.
+
+    The bound moves to the caller, where the goal's lifetime already is — the dispatcher
+    re-perceives after every action anyway, so "tap again" is the next tick's decision, made
+    on a screen that has been looked at.
+    """
+    tapped = commit_via_positive_taps(max_taps=1, goal_keywords=goal_keywords,
+                                      capture_fn=capture_fn, tap_fn=tap_fn)
+    return bool(tapped)

@@ -1,0 +1,21 @@
+{
+  "purpose": "Lorenzo Pinto (trade advisor) is offering to negotiate the Raisin sale price upward by 24.5% (from 192,844,547 to 228,344,660 gold), asking whether to use negotiation attempts with a 76.2% success rate",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 192,844,547 → 228,344,660 (24.5% up). Negotiation Success Rate: Failed ... 76.2% ... Success. Lorenzo Pinto says: In my opinion, we can sell this for 24.5% more. Would you like to negotiate? Options: No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "356416b2747f16ff",
+  "goal_intent": "SellHold",
+  "cached_at": "2026-09-10T19:40:02.315456+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Lorenzo Pinto (trade advisor) is offering to negotiate the Raisin sale price upward by 24.5% (from 192,844,547 to 228,344,660 gold), asking whether to use negotiation attempts with a 76.2% success rate",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 192,844,547 → 228,344,660 (24.5% up). Negotiation Success Rate: Failed ... 76.2% ... Success. Lorenzo Pinto says: In my opinion, we can sell this for 24.5% more. Would you like to negotiate? Options: No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

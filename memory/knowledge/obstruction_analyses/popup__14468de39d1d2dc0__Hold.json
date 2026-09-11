@@ -1,0 +1,21 @@
+{
+  "purpose": "A negotiation attempt dialog showing the merchant advisor Albrecht Wallenstein offering to negotiate the purchase price down by 21.5% (from 168,266 to 122,808 gold) with a 76.2% success rate, asking whether to use 1 or all remaining negotiation chances",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 168,266 → 122,808 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Albrecht Wallenstein: Hmm, we should be able to buy it for 21.5% less. Why don't you try negotiating? Options: No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "14468de39d1d2dc0",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T01:25:39.581906+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A negotiation attempt dialog showing the merchant advisor Albrecht Wallenstein offering to negotiate the purchase price down by 21.5% (from 168,266 to 122,808 gold) with a 76.2% success rate, asking whether to use 1 or all remaining negotiation chances",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 168,266 → 122,808 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Albrecht Wallenstein: Hmm, we should be able to buy it for 21.5% less. Why don't you try negotiating? Options: No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

@@ -74,15 +74,33 @@ def test_free_space_subtracts_cargo_and_a_seven_day_supply_reserve():
     assert free_space_for_barter(100, 0) == 0            # never negative
 
 
-def test_rounds_are_bounded_by_the_peak_hold_not_the_net_fill():
-    # Camas: 280 in / 953 out. Net fill would be 673/round → 5 rounds in 3400 space,
-    # but the OUTPUT alone (953/round) is the real peak → 3.
+def test_rounds_run_until_the_HOLD_SATURATES_not_until_a_reservation_runs_out():
+    """Camas: 280 in / 953 out, 3400 free. Simulated, carried away by round count:
+
+           1 -> 953    2 -> 1906    3 -> 2859    4 -> 3400    5,6,7 -> 3400
+
+    So 4 is the answer: it carries 541 more than 3, and nothing beyond it gains anything.
+
+    This asserted 3 while the planner subtracted a per-round reservation from free space
+    until it ran out. That cannot find the optimum, because it prices a round BEFORE the
+    materials leave the hold, and because it reads "the output does not all fit" as a
+    REFUSAL when the game's own answer is to hand back what fits and discard the rest
+    (user, 2026-09-04). The old comment's instinct was right — net fill would have said 5,
+    which is wasteful — but the peak was the wrong correction; simulating is the right one.
+    """
     plan = plan_barter_rounds(953, {"Avocado": 130, "Cassava": 150},
                               rounds_remaining=7, free_space=3400, cushion=0.0)
     assert plan.peak_per_round == 953
-    assert plan.rounds == 3
+    assert plan.rounds == 4
     assert plan.limited_by == "space"
-    assert plan.output_qty == 2859
+
+
+def test_it_stops_at_saturation_rather_than_burning_rounds_for_nothing():
+    """Past the point where the hold fills, another round costs a daily count, its materials
+    and a market refresh, and carries not one extra unit home."""
+    plan = plan_barter_rounds(953, {"Avocado": 130, "Cassava": 150},
+                              rounds_remaining=20, free_space=3400, cushion=0.0)
+    assert plan.rounds == 4, "kept planning rounds whose output is entirely discarded"
 
 
 def test_materials_can_be_the_peak_when_they_outweigh_the_output():
@@ -146,12 +164,19 @@ def test_cushion_buys_extra_material_against_a_tier_going_DOWN():
         assert per_round_hedged[m] > per_round_plain[m]
 
 
-def test_cushion_reserves_hold_space_against_a_tier_going_UP():
-    # A better ratio yields MORE output; the reserved peak must cover it.
+def test_a_tier_going_UP_no_longer_needs_hold_RESERVED_for_it():
+    """The cushion used to hold space back in case the ratio improved and the output came
+    back bigger than the snapshot. Under the game's own overflow rule that is not a hazard:
+    a bigger yield fills the hold sooner and the surplus is discarded, so the fleet carries a
+    full hold either way. What the cushion still does — and must — is buy MORE MATERIAL in
+    case the ratio goes the other way; see the DOWN test above.
+
+    `reserved_per_round` is still computed and reported, because a plan that cannot say what
+    it thought a round would cost is harder to argue with. It just no longer bounds the count.
+    """
     hedged = _nutmeg(3158, 0.15)
-    assert hedged.reserved_per_round == 635          # ceil(552 × 1.15)
-    grown_output = hedged.rounds * 552 * 1.15
-    assert grown_output <= hedged.free_space         # still fits after a tier-up
+    assert hedged.reserved_per_round == 635          # ceil(552 × 1.15), still reported
+    assert hedged.rounds == _nutmeg(3158, 0.0).rounds
 
 
 def test_the_cushioned_gather_still_fits_the_hold():
@@ -159,9 +184,14 @@ def test_the_cushioned_gather_still_fits_the_hold():
     assert sum(hedged.total_needs.values()) <= hedged.free_space
 
 
-def test_cushion_can_cost_a_round_when_the_hold_is_nearly_full():
+def test_the_cushion_no_longer_costs_a_round():
+    """It did — 5 without, 4 with — because it inflated the per-round hold reservation. That
+    reservation is gone (the count is simulated now), so hedging the ratio no longer costs
+    cargo. The material hedge is unaffected."""
     assert _nutmeg(3158, 0.0).rounds == 5
-    assert _nutmeg(3158, 0.15).rounds == 4
+    assert _nutmeg(3158, 0.15).rounds == 5
+    assert (sum(_nutmeg(3158, 0.15).total_needs.values())
+            > sum(_nutmeg(3158, 0.0).total_needs.values())), "the material hedge was lost"
 
 
 def test_cushion_is_free_when_the_daily_allowance_binds():
@@ -258,3 +288,62 @@ def test_plain_have_need_pairs_are_accepted():
 
 def test_an_empty_panel_funds_nothing():
     assert panel_barter_state([]).rounds_remaining == 0
+
+
+# ── The swap, and why a full hold does not stop a round (user, 2026-09-04) ────
+#
+# "It was full but buying say 200 raisins can do another round, and the exchange will swap the
+# pigs and raisin to groundnuts, so it will need to abandon some groundnuts, but still will
+# get more profits."
+#
+# A round is a SWAP: materials leave the hold, product arrives, and the game hands back only
+# what fits — the "N has not been claimed yet, unclaimed trade goods will be discarded" prompt.
+# The value ratio is what makes the discard irrelevant: Bambara Groundnut sold at 40,600
+# profit/unit against Pig and Raisin at a few hundred, so a round converts ~434 units of
+# ~300-ducat material into up to 1,036 units of 40,600-ducat product — about 300:1.
+#
+# Live 2026-09-04 at Hutu the mission planned 3 rounds, ran 4, and stopped holding 501 Pig and
+# 1 Raisin. The optimum was 5 (the hold saturates there); at 40,600/unit the gap between the
+# plan and the optimum was roughly 59M ducats.
+
+
+def _hutu(free_space, on_hand=None, rounds_remaining=8):
+    return plan_barter_rounds(1036, {"Raisin": 217, "Pig": 217},
+                              rounds_remaining=rounds_remaining, free_space=free_space,
+                              materials_on_hand=on_hand, cushion=0.0)
+
+
+def test_the_hutu_run_should_have_planned_five_rounds_not_three():
+    """free 4,568, 434 in, 1,036 out. Carried away by round count:
+
+           3 -> 3,108      4 -> 4,144      5 -> 4,568      10 -> 4,568
+
+    The old reservation loop planned 3 (4568 / (1036 x 1.15) = 3.8)."""
+    assert _hutu(4568).rounds == 5
+
+
+def test_a_FUNDED_round_is_never_refused_for_space():
+    """Its materials are already aboard, so it costs the hold nothing it does not already
+    hold — it swaps them. 434 of material aboard and only 307 free still funds a round."""
+    plan = _hutu(307, on_hand={"Raisin": 434, "Pig": 434})
+    assert plan.rounds >= 2, "a full hold refused a round it had already paid for"
+
+
+def test_dead_material_aboard_is_still_worth_converting():
+    """The shape of the loss at Hutu: material aboard, hold nearly full. Before this, the
+    planner returned zero rounds and the fleet carried the material home unconverted."""
+    assert _hutu(307, on_hand={"Raisin": 500, "Pig": 500}).rounds >= 2
+
+
+def test_materials_that_cannot_be_LOADED_still_bound_the_plan():
+    """The one thing a discard cannot rescue: you must be able to put the materials aboard in
+    the first place. Unfunded rounds are still limited by room for the purchase."""
+    plan = _hutu(400)                      # 400 free, 434 needed for one unfunded round
+    assert plan.rounds == 0
+    assert plan.limited_by == "space"
+
+
+def test_the_daily_allowance_still_binds_when_space_is_ample():
+    plan = _hutu(1_000_000, rounds_remaining=3)
+    assert plan.rounds == 3
+    assert plan.limited_by == "rounds"

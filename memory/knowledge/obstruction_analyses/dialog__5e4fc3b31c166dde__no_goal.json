@@ -1,0 +1,21 @@
+{
+  "purpose": "Market replenish-stock prompt asking the player to spend 156 gems to restock a sold-out trade good (Coral) back to 50 units",
+  "full_text": "Replenish Stock? (Does not affect market price) Remaining: 34/50. Cost: 156 gems. Cancel | OK",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "5e4fc3b31c166dde",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T18:00:30.413339+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Market replenish-stock prompt asking the player to spend 156 gems to restock a sold-out trade good (Coral) back to 50 units",
+    "full_text": "Replenish Stock? (Does not affect market price) Remaining: 34/50. Cost: 156 gems. Cancel | OK",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

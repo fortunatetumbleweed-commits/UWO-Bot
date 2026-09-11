@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase transaction receipt confirming a bulk buy of trade goods, showing the base cost, tax, negotiation discount applied, total amount paid, and the player's remaining gold balance",
+  "full_text": "Result — Purchase Cost: 192,060 | Tax: 9,240 | Discount: -36,564 | Total Amount: 164,736 | Balance: 69,643,019,214 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "98b1c945b36857c8",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T04:27:26.133491+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase transaction receipt confirming a bulk buy of trade goods, showing the base cost, tax, negotiation discount applied, total amount paid, and the player's remaining gold balance",
+    "full_text": "Result — Purchase Cost: 192,060 | Tax: 9,240 | Discount: -36,564 | Total Amount: 164,736 | Balance: 69,643,019,214 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

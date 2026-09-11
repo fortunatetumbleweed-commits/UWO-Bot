@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase sub-menu is displaying the market inventory at Trabzon, showing available goods including Carpet, Pomegranate, Peony, and Kutnu — Raisin appears to be sold out (0 stock), which is the item the bot is trying to hold (~1081 units)",
+  "full_text": "00:19:14 | 90 diamonds | Carpet Fabrics 101% 1,091 | Pomegranate Food 641 94% 280 | Peony Medicine 491 97% 314 | Kutnu Fabrics Specialties 10/26/2026/00:00:00",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "3956d49a445583c9",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T14:32:56.583669+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase sub-menu is displaying the market inventory at Trabzon, showing available goods including Carpet, Pomegranate, Peony, and Kutnu — Raisin appears to be sold out (0 stock), which is the item the bot is trying to hold (~1081 units)",
+    "full_text": "00:19:14 | 90 diamonds | Carpet Fabrics 101% 1,091 | Pomegranate Food 641 94% 280 | Peony Medicine 491 97% 314 | Kutnu Fabrics Specialties 10/26/2026/00:00:00",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

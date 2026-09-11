@@ -3078,6 +3078,20 @@ def _port_names_to_search(destination: str) -> list[str]:
     # Always include the original
     if dest_lower not in names:
         names.insert(0, dest_lower)
+    # AND THE FORM OCR ACTUALLY RETURNS. The game renders `Gijón` with its accent and the
+    # reader gives back `gijon`, so searching for the canonical name misses its own row.
+    #
+    # Live 2026-09-09, and the failure is worth the whole comment: the query `Gij` was typed,
+    # the list filtered to exactly one row, `_settle_last_typing` confirmed "the box holds
+    # 'Gij' — the search is filtered", and the very next line said "'Gijón' not found in
+    # current world map view". We had it on screen, alone, and could not see it — so the
+    # activity retyped, and the voyage ended at Porto.
+    #
+    # `Malé` misses the same way. `Málaga` happens to survive only because an alias covers it.
+    from memory.places import fold_name
+    folded = fold_name(destination)
+    if folded and folded not in names:
+        names.append(folded)
     return names
 
 
@@ -3231,7 +3245,13 @@ def _find_destination_button(
             (nxt_cx, nxt_cy, nxt_text, nxt_conf)
             for nxt_text, nxt_conf, nxt_cx, nxt_cy in tokens
             if nxt_cy >= min_y
-            and any(n in nxt_text.lower() for n in _DESTINATION_BUTTON_NOUNS)
+            # FUZZY, like the verb above. These were asymmetric — the verb tolerant of OCR
+            # and the noun an exact substring — so a single dropped character in the noun
+            # sank the whole match while the verb beside it read perfectly. Live 2026-09-04
+            # the San Village departure failed on 'Move to' + 'Villags': the button was
+            # mid-render, the 'e' was lost, and 'village' in 'villags' is False. The pair is
+            # one button and one OCR risk; both halves need the same tolerance.
+            and any(fuzzy_contains(nxt_text, n) for n in _DESTINATION_BUTTON_NOUNS)
             and abs(nxt_cy - cy) <= _ROW_TOLERANCE_PX
         ]
         if not same_row:
@@ -3806,16 +3826,12 @@ def _find_port_on_world_map(
     # looking for a port sitting in plain view (user). The rule is already written down —
     # "the search box always matches the query, so it is a guaranteed false positive" — and
     # this path did not apply it. Narrowing to the rail does not help: the box IS in the rail.
-    _box = None
-    try:
-        _box = search_box_element(frame)
-    except Exception as exc:                      # noqa: BLE001 — no box is not an error
-        logger.debug(f"  could not locate the search box: {exc}")
-
     def _is_our_own_query(cx: int, cy: int) -> bool:
-        if _box is None:
-            return False
-        return (_box.x1 <= cx <= _box.x2) and (_box.y1 <= cy <= _box.y2)
+        # POSITION, not the element lookup. `search_box_element` needs the FIELD — wide, or
+        # saying "search" — and so finds the box only when it is EMPTY. The box that matters
+        # is the one holding our query: live 2026-09-06 it held 'gijo', OmniParser returned
+        # that word alone at 58px, the lookup returned None, and the box went unexcluded.
+        return is_the_search_box(frame, cx, cy)
 
     for bbox, text, conf in raw:
         if conf < 0.25:
@@ -4849,7 +4865,49 @@ def _port_list_open(frame, elements=None) -> bool:
     if elements is None:
         from vision.omniparser import parse_fast_cached
         elements = list(parse_fast_cached(frame))
-    return search_box_present(frame, elements) and not _village_list_open(frame, elements)
+    if _village_list_open(frame, elements):
+        return False
+    # THE ROWS ARE EVIDENCE TOO, and they survive what the search box does not.
+    #
+    # The box sits where a MAP LABEL can also fall, and the game draws the map through it —
+    # so the two merge in the parse. Live 2026-09-08 at frames 30-34 of
+    # trade_barter_cmd_2026-09-08T00-43-13 the window held:
+    #
+    #     frame 30, list CLOSED : 'Kuching'   w=142
+    #     frame 32, list OPEN   : 'KSearshg'  w=140     <- 'Kuching' bled over 'Search'
+    #
+    # Same place, same width, and only a garbled word between them: neither the position test
+    # nor the width test can separate those, and matching the garble would be guesswork. So
+    # the box could not be seen, `_on_map` ran over an open list, and the caller re-tapped the
+    # rail — onto a DIFFERENT icon, throwing the list away and stalling the mission.
+    #
+    # The ROWS say it plainly, and they are what `_village_list_open` has always keyed on:
+    # a list is a drawn column, a map is scattered labels. Measured on the same two frames,
+    # in the rail's band: 13 rows at regular ~50px spacing with the list open, 3 at 185 and
+    # 295 apart without it.
+    return search_box_present(frame, elements) or _rail_rows_present(elements)
+
+
+# The rail's row column, measured on trace_barter_cmd_2026-09-08T00-43-13 frames 30 and 32:
+# open, the rows sit at cx 205-281 and step down by ~50-57px; closed, the three map labels in
+# that band sit 185 and 295 apart. Six rows is well clear of both.
+_RAIL_ROWS_X = (150, 460)
+_RAIL_ROWS_Y = (180, 900)
+_RAIL_ROWS_MIN = 6
+
+
+def _rail_rows_present(elements) -> bool:
+    """True when the rail holds a COLUMN of rows — a list, rather than scattered map labels.
+
+    Identity from what is drawn, not from where one control is believed to be: the same rule
+    `_explore_left_icons` states for the icons above ("the rail is drawn, not scattered").
+    """
+    rows = [e for e in elements
+            if (getattr(e, "element_type", "") or "") != "icon"
+            and (getattr(e, "label", "") or "").strip()
+            and _RAIL_ROWS_X[0] < e.cx < _RAIL_ROWS_X[1]
+            and _RAIL_ROWS_Y[0] < e.cy < _RAIL_ROWS_Y[1]]
+    return len(rows) >= _RAIL_ROWS_MIN
 
 
 # How far apart two rail icons' centres may sit horizontally and still be one column.
@@ -5945,6 +6003,40 @@ def _map_search_box(frame) -> Tuple[int, int]:
         if el.cx < 700 and any(k in lab for k in ("search", "edit", "input", "field")):
             return (el.cx, el.cy)
     return (420, 141)
+
+
+# The rail is the LEFT edge; nothing further right is the search box. Load-bearing, not
+# decoration: on 2026-09-06 Gijon sat at (1428,112) — 29px from the box's y, well inside the
+# band — so a y-only test excludes the very port being hunted.
+_SEARCH_BOX_RAIL_MAX_X = 700
+# How far from the box's centre still counts as the box.
+SEARCH_BOX_BAND = 40
+
+
+def is_the_search_box(frame, cx: int, cy: int) -> bool:
+    """Is this point the rail's search box — i.e. our own typing rather than a result?
+
+    BY POSITION, NEVER BY CONTENT, because the content is the problem: the box holds what we
+    typed, so it fuzzy-matches the destination BY CONSTRUCTION and outscores the real label.
+
+    ONE TEST, because there were two and they disagreed. `search_box_element` looks for the
+    FIELD among the parsed elements and needs it to be wide (>=200px) or to say "search" — so
+    it finds the box only when the box is EMPTY. Live 2026-09-06 the box held 'gijo' and
+    OmniParser returned just that word, 58px wide, so the element lookup returned None, the
+    candidate was never excluded, its 1.00 outscored the real 'Gijon' label, and
+    `_find_on_screen`'s backstop then threw away the WHOLE read — the port was on the map at
+    (1428,112) the entire time. The bot re-opened the list twice and stopped: "NOTHING CHANGED
+    for 3 ticks ... choose port 'Gijon'".
+
+    `_map_search_box` falls back to the observed position when detection fails, so this
+    answers even on a frame where the field itself cannot be picked out — which is exactly the
+    frame where it is needed.
+    """
+    try:
+        bx, by = _map_search_box(frame)
+    except Exception:                             # noqa: BLE001 — no box is not an error
+        return False
+    return cx < _SEARCH_BOX_RAIL_MAX_X and abs(cy - by) <= SEARCH_BOX_BAND
 
 
 def _type_search_prefix(search_xy: Tuple[int, int], prefix: str) -> None:

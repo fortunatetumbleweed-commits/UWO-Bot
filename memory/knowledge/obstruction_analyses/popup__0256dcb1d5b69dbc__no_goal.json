@@ -1,0 +1,21 @@
+{
+  "purpose": "Another player's ship ('TaylorFP'), titled 'Season 1 Admiral of Myth', has sailed into view and their name-plate/rank overlay is displaying on screen as a player encounter banner",
+  "full_text": "Season 1 Admiral of Myth — 淡墨桜 TaylorFP — C/HW 27.6 — Dry Season May Night 1v",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "0256dcb1d5b69dbc",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T00:34:30.711284+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Another player's ship ('TaylorFP'), titled 'Season 1 Admiral of Myth', has sailed into view and their name-plate/rank overlay is displaying on screen as a player encounter banner",
+    "full_text": "Season 1 Admiral of Myth — 淡墨桜 TaylorFP — C/HW 27.6 — Dry Season May Night 1v",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

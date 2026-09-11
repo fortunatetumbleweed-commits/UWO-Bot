@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade Goods Info panel for Almond showing sale price calculation (4,765 per unit) opened after the bot tapped the Almond tile to stage it for loading into the hold",
+  "full_text": "Trade Goods Info — Almond, Luxuries, Specialties, quantity 1040. Calculation: Sales Cost 4,013 | Tax -459 | Surcharge +1,211 | Per Price 4,765. Description: A nut that originates from Turkey. It is normally roasted and is known for its rich fragrance and taste. Prices: Current Price 4,013 | Max Price 4,205 | Min Price 3,472. Quantity: 1/1,040. Final Sales Price: 4,765. Buttons: Cancel | Load.",
+  "dismissal": "tap_accept",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "97e546fdbb697ea9",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-11T19:59:39.314014+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade Goods Info panel for Almond showing sale price calculation (4,765 per unit) opened after the bot tapped the Almond tile to stage it for loading into the hold",
+    "full_text": "Trade Goods Info — Almond, Luxuries, Specialties, quantity 1040. Calculation: Sales Cost 4,013 | Tax -459 | Surcharge +1,211 | Per Price 4,765. Description: A nut that originates from Turkey. It is normally roasted and is known for its rich fragrance and taste. Prices: Current Price 4,013 | Max Price 4,205 | Min Price 3,472. Quantity: 1/1,040. Final Sales Price: 4,765. Buttons: Cancel | Load.",
+    "dismissal": "tap_accept",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Lorenzo Pinto (trade advisor) is offering to negotiate the Ruby purchase price down by 21.5% (from 2,737,368 to 2,006,400 gold) with a 76.2% success rate, prompting the player to choose how many negotiation attempts to use",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. Price: 2,737,368 → 2,006,400 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Lorenzo Pinto says: In my opinion, we can buy this for 21.5% less. Would you like to negotiate?",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "b892057ba17fb0f6",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T17:51:40.902453+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Lorenzo Pinto (trade advisor) is offering to negotiate the Ruby purchase price down by 21.5% (from 2,737,368 to 2,006,400 gold) with a 76.2% success rate, prompting the player to choose how many negotiation attempts to use",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. Price: 2,737,368 → 2,006,400 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Lorenzo Pinto says: In my opinion, we can buy this for 21.5% less. Would you like to negotiate?",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

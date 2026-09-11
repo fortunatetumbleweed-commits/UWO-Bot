@@ -1,0 +1,21 @@
+{
+  "purpose": "Numeric keypad dialog has appeared for the bot to enter how many units of Myrrh to load/sell, currently showing '1' with a max of 476 available",
+  "full_text": "Trade Goods Info — Myrrh, Medicine, Specialties (476 in hold). Calculation: Sales Cost 1,143 | -84 | +328 | 1,387. Enter Number: [1]. 1 2 3 | 4 5 6 | 7 8 9 | 0 Max. Final Sales Price 1,387. Max Price 1,187, Min Price 1,075. Cancel | Load.",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "6a75b177ca3f298e",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-11T01:43:43.970667+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Numeric keypad dialog has appeared for the bot to enter how many units of Myrrh to load/sell, currently showing '1' with a max of 476 available",
+    "full_text": "Trade Goods Info — Myrrh, Medicine, Specialties (476 in hold). Calculation: Sales Cost 1,143 | -84 | +328 | 1,387. Enter Number: [1]. 1 2 3 | 4 5 6 | 7 8 9 | 0 Max. Final Sales Price 1,387. Max Price 1,187, Min Price 1,075. Cancel | Load.",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

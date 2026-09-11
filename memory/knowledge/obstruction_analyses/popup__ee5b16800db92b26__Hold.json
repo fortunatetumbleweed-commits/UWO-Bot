@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase screen has refreshed after restock, showing updated available trade goods at Gijón — notably Pig is Sold Out (0 stock), while Pork, Raspberry, and Turron are available; this is the restocked inventory view the bot needs to act on",
+  "full_text": "00:27:06 | 55 diamonds | Pig (Livestock) Sold Out 100% 257 gold | Pork (Food) 775 units 95% 188 gold | Raspberry (Luxuries) 363 units 96% 274 gold | Turron (Luxuries) Specialties 10/12/2026/00:00:00 274 gold",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "ee5b16800db92b26",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T15:41:04.631824+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase screen has refreshed after restock, showing updated available trade goods at Gijón — notably Pig is Sold Out (0 stock), while Pork, Raspberry, and Turron are available; this is the restocked inventory view the bot needs to act on",
+    "full_text": "00:27:06 | 55 diamonds | Pig (Livestock) Sold Out 100% 257 gold | Pork (Food) 775 units 95% 188 gold | Raspberry (Luxuries) 363 units 96% 274 gold | Turron (Luxuries) Specialties 10/12/2026/00:00:00 274 gold",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

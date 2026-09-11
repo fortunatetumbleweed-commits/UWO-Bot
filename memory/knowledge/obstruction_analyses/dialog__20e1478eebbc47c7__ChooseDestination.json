@@ -1,0 +1,21 @@
+{
+  "purpose": "A trade event notification announcing a 'Knit Boom' occurred in Antwerp, causing the world map to display a pop-up overlay showing nearby African port trade indices",
+  "full_text": "Knit Boom occurred in Antwerp. Benin 105, Abidjan 104, Elmina 105, Douala 105, Sao Tome 105",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "20e1478eebbc47c7",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-08T22:17:59.439515+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A trade event notification announcing a 'Knit Boom' occurred in Antwerp, causing the world map to display a pop-up overlay showing nearby African port trade indices",
+    "full_text": "Knit Boom occurred in Antwerp. Benin 105, Abidjan 104, Elmina 105, Douala 105, Sao Tome 105",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

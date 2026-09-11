@@ -17,7 +17,36 @@ Safety, in order of importance:
   2. **Never drop water/food below the leg's reserve** — brain.jettison_planner owns that
      rule; this module only supplies it with what is actually aboard.
   3. **Never dump the barter output** we just came to collect.
-  4. The Discard dialog defaults to ALL — always set the quantity explicitly.
+  4. **Never dump MATERIALS that can still fund a round** — see THE LAST ROUND below.
+  5. The Discard dialog defaults to ALL — always set the quantity explicitly.
+
+THE LAST ROUND (user, 2026-09-04). Leftover materials are the best thing to dump, but only
+once no further round can use them: dumping them earlier spends a whole round's product to
+save a few units of space. Dumping mid-session could be made to pay, but it is much more
+complicated, so it is deliberately not attempted — the rule is the last round or nothing.
+
+  * NOT the last round -> materials are protected exactly like the output good.
+  * The last round     -> ALL of them go, first, ahead of spare supply — every unit, even
+    when the overflow is smaller, because the space freed beyond it is what the fleet
+    resupplies into. See `plan_for_overflow`.
+
+`last_round_reason` names the three ways a round is known to be the last. Any one of them
+is enough, and each is read from this dialog plus the round count:
+
+  1. **the overflow exceeds every material aboard** — even dumping the lot cannot clear it,
+     so there is nothing left to hold back for;
+  2. **a material is down to almost nothing** — below MIN_VIABLE_MATERIAL, so not even a
+     minimum-size exchange can use it;
+  3. **the day's last round has been played** — seven, per _MAX_DAILY_ROUNDS.
+
+READ THE CARGO TILES, NEVER THE PANEL BEHIND. At frame 15 the Trade Material panel still
+reads 182/170 Avocado and 201/170 Cassava, both GREEN, while the cargo holds 12 and 31 —
+exactly 170 less, one round's consumption. The panel is a background window that has not
+refreshed, so trusting it would report a funded round that does not exist.
+
+Both halves matter. This module previously offered materials as dump candidates on EVERY
+round, so a mid-barter overflow could throw away the inputs for every remaining round; that
+became far more likely when plan_barter_rounds started planning deliberately into overflow.
 
 All geometry is derived from detected elements (see actions/ui), because this dialog
 moves with the camera-cutout offset like everything else.
@@ -29,17 +58,18 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
 from loguru import logger
+from utils.digits import SEPARATORS as _SEP
 
-_INT_RE = re.compile(r"^[\d,]+$")
-_PAIR_RE = re.compile(r"^\s*([\d,]+)\s*/\s*([\d,]+)")
-_USED_CAP_RE = re.compile(r"([\d,]+)\s*/\s*([\d,]+)\s*\((\d+)%\)")
+_INT_RE = re.compile(r"^\d[\d,.\']*$")
+_PAIR_RE = re.compile(r"^\s*(\d[\d,.\']*)\s*/\s*(\d[\d,.\']*)")
+_USED_CAP_RE = re.compile(r"(\d[\d,.\']*)\s*/\s*(\d[\d,.\']*)\s*\((\d+)%\)")
 
 OVERFLOW_TITLE = "insufficient empty space"
 DISCARD_TITLE = "discard goods"
 
 
 def _int(s: str) -> Optional[int]:
-    s = (s or "").strip().replace(",", "")
+    s = (s or "").strip().translate(_SEP)
     return int(s) if s.isdigit() else None
 
 
@@ -100,6 +130,35 @@ def _header(elements, text: str):
     return None
 
 
+def _dialog_span(elements, headers) -> Optional[tuple]:
+    """The dialog's left and right edges in x, measured — never assumed.
+
+    WHAT THE DIALOG COVERS CANNOT BE DETECTED; ONLY THE GUTTERS BESIDE IT CAN. So every
+    element that does not belong to this card comes from the screen behind it, showing past
+    one edge or the other — and a dialog is CENTRED (`docs/dialogs_are_windows.md`), which
+    makes the two edges one fact. The section headers sit at the dialog's inner left margin
+    and the TITLE is centred in it, so mirroring the first about the second gives both.
+
+    This is the bug that made it worth measuring. `read_overflow` filtered candidate tiles by
+    Y alone, so the Barter screen's Trade Count chip at x[399,506] — 150px clear of the
+    dialog's edge at 559 — was collected as a cargo tile. Probing it tapped OUTSIDE the
+    dialog, which DISMISSED it, and every action afterwards ran against a screen that no
+    longer had one: the discards read nothing and logged "cancelling" with no dialog to
+    cancel, and Receive tapped a remembered coordinate on bare screen. Live 2026-09-10 at San
+    Village, five overflows, 235 units of Bambara Groundnut lost.
+    """
+    title = next((e for e in elements or []
+                  if OVERFLOW_TITLE in _label(e).lower()), None)
+    lefts = [h.x1 for h in headers if h is not None]
+    if title is None or not lefts:
+        return None                       # nothing to measure from — do not invent an edge
+    left = min(lefts)
+    centre = (title.x1 + title.x2) / 2.0
+    if centre <= left:
+        return None                       # the title is not where a centred title can be
+    return left, centre + (centre - left)
+
+
 def read_overflow(elements) -> Optional[OverflowState]:
     """Parse the overflow dialog. Sections are located by their HEADERS, and the tiles
     by which header they sit under — the dialog's absolute position is never assumed."""
@@ -112,6 +171,14 @@ def read_overflow(elements) -> Optional[OverflowState]:
 
     pending_hdr = _header(elements, "received trade")
     cargo_hdr = _header(elements, "cargo")
+
+    # INSIDE THE CARD, OR IT IS NOT THE CARD'S. Judged on the element's CENTRE rather than
+    # its edges: a tile's own border sits a few pixels outside the header text it lines up
+    # with (measured 553 against 559), and a centre needs no slack to forgive that.
+    span = _dialog_span(elements, (pending_hdr, cargo_hdr))
+    if span is not None:
+        lo, hi = span
+        numeric = [e for e in numeric if lo <= (e.x1 + e.x2) / 2.0 <= hi]
 
     # 'Received Trade Goods' holds ONE tile: the pending output.
     if pending_hdr is not None:
@@ -199,7 +266,17 @@ def probe_tiles(capture_fn, tap_fn, state: OverflowState, *, omni_fn, ui,
         ui.tap_element(tile.element, dwell="dialog", why=f"identify the {tile.qty}-unit tile")
         dc = read_discard(omni_fn(capture_fn()))
         if dc is None or not dc.name:
-            logger.warning(f"[overflow] tile {tile.qty} did not identify — leaving it alone")
+            # ONE TILE ALWAYS LANDS HERE, AND IT IS NOT A FAULT: the game makes the tile of
+            # the good being RECEIVED inert, so tapping the barter output opens nothing
+            # (user, 2026-09-10: "that is the groundnut, so tapping it has no effect").
+            # Verified across five overflows at San Village — frames 362/392/422/446/476 tap
+            # the 2,917 Bambara Groundnut tile dead centre and 363/393/423/447/477 show the
+            # card unchanged, while the Water tap on 364 opens its dialog on 365.
+            #
+            # Nothing is opened, so nothing needs cancelling, and the outcome is right either
+            # way: `build_cargo` excludes the output by name. The cost is one wasted probe.
+            logger.warning(f"[overflow] tile {tile.qty} did not identify — leaving it alone "
+                           "(the output good's tile is inert; any other is a bad read)")
             if dc is not None and dc.cancel is not None:
                 ui.tap_element(dc.cancel, dwell="dialog", why="cancel an unidentified tile")
             continue
@@ -211,7 +288,98 @@ def probe_tiles(capture_fn, tap_fn, state: OverflowState, *, omni_fn, ui,
     return found
 
 
-def build_cargo(found: list, *, output_good: str, reserves: dict) -> list:
+# A material that can no longer fund a round is worth less to us than any other cargo: it
+# cannot be used, and carrying it home is what the fleet was doing wrong. `plan_jettison`
+# sorts trade goods by unit_value ascending, so this is what puts materials at the front.
+_DEAD_WEIGHT = -1.0
+
+
+def _needs_map(needs_per_round) -> dict:
+    """{normalised material name: units one round consumes}."""
+    return {_norm(m): int(q) for m, q in (needs_per_round or {}).items() if int(q or 0) > 0}
+
+
+# Seven, not eight: the strip draws eight slots but the last is only reachable by PAYING
+# for it, so seven is the ceiling for a day we actually play (brain.activities.village).
+MAX_DAILY_ROUNDS = 7
+
+# THE FLOOR IS THE MINIMUM-SIZE EXCHANGE, NOT THE FULL-SIZE ONE (user, 2026-09-04).
+#
+# The panel's `X/Y` is have/need AT THE CURRENT STEPPER VALUE (1-200), so a material short of
+# the full-size need is NOT dead — the exchange can be stepped down and still run as a real
+# round costing a real daily count (walkthrough notes, Melanesian round 2 at ~9.9%). Testing
+# against the full-size need would therefore call it the last round while several usable
+# rounds remained, and dump their inputs.
+#
+# What actually ends it is having so little of one material that no exchange can use it:
+# "some barters may still go forward if one material is just 2, but most cannot — at Hutu
+# there was 1 Raisin and 500 Pig left and it could not reach another round, as the minimum
+# needed for Raisin is 2. And when it is less than 3 you cannot get many anyway."
+#
+# So 3 is a floor on VIABILITY, not on arithmetic: at or below it, the round that remains is
+# too small to be worth the daily count even where the game would allow it.
+MIN_VIABLE_MATERIAL = 3
+
+
+def _held_materials(found: list, needs_per_round) -> dict:
+    """{normalised material name: units of it aboard}, materials only."""
+    needs = _needs_map(needs_per_round)
+    held: dict = {}
+    for f in found or []:
+        key = _norm(f.get("name"))
+        if key in needs:
+            held[key] = held.get(key, 0) + int(f.get("qty") or 0)
+    return held
+
+
+def last_round_reason(found: list, needs_per_round, *, pending: Optional[int] = None,
+                      rounds_done: Optional[int] = None,
+                      max_rounds: int = MAX_DAILY_ROUNDS) -> Optional[str]:
+    """Why no further round can use these materials, or None if one still can.
+
+    Read from the overflow dialog itself: `found` is the probe, which names every tile, and
+    `needs_per_round` is the recipe. The exchange has already taken this round's inputs by
+    the time this dialog appears, so these quantities are the LEFTOVERS — at Camas (frames
+    15-17) 12 Avocado and 31 Cassava against a round needing 170 of each.
+
+    `needs_per_round` is the FULL-SIZE need and is used to identify the materials, NOT as the
+    floor — see MIN_VIABLE_MATERIAL for why the floor is much lower.
+
+    Returns a reason rather than a bool because this is the judgement that can cost a whole
+    round's product, and a log saying WHICH condition fired is what makes it reviewable.
+    None when the recipe is unknown: materials cannot then be told apart from any other
+    cargo, and nothing here should pretend otherwise."""
+    needs = _needs_map(needs_per_round)
+    if not needs:
+        return None
+
+    if rounds_done is not None and int(rounds_done) >= int(max_rounds):
+        return f"the day's last round ({rounds_done} of {max_rounds}) has been played"
+
+    held = _held_materials(found, needs_per_round)
+    shown = {_norm(m): str(m) for m in (needs_per_round or {})}   # the recipe's own casing
+    spent = [m for m in needs if held.get(m, 0) < MIN_VIABLE_MATERIAL]
+    if spent:
+        have = ", ".join(f"{shown.get(m, m)} {held.get(m, 0)}" for m in spent)
+        return (f"{have} left, under the {MIN_VIABLE_MATERIAL} any exchange needs, and a "
+                "round needs every input")
+
+    total = sum(held.values())
+    if pending is not None and int(pending) > total:
+        return (f"the {pending} pending exceed every material aboard ({total}), so dumping "
+                "the lot still cannot clear it")
+    return None
+
+
+def is_last_round(found: list, needs_per_round, **kw) -> Optional[bool]:
+    """`last_round_reason` as a bool. None when the recipe is unknown."""
+    if not _needs_map(needs_per_round):
+        return None
+    return last_round_reason(found, needs_per_round, **kw) is not None
+
+
+def build_cargo(found: list, *, output_good: str, reserves: dict,
+                needs_per_round=None, last_round: Optional[bool] = None) -> list:
     """Turn probed tiles into `jettison_planner.CargoItem`s.
 
     Two classifications carry all the safety: supplies get a `resource` so the planner
@@ -224,8 +392,17 @@ def build_cargo(found: list, *, output_good: str, reserves: dict) -> list:
     to throw away 100 of the 3,613 Camas while 122 units of spare supply sat untouched;
     the human dumped 50 food + 50 water instead. Excluding it is also what makes the
     planner's `shortfall` mean the right thing — "even after everything dumpable, the
-    output itself must be sacrificed" — rather than silently sacrificing it first."""
+    output itself must be sacrificed" — rather than silently sacrificing it first.
+
+    MATERIALS are treated the same way until the last round: excluded, so a round's worth of
+    space is never bought with a round's worth of product. On the last round they invert and
+    become the cheapest thing aboard — see `plan_for_overflow`, which dumps them WHOLE rather
+    than trimming them to the overflow. `last_round` overrides the reading when a caller
+    knows better; None derives it from `needs_per_round`."""
     from brain.jettison_planner import CargoItem
+    needs = _needs_map(needs_per_round)
+    if last_round is None:
+        last_round = is_last_round(found, needs_per_round)
     out = []
     for f in found:
         name, low = f["name"], _norm(f["name"])
@@ -233,20 +410,63 @@ def build_cargo(found: list, *, output_good: str, reserves: dict) -> list:
             logger.info(f"[overflow] {name} is the barter output — not a dump candidate")
             continue
         resource = low if low in reserves else None
+        if resource is None and low in needs:
+            if not last_round:
+                logger.info(f"[overflow] {name} is a MATERIAL and a round can still use it "
+                            "— not a dump candidate")
+                continue
+            logger.info(f"[overflow] {name} is a leftover MATERIAL on the last round "
+                        "— dumping it first")
+            out.append(CargoItem(name=name, qty=f["qty"], unit_value=_DEAD_WEIGHT,
+                                 resource=None))
+            continue
         out.append(CargoItem(name=name, qty=f["qty"], unit_value=0.0, resource=resource))
     return out
 
 
 def plan_for_overflow(state: OverflowState, found: list, *, output_good: str,
-                      reserves: dict):
-    """(dump_plan, shortfall) for this dialog, via the canonical jettison policy."""
-    from brain.jettison_planner import plan_jettison
-    cargo = build_cargo(found, output_good=output_good, reserves=reserves)
+                      reserves: dict, needs_per_round=None,
+                      last_round: Optional[bool] = None, rounds_done: Optional[int] = None):
+    """(dump_plan, shortfall) for this dialog, via the canonical jettison policy.
+
+    On the last round the materials are dumped WHOLE — every unit of every one, even when
+    the overflow is smaller than they are — and only the remainder is taken from spare
+    supply (user, 2026-09-04: "in these cases dump all the materials").
+
+    THE SURPLUS IS NOT WASTE, IT IS SUPPLY HEADROOM. An overflow means the hold is at 100%,
+    and a hold at 100% cannot take supply aboard. Villages cannot resupply at all
+    (VILLAGE_LEG_RESERVE_DAYS is 7.0 for exactly that reason — the fleet must already be
+    carrying the round trip), and the fleet arrives at the next port still full, so it cannot
+    top up there either. Dumping only what the overflow needs leaves the hold full and the
+    fleet sailing on whatever supply it happened to have. Dumping the lot converts dead
+    material into room the auto-resupply can actually fill.
+
+    It is also the cheaper action mechanically: the Discard dialog defaults to the full
+    stack, so a whole-stack dump is one tap and never opens the keypad.
+    """
+    from brain.jettison_planner import DumpAction, plan_jettison
+    if last_round is None:
+        last_round = is_last_round(found, needs_per_round, pending=state.pending,
+                                   rounds_done=rounds_done)
     need = state.pending or 0
-    return plan_jettison(need, cargo, reserves)
+
+    plan: list = []
+    if last_round:
+        needs = _needs_map(needs_per_round)
+        for f in found or []:
+            qty = int(f.get("qty") or 0)
+            if _norm(f.get("name")) in needs and qty > 0:
+                plan.append(DumpAction(f["name"], qty, None))
+                need -= qty
+
+    cargo = build_cargo(found, output_good=output_good, reserves=reserves,
+                        needs_per_round=needs_per_round, last_round=False)
+    rest, shortfall = plan_jettison(max(0, need), cargo, reserves)
+    return plan + rest, shortfall
 
 
-def clear_overflow(*, output_good: str, reserves: dict,
+def clear_overflow(*, output_good: str, reserves: dict, needs_per_round=None,
+                   rounds_done: Optional[int] = None, last_round: Optional[bool] = None,
                    capture_fn=None, tap_fn=None, omni_fn=None, ui_mod=None,
                    type_qty_fn=None, max_discards: int = 8) -> dict:
     """Clear an open overflow dialog: probe → plan → discard exactly → Receive.
@@ -275,15 +495,76 @@ def clear_overflow(*, output_good: str, reserves: dict,
         return {"ok": ok, "pending_before": 0, "discarded": [], "sacrificed": 0,
                 "reason": "nothing pending — received"}
 
+    # WHILE A ROUND REMAINS, NOTHING ABOARD IS WORTH DUMPING FOR THIS. Materials are
+    # protected until the last round, the output is never a candidate, and what that leaves
+    # is surplus supply — which the fleet needs at sea and which cannot cover an overflow
+    # anyway. So the probe has nothing to find, and the card's own answer is Receive.
+    #
+    # Live 2026-09-10 at San Village, five times over: twelve probe taps and ~70s a round to
+    # plan `[('Water', 3), ('Food', 3)]` against 47 pending — six units recoverable at best,
+    # bought with supply. User: *"if it is not the last round, just receive. Just lose the 47
+    # that overflowed. Only do probe at the last round."*
+    if last_round is False:
+        ok = _receive(state, ui_mod)
+        logger.info(f"[overflow] not the last round — receiving what fits of {pending_before} "
+                    "and letting the rest go; a further round still needs the materials, and "
+                    "supply is not worth spending on the remainder")
+        return {"ok": ok, "pending_before": pending_before, "discarded": [],
+                "sacrificed": pending_before,
+                "reason": f"not the last round — {pending_before} given up rather than "
+                          "spending supply or a round's materials"}
+
     found = probe_tiles(capture_fn, tap_fn, state, omni_fn=omni_fn, ui=ui_mod)
+    # Decided BEFORE anything is discarded, and logged WITH ITS REASON, because it is the
+    # one judgement here that can cost a whole round's product if it is wrong either way.
+    if last_round:
+        # THE CALLER READ THE PANEL; THIS CARD COVERS IT. An answer taken from the barter
+        # panel beats one re-derived from the tiles in front of us — see `_is_last_round`.
+        # (`last_round is False` has already returned above, so this is the only way in.)
+        last = True
+        why = ("LAST ROUND — the village says no further round is available; dumping every "
+               "material")
+    elif not _needs_map(needs_per_round):
+        last, why = None, "the recipe is unknown — materials cannot be identified"
+    else:
+        why = last_round_reason(found, needs_per_round, pending=pending_before,
+                                rounds_done=rounds_done)
+        last = why is not None
+        why = (f"LAST ROUND — {why}; dumping every material"
+               if last else "a further round is still funded — materials are protected")
+    logger.info(f"[overflow] {why}")
     plan, shortfall = plan_for_overflow(state, found, output_good=output_good,
-                                        reserves=reserves)
+                                        reserves=reserves,
+                                        needs_per_round=needs_per_round, last_round=last)
     logger.info(f"[overflow] pending {pending_before} → plan "
                 f"{[(d.name, d.qty) for d in plan]} shortfall={shortfall}")
     by_name = {_norm(f["name"]): f["tile"] for f in found}
 
+    # RIGHT TO LEFT, because DISCARDING RE-FLOWS THE ROW. The tiles here were located during
+    # the probe, before anything was dumped; emptying one removes it and every tile to its
+    # RIGHT slides left, so a coordinate taken earlier now lands on its neighbour.
+    #
+    # Live 2026-09-10 at Hutu, last round: the row was Water(623) Food(751) Pig(878)
+    # Raisin(1007) Output(1136). Pig was discarded first, Raisin slid into 878, and the tap at
+    # the remembered 1007 hit the OUTPUT tile — which is inert, so it opened nothing and
+    # logged "expected Raisin, got None". Water and Food still worked, because they sit LEFT
+    # of Pig where nothing moved. 141 Raisin were left aboard and 141 more Bambara Groundnut
+    # were dropped for want of the room they would have freed.
+    #
+    # Taking the rightmost target first makes every remaining coordinate stay valid, with no
+    # re-read: removals only ever move tiles that come after. A partial dump leaves its tile
+    # in place and shifts nothing, and a dump that FAILS shifts nothing either, so the order
+    # holds in both cases. `(y1, x1)` descending so it also holds if the row ever wraps.
+    #
+    # This is the same defect CLAUDE.md records for the sell grid — "selling re-flows the
+    # grid, so the fix is sell-page → scroll → repeat, never read-all-then-tap".
+    def _where(action):
+        tile = by_name.get(_norm(action.name))
+        el = getattr(tile, "element", None) if tile is not None else None
+        return (getattr(el, "y1", 0) or 0, getattr(el, "x1", 0) or 0)
+
     discarded = []
-    for action in plan[:max_discards]:
+    for action in sorted(plan[:max_discards], key=_where, reverse=True):
         tile = by_name.get(_norm(action.name))
         if tile is None or tile.element is None:
             logger.warning(f"[overflow] no tile for {action.name} — skipping")

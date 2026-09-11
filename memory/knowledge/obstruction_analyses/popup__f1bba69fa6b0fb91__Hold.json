@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase screen at Gijón is showing available trade goods including Pig (sold out), Pork, Raspberry, and Turron — this is the normal purchase sub-menu state after the bot answered a dialog, and Pig is currently sold out (100% stock depleted) so the bot cannot buy it here",
+  "full_text": "Purchase screen — Pig (Livestock) Sold Out 100% / 257 gold | Pork (Food) 775 units 95% / 188 gold | Raspberry (Luxuries) 363 units 96% / 274 gold | Turron (Luxuries) Specialties available until 10/12/2026 00:00:00 | Timer: 00:27:47 | Cargo: 3593/4952",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "f1bba69fa6b0fb91",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T15:40:25.399383+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase screen at Gijón is showing available trade goods including Pig (sold out), Pork, Raspberry, and Turron — this is the normal purchase sub-menu state after the bot answered a dialog, and Pig is currently sold out (100% stock depleted) so the bot cannot buy it here",
+    "full_text": "Purchase screen — Pig (Livestock) Sold Out 100% / 257 gold | Pork (Food) 775 units 95% / 188 gold | Raspberry (Luxuries) 363 units 96% / 274 gold | Turron (Luxuries) Specialties available until 10/12/2026 00:00:00 | Timer: 00:27:47 | Cargo: 3593/4952",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

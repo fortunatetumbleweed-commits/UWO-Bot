@@ -1,0 +1,21 @@
+{
+  "purpose": "The city navigation menu for Antalya is open, showing available port facilities (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) — this is the main in-port location selector, not related to viewing the ship's hold.",
+  "full_text": "Summer Aug 12:26 | Harbor | Market | Shipyard | Bank | Inn | Sanctuary | Union | Bureau",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "716bc53f7fd528b9",
+  "goal_intent": "ReadHold",
+  "cached_at": "2026-09-11T01:53:09.430212+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The city navigation menu for Antalya is open, showing available port facilities (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) — this is the main in-port location selector, not related to viewing the ship's hold.",
+    "full_text": "Summer Aug 12:26 | Harbor | Market | Shipyard | Bank | Inn | Sanctuary | Union | Bureau",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

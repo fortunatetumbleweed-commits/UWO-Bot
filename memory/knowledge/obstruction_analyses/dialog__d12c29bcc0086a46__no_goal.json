@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade confirmation dialog asking the player to confirm the sale of 731 Pigs (Livestock) for a net price of 551,905 gold, after applying a 6% tax of -21,930 and a surcharge of +138,890",
+  "full_text": "Confirm Sales — Trade Goods: Pig (Livestock, qty 731) | Sales Cost: 434,945 | Tax 6%: -21,930 | Surcharge: +138,890 | Price: 551,905 — Total Sales: 434,945 | -21,930 | +138,890 | 551,905 — [Cancel] [OK]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "d12c29bcc0086a46",
+  "goal_intent": null,
+  "cached_at": "2026-09-07T23:20:42.234632+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade confirmation dialog asking the player to confirm the sale of 731 Pigs (Livestock) for a net price of 551,905 gold, after applying a 6% tax of -21,930 and a surcharge of +138,890",
+    "full_text": "Confirm Sales — Trade Goods: Pig (Livestock, qty 731) | Sales Cost: 434,945 | Tax 6%: -21,930 | Surcharge: +138,890 | Price: 551,905 — Total Sales: 434,945 | -21,930 | +138,890 | 551,905 — [Cancel] [OK]",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

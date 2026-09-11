@@ -1,0 +1,21 @@
+{
+  "purpose": "The purchase sub-menu panel showing available goods at Antalya, including Mutton (639 units at 99% / 258 gold), which is the bot's current trading target — this is the normal purchase screen the bot just navigated to, not an obstruction",
+  "full_text": "00:29:08 | 204 | Sugar Beet Food 633 99% 222 | Mutton Food 639 99% 258 | Rose Perfume 177 108% 694 | Kutnu Fabrics 194 Specialties Unlock Condition (0/1)",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "862086559cf5eb37",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T01:39:09.980545+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The purchase sub-menu panel showing available goods at Antalya, including Mutton (639 units at 99% / 258 gold), which is the bot's current trading target — this is the normal purchase screen the bot just navigated to, not an obstruction",
+    "full_text": "00:29:08 | 204 | Sugar Beet Food 633 99% 222 | Mutton Food 639 99% 258 | Rose Perfume 177 108% 694 | Kutnu Fabrics 194 Specialties Unlock Condition (0/1)",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

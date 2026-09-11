@@ -249,6 +249,7 @@ class OmniParser:
             texts = self._detect_text(frame)
             elements = _merge_icons_and_text(icons, texts, frame_dims=(frame.width, frame.height))
             elements.sort(key=lambda e: (e.y1, e.x1))
+            _announce_parse(frame, elements)
             return elements
         except Exception as exc:
             logger.warning(f"OmniParser.parse_fast() error: {exc}")
@@ -587,6 +588,32 @@ def get_omniparser() -> OmniParser:
 # pattern: 1-3 frames live at once).
 
 _FRAME_CACHE: dict[int, List[DetectedElement]] = {}
+
+# WHERE A PARSE IS ANNOUNCED. `_FRAME_CACHE` exists to save inference within a tick and is
+# capped at 4 entries, CLEARED WHOLESALE on overflow — so a parse survives about four frames.
+# That is right for a cache and useless for a recorder: by the time the action trace asked,
+# the parse it wanted had usually been dropped, and the Berber report came out "66 frames:
+# 1 live, 65 unread" over a run that had parsed 27 times.
+#
+# So a parse is ANNOUNCED as it is made, rather than looked up later and found missing. The
+# sink is the same shape as `capture.adb_capture.set_capture_sink`, and is installed by
+# `actions.action_trace.start`. It must never raise into the parse and never hold the frame.
+_PARSE_SINK = None
+
+
+def set_parse_sink(fn) -> None:
+    """Install (or clear, with None) the callback told about every parse."""
+    global _PARSE_SINK
+    _PARSE_SINK = fn
+
+
+def _announce_parse(frame, elements) -> None:
+    if _PARSE_SINK is None:
+        return
+    try:
+        _PARSE_SINK(frame, elements)
+    except Exception as exc:                 # a recorder must never break the run it records
+        logger.debug(f"parse sink failed: {exc}")
 MAX_CACHE_ENTRIES: int = 4
 
 

@@ -18,6 +18,8 @@ dialogs (no buttons), which the legacy keyword pipeline misses.
 """
 from __future__ import annotations
 
+from loguru import logger
+
 from dataclasses import dataclass, field
 from typing import List, Optional, Sequence, Tuple
 
@@ -31,8 +33,24 @@ _DIALOG_ACTION_VERBS = {
     "purchase", "sell", "buy", "deposit", "withdraw", "recruit",
     "donate", "exchange", "continue", "next", "claim", "collect",
     "depart", "depart now", "set sail", "close", "back",
-    "accept", "skip", "receive", "open", "free", "get",
+    "accept", "skip", "receive", "open",
 }
+# NOT "get", AND NOT "free". They are ordinary English words, so they turn up INSIDE prose,
+# and one word is enough to manufacture a dialog out of a screen that has none.
+#
+# Live 2026-09-06 at Madeira, on the port overworld: an NPC says "You'll have to pay me if you
+# want to get to the New World...". OmniParser split that sentence and returned a standalone
+# 'get' at (1377,672)-(1438,716); it matched here, it was the ONLY anchor
+# (`anchors=('actions',)`), and the whole overworld was reported as a confirmation dialog. The
+# leg died with "a confirmation dialog nobody will answer (options=['get'])".
+#
+# REMOVING THEM COSTS NOTHING, which is what makes this the fix rather than a trade-off:
+# neither word appears in `is_positive` here or in `game_rules._POSITIVE_WORDS`, so a REAL
+# "Get" button was already unanswerable — detecting it only ever produced a stall. The verbs
+# that stay are either answerable (ok, confirm, receive) or shape-defining (no, cancel).
+#
+# The general hazard remains: any single common word can do this, and the detector asks only
+# whether a word matches, never whether a dialog exists.
 
 
 # ── The brown title bar — the game's own layer marker ───────────────
@@ -310,13 +328,46 @@ def detect_dialog(
     close_btn = _find_x_close(candidates, fw, fh)
 
     # Anchor 2 — action verb buttons in the centre band.
-    action_btns = _find_action_buttons(candidates, fw, fh)
+    action_btns = _find_action_buttons(candidates, fw, fh, frame)
 
     fired = []
     if close_btn:     fired.append("close")
     if action_btns:   fired.append("actions")
     if not fired:
         return None
+
+    # A DIALOG DIMS WHAT IT COVERS, AND A LIT SCREEN HAS NO DIALOG ON IT (user, 2026-09-07:
+    # "there is no dialog, dialog needs to dim the area outside of it").
+    #
+    # The anchors above say "something here looks like a dialog's furniture"; they cannot say
+    # a dialog is present, because ordinary screens carry furniture too. This detector fired
+    # on ONE anchor and that anchor was a misread: live 2026-09-07 at Samarai, on the plain
+    # Purchase grid (frame 49 of trace_barter_cmd_2026-09-07T23-05-09), OmniParser labelled
+    # Palm Oil's gold `110%` price-index chip as an action called `Ok`, and this returned a
+    # dialog spanning (356,121)-(2240,1039) — nearly the whole screen, with no title bar.
+    #
+    # Everything downstream then trusted it. The obstruction classifier reported
+    # `kind='dialog'`, which let a learned interruptor's broad keywords match the PAGE'S OWN
+    # words (they were "inside the dialog" because the dialog was the screen), and its
+    # dismissal tapped the `Ok` — the 110% chip — which staged 816 Palm Oil in bulk and bought
+    # them for 165,648 ducats. Nothing had chosen Palm Oil.
+    #
+    # `chrome_is_dimmed` is the canonical measure and needs no baseline: it reads the SCREEN'S
+    # OWN TITLE glyphs, which are bright when lit and dim under a scrim (the game's
+    # FLAG_DIM_BEHIND ×1.98 — see docs/dialogs_are_windows.md). Measured over six frames:
+    # the three plain Purchase pages and the Village Info PANEL read False; the cart-confirm
+    # and overflow cards read True.
+    #
+    # ONLY A DEFINITE `False` REJECTS. `None` means the title could not be measured, and the
+    # rule that function states is that "could not tell" must never be read as "nothing in the
+    # way" — so an unmeasurable screen keeps the anchors' verdict.
+    if frame is not None:
+        try:
+            from actions.ui import chrome_is_dimmed
+            if chrome_is_dimmed(frame) is False:
+                return None
+        except Exception as exc:              # noqa: BLE001 — unmeasurable is not "lit"
+            logger.debug(f"[dialog] could not measure the scrim: {exc}")
 
     # Build the cluster bbox.  Anchors tell us the dialog exists; the
     # dialog's body / title extend WELL beyond the anchor bbox (the
@@ -486,8 +537,14 @@ def _find_x_close(
     return None
 
 
+# Tallest a dialog action button may be, as a fraction of frame height. Measured: `No`
+# 43px, `Ok` 73px on a 1080-tall frame (4% and 7%). 12% is loose enough to ride a
+# re-layout and tight enough to reject a 314px parse artefact.
+_MAX_ACTION_H = 0.12
+
+
 def _find_action_buttons(
-    elements: Sequence[DetectedElement], fw: int, fh: int,
+    elements: Sequence[DetectedElement], fw: int, fh: int, frame=None,
 ) -> List[DialogAction]:
     """Action-verb buttons in the centre band, lower half.
 
@@ -521,6 +578,23 @@ def _find_action_buttons(
             continue
         if not (0.45 * fh <= e.cy <= 0.95 * fh):
             continue
+        # A BOX BIGGER THAN ITS THING IS NOT THE THING. A caller taps an action at its
+        # CENTRE, so an oversized box does not merely describe the button loosely — it aims
+        # somewhere the button is not.
+        #
+        # Live 2026-09-06 at Tripoli. OmniParser returned the negotiation card's `No` as a
+        # 725x314 `button` spanning (1488,367)-(2213,681); the real control is the 63x43 text
+        # at (1771,617)-(1834,660). `game_rules` chose 'No' correctly, the dispatcher tapped
+        # the big box's centre (1850,524) — about 110px above the button — three times, and
+        # the leg failed with "a confirmation dialog will not close". The very next frame
+        # parsed the same card correctly, so this is parse noise, not a layout.
+        #
+        # Measured buttons: `No` 63x43, a Result card's `Ok` 217x73. Nothing legitimate comes
+        # close to 130px tall, and rejecting the bad box is what lets the card reach a reader
+        # that CAN place it — `market._on_negotiation` finds this same 'No' by OCR at
+        # (1803,639).
+        if (e.y2 - e.y1) > _MAX_ACTION_H * fh:
+            continue
         out.append(DialogAction(
             label=e.label.strip(),
             bbox=(e.x1, e.y1, e.x2, e.y2),
@@ -530,7 +604,69 @@ def _find_action_buttons(
                 "open", "receive", "purchase", "sell", "buy", "recruit",
             },
         ))
-    return out
+    if out:
+        return out
+    # NO READABLE VERB — LOOK FOR THE GOLD PILL INSTEAD.
+    #
+    # This game marks its positive control by COLOUR, not by wording (CLAUDE.md: "a POSITIVE
+    # button is identified by its yellow/gold background"), and OmniParser does not always
+    # give that control a word. On a purchase Result card it comes back as a bare `icon`:
+    #
+    #     'Result' … 'Total Amount' 275,175 … 'Balance' 68,606,484,238
+    #     icon (1092,676)-(1309,749)          <- 217x73, gold, bottom centre: the OK
+    #
+    # so the verb loop above found nothing, the dialog reported `actions=[]`, and every layer
+    # downstream concluded the card had no button to press. `tap_one_positive` found nothing
+    # five times running at Barcelona on 2026-09-06 and the run stalled. The X in the corner
+    # was closing these cards instead — a dismissal standing in for a completion, which is
+    # backwards (user: "using the Ok button would be the preferred method for all the
+    # confirmation dialogs", and *Back / Home = Cancel, not progress*).
+    #
+    # The test is the CANONICAL one, not a new one: `looks_like_commit_button` — a wide pill
+    # with enough gold — which already accepts this button (217x73, aspect 2.97, yellow 0.324
+    # against a 0.25 floor). Same reasoning as `keypad.py`: recognise the control by what it
+    # IS when the caption is missing.
+    gold = _find_gold_action(elements, frame, fw, fh)
+    return [gold] if gold is not None else []
+
+
+def _find_gold_action(elements, frame, fw: int, fh: int) -> Optional[DialogAction]:
+    """The positive control, by colour, when it carries no readable word.
+
+    NEVER a red-gem button. Those spend real money, and `commit_button.cost_currency` is the
+    same reading `brain/action_executor.py` gates on — a control this function cannot price
+    is not offered as an option at all.
+    """
+    if frame is None:
+        return None
+    try:
+        import numpy as _np
+
+        from vision.region_detectors.commit_button import (cost_currency,
+                                                           looks_like_commit_button,
+                                                           yellow_fraction)
+        arr = _np.asarray(frame.convert("RGB"))
+    except Exception:                       # noqa: BLE001 — a poorer read, not a broken one
+        return None
+    best = None
+    for e in elements:
+        if not (0.20 * fw <= e.cx <= 0.80 * fw and 0.45 * fh <= e.cy <= 0.95 * fh):
+            continue
+        x1, y1, x2, y2 = int(e.x1), int(e.y1), int(e.x2), int(e.y2)
+        w, h = x2 - x1, y2 - y1
+        if w <= 0 or h <= 0:
+            continue
+        try:
+            frac = yellow_fraction(arr, x1, y1, x2, y2)
+            if not looks_like_commit_button(w, h, frac):
+                continue
+            if cost_currency(arr, x1, y1, x2, y2) == "red_gem":
+                continue
+        except Exception:                   # noqa: BLE001
+            continue
+        if best is None or frac > best[0]:
+            best = (frac, DialogAction(label="Ok", bbox=(x1, y1, x2, y2), is_positive=True))
+    return best[1] if best else None
 
 
 def _find_title_bar(

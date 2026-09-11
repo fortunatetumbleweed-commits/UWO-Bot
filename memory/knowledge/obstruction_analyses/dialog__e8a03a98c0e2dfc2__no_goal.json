@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade post purchase confirmation dialog asking the player to confirm buying 228 units of Coral (Jewelry category) for a final price of 2,737,368 gold after applying a 6% tax of 154,812 and a discount of -625,860 on a base cost of 3,208,416",
+  "full_text": "Confirm Purchase — Trade Goods: Coral (Jewelry, qty 228) | Purchase Cost: 3,208,416 | Tax 6%: 154,812 | Discount: -625,860 | Purchase Price: 2,737,368 | Total Price: 3,208,416 base, 154,812 tax, -625,860 discount, 2,737,368 final. [Cancel] [OK]",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "e8a03a98c0e2dfc2",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T17:39:17.259632+00:00",
+  "visit_count": 12,
+  "raw_api_response": {
+    "purpose": "Trade post purchase confirmation dialog asking the player to confirm buying 228 units of Coral (Jewelry category) for a final price of 2,737,368 gold after applying a 6% tax of 154,812 and a discount of -625,860 on a base cost of 3,208,416",
+    "full_text": "Confirm Purchase — Trade Goods: Coral (Jewelry, qty 228) | Purchase Cost: 3,208,416 | Tax 6%: 154,812 | Discount: -625,860 | Purchase Price: 2,737,368 | Total Price: 3,208,416 base, 154,812 tax, -625,860 discount, 2,737,368 final. [Cancel] [OK]",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

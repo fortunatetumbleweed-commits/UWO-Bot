@@ -17,6 +17,7 @@ import time
 from typing import Callable, Mapping, Optional, Sequence
 
 from loguru import logger
+from utils.digits import SEPARATORS as _SEP
 
 
 def _name(g):
@@ -161,7 +162,20 @@ def _find_sell_commit(frame, elements):
     for c in commits:
         if "sell" in (getattr(c, "verb", "") or "").lower():
             return c
-    return commits[0] if commits else None
+    # NO BARE `commits[0]`. A failed lookup is a REFUSAL, not a guess
+    # (`a-fallback-fires-when-guessing-is-worst`), and this is a screen we MEANT to be on, so
+    # the control is anchored or it is absent — CLAUDE.md: "Expected screens are
+    # multi-anchored; positive-button search is for the UNEXPECTED ... with no goal the search
+    # degrades to 'tap whatever looks positive'".
+    #
+    # It degraded exactly that way. With the basket EMPTY the real Sell button is greyed and
+    # undetectable, so the only gold thing on the Lisboa page was the `Specialties` banner on
+    # the Almond tile — Almond being a Lisboa specialty. This returned it, the caller read
+    # "the basket is loaded", and the tap landed inside the tile: Put In Bulk staged all 1,841
+    # and the next tick sold them, during a trim whose keep list named Almond.
+    #
+    # An empty basket has no commit button, and that is the correct answer to give.
+    return None
 
 
 # How many times the sell list may be scrolled looking for more to sell. A hold deep
@@ -389,7 +403,7 @@ def sell_goods(port: str, goal: str = "profit", keep: Optional[Sequence[str]] = 
 # WITHOUT tapping Sell — nothing has left the hold at that point. This is what stops the
 # bulk-still-ON case (tile tap silently loads the full stack) from selling everything.
 
-_QTY_PAIR_RE = re.compile(r"^\s*(\d[\d,]*)?\s*/\s*(\d[\d,]*)\s*$")
+_QTY_PAIR_RE = re.compile(r"^\s*(\d[\d,.\']*)?\s*/\s*(\d[\d,.\']*)\s*$")
 
 
 def _find_qty_field(elements, dialog_bbox=None) -> Optional[tuple]:
@@ -433,7 +447,7 @@ def _find_qty_field(elements, dialog_bbox=None) -> Optional[tuple]:
         x0, y0, x1, y1 = dialog_bbox
         if not (x0 <= cx <= x1 and y0 <= cy <= y1):
             continue              # the Cargo bar and anything else behind the scrim
-        total = int(m.group(2).replace(",", ""))
+        total = int(m.group(2).translate(_SEP))
         if best is None:
             best = (cx, cy, total)
     if best is None:
@@ -453,6 +467,7 @@ def sell_down_to(port: str, keep: Mapping[str, int], *,
                  overlay_fn: Optional[Callable] = None,
                  react_fn: Optional[Callable] = None,
                  find_button_fn: Optional[Callable] = None,
+                 ensure_sell_tab_fn: Optional[Callable] = None,
                  settle: float = 1.2) -> dict:
     """Trim each good in `keep` down to that many units, selling the excess.
 
@@ -508,12 +523,67 @@ def sell_down_to(port: str, keep: Mapping[str, int], *,
         logger.warning(f"[sell_down_to] {reason}")
         return {"ok": False, "trimmed": {}, "skipped": skipped, "reason": reason}
 
+    def _tile_did_not_move(name: str, was: int, overlay=None) -> bool:
+        """Is this good's tile still showing what it showed before we tapped it?
+
+        THE PROOF THAT THE BASKET IS CLEAN. Staging moves a good OUT of the tile and into
+        the cart — measured live: Iron 999 became 822 once its 177 surplus was staged — so a
+        tile that has not moved is a tile whose tap did nothing. Unknown reads as False:
+        this licenses a sale, so "cannot tell" must not mean "go ahead".
+
+        The dialog is cleared first. Reading the page behind a modal is reading the wrong
+        window, and the tap that clears it must not be aimed through one either.
+        """
+        if overlay is not None and getattr(overlay, "is_modal", False):
+            _dismiss_dialog(overlay, capture_fn, tap_fn, find_button_fn, settle)
+        try:
+            page = read_page_fn(capture_fn()) or []
+        except Exception as exc:              # noqa: BLE001 — a poorer read, not a broken one
+            logger.debug(f"[sell_down_to] could not re-read the grid: {exc}")
+            return False
+        for other in page:
+            if str(getattr(other, "name", "")).strip().lower() == name.strip().lower():
+                now = getattr(other, "owned_qty", None)
+                return now is not None and int(now) == int(was)
+        return False                          # not on the page — nothing is proven
+
     # DECIDE FIRST, TOUCH NOTHING YET. The Sell page's centre grid IS the cargo hold, so
     # whether anything is over-stocked is answerable from the frame already on screen. When
     # nothing is, we leave without a single tap. Live 2026-08-22 the old order toggled
     # Put In Bulk OFF and straight back ON around a trim that then reported
     # "trimmed {} (nothing to trim)" — two taps and 20 seconds to change nothing.
-    goods = {_name(g).lower(): g for g in (read_page_fn(capture_fn()) or [])}
+    # SWITCH TO THE SELL TAB, AND CONFIRM IT. `sell_goods` has always done this and
+    # `_read_owned_via_sell` refuses without it; the TRIM path alone just read whatever grid
+    # was on screen. Live 2026-09-04 at Madeira it read the PURCHASE page (frame 277 of
+    # trace_barter_cmd_2026-09-04T17-35-01 — title "Purchase", the shop's stock in the middle,
+    # the fleet's 3,237 Pig sitting in the panel on the right):
+    #
+    #     [Madeira] nothing over-stocked — leaving the market untouched (hold {})
+    #     trim skipped at Madeira: Raisin: not on the sell page
+    #     trim skipped at Madeira: Pig: not on the sell page
+    #
+    # It then sailed to the village with the whole 1,476-unit Pig surplus aboard.
+    _ensure_tab = ensure_sell_tab_fn
+    if _ensure_tab is None:
+        from actions.buy_materials import ensure_sell_tab as _ensure_tab
+    try:
+        on_sell = _ensure_tab(capture_fn, tap_fn, settle)
+    except Exception as exc:
+        logger.debug(f"[sell_down_to] sell-tab switch raised: {exc}")
+        on_sell = False
+    if not on_sell:
+        return _abort("could not reach the Sell grid — refusing to report the hold as "
+                      "trimmed", [f"{n}: the Sell grid was never reached" for n in keep])
+
+    # None IS NOT AN EMPTY HOLD. `_sell_page` returns None for "I was not looking at the
+    # hold" and [] for "I was, and it holds nothing" — a distinction it documents at length,
+    # having been given it on 2026-09-01 for exactly this failure. `or []` threw it away one
+    # call later, so a wrong-page read became "nothing to trim" and the leg reported ok.
+    page = read_page_fn(capture_fn())
+    if page is None:
+        return _abort("the Sell grid could not be read — refusing to report the hold as "
+                      "trimmed", [f"{n}: the Sell grid could not be read" for n in keep])
+    goods = {_name(g).lower(): g for g in page}
     owned_now = {n: int(g.owned_qty) for n, g in goods.items()
                  if getattr(g, "owned_qty", None) is not None}
     over_stocked, skipped = [], []
@@ -561,6 +631,38 @@ def sell_down_to(port: str, keep: Mapping[str, int], *,
         overlay = overlay_fn(dlg_frame)
         qty_field = _find_qty_field(omni_fn(dlg_frame), dialog_bbox=overlay.bbox)
         if qty_field is None:
+            # A DROPPED TAP IS THE LIKELIEST CAUSE, and the game drops about one in twenty.
+            # Re-tap the SAME tile once — this waits for our own effect on the same screen,
+            # which is the one thing a primitive's loop may do.
+            logger.info(f"[{port}] {name}: no quantity dialog — re-tapping the tile once")
+            tap_fn(g.tap_x, g.tap_y)
+            time.sleep(settle)
+            dlg_frame = capture_fn()
+            overlay = overlay_fn(dlg_frame)
+            qty_field = _find_qty_field(omni_fn(dlg_frame), dialog_bbox=overlay.bbox)
+
+        if qty_field is None:
+            # COMMIT WHAT WAS CONFIRMED RATHER THAN THROWING IT AWAY.
+            #
+            # The all-or-nothing abort exists for a real danger: with Put In Bulk still ON a
+            # tile tap loads the WHOLE stack, and selling that dumps materials the barter
+            # needs. But that danger is about THIS good, and it is observable — a tap that
+            # loaded the stack MOVES the tile's count, while a dropped tap leaves it exactly
+            # where it was. Every good already in the basket passed a confirmed quantity
+            # dialog, so committing them is precisely as safe as the full commit would be.
+            #
+            # Live 2026-09-06 at Tripoli: Candle 211 and Iron 177 staged correctly — the
+            # exact surpluses, tiles reading 709 and 822 — then Matchlock Gun's dialog did
+            # not open and the whole basket was abandoned, 205,013 ducats and one tap from
+            # Sell. That is the 2026-08-22 loss repeating ("981 Ebony loaded, Sell one tap
+            # away, thrown away"), and this file's own safety note is what licenses the
+            # narrower rule: the model is per-good confirmation, not per-basket.
+            if trimmed and _tile_did_not_move(name, owned, overlay):
+                logger.warning(f"[{port}] {name}: quantity dialog would not open and its "
+                               f"tile is untouched — skipping it and selling the "
+                               f"{len(trimmed)} good(s) already confirmed")
+                skipped.append(f"{name}: quantity dialog would not open")
+                continue
             return _abort(f"{name}: quantity dialog did not open (Put In Bulk still ON?) "
                           "— aborted before selling anything", skipped, overlay=overlay)
 
@@ -601,9 +703,28 @@ def sell_down_to(port: str, keep: Mapping[str, int], *,
         overlay_after = overlay_fn(after)
         if (overlay_after.is_modal
                 and _find_qty_field(omni_fn(after), dialog_bbox=overlay_after.bbox)):
-            return _abort(f"{name}: quantity dialog still open after Load — the amount "
-                          "may not be in the basket; aborted before selling anything",
-                          skipped, overlay=overlay_after)
+            # A DIALOG STILL OPEN IS PROOF THE LOAD DID NOT HAPPEN, which is what makes ONE
+            # re-tap safe: a Load that had worked would have closed it, so this cannot load
+            # the amount twice. The usual cause is the tap the game drops about once in
+            # twenty, and re-tapping the same control on the same screen is waiting for our
+            # own effect — the one loop a primitive may have.
+            #
+            # Live 2026-09-06 at Madeira, frame 400 of trace_barter_cmd_2026-09-06T21-45-01:
+            # the Trade Goods Info card open for Pig, the field reading a correct `73 / 1,828`
+            # (1,828 aboard less 1,755 kept), and the tap at (1313,943) dead on Load. Four
+            # seconds later the card was unchanged. The trim aborted with "the amount may not
+            # be in the basket" and the whole surplus sailed on unsold.
+            logger.info(f"[{port}] {name}: the quantity dialog is still open — re-tapping "
+                        "Load once; it cannot have loaded and stayed open")
+            tap_fn(*load)
+            time.sleep(settle)
+            after = capture_fn()
+            overlay_after = overlay_fn(after)
+            if (overlay_after.is_modal
+                    and _find_qty_field(omni_fn(after), dialog_bbox=overlay_after.bbox)):
+                return _abort(f"{name}: quantity dialog still open after Load — the amount "
+                              "may not be in the basket; aborted before selling anything",
+                              skipped, overlay=overlay_after)
         trimmed[name] = excess
 
     if not trimmed:

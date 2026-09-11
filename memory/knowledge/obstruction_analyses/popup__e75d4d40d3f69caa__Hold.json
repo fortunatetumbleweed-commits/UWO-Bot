@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is showing the current hold contents — Iron (712 units) and Matchlock Gun (346 units) are visible cargo items available to sell, which is the hold inventory the bot went to read",
+  "full_text": "Matchlock Gun / Firearms / 346 / 102% / 98 (-871)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "e75d4d40d3f69caa",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-08T22:12:44.277814+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Sell screen is showing the current hold contents — Iron (712 units) and Matchlock Gun (346 units) are visible cargo items available to sell, which is the hold inventory the bot went to read",
+    "full_text": "Matchlock Gun / Firearms / 346 / 102% / 98 (-871)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

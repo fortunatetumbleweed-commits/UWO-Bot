@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase sub-menu panel is showing the available goods at Trabzon — this is the normal purchase screen the bot is already on, not a new obstruction; Raisin shows as Sold Out (quantity 0), meaning the bot cannot buy Raisin here to reach its hold target of ~1081 units",
+  "full_text": "00:27:38 | 139 diamonds | Carpet (Fabrics) 101% 1,091 | Pomegranate (Food) 94% 280 | Peony (Medicine) 97% 314 | Kutnu (Fabrics) Specialties 10/26/2026/00:00:00 | 641 | 491",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "5d103df45cfdf792",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T14:36:00.489801+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase sub-menu panel is showing the available goods at Trabzon — this is the normal purchase screen the bot is already on, not a new obstruction; Raisin shows as Sold Out (quantity 0), meaning the bot cannot buy Raisin here to reach its hold target of ~1081 units",
+    "full_text": "00:27:38 | 139 diamonds | Carpet (Fabrics) 101% 1,091 | Pomegranate (Food) 94% 280 | Peony (Medicine) 97% 314 | Kutnu (Fabrics) Specialties 10/26/2026/00:00:00 | 641 | 491",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

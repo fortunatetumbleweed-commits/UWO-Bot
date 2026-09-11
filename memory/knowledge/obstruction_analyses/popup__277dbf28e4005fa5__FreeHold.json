@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell panel on the right side of the trading screen is showing the current cargo loaded for sale (Coral, Ebony, Textiles) with their quantities, prices, negotiation chance, tax, and profit summary — this is the active sell interface, not a blocking popup",
+  "full_text": "Coral (Jewelry) 104% 14,386 (2,461) | Textiles (Fabrics) Specialties 94% 13,589 (12,522) | Cargo 741/4,952 | Nego. Chance 63.7% Success Rate 76.2% | Trade Points 352P | Tax 11% -585,969 | Profit/Loss on Sales 4,743,262 | Total 7,326,099",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "277dbf28e4005fa5",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-08T21:12:16.857314+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Sell panel on the right side of the trading screen is showing the current cargo loaded for sale (Coral, Ebony, Textiles) with their quantities, prices, negotiation chance, tax, and profit summary — this is the active sell interface, not a blocking popup",
+    "full_text": "Coral (Jewelry) 104% 14,386 (2,461) | Textiles (Fabrics) Specialties 94% 13,589 (12,522) | Cargo 741/4,952 | Nego. Chance 63.7% Success Rate 76.2% | Trade Points 352P | Tax 11% -585,969 | Profit/Loss on Sales 4,743,262 | Total 7,326,099",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

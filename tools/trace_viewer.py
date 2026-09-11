@@ -54,7 +54,8 @@ def _run_components(frame: Image.Image, qwen: bool) -> dict:
         try:
             from vision.qwen_perception import qwen_perceive
             toks = [(t["text"], t["conf"], t["cx"], t["cy"]) for t in ocr]
-            qres = qwen_perceive(state or "unknown", detail or "", toks, elements=els)
+            qres = qwen_perceive(state or "unknown", detail or "", toks, elements=els,
+                                 frame_h=getattr(img, "height", 0))
         except Exception as exc:
             qres = {"error": str(exc)}
     return {"state": state, "detail": detail, "omni": omni, "ocr": ocr, "qwen": qres}
@@ -69,6 +70,20 @@ def build(session: Path, qwen: bool, limit: int, rebuild: bool,
     actions = [json.loads(l) for l in (session / "actions.jsonl").read_text().splitlines() if l.strip()]
     if limit:
         actions = actions[:limit]
+    # WHAT WE ASKED AN LLM, AND WHAT IT SAID (user, 2026-09-08). Written live by
+    # `action_trace.record_llm`, keyed to the frame the question was asked about. A session
+    # recorded before this exists simply has no file and the tab says so.
+    consults: dict = {}
+    llm_path = session / "llm.jsonl"
+    if llm_path.exists():
+        for line in llm_path.read_text().splitlines():
+            if not line.strip():
+                continue
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            consults.setdefault(row.get("frame_idx", -1), []).append(row)
     cache_dir = session / "viewer_data"
     cache_dir.mkdir(exist_ok=True)
     frames = []
@@ -114,6 +129,7 @@ def build(session: Path, qwen: bool, limit: int, rebuild: bool,
         data["perception"] = "rebuilt"
         cache.write_text(json.dumps(data))
         frames.append({**a, **data})
+    _attach_consults(frames, consults)
     return frames
 
 
@@ -218,6 +234,14 @@ def _annotate_from_log(session: Path, frames: list) -> None:
         prev = t or prev
 
 
+def _attach_consults(frames: list, consults: dict) -> None:
+    """Give each frame the LLM consults asked about it."""
+    for f in frames:
+        rows = consults.get(f.get("idx"))
+        if rows:
+            f["llm"] = rows
+
+
 def _write_html(session: Path, frames: list) -> Path:
     payload = json.dumps(frames).replace("</", "<\\/")
     out = session / "viewer.html"
@@ -266,7 +290,7 @@ _HTML = r"""<!doctype html><html><head><meta charset="utf-8"><title>__TITLE__</t
 </div>
 <script>
 const F = __DATA__;
-const TABS = ["Screen / OmniParser","OCR","Perception","Decision"];
+const TABS = ["Screen / OmniParser","OCR","Perception","Decision","LLM"];
 let cur = 0, tab = 0;
 const listEl=document.getElementById('list'), tabsEl=document.getElementById('tabs'),
       bodyEl=document.getElementById('body'), hdEl=document.getElementById('hd');
@@ -351,6 +375,34 @@ function percView(f){
      <div><span class="k">action:</span> <span class="fact">${esc(tapStr(f))}</span>${f.label?(' — '+esc(f.label)):''}</div></div>
    <b>Qwen (L2.5)</b>${ql}`;
 }
+function llmView(f){
+  const rows=f.llm||[];
+  if(!rows.length){
+    let last=null; for(let i=cur;i>=0;i--){ if((F[i].llm||[]).length){last=F[i];break;} }
+    return '<i style="color:#888">No LLM consult on this frame'
+      + (last?` — most recent was frame #${last.idx}.`:'. Perception answered from the '
+        +'fingerprints alone, which is the cheap path and the usual one.')
+      + '</i>';
+  }
+  return rows.map((r,i)=>{
+    const meta=Object.entries(r).filter(([k])=>
+      !['prompt','response','question','model','t','frame_idx','elapsed_s'].includes(k))
+      .map(([k,v])=>`<span class="k">${esc(k)}:</span> <span class="v">${esc(JSON.stringify(v))}</span>`)
+      .join(' &nbsp; ');
+    const resp=typeof r.response==='string'?r.response:JSON.stringify(r.response,null,1);
+    return `<div style="margin-bottom:14px;border:1px solid #444;padding:8px">
+      <div class="hd" style="margin:-8px -8px 8px"><b>${esc(r.model||'?')}</b>
+        <span style="color:#888">${esc(r.t||'')} &nbsp; ${esc(r.elapsed_s||0)}s</span></div>
+      <div><span class="k">asked:</span> <span class="fact">${esc(r.question||'')}</span></div>
+      ${meta?`<div style="margin-top:4px">${meta}</div>`:''}
+      <div style="margin-top:8px"><b>ANSWER</b>
+        <pre style="white-space:pre-wrap;background:#1e1e1e;padding:8px;margin:4px 0">${esc(resp||'(none)')}</pre></div>
+      <details style="margin-top:4px"><summary style="cursor:pointer;color:#7ab">
+        full prompt (${(r.prompt||'').length} chars) — this is the evidence, open it when the answer looks wrong</summary>
+        <pre style="white-space:pre-wrap;background:#1e1e1e;padding:8px;max-height:520px;overflow:auto">${esc(r.prompt||'')}</pre>
+      </details></div>`;
+  }).join('');
+}
 function kv(o){return Object.entries(o||{}).map(([k,v])=>
   `<tr><td class="k">${esc(k)}</td><td class="v">${esc(typeof v==='object'?JSON.stringify(v):v)}</td></tr>`).join('');}
 function decisionView(f){
@@ -382,7 +434,7 @@ function render(){
   hdEl.innerHTML=`<b>#${String(F[cur].idx).padStart(3,'0')}</b> — <span class="fstate">${whereStr(F[cur])}</span> ${gapStr(F[cur])}
     — <span class="fact">${esc(tapStr(F[cur]))}</span> ${srcTag} <span style="color:#888">(${cur+1}/${F.length})</span>`;
   const f=F[cur];
-  bodyEl.innerHTML=[omniView,ocrView,percView,decisionView][tab](f);
+  bodyEl.innerHTML=[omniView,ocrView,percView,decisionView,llmView][tab](f);
   buildList();buildTabs();
   const s=document.querySelector('.fitem.sel'); if(s)s.scrollIntoView({block:'nearest'});
 }
@@ -412,7 +464,7 @@ function seltab(i){tab=i;render();}
 document.onkeydown=e=>{
   if(e.key==='ArrowRight'||e.key==='ArrowDown')sel(cur+1);
   else if(e.key==='ArrowLeft'||e.key==='ArrowUp')sel(cur-1);
-  else if(e.key>='1'&&e.key<='4')seltab(+e.key-1);
+  else if(e.key>='1'&&e.key<='5')seltab(+e.key-1);
 };
 render();
 </script></body></html>"""

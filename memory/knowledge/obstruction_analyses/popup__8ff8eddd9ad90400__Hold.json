@@ -1,0 +1,21 @@
+{
+  "purpose": "The purchase sub-menu is displaying the normal market goods panel at Trabzon — this is the purchase tab itself, not a popup obstruction; the bot has already met its Raisin hold target (1272 ≥ 1081).",
+  "full_text": "00:28:49 | 183 gems | Carpet (Fabrics) 177 — 101% 1,091 | Pomegranate (Food) 641 — 94% 280 | Peony (Medicine) 491 — 97% 314 | Kutnu (Fabrics) Specialties 10/26/2026/00:00:00",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "8ff8eddd9ad90400",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T14:48:16.244397+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The purchase sub-menu is displaying the normal market goods panel at Trabzon — this is the purchase tab itself, not a popup obstruction; the bot has already met its Raisin hold target (1272 ≥ 1081).",
+    "full_text": "00:28:49 | 183 gems | Carpet (Fabrics) 177 — 101% 1,091 | Pomegranate (Food) 641 — 94% 280 | Peony (Medicine) 491 — 97% 314 | Kutnu (Fabrics) Specialties 10/26/2026/00:00:00",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "high"
+  }
+}

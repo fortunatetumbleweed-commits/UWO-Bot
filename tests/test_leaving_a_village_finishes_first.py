@@ -69,9 +69,11 @@ class LeavingForTheTail(unittest.TestCase):
                 f"a Back was dispatched at {where!r}, which Back does nothing to")
 
     def test_an_ordinary_village_screen_still_uses_back(self):
+        # TWO, not one: EXIT_BUILDING gets one retry at a village now (2026-09-04). See
+        # `test_it_gives_up_rather_than_pressing_back_forever` for why that is bounded.
         ok, backs = self._run(["village"] * 4 + ["sea"])
         self.assertTrue(ok)
-        self.assertEqual(len(backs), 1)
+        self.assertEqual(len(backs), 2)
 
     def test_already_at_sea_needs_neither(self):
         ok, backs = self._run(["sea"])
@@ -79,12 +81,28 @@ class LeavingForTheTail(unittest.TestCase):
         self.assertEqual(backs, [])
 
     def test_it_gives_up_rather_than_pressing_back_forever(self):
-        """One press, then it waits: the dispatcher holds an intent in flight until the state
-        changes, so an unmoving screen is not pressed again."""
+        """Two presses, then it gives up — and the second is what this test now defends.
+
+        It asserted ONE, because a second Back at a village lands at SEA and loses the
+        village. What changed is the reading of that cost, not the risk: EXIT_BUILDING is
+        dispatched when leaving IS the goal, so "lost the village" and "left the village" are
+        the same event. Live 2026-09-04 at San a single swallowed Back stranded a finished
+        barter — four rounds committed, 4,455 Bambara Groundnut aboard — because nothing
+        pressed again.
+
+        The bound is the point, and it is unchanged in spirit: the old loop pressed Back up
+        to four times at a screen that never moved. This presses once more, only on an
+        OBSERVED-unchanged screen, and stops.
+        """
         ok, backs = self._run(["village"])
         self.assertFalse(ok)
-        self.assertEqual(len(backs), 1,
-                         "the dispatcher holds an intent in flight until the state changes")
+        self.assertEqual(len(backs), 2, "one retry, then it stops — never the old loop")
+
+    def test_the_presses_do_not_scale_with_the_looks(self):
+        """The property the original assertion was really defending."""
+        _, few = self._run(["village"] * 3)
+        _, many = self._run(["village"] * 30)
+        self.assertEqual(len(few), len(many))
 
 
 class BackIsNeverPressedOnAnOverworld(unittest.TestCase):
@@ -130,7 +148,7 @@ class BackIsNeverPressedOnAnOverworld(unittest.TestCase):
         """The case the function exists for — a village must be left to reach the map."""
         ok, backs = self._run(["village"] * 4 + ["sea"])
         self.assertTrue(ok)
-        self.assertEqual(len(backs), 1)
+        self.assertEqual(len(backs), 2)   # one retry; see LeavingForTheTail above
 
     def test_the_port_map_also_counts_as_clear(self):
         ok, backs = self._run(["port_map"])

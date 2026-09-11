@@ -1,0 +1,21 @@
+{
+  "purpose": "A nearby player ship panel showing 'TaylorFP' (with a confederate flag icon) and 'Patron' rank has appeared on screen, likely a player encounter or proximity card in the Dangerous Waters zone near Berber Village",
+  "full_text": "TW | Patron | 0.0 | 1 | TaylorFP | 14",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "10f3004d86cdceaf",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-11T03:03:13.061019+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A nearby player ship panel showing 'TaylorFP' (with a confederate flag icon) and 'Patron' rank has appeared on screen, likely a player encounter or proximity card in the Dangerous Waters zone near Berber Village",
+    "full_text": "TW | Patron | 0.0 | 1 | TaylorFP | 14",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

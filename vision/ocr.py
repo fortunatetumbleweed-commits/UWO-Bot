@@ -208,7 +208,7 @@ def _element_in_norm_region(el, region, frame_w, frame_h) -> bool:
 _TITLE_MIN_HEIGHT_NORM = 32 / 1080
 
 
-def _top_left_title_from_elements(elements, frame_w, frame_h) -> str:
+def _top_left_title_from_elements(elements, frame_w, frame_h, *, acceptable=None) -> str:
     """Find the title text in the top-left region.
 
     The title (port name on port_overworld, building name in a building,
@@ -240,6 +240,18 @@ def _top_left_title_from_elements(elements, frame_w, frame_h) -> str:
         if el.height < min_h:
             continue
         candidates.append(el)
+    # A CALLER MAY KNOW WHAT ITS TITLE CANNOT LOOK LIKE, and this has to run BEFORE the
+    # height ranking, not after — the ranking keeps only what is within 20% of the tallest,
+    # so an impossible-but-tall candidate does not merely win, it evicts the real one.
+    #
+    # Live 2026-09-07 at Faro: an NPC bubble reading "...Pyrenees in the north?" came back
+    # 71px tall — the BUBBLE's height, not its glyphs' — against the real `Faro` at 38px.
+    # `north?` won, matched no port at 0.55, passed through raw, and the leg failed with
+    # "the voyage ended at 'north?', not 'Faro'" while the fleet stood in Faro.
+    if acceptable is not None:
+        kept = [el for el in candidates if acceptable((el.label or "").strip())]
+        if kept:
+            candidates = kept
     if not candidates:
         return ""
     max_h = max(el.height for el in candidates)
@@ -323,6 +335,24 @@ _NEVER_IN_A_PORT_NAME = frozenset({
 })
 
 
+def _could_be_a_port_name(text: str) -> bool:
+    """Could this string be a port's name at all? SHAPE only — never the catalogue.
+
+    Measured over the 224 known ports: none carries `? ! . , ; :` or a digit, and none is
+    without a capital. Two hold an apostrophe (Chang'an, K'gari), so that is left alone. A
+    genuinely uncatalogued port still passes — which is what the raw pass-through is for —
+    while a scrap of an NPC's sentence does not.
+    """
+    raw = (text or "").strip()
+    if not raw:
+        return False
+    if any(ch.isdigit() for ch in raw):
+        return False
+    if any(ch in raw for ch in "?!.,;:"):
+        return False
+    return any(ch.isupper() for ch in raw)
+
+
 def read_port_name(
     frame: Image.Image,
     *,
@@ -349,7 +379,7 @@ def read_port_name(
 
     if elements is not None:
         title = _top_left_title_from_elements(
-            elements, frame.width, frame.height,
+            elements, frame.width, frame.height, acceptable=_could_be_a_port_name,
         )
         if title:
             # OmniParser-sourced text is already conf ≥ 0.4 filtered;
@@ -400,6 +430,30 @@ def read_port_name(
     #  aborted a destination selection.)
     if any(ch.isdigit() for ch in raw):
         logger.debug(f"[read_port_name] {raw!r} contains digits — not a port name, "
+                     "returning None")
+        return None
+
+    # NOR SENTENCE PUNCTUATION, AND NOT ALL IN LOWER CASE. Same reasoning as the digits
+    # above, and the same failure: this pass-through hands the caller a name it will treat
+    # as proof of where the fleet is.
+    #
+    # Live 2026-09-07 arriving at FARO. The nameplate read `Faro` at 38px; an NPC bubble
+    # overhead said "...Pyrenees in the north?" and OmniParser boxed that fragment 71px tall
+    # — taller than the real name, because the box wraps the BUBBLE and not the glyphs — so
+    # the largest-height title rule picked `north?`. It matched no port at 0.55, came through
+    # raw, and the leg failed with "the voyage ended at 'north?', not 'Faro'". The fleet was
+    # standing in Faro.
+    #
+    # Measured over the 224 known ports: NONE contains `? ! . , ; :` or `-`, and none is
+    # without a capital. Two ports carry an apostrophe (Chang'an, K'gari), so that is left
+    # alone. A genuinely uncatalogued port still passes — which is what the pass-through is
+    # for — while a scrap of prose does not.
+    if any(ch in raw for ch in "?!.,;:"):
+        logger.debug(f"[read_port_name] {raw!r} carries sentence punctuation — prose, not a "
+                     "port name; returning None")
+        return None
+    if not any(ch.isupper() for ch in raw):
+        logger.debug(f"[read_port_name] {raw!r} has no capital — not a port name, "
                      "returning None")
         return None
     # A PORT NAME IS A NAME, NOT A SENTENCE. Live 2026-08-26 at Barcelona this returned

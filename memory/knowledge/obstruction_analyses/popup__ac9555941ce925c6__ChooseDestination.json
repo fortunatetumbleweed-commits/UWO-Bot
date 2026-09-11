@@ -1,0 +1,21 @@
+{
+  "purpose": "A nearby player ship (TaylorFP, rank Patron) has appeared in proximity, showing their fleet info tooltip/nameplate overlay on the sea map near Berber Village",
+  "full_text": "Patron | 0.0 | 44 | TaylorFP | 5",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "ac9555941ce925c6",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-11T03:02:49.643838+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A nearby player ship (TaylorFP, rank Patron) has appeared in proximity, showing their fleet info tooltip/nameplate overlay on the sea map near Berber Village",
+    "full_text": "Patron | 0.0 | 44 | TaylorFP | 5",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

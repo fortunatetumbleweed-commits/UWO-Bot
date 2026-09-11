@@ -1,0 +1,21 @@
+{
+  "purpose": "Merchant Thomas Tew is offering a negotiation (bargaining) opportunity to reduce the purchase price by 21.5% (from 75,558 to 55,566 per unit) with a 76.2% success rate and multiple remaining attempts — the bot must choose whether to use 1 chance, all remaining chances, or decline",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts (icons). 75,558 → 55,566 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Options: No / Use 1 chance / Use all remaining chances.",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "2655774f4d4a4d2c",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T15:24:36.711628+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Merchant Thomas Tew is offering a negotiation (bargaining) opportunity to reduce the purchase price by 21.5% (from 75,558 to 55,566 per unit) with a 76.2% success rate and multiple remaining attempts — the bot must choose whether to use 1 chance, all remaining chances, or decline",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts (icons). 75,558 → 55,566 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Options: No / Use 1 chance / Use all remaining chances.",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

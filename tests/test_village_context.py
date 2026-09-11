@@ -68,8 +68,46 @@ def test_our_own_dialogs_outrank_the_panel_beneath_them():
 
 
 def test_overflow_is_its_own_state():
-    assert classify(None, elements=_els("Cargo is full", "OK"), panel=_panel(),
-                    exchange_live=True) == OVERFLOW_PROMPT
+    """THE CARD'S OWN FURNITURE, not a phrase we imagined it would use.
+
+    This asserted on "Cargo is full" — one of three phrases in the old `_OVERFLOW_WORDS`,
+    none of which the game has ever drawn. It says "Insufficient Empty Space", and carries a
+    `Received Trade Goods` strip over a `Cargo` strip. So the test passed, `_on_overflow` was
+    unreachable, and every overflow in the project's life was silently discarded — 360 units
+    on one card at San Village and 400 on another (FC-3, docs/market_as_contexts.md).
+
+    A test written from the same imagination as the code cannot catch the code being wrong
+    about the world. The strings below are read off frame 214 of
+    trace_barter_cmd_2026-09-05T21-38-09.
+    """
+    assert classify(None, elements=_els("Insufficient Empty Space",
+                                        "Received Trade Goods", "Cargo", "Receive"),
+                    panel=_panel(), exchange_live=True) == OVERFLOW_PROMPT
+
+
+def test_the_discard_notice_is_not_the_overflow_card():
+    """It opens OVER the overflow card, so both are on screen and the innermost is live.
+
+    NOT told apart by "will be discarded" — BOTH cards say it. Only the notice asks a
+    question.
+    """
+    from brain.village_context import DISCARD_NOTICE
+
+    both_on_screen = _els("Insufficient Empty Space", "Received Trade Goods", "Cargo",
+                          "Complete the trade?",
+                          "400 Bambara Groundnut has not been claimed yet.",
+                          "Unclaimed trade goods will be discarded.", "Cancel", "OK")
+    assert classify(None, elements=both_on_screen, panel=_panel(),
+                    exchange_live=True) == DISCARD_NOTICE
+
+
+def test_the_overflow_card_alone_is_not_read_as_the_notice():
+    """The overflow card also says "Unreceived trade goods will be discarded", and keying
+    the notice on that phrase classified frame 214 as the notice."""
+    assert classify(None, elements=_els("Insufficient Empty Space", "Received Trade Goods",
+                                        "Cargo", "Unreceived trade goods will be discarded.",
+                                        "Receive"),
+                    panel=_panel(), exchange_live=True) == OVERFLOW_PROMPT
 
 
 def test_anything_else_is_a_MISS():
@@ -131,3 +169,50 @@ class TheFieldNamesMatchTheRealObjects(unittest.TestCase):
         from brain.barter_quantity import PanelBarterState
         from brain.village_context import _panel_is_up
         self.assertFalse(_panel_is_up(PanelBarterState(rounds_remaining=3)))
+
+
+class AnUnreadableNameIsNotAnEmptyPanel(unittest.TestCase):
+    """Live 2026-09-05 at Berber, an endless loop.
+
+    Argan Oil's name would not OCR on any frame. `_select_trade_good` selected the tile and
+    answered "selected Argan Oil" — via the live-Exchange rule one layer down — and the very
+    next tick this classifier called the panel BARTER_PANEL_NO_GOOD again, so the activity
+    re-selected, and re-selected, six taps a minute with no rounds committed.
+
+    The game says "Select Trade Good." when nothing is chosen, and that prompt is tested
+    FIRST. Reaching the name check means the game did not say it: a good IS selected and only
+    our reading of its name is missing. The Exchange button then answers whether it can be
+    bartered, which is the same authority `village._why_it_stopped` already cites for the end
+    of a barter.
+    """
+
+    def _panel(self, good):
+        import types
+        return types.SimpleNamespace(
+            selected_good=good, output_quantity=751,
+            materials=[types.SimpleNamespace(label="Medicine", have=588, need=73),
+                       types.SimpleNamespace(label="Food", have=595, need=126)])
+
+    def test_an_unnamed_panel_with_a_live_exchange_is_READY(self):
+        self.assertEqual(classify("", elements=[], panel=self._panel(None),
+                                  exchange_live=True), BARTER_PANEL_READY)
+
+    def test_an_unnamed_panel_with_a_GREYED_exchange_is_still_NO_GOOD(self):
+        """Nothing tradable is selected, so asking for a good again is right."""
+        self.assertEqual(classify("", elements=[], panel=self._panel(None),
+                                  exchange_live=False), BARTER_PANEL_NO_GOOD)
+
+    def test_the_games_own_prompt_still_wins(self):
+        """'Select Trade Good.' is positive evidence that nothing is chosen, and it is
+        checked before any of this."""
+        import types as _t
+        prompt = [_t.SimpleNamespace(label="Select Trade Good.", cx=1600, cy=480,
+                                     x1=1500, y1=460, x2=1700, y2=500,
+                                     element_type="text")]
+        self.assertEqual(classify("", elements=prompt,
+                                  panel=self._panel(None), exchange_live=True),
+                         BARTER_PANEL_NO_GOOD)
+
+    def test_a_named_panel_is_unaffected(self):
+        self.assertEqual(classify("", elements=[], panel=self._panel("Argan Oil"),
+                                  exchange_live=True), BARTER_PANEL_READY)

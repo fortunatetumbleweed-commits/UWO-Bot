@@ -1,0 +1,21 @@
+{
+  "purpose": "Confirmation dialog asking the bot to confirm restocking an item using 106 diamonds, showing 31 of 50 replenishments remaining for this item",
+  "full_text": "Replenish Stock? (Does not affect market price) Remaining: 31/50 [cost: 106 diamonds] OK / Cancel",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "88b54526db4cfef1",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T01:37:59.088965+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Confirmation dialog asking the bot to confirm restocking an item using 106 diamonds, showing 31 of 50 replenishments remaining for this item",
+    "full_text": "Replenish Stock? (Does not affect market price) Remaining: 31/50 [cost: 106 diamonds] OK / Cancel",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

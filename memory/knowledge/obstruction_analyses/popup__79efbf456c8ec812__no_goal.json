@@ -1,0 +1,21 @@
+{
+  "purpose": "Port facility navigation panel listing all available venues in Ambon (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) during a Tropical climate in May at 03:00",
+  "full_text": "Tropical | May | 03:00 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "79efbf456c8ec812",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T13:09:23.873874+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Port facility navigation panel listing all available venues in Ambon (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) during a Tropical climate in May at 03:00",
+    "full_text": "Tropical | May | 03:00 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

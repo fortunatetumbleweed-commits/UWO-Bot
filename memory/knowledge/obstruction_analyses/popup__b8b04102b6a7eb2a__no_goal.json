@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase panel showing available trade goods at this port, including Mace, Ebony, Rosewood, and T'nalak (locked), with their quantities, price percentages, and specialty status",
+  "full_text": "Purchase screen — Cargo 2,158/4,952. Timer: 00:10:32, Diamonds: 46. Mace (Spices) qty 103, Specialties, 103%, 1,311 gold. Ebony (Wares) qty 132, Specialties, 94%, 1,223 gold. Rosewood (Wares) qty 221, 99%, 736 gold. T'nalak (Fabrics) qty 208, Specialties, Unlock Condition (0/1) — locked.",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "b8b04102b6a7eb2a",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T05:44:25.240388+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The Purchase panel showing available trade goods at this port, including Mace, Ebony, Rosewood, and T'nalak (locked), with their quantities, price percentages, and specialty status",
+    "full_text": "Purchase screen — Cargo 2,158/4,952. Timer: 00:10:32, Diamonds: 46. Mace (Spices) qty 103, Specialties, 103%, 1,311 gold. Ebony (Wares) qty 132, Specialties, 94%, 1,223 gold. Rosewood (Wares) qty 221, 99%, 736 gold. T'nalak (Fabrics) qty 208, Specialties, Unlock Condition (0/1) — locked.",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

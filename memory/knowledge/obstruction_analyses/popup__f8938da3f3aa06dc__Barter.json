@@ -1,0 +1,21 @@
+{
+  "purpose": "The game is warning that 296 Argan Oil has not yet been claimed from the barter and will be permanently discarded if the trade is completed now — asking the bot to confirm or cancel before proceeding.",
+  "full_text": "Complete the trade? 296 Argan Oil has not been claimed yet. Unclaimed trade goods will be discarded.",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "f8938da3f3aa06dc",
+  "goal_intent": "Barter",
+  "cached_at": "2026-09-11T02:55:06.873284+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The game is warning that 296 Argan Oil has not yet been claimed from the barter and will be permanently discarded if the trade is completed now — asking the bot to confirm or cancel before proceeding.",
+    "full_text": "Complete the trade? 296 Argan Oil has not been claimed yet. Unclaimed trade goods will be discarded.",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

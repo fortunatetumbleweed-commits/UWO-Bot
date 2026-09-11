@@ -1,0 +1,21 @@
+{
+  "purpose": "A numeric entry dialog has appeared over the Trade Goods Info panel, prompting the player to enter a quantity of Coral to load/sell before confirming the transaction",
+  "full_text": "Trade Goods Info - Coral (Jewelry) quantity: 1537. Calculation: Sales Cost 820, +228, Final Sales Price 1,048. Enter Number: 1. Buttons: 1 2 3 4 5 6 7 8 9 0 Max. Max Price 857, Min Price 341. Success Rate 76.2%. Cancel | Load.",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "d03b96224b4c7fd7",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T18:04:09.763514+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A numeric entry dialog has appeared over the Trade Goods Info panel, prompting the player to enter a quantity of Coral to load/sell before confirming the transaction",
+    "full_text": "Trade Goods Info - Coral (Jewelry) quantity: 1537. Calculation: Sales Cost 820, +228, Final Sales Price 1,048. Enter Number: 1. Buttons: 1 2 3 4 5 6 7 8 9 0 Max. Max Price 857, Min Price 341. Success Rate 76.2%. Cancel | Load.",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

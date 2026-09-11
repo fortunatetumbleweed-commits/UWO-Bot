@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is open showing Iron (709 units, 106% price, 43g base/-411 loss) and Matchlock Gun (355 units, 89% price, 87g base/-868 loss) available to sell, but no goods have been selected yet — this is the sell interface the bot navigated to as part of trimming the hold",
+  "full_text": "Sell — Cargo 1,074/4,952 — Iron Wares 709 | 106% 43 (-411) — Matchlock Gun Firearms 355 | 89% 87 (-868) — Select the goods you'd like to sell. — Nego. Chance 63.7% Success Rate 76.2% — Trade Points 0 P — Tax 0% 0 — Profit/Loss on Sales 0 — Sell",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "110b6c5f4205c197",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-09T04:36:02.624013+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Sell screen is open showing Iron (709 units, 106% price, 43g base/-411 loss) and Matchlock Gun (355 units, 89% price, 87g base/-868 loss) available to sell, but no goods have been selected yet — this is the sell interface the bot navigated to as part of trimming the hold",
+    "full_text": "Sell — Cargo 1,074/4,952 — Iron Wares 709 | 106% 43 (-411) — Matchlock Gun Firearms 355 | 89% 87 (-868) — Select the goods you'd like to sell. — Nego. Chance 63.7% Success Rate 76.2% — Trade Points 0 P — Tax 0% 0 — Profit/Loss on Sales 0 — Sell",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

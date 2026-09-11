@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase result confirmation showing the bot just bought Hand Cannons (or similar firearms), displaying cost breakdown including tax and discount, with final total of 312,181 gold deducted from balance",
+  "full_text": "Result — Purchase Cost: 359,521 | Tax: 17,621 | Discount: -64,961 | Total Amount: 312,181 | Balance: 77,566,218,815 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "4b2897e224a98c9d",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T22:13:20.720437+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase result confirmation showing the bot just bought Hand Cannons (or similar firearms), displaying cost breakdown including tax and discount, with final total of 312,181 gold deducted from balance",
+    "full_text": "Result — Purchase Cost: 359,521 | Tax: 17,621 | Discount: -64,961 | Total Amount: 312,181 | Balance: 77,566,218,815 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

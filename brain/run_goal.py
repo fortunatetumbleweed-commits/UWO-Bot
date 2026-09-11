@@ -111,6 +111,7 @@ def default_activities() -> Mapping[str, Any]:
     """
     from brain.activities.harbor import HarborActivity
     from brain.activities.idle_lock import IdleLockActivity
+    from brain.activities.main_menu import MainMenuActivity
     from brain.activities.market import MarketActivity
     from brain.activities.bootstrap import PositionKnownActivity
     from brain.activities.sea import AshoreActivity, SeaActivity
@@ -125,7 +126,7 @@ def default_activities() -> Mapping[str, Any]:
     registry: dict = {}
     for activity in (MarketActivity(), HarborActivity(), VillageActivity(), SeaActivity(),
                      AshoreActivity(), WorldMapActivity(), PositionKnownActivity(),
-                     IdleLockActivity(), TransientActivity(),
+                     IdleLockActivity(), TransientActivity(), MainMenuActivity(),
                      UnrecognizedChromedActivity()):
         for where in activity.SERVES:
             registry.setdefault(where, []).append(activity)

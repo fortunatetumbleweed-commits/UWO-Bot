@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase result confirmation showing the total cost (135,980 gold after tax and discount) for a bulk buy of goods, with remaining balance displayed — bot must tap OK to complete the transaction",
+  "full_text": "Result — Purchase Cost: 156,520 | Tax: 7,670 | Discount: -28,210 | Total Amount: 135,980 | Balance: 77,517,552,517 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "c90dc3430de5d849",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T19:05:13.660909+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase result confirmation showing the total cost (135,980 gold after tax and discount) for a bulk buy of goods, with remaining balance displayed — bot must tap OK to complete the transaction",
+    "full_text": "Result — Purchase Cost: 156,520 | Tax: 7,670 | Discount: -28,210 | Total Amount: 135,980 | Balance: 77,517,552,517 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase receipt confirming a completed trade transaction, showing the cost, tax, discount applied, total paid, and remaining gold balance",
+  "full_text": "Result — Purchase Cost: 318,464 | Tax: 15,360 | Discount: -60,672 | Total Amount: 273,152 | Balance: 70,953,534,678 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "02b6a697a29e7737",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T17:17:09.717884+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase receipt confirming a completed trade transaction, showing the cost, tax, discount applied, total paid, and remaining gold balance",
+    "full_text": "Result — Purchase Cost: 318,464 | Tax: 15,360 | Discount: -60,672 | Total Amount: 273,152 | Balance: 70,953,534,678 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

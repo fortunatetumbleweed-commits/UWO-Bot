@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase panel at a trading port is open, showing available trade goods (Mace, Ebony, Rosewood, T'nalak) with their quantities, price percentages, and specialty tags — Ebony is sold out and T'nalak is locked behind an unlock condition.",
+  "full_text": "Purchase screen — Cargo 2,158/4,952. Timer: 00:24:48. Refresh cost: 108 gems. Mace (Spices) qty 103, Specialties, 103% price, 1,311 gold. Ebony (Wares) qty 0, Sold Out, Specialties, 96% price, 1,248 gold. Rosewood (Wares) qty 221, Specialties, 91% price, 677 gold. T'nalak (Fabrics) qty 208, Specialties, Unlock Condition (0/1).",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "e906970ddd4be0e9",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T04:30:13.167205+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase panel at a trading port is open, showing available trade goods (Mace, Ebony, Rosewood, T'nalak) with their quantities, price percentages, and specialty tags — Ebony is sold out and T'nalak is locked behind an unlock condition.",
+    "full_text": "Purchase screen — Cargo 2,158/4,952. Timer: 00:24:48. Refresh cost: 108 gems. Mace (Spices) qty 103, Specialties, 103% price, 1,311 gold. Ebony (Wares) qty 0, Sold Out, Specialties, 96% price, 1,248 gold. Rosewood (Wares) qty 221, Specialties, 91% price, 677 gold. T'nalak (Fabrics) qty 208, Specialties, Unlock Condition (0/1).",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

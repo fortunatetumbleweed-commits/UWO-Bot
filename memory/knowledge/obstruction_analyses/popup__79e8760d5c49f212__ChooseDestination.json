@@ -1,0 +1,21 @@
+{
+  "purpose": "The classifier has misidentified the right half of the world map port labels as a popup; this is normal world map content showing Mediterranean ports, not an obstruction — Tripoli is not yet visible and the map needs further scrolling east/south along the North African coast",
+  "full_text": "Pisa 104 Ancona 104 Montpellierille 108 108 Ragusa 104 Calvi 104 Barcelona 104 Naples Sassari 104 Palma 104 Cagliari 409 Tunis 108 Syracuse 104 Algiers 108",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "79e8760d5c49f212",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-09T20:49:44.698101+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The classifier has misidentified the right half of the world map port labels as a popup; this is normal world map content showing Mediterranean ports, not an obstruction — Tripoli is not yet visible and the map needs further scrolling east/south along the North African coast",
+    "full_text": "Pisa 104 Ancona 104 Montpellierille 108 108 Ragusa 104 Calvi 104 Barcelona 104 Naples Sassari 104 Palma 104 Cagliari 409 Tunis 108 Syracuse 104 Algiers 108",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

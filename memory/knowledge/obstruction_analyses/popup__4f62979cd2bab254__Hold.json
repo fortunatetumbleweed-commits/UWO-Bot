@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase screen at Trabzon shows Raisin is sold out (quantity 0), meaning the bot cannot hold Raisin here; the screen is displaying the normal purchase UI after the bot answered a previous dialog",
+  "full_text": "00:27:44 | 167 | Carpet Fabrics 101% 1,091 | Pomegranate Food 94% 280 | Peony Medicine 97% 314 491 | Kutnu Fabrics Specialties 10/26/2026/00:00:00",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "4f62979cd2bab254",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T14:46:25.619962+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase screen at Trabzon shows Raisin is sold out (quantity 0), meaning the bot cannot hold Raisin here; the screen is displaying the normal purchase UI after the bot answered a previous dialog",
+    "full_text": "00:27:44 | 167 | Carpet Fabrics 101% 1,091 | Pomegranate Food 94% 280 | Peony Medicine 97% 314 491 | Kutnu Fabrics Specialties 10/26/2026/00:00:00",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

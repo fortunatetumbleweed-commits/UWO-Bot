@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is displaying available trade goods (Coral, Textiles) with their current market prices and demand percentages, awaiting the player to select items to sell",
+  "full_text": "Coral (Jewelry) x1,409 — 108% demand, price 1,048 (-10,875 vs base). Textiles (Fabrics) x1,409 — 104% demand, price 4,154 (+3,087 vs base). Specialties category highlighted.",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "aedd12fec59a9089",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T18:10:09.602997+00:00",
+  "visit_count": 6,
+  "raw_api_response": {
+    "purpose": "The Sell screen is displaying available trade goods (Coral, Textiles) with their current market prices and demand percentages, awaiting the player to select items to sell",
+    "full_text": "Coral (Jewelry) x1,409 — 108% demand, price 1,048 (-10,875 vs base). Textiles (Fabrics) x1,409 — 104% demand, price 4,154 (+3,087 vs base). Specialties category highlighted.",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

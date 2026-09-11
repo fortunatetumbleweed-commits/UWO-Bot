@@ -1,0 +1,21 @@
+{
+  "purpose": "Market is prompting the player to spend 13 Pearls to replenish a partially-depleted trade good stock (38 of 50 units remaining) before purchasing",
+  "full_text": "Replenish Stock? (Does not affect market price) Remaining: 38/50. Cost: 13 Pearls. Cancel | OK",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "e00b2cd7722264db",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T13:22:56.675497+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Market is prompting the player to spend 13 Pearls to replenish a partially-depleted trade good stock (38 of 50 units remaining) before purchasing",
+    "full_text": "Replenish Stock? (Does not affect market price) Remaining: 38/50. Cost: 13 Pearls. Cancel | OK",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

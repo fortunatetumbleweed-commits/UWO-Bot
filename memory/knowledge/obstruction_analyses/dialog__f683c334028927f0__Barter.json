@@ -1,0 +1,21 @@
+{
+  "purpose": "The barter trade completed but the cargo hold is completely full (4,952/4,952), so the received Argan Oil goods (296 units) cannot be stored and will be discarded unless space is freed first",
+  "full_text": "Insufficient Empty Space. Cannot receive item due to insufficient space. Please organize your Cargo Hold. Unreceived trade goods will be discarded. Received Trade Goods: 296. Cargo: 4,952/4,952 (100%). [Items: 267, 266, 240, 120, 240, 3,819]",
+  "dismissal": "tap_accept",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "f683c334028927f0",
+  "goal_intent": "Barter",
+  "cached_at": "2026-09-11T02:54:40.547761+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The barter trade completed but the cargo hold is completely full (4,952/4,952), so the received Argan Oil goods (296 units) cannot be stored and will be discarded unless space is freed first",
+    "full_text": "Insufficient Empty Space. Cannot receive item due to insufficient space. Please organize your Cargo Hold. Unreceived trade goods will be discarded. Received Trade Goods: 296. Cargo: 4,952/4,952 (100%). [Items: 267, 266, 240, 120, 240, 3,819]",
+    "dismissal": "tap_accept",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "The sell panel is showing available trade goods (Coral and Textiles) in the market's sell tab, which is the expected state after opening the sell interface to offload cargo",
+  "full_text": "Coral Jewelry 184 | Textiles Fabrics 184 | Specialties | 104% 14,386 (2,461) | 94% 13,589 (12,522)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "66f385a06a372243",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-08T21:10:49.452528+00:00",
+  "visit_count": 6,
+  "raw_api_response": {
+    "purpose": "The sell panel is showing available trade goods (Coral and Textiles) in the market's sell tab, which is the expected state after opening the sell interface to offload cargo",
+    "full_text": "Coral Jewelry 184 | Textiles Fabrics 184 | Specialties | 104% 14,386 (2,461) | 94% 13,589 (12,522)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "low"
+  }
+}

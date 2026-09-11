@@ -1,0 +1,21 @@
+{
+  "purpose": "A trade item card for Raisin (Luxuries) is highlighted or selected in the Sell screen, showing quantity 110 at 103% market price with a coin value of 55 and a market deficit of -515",
+  "full_text": "Raisin Luxuries 110 103% 55 (-515)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "3847d234d32e3b53",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T00:04:15.389061+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A trade item card for Raisin (Luxuries) is highlighted or selected in the Sell screen, showing quantity 110 at 103% market price with a coin value of 55 and a market deficit of -515",
+    "full_text": "Raisin Luxuries 110 103% 55 (-515)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

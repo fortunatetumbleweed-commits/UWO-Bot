@@ -288,6 +288,28 @@ def learn(village: str, dry_run: bool = False) -> int:
     if _find_button(frame, "barter", x_min=_PANEL_X_MIN) is None:
         logger.error("[learn] Village Info panel did not open (no Barter tab)")
         return 1
+
+    # THE BASE TAB FIRST, because the two numbers a chain plan turns on are only there:
+    # the day's ROUNDS (`Daily Barter Progress`, e.g. 0/7) and the AMITY GRADE, which is the
+    # key `output_per_round` is stored under. This tool read neither — so every good it
+    # learned came back with `output_per_round={}` and every village with
+    # `barter_rounds_total=None`, while the mission's own check (`write_back_invariants`)
+    # records both. Same panel, one extra tab.
+    #
+    # The panel reopens on whichever tab it was last left on, so this is not a step that can
+    # be assumed to have happened (the mission learned that live 2026-08-29).
+    base = {}
+    if ui.tap_text(frame, "base", x_min=_PANEL_X_MIN, dwell="dialog",
+                   why="Village Info → Base tab (rounds + amity)"):
+        from actions.village_check import parse_base_tab
+        base = parse_base_tab(list(parse_fast_cached(capture_screen()))) or {}
+        logger.info(f"[learn] base: amity={base.get('amity_grade')} "
+                    f"rounds={base.get('barters_used')}/{base.get('barters_total')}")
+    else:
+        logger.warning("[learn] could not open the Base tab — rounds and amity stay unknown, "
+                       "and without the grade the yields cannot be keyed")
+
+    frame = capture_screen()
     if not ui.tap_text(frame, "barter", x_min=_PANEL_X_MIN, dwell="dialog",
                        why="Village Info → Barter tab"):
         logger.error("[learn] could not tap the Barter tab")
@@ -330,7 +352,7 @@ def learn(village: str, dry_run: bool = False) -> int:
                 if t.obtain and not prev.obtain:
                     prev.obtain = t.obtain
     merged = sorted(by_good.values(), key=lambda t: t.good)
-    _report_and_save(village, merged, dry_run)
+    _report_and_save(village, merged, dry_run, base=base)
     return 0 if merged else 1
 
 
@@ -537,7 +559,7 @@ def _one_pass(village, ui, capture_screen, parse_fast_cached,
     return out
 
 
-def _report_and_save(village, merged, dry_run):
+def _report_and_save(village, merged, dry_run, *, base=None):
     from loguru import logger
     if not merged:
         logger.error("[learn] nothing parsed — frames saved in " + FRAME_DIR)
@@ -556,7 +578,15 @@ def _report_and_save(village, merged, dry_run):
     # rather than replace (a material list is invariant — a read that misses one is a
     # partial READ, not a recipe change), and keep a per-village input list.
     from memory.barter_kb import (BarterRecipe, RecipeInput, Village, load_recipe,
-                                  save_recipe, save_village, _slug)
+                                  load_village, save_recipe, save_village, _slug)
+
+    # WHERE EACH MATERIAL IS SOLD, learned by tapping its location pin (user, 2026-09-04).
+    # The trade list marks every material row with one; its Source panel names the ports.
+    # Without this the tool taught the KB a recipe nobody could gather for — the mission
+    # needs source ports to plan its legs BEFORE it sails, so a good whose materials are
+    # new to the KB could never be missioned at all.
+    learned = {} if dry_run else _learn_sources(merged)
+
     written = 0
     for t in merged:
         if not t.materials:
@@ -564,12 +594,35 @@ def _report_and_save(village, merged, dry_run):
             continue
         recipe = load_recipe(t.good) or BarterRecipe(good=t.good)
         prior = {i.material.strip().lower(): i for i in recipe.inputs}
-        seen, inputs = set(), []
+        seen, inputs, resolved = set(), [], {}
         for material, need in t.materials.items():
-            old = prior.get(material.strip().lower())
+            key = material.strip().lower()
+            old = prior.get(key)
+            # SOURCES ACCUMULATE, they are not replaced. A NON-EMPTY READ CAN STILL BE
+            # PARTIAL — the Source panel is a list like any other and shows what fits.
+            #
+            # Live 2026-09-10: Cheyenne's panel named all three villages that barter American
+            # Bison (Sioux, Cheyenne, Pawnee); Sioux's named two. Replacing on a fresh read
+            # dropped Pawnee — the village whose whole value is that it trades Bison and
+            # nothing that competes for its rounds, which is the entire point of routing
+            # through it.
+            #
+            # Same argument as "a recipe does not lose an ingredient": a village does not
+            # stop trading a good because one panel read did not mention it. Union, keeping
+            # what the KB had first so the order stays stable.
+            fresh = learned.get(key) or {}
+
+            def _union(known, new):
+                out = list(known or [])
+                out += [s for s in (new or []) if s not in out]
+                return out
+
+            ports = _union(old.source_ports if old else [], fresh.get("market"))
+            villages = _union(old.source_villages if old else [], fresh.get("village"))
             inputs.append(RecipeInput(material=material, ratio=int(need),
-                                      source_ports=list(old.source_ports if old else [])))
-            seen.add(material.strip().lower())
+                                      source_ports=ports, source_villages=villages))
+            resolved[key] = (ports, villages)
+            seen.add(key)
         for key, old in prior.items():
             if key not in seen:
                 logger.warning(f"[learn] {t.good}: keeping known material {old.material!r} "
@@ -577,17 +630,152 @@ def _report_and_save(village, merged, dry_run):
                 inputs.append(old)
         recipe.inputs = inputs
         recipe.village_inputs = dict(recipe.village_inputs or {})
+        # THE SAME SOURCES THE RECIPE JUST RESOLVED. This read `prior` — the sources as they
+        # stood BEFORE this sweep — so a freshly learned source landed in `inputs` and not
+        # here, and the two halves of one recipe disagreed about where a material comes from.
         recipe.village_inputs[_slug(village)] = [
             RecipeInput(material=m, ratio=int(q),
-                        source_ports=list(prior[m.strip().lower()].source_ports
-                                          if m.strip().lower() in prior else []))
+                        source_ports=list(resolved.get(m.strip().lower(), ([], []))[0]),
+                        source_villages=list(resolved.get(m.strip().lower(), ([], []))[1]))
             for m, q in t.materials.items()]
         if village not in recipe.villages:
             recipe.villages.append(village)
+        # THE YIELD, KEYED BY AMITY GRADE — exactly as `write_back_invariants` records it, so
+        # the two paths agree. Without the Base tab this tool never had the grade, so every
+        # good it taught the KB carried `output_per_round={}` — and that is the one number a
+        # chain plan starts from ("how many rounds fill the hold").
+        grade = (base or {}).get("amity_grade")
+        if grade and t.obtain:
+            recipe.output_per_round[grade] = int(t.obtain)
         save_recipe(recipe)
         written += 1
-    save_village(Village(name=village))
+
+    # MERGE, NEVER REPLACE. `save_village` overwrites the whole record, and this passed a
+    # name-only Village — so learning a village's goods ERASED its amity and its daily
+    # rounds. Run against Hutu it would have dropped `barter_rounds_total=7` to None, and the
+    # rounds are the budget the whole chain plan is allocated from.
+    known = load_village(village) or Village(name=village)
+    known.eligible_goods = [t.good for t in merged if t.good] or known.eligible_goods
+    for field, value in (("amity", (base or {}).get("amity_grade")),
+                         ("amity_points", ((base or {}).get("amity_points") or (None,))[0]),
+                         ("barter_rounds_total", (base or {}).get("barters_total"))):
+        if value is not None:                  # an unread tab must not clear what is known
+            setattr(known, field, value)
+    used, total = (base or {}).get("barters_used"), (base or {}).get("barters_total")
+    if used is not None and total is not None:
+        known.barter_rounds_remaining = max(0, int(total) - int(used))
+    save_village(known)
     print(f"\nKB updated: {written} recipe(s) for {village}")
+
+
+def _learn_sources(merged) -> dict:
+    """{material (lowercased): [ports]} — tap each material's pin, read its Source panel.
+
+    ONE PASS OVER THE MATERIALS, and only the ones we do not already know. Each is a tap,
+    a read and a Back, so the cost is real and there is no reason to pay it twice.
+
+    Every name goes through the port catalogue on the way out — see
+    `village_remote_reader.resolve_source_port`. The panel lists producing villages and
+    section headings beside the ports, and reading it unchecked is what put 'Production' and
+    'Smelting Handbook: Uncut Ore' in the KB as places to sail to.
+
+    Best-effort throughout: a pin that will not open leaves its material unlearned, which is
+    the state it was already in.
+    """
+    from actions import ui
+    from actions.village_check import _kb_sources, material_pins
+    from actions.village_remote_reader import read_material_sources_by_kind_frame
+    from capture.adb_capture import capture_screen
+    from vision.omniparser import parse_fast_cached
+
+    import time
+    from actions.village_check import trade_list_elements
+
+    wanted = {m.strip().lower() for t in merged for m in (t.materials or {})}
+    known = set(_kb_sources())
+    todo = set(wanted) - known
+    if not todo:
+        logger.info("[learn] every material already has source ports — no pins to tap")
+        return {}
+    logger.info(f"[learn] looking up source ports for {len(todo)} material(s): {sorted(todo)}")
+
+    # THE LIST IS TALLER THAN THE SCREEN, SO THE LOOKUP MUST WALK IT.
+    #
+    # This read pins from whatever screen the scroll passes happened to end on, and a pin
+    # only exists for a row that is currently drawn. Live 2026-09-04 at Berber that learned
+    # Almond and Chicle and reported "no location pin on screen" for Mutton and Myrrh — both
+    # Argan Oil materials, both simply below the fold. The mission stayed unplannable for
+    # want of two rows nobody had scrolled to.
+    #
+    # So: rewind to the top and sweep, exactly as the reading passes do, taking every wanted
+    # pin on each screen before moving on. Bounded by MAX_SCREENS, and it stops the moment
+    # the list has nothing left we came for.
+    for _ in range(REWIND_SWIPES):
+        vp = _list_viewport(list(trade_list_elements(capture_screen())))
+        if vp is None:
+            break
+        from tools.village_scroll_report import _scrollbar, bar_position
+        at_top, _ = bar_position(_scrollbar(capture_screen(), vp), vp)
+        if at_top:
+            break
+        _safe_scroll(vp, -SCROLL_DY, "rewind the trade list before looking up sources")
+        time.sleep(0.6)
+
+    out = {}
+    for _screen in range(MAX_SCREENS):
+        if not todo:
+            break
+        frame = capture_screen()
+        pins = {k.strip().lower(): v
+                for k, v in material_pins(parse_fast_cached(frame)).items()}
+        here = [m for m in sorted(todo) if m in pins]
+        for material in here:
+            ui.tap_at(*pins[material], dwell="dialog", why=f"source pin for {material}")
+            try:
+                # BY KIND, because a CHAINED material is sourced at a VILLAGE and this tool
+                # used to throw that half away. `read_material_sources_frame` is a wrapper
+                # over this same reader that keeps only `['market']` — so the village was
+                # read correctly, by the same code hardened on the Damascus Steel panel, and
+                # discarded one line later while the caller reported "no known port".
+                #
+                # Live 2026-09-10 at Cheyenne: "'american bison': the Source panel named no
+                # known port" — Bison is made at a village, which is the whole point of it.
+                # That warning is why every chained material in the KB reads as unsourced.
+                found = read_material_sources_by_kind_frame(capture_screen()) or {}
+            except Exception as exc:                   # noqa: BLE001 — one material, not the run
+                logger.warning(f"[learn] {material!r}: source panel unreadable ({exc})")
+                found = {}
+            ports = list(found.get("market") or [])
+            villages = list(found.get("village") or [])
+            if ports or villages:
+                out[material] = {"market": ports, "village": villages}
+                where = ", ".join(filter(None, [
+                    f"sold at {ports}" if ports else "",
+                    f"bartered at {villages}" if villages else ""]))
+                logger.info(f"[learn] {material}: {where}")
+            else:
+                logger.warning(f"[learn] {material!r}: the Source panel named no known "
+                               "port or village")
+            # LOOKED UP IS LOOKED UP. A material whose panel named nothing is not retried on
+            # the next screen — the answer was empty, not missing, and re-tapping the same
+            # pin costs a tap and a Back to learn the same nothing.
+            todo.discard(material)
+            ui.back(why=f"done with {material}'s sources")
+            time.sleep(0.4)
+        if not todo:
+            break
+        vp = _list_viewport(list(trade_list_elements(capture_screen())))
+        if vp is None:
+            logger.warning("[learn] the trade list viewport could not be measured — "
+                           f"stopping the source sweep with {sorted(todo)} unlooked-up")
+            break
+        _safe_scroll(vp, SCROLL_DY, "next screen of the trade list")
+        time.sleep(0.6)
+
+    if todo:
+        logger.warning(f"[learn] no location pin found for {sorted(todo)} — left unsourced, "
+                       "which is the state they were already in")
+    return out
 
 
 if __name__ == "__main__":

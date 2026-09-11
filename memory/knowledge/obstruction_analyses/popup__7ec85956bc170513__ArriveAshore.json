@@ -1,0 +1,21 @@
+{
+  "purpose": "The mini-map/navigation panel in the top-right corner showing nearby players (Patron rank player 'TaylorFP') and wind/heading data — this is a persistent HUD element, not a popup obstruction",
+  "full_text": "C/HW 27.6 Patron TaylorFP 1▼",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "7ec85956bc170513",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-10T18:40:09.538992+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The mini-map/navigation panel in the top-right corner showing nearby players (Patron rank player 'TaylorFP') and wind/heading data — this is a persistent HUD element, not a popup obstruction",
+    "full_text": "C/HW 27.6 Patron TaylorFP 1▼",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is displaying available goods in the ship's cargo (Myrrh 435, Almond 870, Mutton 870) for sale at Antalya, which is exactly the TrimHold target configuration the bot is working toward",
+  "full_text": "Myrrh Medicine 435 Specialties 98% 1,336 (629) | Almond Luxuries 870 Specialties 101% 4,631 (3,585)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "4bee95c4e33ea300",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-11T02:31:44.527104+00:00",
+  "visit_count": 6,
+  "raw_api_response": {
+    "purpose": "The Sell screen is displaying available goods in the ship's cargo (Myrrh 435, Almond 870, Mutton 870) for sale at Antalya, which is exactly the TrimHold target configuration the bot is working toward",
+    "full_text": "Myrrh Medicine 435 Specialties 98% 1,336 (629) | Almond Luxuries 870 Specialties 101% 4,631 (3,585)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "medium"
+  }
+}

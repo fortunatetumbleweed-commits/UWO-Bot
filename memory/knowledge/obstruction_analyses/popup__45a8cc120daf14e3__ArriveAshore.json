@@ -1,0 +1,21 @@
+{
+  "purpose": "A nearby player ship ('TaylorFP') and a 'Patron' encounter/greeting popup has appeared showing another player's vessel in proximity on the open sea",
+  "full_text": "Patron 0.0 TaylorFP ~ 14",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "45a8cc120daf14e3",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-10T01:54:09.336303+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A nearby player ship ('TaylorFP') and a 'Patron' encounter/greeting popup has appeared showing another player's vessel in proximity on the open sea",
+    "full_text": "Patron 0.0 TaylorFP ~ 14",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

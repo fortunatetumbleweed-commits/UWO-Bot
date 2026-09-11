@@ -44,6 +44,9 @@ def _run(keep, goods=HOLD):
         commit_fn=lambda _f, _e: calls["commits"].append(1),
         react_fn=lambda *a, **k: None,
         find_button_fn=lambda *a, **k: (0, 0),
+        # Being ON the Sell tab is a precondition with its own tests
+        # (test_sell_down_to.py); these are about what the trim DECIDES once it is there.
+        ensure_sell_tab_fn=lambda *a, **k: True,
         settle=0,
     )
     return res, calls

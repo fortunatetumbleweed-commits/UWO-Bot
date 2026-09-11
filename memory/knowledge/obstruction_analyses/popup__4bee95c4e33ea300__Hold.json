@@ -1,0 +1,21 @@
+{
+  "purpose": "The bot navigated to the Sell sub-menu and is now viewing the port's available goods panel showing Myrrh (Medicine, Specialty, 435 units, 98% price, 1,336 base/629 profit) and Almond (Luxuries, Specialty, 870 units, 101% price, 4,631 base/3,585 profit) — this is the hold/market read the bot intended to perform",
+  "full_text": "Myrrh Medicine 435 Specialties 98% 1,336 (629) | Almond Luxuries 870 Specialties 101% 4,631 (3,585)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "4bee95c4e33ea300",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T02:33:39.367042+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The bot navigated to the Sell sub-menu and is now viewing the port's available goods panel showing Myrrh (Medicine, Specialty, 435 units, 98% price, 1,336 base/629 profit) and Almond (Luxuries, Specialty, 870 units, 101% price, 4,631 base/3,585 profit) — this is the hold/market read the bot intended to perform",
+    "full_text": "Myrrh Medicine 435 Specialties 98% 1,336 (629) | Almond Luxuries 870 Specialties 101% 4,631 (3,585)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "medium"
+  }
+}

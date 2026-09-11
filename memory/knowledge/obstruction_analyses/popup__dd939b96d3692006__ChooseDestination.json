@@ -1,0 +1,21 @@
+{
+  "purpose": "False positive: the 'popup' is just the normal world map port labels (Candia, Benghazi, Alexandria, Cairo) in the region near Antalya — no real dialog has appeared, but the target port Antalya may be at the edge of or outside the current viewport",
+  "full_text": "104 Candia 104 Benghazi Cc Alexandria Cairo 104",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "dd939b96d3692006",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-11T01:29:26.907648+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "False positive: the 'popup' is just the normal world map port labels (Candia, Benghazi, Alexandria, Cairo) in the region near Antalya — no real dialog has appeared, but the target port Antalya may be at the edge of or outside the current viewport",
+    "full_text": "104 Candia 104 Benghazi Cc Alexandria Cairo 104",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "low"
+  }
+}

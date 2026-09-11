@@ -1,0 +1,21 @@
+{
+  "purpose": "Negotiation dialog offering a 21.5% discount on Gobelin Fabrics purchase, asking the bot to use 1 or all remaining negotiation attempts at a 76.2% success rate",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 158,098 → 115,628 (-21.5%). Negotiation Success Rate: Failed ... 76.2% ... Success.",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "5f0a2f475fe0bfe3",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-09T23:26:20.351767+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Negotiation dialog offering a 21.5% discount on Gobelin Fabrics purchase, asking the bot to use 1 or all remaining negotiation attempts at a 76.2% success rate",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 158,098 → 115,628 (-21.5%). Negotiation Success Rate: Failed ... 76.2% ... Success.",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

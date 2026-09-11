@@ -1,0 +1,21 @@
+{
+  "purpose": "Merchant NPC Edmund Gilbert is offering a negotiation to purchase goods at a 21.5% discount (275,098 → 202,773 gold), with a 76.2% success rate and remaining negotiation attempts shown — the bot must choose to decline, use one chance, or use all remaining chances",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 275,098 → 202,773 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success.",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "942c8ab7ac20cff4",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T01:08:35.515169+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Merchant NPC Edmund Gilbert is offering a negotiation to purchase goods at a 21.5% discount (275,098 → 202,773 gold), with a 76.2% success rate and remaining negotiation attempts shown — the bot must choose to decline, use one chance, or use all remaining chances",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 275,098 → 202,773 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success.",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

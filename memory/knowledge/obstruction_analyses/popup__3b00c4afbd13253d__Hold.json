@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase screen is showing the market inventory at Antalya, with Mutton currently at 0 stock available — the bot has staged a purchase but Mutton shows 0 units in stock, meaning it cannot be bought here right now",
+  "full_text": "Purchase screen showing: Sugar Beet (Food) 633 stock 99% 222 gold | Mutton (Food) 0 stock 99% 258 gold | Rose (Perfume) 177 stock 108% 694 gold | Kutnu (Fabrics) 194 stock — Specialties, Unlock Condition (0/1). Timer: 00:18:19. Diamonds: 123.",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "3b00c4afbd13253d",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T01:35:37.104609+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase screen is showing the market inventory at Antalya, with Mutton currently at 0 stock available — the bot has staged a purchase but Mutton shows 0 units in stock, meaning it cannot be bought here right now",
+    "full_text": "Purchase screen showing: Sugar Beet (Food) 633 stock 99% 222 gold | Mutton (Food) 0 stock 99% 258 gold | Rose (Perfume) 177 stock 108% 694 gold | Kutnu (Fabrics) 194 stock — Specialties, Unlock Condition (0/1). Timer: 00:18:19. Diamonds: 123.",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

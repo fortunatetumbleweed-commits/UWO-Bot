@@ -1,0 +1,21 @@
+{
+  "purpose": "Port selection info panel for Barcelona has appeared on the world map, showing the port's coordinates, season, and trade stats after the bot tapped it as a destination",
+  "full_text": "TW 1 2 Patron 0.0 331 24 — Barcelona port info panel showing coordinates 41.30,2.24, Summer Jun Night",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "5d325c9a8f8151ec",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-09T20:46:49.911782+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Port selection info panel for Barcelona has appeared on the world map, showing the port's coordinates, season, and trade stats after the bot tapped it as a destination",
+    "full_text": "TW 1 2 Patron 0.0 331 24 — Barcelona port info panel showing coordinates 41.30,2.24, Summer Jun Night",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "medium"
+  }
+}

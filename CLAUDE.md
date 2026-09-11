@@ -136,6 +136,24 @@ Read the SUSPECT lines first.  A flag that is always False may simply not apply
 (`has_sea_hud` in port); one that is False 93% of the time, having been True three times, is
 a check that works and usually does not — which is what a broken read looks like from outside.
 
+## Debugging a Failed Run — the frames first, the code after
+When a run fails, in this order and no other:
+
+1. **Generate the trace report and open it** (see *Trace Viewer Reports* above).
+2. **Walk the frames one by one.** For each frame, say what the bot DID and what came of it.
+   A frame whose action produced no visible effect is the most informative kind — name it,
+   do not skip it.
+3. **Only then** state the analysis, and only after that propose a change.
+
+Do not interleave edits with the walk, and do not diagnose from the log alone.
+
+Why this is the standing order: the failures here are almost never where the traceback
+points, and the log cannot tell a wrong DECISION from a wrong READING. On 2026-09-06 the
+question "why did it tap Sell instead of refreshing?" read as broken refresh logic and was
+neither — the ↻ was on screen with 11 blue gems, and the tick had simply left the Purchase
+grid before looking. The frames said so; the log did not. Guiding Principle #3 — enumerate
+the causes, do not hardcode one — is unenforceable without the walk that produces them.
+
 ## Voyage Evaluation Procedure
 Standard, single-command voyage evaluation against the canonical
 Cairo→Y-tip reference path:
@@ -565,6 +583,23 @@ Detail:
   (+66.6M ducats); see `memory/project_village_find_worldmap_2026-08-20.md`.
   ⚠️ Unvalidated live surface: the Village Info panel navigation and the main-menu
   fleet read (`actions/fleet_status.py`) — supervise the first run.
+- **★ Multi-stage barter — one command for a whole chain (DESIGN, 2026-09-10)** →
+  `docs/multi_stage_barter.md`.  `barter Moccasin` / `barter Eagle Feather` should run the
+  chain, not one stage.  The planner cannot: `plan_barter_rounds` sizes ONE good at ONE
+  village against hold space and materials, and is HANDED `rounds_remaining` — but in a chain
+  **rounds are the binding constraint**, and the daily allowance belongs to the VILLAGE, shared
+  by everything it trades (`a-villages-rounds-are-one-budget`).  So a round spent on the final
+  good beats one spent on its intermediate: spend a village's rounds on the best good it can
+  make and source the intermediate elsewhere — the user's Groundnut-at-San-then-seasonal-at-Hutu
+  play, and why of the three villages trading American Bison the Bison-only one, sitting between
+  the two Moccasin villages, is the useful one.  Plan BACKWARDS from the final stage, which is
+  today's barter (capacity-bound, maximised); upstream stages need an exact quantity, not a
+  full hold.  **The blockers are DATA, not algorithm**: `output_per_round` is `{}` for every
+  chained good (Näverslöjd, Eagle Feather, American Bison, Moccasin), `source_villages` is
+  empty on every chained material so they read as unsourced, and the village index knows one
+  Cheyenne against the five villages this needs.  **Not decided**; the three deferred overflow
+  fixes wait on it, because the dump rule inverts mid-chain — at Svear, Birch Tree is both the
+  output and the next stage's material.
 - **★ Event selling — FIRST LIVE SALE 2026-08-24 (branch `even_selling`)** → flow and cues in
   `docs/trade_system.md` ("Selling into a Bazaar").  The fleet hubs at London, reads the
   **Trade Event Schedule** (`vision/trade_event_reader.py`, times are **Korean UTC+9**), and
@@ -582,6 +617,28 @@ Detail:
   that wording/layout changes degrade a read instead of breaking it, since the FUNCTIONALITY
   is what stays constant.  Today's per-element word matching in the left-menu detector is a
   WORKAROUND at the wrong granularity (a reward panel is one group, not five rows).
+- **★ Detecting game elements — boundaries, not boxes (DESIGN, 2026-09-10)** →
+  `docs/game_element_detection.md`.  The layer BENEATH the panel KB above: where the boxes
+  come from.  Written after two money-losing defects in one afternoon that were the same
+  failure — an element's BOUNDARY taken from OmniParser and never checked.  A tile boxed
+  SHORT (y 195-369 against a card running to 425) scales every tile-relative position too
+  low, so a correctly-read `1,841` badge was discarded for being out of band and the buy
+  loop bought to 2.1x target; a `Specialties` banner boxed ALONE is 508x46 and strongly
+  gold, i.e. a wide pill, so it passed the shape guard, was returned by a bare `commits[0]`
+  as the Sell button, and the tap staged and sold 1,841 Almond during a trim that meant to
+  keep them.  **Not an OCR problem** — the text was right both times; OmniParser is generic
+  about BOUNDARIES and CATEGORIES (`button`/`text`/`icon`, and a banner is a `button`).
+  Note the precedent this project trusts most, `DialogModel`, is **not a model** — it is
+  classical numpy structure, and market cards have the same stable grammar dialogs do.
+  Options costed: a structural TileModel (days, fixes both, no data), an anchor+pitch grid
+  (cheapest, fixes extents only), a UWO-specific trained detector (weeks, highest ceiling,
+  28,101 frames already on disk to bootstrap from, but confidently-wrong nets are harder to
+  debug than readable rules), fine-tuning OmniParser (inherits the generic classes that
+  caused this).  **Recommended: structural TileModel + the containment rule *nothing inside
+  a goods tile is a control*, encoded POSITIONALLY** — replacing the word-list exclusion in
+  `a81fe6a`, which catches `Specialties` and would miss the next banner.  And §5: the
+  invariants are needed either way, because a better detector raises the floor but does not
+  make a bad reading a refusal.  **Not decided.**
 - **★ Dialogs without sub-loops — the market as contexts (DRAFT, 2026-08-30)** →
   `docs/market_as_contexts.md`.  A UI framework's listener registry buys INVERSION OF CONTROL,
   not "no polling" — and we have no event source, so the substitute is the dispatcher's tick:
@@ -844,8 +901,7 @@ Two fixes that had only ever been checked against recorded frames ran live and w
 
 STILL OPEN, and none of it was needed for this run: `EXIT_BUILDING` is not retried at a
 village (`823547b`, deliberate — a stray second Back loses the village, but on a sail leg
-leaving IS the goal); the sea wake-timer sets its next sleep from a frame captured BEFORE
-that sleep; `_answer_it_anyway` taps a computed point rather than the button it located;
+leaving IS the goal);
 and `run_barter.py` / `run_task.py` index different task sets, the latter still on the
 deprecated recovery path.
 

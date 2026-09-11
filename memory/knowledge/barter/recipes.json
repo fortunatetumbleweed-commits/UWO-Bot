@@ -5,65 +5,65 @@
     "inputs": [
       {
         "material": "Raisin",
-        "ratio": 279,
+        "ratio": 188,
         "source_ports": [
           "Bordeaux",
           "Madeira",
           "Trabzon"
-        ]
+        ],
+        "source_villages": []
       },
       {
         "material": "Pig",
-        "ratio": 279,
+        "ratio": 188,
         "source_ports": [
           "Faro",
-          "Gijon",
-          "Nokor",
-          "Prey"
-        ]
+          "Gijón"
+        ],
+        "source_villages": []
       }
     ],
     "village_inputs": {
       "hutu_village": [
         {
           "material": "Raisin",
-          "ratio": 279,
+          "ratio": 188,
           "source_ports": [
             "Bordeaux",
             "Madeira",
             "Trabzon"
-          ]
+          ],
+          "source_villages": []
         },
         {
           "material": "Pig",
-          "ratio": 279,
+          "ratio": 188,
           "source_ports": [
             "Faro",
-            "Gijon",
-            "Nokor",
-            "Prey"
-          ]
+            "Gijón"
+          ],
+          "source_villages": []
         }
       ],
       "san_village": [
         {
           "material": "Raisin",
-          "ratio": 225,
+          "ratio": 188,
           "source_ports": [
             "Bordeaux",
             "Madeira",
             "Trabzon"
-          ]
+          ],
+          "source_villages": []
         },
         {
           "material": "Pig",
-          "ratio": 285,
+          "ratio": 218,
           "source_ports": [
             "Faro",
-            "Gijon",
-            "Nokor",
-            "Prey"
-          ]
+            "Gijón"
+          ],
+          "source_villages": []
         }
       ]
     },
@@ -72,7 +72,8 @@
       "Hutu Village"
     ],
     "output_per_round": {
-      "Neutral": 829
+      "Neutral": 829,
+      "Friendly": 988
     },
     "preconditions": {
       "amity_min": null,
@@ -85,10 +86,11 @@
   },
   "box_of_nutmeg": {
     "good": "Box of Nutmeg",
+    "season": "7",
     "inputs": [
       {
         "material": "Ebony",
-        "ratio": 168,
+        "ratio": 117,
         "source_ports": [
           "Ambon",
           "Brunei",
@@ -97,9 +99,9 @@
       },
       {
         "material": "Coral",
-        "ratio": 228,
+        "ratio": 175,
         "source_ports": [
-          "Male",
+          "Malé",
           "Atuona",
           "Guam",
           "Las Palmas",
@@ -111,32 +113,18 @@
       },
       {
         "material": "Textiles",
-        "ratio": 252,
+        "ratio": 175,
         "source_ports": [
           "Kolkata",
           "Masulipatnam"
         ]
       }
     ],
-    "notes": "Season 7 (2026-08-10 to 2026-12-09). Melanesian & Khmer: Ebony+Coral+Textiles; Malay: Ebony+Coral+Dhaka Muslin (Dhaka Muslin needs a Monopolizing Guild in Masulipatnam/Kolkata/Pegu/Pondicherry). Khmer requires Negotiation Expertise LV24. Ratios + per-round output UNKNOWN here — read live from the village barter panel. [Melanesian ratios read live 2026-08-15: 136 Ebony + 204 Coral + 180 Textiles -> 591 Box of Nutmeg/round @ Neutral.]",
-    "output_per_round": {
-      "Friendly": 679,
-      "Neutral": 591,
-      "Trusting": 476
-    },
-    "preconditions": {
-      "amity_min": null,
-      "event": null,
-      "guild": null,
-      "negotiation_expertise_min": null,
-      "trade_level_min": null
-    },
-    "season": "7",
     "village_inputs": {
       "melanesian_village": [
         {
           "material": "Ebony",
-          "ratio": 168,
+          "ratio": 117,
           "source_ports": [
             "Ambon",
             "Brunei",
@@ -145,9 +133,9 @@
         },
         {
           "material": "Coral",
-          "ratio": 228,
+          "ratio": 175,
           "source_ports": [
-            "Male",
+            "Malé",
             "Atuona",
             "Guam",
             "Las Palmas",
@@ -159,7 +147,7 @@
         },
         {
           "material": "Textiles",
-          "ratio": 252,
+          "ratio": 175,
           "source_ports": [
             "Kolkata",
             "Masulipatnam"
@@ -171,7 +159,20 @@
       "Melanesian Village",
       "Malay Village",
       "Khmer Village"
-    ]
+    ],
+    "output_per_round": {
+      "Friendly": 679,
+      "Neutral": 591,
+      "Trusting": 616
+    },
+    "preconditions": {
+      "amity_min": null,
+      "trade_level_min": null,
+      "negotiation_expertise_min": null,
+      "guild": null,
+      "event": null
+    },
+    "notes": "Season 7 (2026-08-10 to 2026-12-09). Melanesian & Khmer: Ebony+Coral+Textiles; Malay: Ebony+Coral+Dhaka Muslin (Dhaka Muslin needs a Monopolizing Guild in Masulipatnam/Kolkata/Pegu/Pondicherry). Khmer requires Negotiation Expertise LV24. Ratios + per-round output UNKNOWN here — read live from the village barter panel. [Melanesian ratios read live 2026-08-15: 136 Ebony + 204 Coral + 180 Textiles -> 591 Box of Nutmeg/round @ Neutral.]"
   },
   "camas": {
     "good": "Camas",
@@ -255,128 +256,64 @@
     "inputs": [
       {
         "material": "Iron",
-        "ratio": 88,
+        "ratio": 116,
         "source_ports": [
           "Amsterdam",
-          "Chinook Village",
           "Barcelona",
-          "Ciguayo Village",
           "Dublin",
-          "Oriya Village",
-          "Kuching",
-          "Nubia",
-          "Village",
-          "Production",
-          "Sioux Village",
-          "Smelting Handbook: Uncut Ore",
-          "Bari Village",
-          "Lusitanian Villag",
-          "Yawuru",
-          "Village"
-        ]
+          "Kuching"
+        ],
+        "source_villages": []
       },
       {
         "material": "Matchlock Gun",
-        "ratio": 44,
+        "ratio": 51,
         "source_ports": [
           "Barcelona",
-          "Chinook",
-          "Village",
-          "Seville",
-          "Ciguayo Village",
-          "Oriya Village",
-          "Nubia",
-          "Village",
-          "Sioux Village",
-          "Bari Village",
-          "Lusitanian Villag",
-          "Yawuru",
-          "Village"
-        ]
+          "Seville"
+        ],
+        "source_villages": []
       },
       {
         "material": "Candle",
-        "ratio": 88,
+        "ratio": 102,
         "source_ports": [
           "Santa Island",
-          "Chinook Village",
-          "Tripoli",
-          "Ciguayo Village",
-          "Production",
-          "Oriya Village",
-          "Sundry Goods Company Directory_",
-          "Nubia",
-          "Village",
-          "Sioux Village",
-          "Bari Village",
-          "Lusitanian Villag",
-          "Yawuru",
-          "Village"
-        ]
+          "Tripoli"
+        ],
+        "source_villages": []
       }
     ],
     "village_inputs": {
       "svear_village": [
         {
           "material": "Iron",
-          "ratio": 88,
+          "ratio": 116,
           "source_ports": [
             "Amsterdam",
-            "Chinook Village",
             "Barcelona",
-            "Ciguayo Village",
             "Dublin",
-            "Oriya Village",
-            "Kuching",
-            "Nubia",
-            "Village",
-            "Production",
-            "Sioux Village",
-            "Smelting Handbook: Uncut Ore",
-            "Bari Village",
-            "Lusitanian Villag",
-            "Yawuru",
-            "Village"
-          ]
+            "Kuching"
+          ],
+          "source_villages": []
         },
         {
           "material": "Matchlock Gun",
-          "ratio": 44,
+          "ratio": 51,
           "source_ports": [
             "Barcelona",
-            "Chinook",
-            "Village",
-            "Seville",
-            "Ciguayo Village",
-            "Oriya Village",
-            "Nubia",
-            "Village",
-            "Sioux Village",
-            "Bari Village",
-            "Lusitanian Villag",
-            "Yawuru",
-            "Village"
-          ]
+            "Seville"
+          ],
+          "source_villages": []
         },
         {
           "material": "Candle",
-          "ratio": 88,
+          "ratio": 102,
           "source_ports": [
             "Santa Island",
-            "Chinook Village",
-            "Tripoli",
-            "Ciguayo Village",
-            "Production",
-            "Oriya Village",
-            "Sundry Goods Company Directory_",
-            "Nubia",
-            "Village",
-            "Sioux Village",
-            "Bari Village",
-            "Lusitanian Villag",
-            "Yawuru",
-            "Village"
-          ]
+            "Tripoli"
+          ],
+          "source_villages": []
         }
       ]
     },
@@ -384,7 +321,8 @@
       "Svear Village"
     ],
     "output_per_round": {
-      "Neutral": 448
+      "Neutral": 448,
+      "Friendly": 495
     },
     "preconditions": {
       "amity_min": null,
@@ -532,33 +470,72 @@
     "inputs": [
       {
         "material": "Pulque",
-        "ratio": 75,
-        "source_ports": []
+        "ratio": 63,
+        "source_ports": [],
+        "source_villages": [
+          "Apache Village",
+          "Chinook Village"
+        ]
       },
       {
         "material": "Guarana",
-        "ratio": 75,
-        "source_ports": []
+        "ratio": 63,
+        "source_ports": [],
+        "source_villages": [
+          "Jívaro Village",
+          "Witoto Village"
+        ]
       }
     ],
     "village_inputs": {
       "cheyenne_village": [
         {
           "material": "Pulque",
-          "ratio": 75,
-          "source_ports": []
+          "ratio": 73,
+          "source_ports": [],
+          "source_villages": [
+            "Apache Village",
+            "Chinook Village"
+          ]
         },
         {
           "material": "Guarana",
-          "ratio": 75,
-          "source_ports": []
+          "ratio": 73,
+          "source_ports": [],
+          "source_villages": [
+            "Jívaro Village",
+            "Witoto Village"
+          ]
+        }
+      ],
+      "sioux_village": [
+        {
+          "material": "Pulque",
+          "ratio": 63,
+          "source_ports": [],
+          "source_villages": [
+            "Apache Village",
+            "Chinook Village"
+          ]
+        },
+        {
+          "material": "Guarana",
+          "ratio": 63,
+          "source_ports": [],
+          "source_villages": [
+            "Jívaro Village",
+            "Witoto Village"
+          ]
         }
       ]
     },
     "villages": [
-      "Cheyenne Village"
+      "Cheyenne Village",
+      "Sioux Village"
     ],
-    "output_per_round": {},
+    "output_per_round": {
+      "Neutral": 572
+    },
     "preconditions": {
       "amity_min": null,
       "trade_level_min": null,
@@ -574,43 +551,153 @@
     "inputs": [
       {
         "material": "Chicle",
-        "ratio": 187,
-        "source_ports": []
+        "ratio": 232,
+        "source_ports": [],
+        "source_villages": []
       },
       {
         "material": "Corn",
-        "ratio": 187,
-        "source_ports": []
+        "ratio": 257,
+        "source_ports": [
+          "Mérida",
+          "Panama",
+          "Portobelo",
+          "Veracruz"
+        ],
+        "source_villages": []
       },
       {
         "material": "Gold Dust",
-        "ratio": 187,
-        "source_ports": []
+        "ratio": 207,
+        "source_ports": [
+          "Port Royal",
+          "San Juan",
+          "Santiago de Cuba",
+          "Abidjan",
+          "Atuona",
+          "Bathurst",
+          "Buenos Aires",
+          "Cape Town",
+          "Elmina"
+        ],
+        "source_villages": []
       }
     ],
     "village_inputs": {
       "cheyenne_village": [
         {
           "material": "Chicle",
-          "ratio": 187,
-          "source_ports": []
+          "ratio": 182,
+          "source_ports": [],
+          "source_villages": []
         },
         {
           "material": "Corn",
-          "ratio": 187,
-          "source_ports": []
+          "ratio": 157,
+          "source_ports": [
+            "Mérida",
+            "Panama",
+            "Portobelo",
+            "Veracruz"
+          ],
+          "source_villages": []
         },
         {
           "material": "Gold Dust",
-          "ratio": 187,
-          "source_ports": []
+          "ratio": 182,
+          "source_ports": [
+            "Port Royal",
+            "San Juan",
+            "Santiago de Cuba",
+            "Abidjan",
+            "Atuona",
+            "Bathurst",
+            "Buenos Aires",
+            "Cape Town",
+            "Elmina"
+          ],
+          "source_villages": []
+        }
+      ],
+      "sioux_village": [
+        {
+          "material": "Chicle",
+          "ratio": 157,
+          "source_ports": [],
+          "source_villages": []
+        },
+        {
+          "material": "Corn",
+          "ratio": 157,
+          "source_ports": [
+            "Mérida",
+            "Panama",
+            "Portobelo",
+            "Veracruz"
+          ],
+          "source_villages": []
+        },
+        {
+          "material": "Gold Dust",
+          "ratio": 157,
+          "source_ports": [
+            "Port Royal",
+            "San Juan",
+            "Santiago de Cuba",
+            "Abidjan",
+            "Atuona",
+            "Bathurst",
+            "Buenos Aires",
+            "Cape Town",
+            "Elmina"
+          ],
+          "source_villages": []
+        }
+      ],
+      "pawnee_village": [
+        {
+          "material": "Chicle",
+          "ratio": 232,
+          "source_ports": [],
+          "source_villages": []
+        },
+        {
+          "material": "Corn",
+          "ratio": 257,
+          "source_ports": [
+            "Mérida",
+            "Panama",
+            "Portobelo",
+            "Veracruz"
+          ],
+          "source_villages": []
+        },
+        {
+          "material": "Gold Dust",
+          "ratio": 207,
+          "source_ports": [
+            "Port Royal",
+            "San Juan",
+            "Santiago de Cuba",
+            "Abidjan",
+            "Atuona",
+            "Bathurst",
+            "Buenos Aires",
+            "Cape Town",
+            "Elmina"
+          ],
+          "source_villages": []
         }
       ]
     },
     "villages": [
-      "Cheyenne Village"
+      "Cheyenne Village",
+      "Sioux Village",
+      "Pawnee Village"
     ],
-    "output_per_round": {},
+    "output_per_round": {
+      "Neutral": 1061
+    },
     "preconditions": {
       "amity_min": null,
       "trade_level_min": null,
@@ -626,43 +713,133 @@
     "inputs": [
       {
         "material": "Horse",
-        "ratio": 150,
-        "source_ports": []
+        "ratio": 166,
+        "source_ports": [
+          "Doha",
+          "Shiraz"
+        ],
+        "source_villages": []
       },
       {
         "material": "Hand Cannon",
-        "ratio": 150,
-        "source_ports": []
+        "ratio": 186,
+        "source_ports": [
+          "Lisboa",
+          "Porto"
+        ],
+        "source_villages": []
       },
       {
         "material": "Bullet",
-        "ratio": 150,
-        "source_ports": []
+        "ratio": 186,
+        "source_ports": [
+          "Bristol",
+          "Gijón",
+          "Seville"
+        ],
+        "source_villages": []
       }
     ],
     "village_inputs": {
       "cheyenne_village": [
         {
           "material": "Horse",
-          "ratio": 150,
-          "source_ports": []
+          "ratio": 126,
+          "source_ports": [
+            "Doha",
+            "Shiraz"
+          ],
+          "source_villages": []
         },
         {
           "material": "Hand Cannon",
-          "ratio": 150,
-          "source_ports": []
+          "ratio": 146,
+          "source_ports": [
+            "Lisboa",
+            "Porto"
+          ],
+          "source_villages": []
         },
         {
           "material": "Bullet",
-          "ratio": 150,
-          "source_ports": []
+          "ratio": 146,
+          "source_ports": [
+            "Bristol",
+            "Gijón",
+            "Seville"
+          ],
+          "source_villages": []
+        }
+      ],
+      "sioux_village": [
+        {
+          "material": "Horse",
+          "ratio": 126,
+          "source_ports": [
+            "Doha",
+            "Shiraz"
+          ],
+          "source_villages": []
+        },
+        {
+          "material": "Hand Cannon",
+          "ratio": 126,
+          "source_ports": [
+            "Lisboa",
+            "Porto"
+          ],
+          "source_villages": []
+        },
+        {
+          "material": "Bullet",
+          "ratio": 126,
+          "source_ports": [
+            "Bristol",
+            "Gijón",
+            "Seville"
+          ],
+          "source_villages": []
+        }
+      ],
+      "pawnee_village": [
+        {
+          "material": "Horse",
+          "ratio": 166,
+          "source_ports": [
+            "Doha",
+            "Shiraz"
+          ],
+          "source_villages": []
+        },
+        {
+          "material": "Hand Cannon",
+          "ratio": 186,
+          "source_ports": [
+            "Lisboa",
+            "Porto"
+          ],
+          "source_villages": []
+        },
+        {
+          "material": "Bullet",
+          "ratio": 186,
+          "source_ports": [
+            "Bristol",
+            "Gijón",
+            "Seville"
+          ],
+          "source_villages": []
         }
       ]
     },
     "villages": [
-      "Cheyenne Village"
+      "Cheyenne Village",
+      "Sioux Village",
+      "Pawnee Village"
     ],
-    "output_per_round": {},
+    "output_per_round": {
+      "Neutral": 923
+    },
     "preconditions": {
       "amity_min": null,
       "trade_level_min": null,
@@ -678,33 +855,77 @@
     "inputs": [
       {
         "material": "American Bison",
-        "ratio": 300,
-        "source_ports": []
+        "ratio": 251,
+        "source_ports": [],
+        "source_villages": [
+          "Sioux Village",
+          "Cheyenne Village",
+          "Pawnee Village"
+        ]
       },
       {
         "material": "Wool",
-        "ratio": 340,
-        "source_ports": []
+        "ratio": 251,
+        "source_ports": [
+          "Edinburgh",
+          "Khatanga",
+          "Reykjavík"
+        ],
+        "source_villages": []
       }
     ],
     "village_inputs": {
       "cheyenne_village": [
         {
           "material": "American Bison",
-          "ratio": 300,
-          "source_ports": []
+          "ratio": 251,
+          "source_ports": [],
+          "source_villages": [
+            "Sioux Village",
+            "Cheyenne Village",
+            "Pawnee Village"
+          ]
         },
         {
           "material": "Wool",
-          "ratio": 340,
-          "source_ports": []
+          "ratio": 291,
+          "source_ports": [
+            "Edinburgh",
+            "Khatanga",
+            "Reykjavík"
+          ],
+          "source_villages": []
+        }
+      ],
+      "sioux_village": [
+        {
+          "material": "American Bison",
+          "ratio": 251,
+          "source_ports": [],
+          "source_villages": [
+            "Sioux Village",
+            "Cheyenne Village"
+          ]
+        },
+        {
+          "material": "Wool",
+          "ratio": 251,
+          "source_ports": [
+            "Edinburgh",
+            "Khatanga",
+            "Reykjavík"
+          ],
+          "source_villages": []
         }
       ]
     },
     "villages": [
-      "Cheyenne Village"
+      "Cheyenne Village",
+      "Sioux Village"
     ],
-    "output_per_round": {},
+    "output_per_round": {
+      "Neutral": 859
+    },
     "preconditions": {
       "amity_min": null,
       "trade_level_min": null,
@@ -745,6 +966,169 @@
     },
     "villages": [
       "Svear Village"
+    ],
+    "output_per_round": {},
+    "preconditions": {
+      "amity_min": null,
+      "trade_level_min": null,
+      "negotiation_expertise_min": null,
+      "guild": null,
+      "event": null
+    },
+    "notes": ""
+  },
+  "argan_oil": {
+    "good": "Argan Oil",
+    "season": "",
+    "inputs": [
+      {
+        "material": "Myrrh",
+        "ratio": 63,
+        "source_ports": [
+          "Alexandria",
+          "Benghazi"
+        ],
+        "source_villages": []
+      },
+      {
+        "material": "Mutton",
+        "ratio": 126,
+        "source_ports": [
+          "Antalya",
+          "Hormuz",
+          "Jeddah",
+          "Narvik",
+          "Reykjavík"
+        ],
+        "source_villages": []
+      },
+      {
+        "material": "Almond",
+        "ratio": 126,
+        "source_ports": [
+          "Lisboa",
+          "Málaga",
+          "Palma",
+          "Valencia"
+        ],
+        "source_villages": []
+      }
+    ],
+    "village_inputs": {
+      "berber_village": [
+        {
+          "material": "Myrrh",
+          "ratio": 63,
+          "source_ports": [
+            "Alexandria",
+            "Benghazi"
+          ],
+          "source_villages": []
+        },
+        {
+          "material": "Mutton",
+          "ratio": 126,
+          "source_ports": [
+            "Antalya",
+            "Hormuz",
+            "Jeddah",
+            "Narvik",
+            "Reykjavík"
+          ],
+          "source_villages": []
+        },
+        {
+          "material": "Almond",
+          "ratio": 126,
+          "source_ports": [
+            "Lisboa",
+            "Málaga",
+            "Palma",
+            "Valencia"
+          ],
+          "source_villages": []
+        }
+      ]
+    },
+    "villages": [
+      "Berber Village"
+    ],
+    "output_per_round": {
+      "Neutral": 751,
+      "Friendly": 617
+    },
+    "preconditions": {
+      "amity_min": null,
+      "trade_level_min": null,
+      "negotiation_expertise_min": null,
+      "guild": null,
+      "event": null
+    },
+    "notes": ""
+  },
+  "momordica_balsamina": {
+    "good": "Momordica Balsamina",
+    "season": "",
+    "inputs": [
+      {
+        "material": "Tobacco",
+        "ratio": 146,
+        "source_ports": [
+          "Havana",
+          "Port Royal",
+          "Santo Domingo"
+        ]
+      },
+      {
+        "material": "Peanut",
+        "ratio": 73,
+        "source_ports": [
+          "Port Royal",
+          "Santiago de Cuba",
+          "Southside"
+        ]
+      },
+      {
+        "material": "Chicle",
+        "ratio": 146,
+        "source_ports": [
+          "Mérida",
+          "Veracruz"
+        ]
+      }
+    ],
+    "village_inputs": {
+      "berber_village": [
+        {
+          "material": "Tobacco",
+          "ratio": 146,
+          "source_ports": [
+            "Havana",
+            "Port Royal",
+            "Santo Domingo"
+          ]
+        },
+        {
+          "material": "Peanut",
+          "ratio": 73,
+          "source_ports": [
+            "Port Royal",
+            "Santiago de Cuba",
+            "Southside"
+          ]
+        },
+        {
+          "material": "Chicle",
+          "ratio": 146,
+          "source_ports": [
+            "Mérida",
+            "Veracruz"
+          ]
+        }
+      ]
+    },
+    "villages": [
+      "Berber Village"
     ],
     "output_per_round": {},
     "preconditions": {

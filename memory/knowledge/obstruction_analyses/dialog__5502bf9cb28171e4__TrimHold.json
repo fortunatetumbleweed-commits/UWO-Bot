@@ -1,0 +1,21 @@
+{
+  "purpose": "The bot opened the numeric keypad to enter a specific quantity of Iron to load/sell, and the 'Enter Number' dialog is now awaiting input of the target quantity (934) before confirming the trade action.",
+  "full_text": "Trade Goods Info — Iron (Wares) — Calculation: Sales Cost 924, -44, +286, Final Sales Price 1,166. Enter Number: [input field showing '1']. Buttons: 1 2 3 4 5 6 7 8 9 0 Max. Max Price 1,048 | Min Price 846. Cancel | Load.",
+  "dismissal": "tap_accept",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "5502bf9cb28171e4",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-09T21:06:40.239934+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The bot opened the numeric keypad to enter a specific quantity of Iron to load/sell, and the 'Enter Number' dialog is now awaiting input of the target quantity (934) before confirming the trade action.",
+    "full_text": "Trade Goods Info — Iron (Wares) — Calculation: Sales Cost 924, -44, +286, Final Sales Price 1,166. Enter Number: [input field showing '1']. Buttons: 1 2 3 4 5 6 7 8 9 0 Max. Max Price 1,048 | Min Price 846. Cancel | Load.",
+    "dismissal": "tap_accept",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "The purchase sub-menu is displaying the available goods at Benghazi, including Myrrh (Medicine) at 96% supply with 238 units available — this is the normal purchase screen the bot needs to interact with to buy Myrrh toward its hold goal",
+  "full_text": "Purchase screen showing: Safflower (Dye) 322 units, Specialties, 98% 515 gold; Wild Oat (Food) 766 units, 97% 144 gold; Myrrh (Medicine) 238 units, Specialties, 96% 707 gold; Darbuka (Crafts) 141 units, Specialties, Unlock Condition (0/1). Timer: 00:29:55, balance: 190 diamonds.",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "8402d982686ba36c",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T01:23:28.951399+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The purchase sub-menu is displaying the available goods at Benghazi, including Myrrh (Medicine) at 96% supply with 238 units available — this is the normal purchase screen the bot needs to interact with to buy Myrrh toward its hold goal",
+    "full_text": "Purchase screen showing: Safflower (Dye) 322 units, Specialties, 98% 515 gold; Wild Oat (Food) 766 units, 97% 144 gold; Myrrh (Medicine) 238 units, Specialties, 96% 707 gold; Darbuka (Crafts) 141 units, Specialties, Unlock Condition (0/1). Timer: 00:29:55, balance: 190 diamonds.",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

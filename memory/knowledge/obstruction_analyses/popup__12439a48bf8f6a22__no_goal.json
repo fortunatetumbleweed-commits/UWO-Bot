@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase panel is open at a port marketplace, showing available trade goods (Gold, Coral, Pearl Oyster, Coconut, Palm Oil, Pituri) with their quantities, price ratios, and costs — Pituri is locked behind an unlock condition.",
+  "full_text": "Purchase screen showing: Coral (Jewelry) x231 at 116% for 14,348 gold; Pearl Oyster (Food) x535 at 97% for 605 gold [Specialties]; Palm Oil (Seasoning) x816 at 110% for 203 gold; Pituri (Luxuries) x316 [Specialties] — Unlock Condition (0/1). Timer: 00:16:25. Cargo: 982/4,952.",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "12439a48bf8f6a22",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T04:10:32.235106+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase panel is open at a port marketplace, showing available trade goods (Gold, Coral, Pearl Oyster, Coconut, Palm Oil, Pituri) with their quantities, price ratios, and costs — Pituri is locked behind an unlock condition.",
+    "full_text": "Purchase screen showing: Coral (Jewelry) x231 at 116% for 14,348 gold; Pearl Oyster (Food) x535 at 97% for 605 gold [Specialties]; Palm Oil (Seasoning) x816 at 110% for 203 gold; Pituri (Luxuries) x316 [Specialties] — Unlock Condition (0/1). Timer: 00:16:25. Cargo: 982/4,952.",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

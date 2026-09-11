@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade Goods Info panel showing Ebony's sale calculation, including sales cost, tax, surcharge, and final per-unit price before confirming how many units to load for sale",
+  "full_text": "Trade Goods Info — Ebony (Wares, Specialties) — 1067 units. Description: Very hard black wood. Highly valuable for decorative woodwork due to the soft sheen it shows when polished. Calculation: Sales Cost 3,514 | Tax -175 | Surcharge +976 | Per Price 4,315. Prices: Current Price 3,514 | Max Price 4,111 | Min Price 3,289. Quantity: 1/1,067. Min / Max buttons. Final Sales Price: 4,315. Cancel | Load.",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "3ade99ab41c00cb7",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T18:05:29.338875+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade Goods Info panel showing Ebony's sale calculation, including sales cost, tax, surcharge, and final per-unit price before confirming how many units to load for sale",
+    "full_text": "Trade Goods Info — Ebony (Wares, Specialties) — 1067 units. Description: Very hard black wood. Highly valuable for decorative woodwork due to the soft sheen it shows when polished. Calculation: Sales Cost 3,514 | Tax -175 | Surcharge +976 | Per Price 4,315. Prices: Current Price 3,514 | Max Price 4,111 | Min Price 3,289. Quantity: 1/1,067. Min / Max buttons. Final Sales Price: 4,315. Cancel | Load.",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

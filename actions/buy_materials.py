@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import re
 import time
 from typing import Callable, Mapping, Optional
 
@@ -51,19 +52,39 @@ def _find_material_tile(elements, material: str):
     """(cx, cy) of the goods-grid tile whose label matches `material` (OmniParser
     button in the left/centre grid, cx < ~1600). None if not on screen (out of
     stock / wrong tab)."""
-    m = material.lower()
-    best = None
+    # THE EXTRA WORD IS THE WHOLE DIFFERENCE. This was `m in lab or lab in m`, and the game
+    # is full of names that are prefixes of one another — Almond / Almond Oil, Duck / Duck
+    # Meat, Olive / Olive Oil (user, 2026-09-05).
+    #
+    # Live 2026-09-05 at Lisboa, with BOTH tiles on screen and both read correctly:
+    #
+    #     button 'Almond'      @ (1450, 557)
+    #     button 'Almond Oil'  @ ( 570, 798)   <- what the substring test returned, twice
+    #
+    # It bought ~1,020 Almond Oil for ~194,000 ducats and two blue gems, drained Lisboa's
+    # Almond Oil shelf twice, and carried zero Almond. Nothing downstream could catch it: the
+    # ledger, the goal counter and every log line say the name we ASKED for, never the name
+    # on the tile that was tapped. The goal then read 1020/1015 — met — and the mission would
+    # have gathered the other two materials and failed at the barter panel.
+    #
+    # EXACT FIRST, then per-word fuzzy. `same_good_name` requires the same number of words,
+    # so a prefix can never stand in for the good itself, while a tile that OCRs as 'Almend'
+    # still matches.
+    from utils.fuzzy import same_good_name
+    exact, fuzzy = None, None
     for e in elements:
-        lab = (getattr(e, "label", "") or "").strip().lower()
-        if not lab or getattr(e, "cx", None) is None:
+        lab = (getattr(e, "label", "") or "").strip()
+        if not lab or getattr(e, "cx", None) is None or getattr(e, "cx") >= 1600:
             continue
-        if getattr(e, "cx") >= 1600:
-            continue
-        et = (getattr(e, "element_type", "") or "")
-        if m in lab or lab in m:
-            if et == "button" or best is None:
-                best = (int(e.cx), int(e.cy))
-    return best
+        is_button = (getattr(e, "element_type", "") or "") == "button"
+        pos = (int(e.cx), int(e.cy))
+        if lab.lower().split() == material.lower().split():
+            if is_button or exact is None:
+                exact = pos
+        elif same_good_name(material, lab):
+            if is_button or fuzzy is None:
+                fuzzy = pos
+    return exact or fuzzy
 
 
 def _find_purchase_commit(frame, elements):
@@ -250,6 +271,31 @@ def _react_after_purchase(capture_fn, tap_fn) -> bool:
                 logger.info("[buy] negotiation popup — No")
                 tap_fn(*pos)
                 continue
+        # THE OVERLOAD NOTICE, WHICH SAYS NONE OF THE WORDS BELOW (user, 2026-09-04: "for
+        # this one you can tap the Ok button").
+        #
+        #   "The Cargo Hold's Trade Goods slot will be exceeded by 52 slots.
+        #    Purchase the Trade Goods?"                              [Cancel] [OK]
+        #
+        # No "confirm", no "result", no "balance" — so this loop broke on its first pass and
+        # left the dialog standing. `purchase_goods` then returned ok with purchased=False,
+        # and the caller walked out of the market through the chromed title with the Notice
+        # still up. Live 2026-09-04 at Madeira (frame 272) that abandoned the purchase
+        # entirely: 105 slots were free and nothing was bought.
+        #
+        # It is a plain acknowledgement — the game hands back what fits and the rest is not
+        # taken — and it spends no gems, so OK is the answer. Matched on BOTH phrases, never
+        # on the bare word "notice", because a Notice is a shape and not a meaning.
+        if "exceeded by" in txt and "purchase the trade goods" in txt:
+            pos = find_text_button(tokens, "ok", min_ratio=0.85)
+            if pos:
+                logger.info("[buy] trade-goods overload Notice — OK (the hold takes what "
+                            "fits)")
+                tap_fn(*pos)
+                confirmed = True
+                continue
+            logger.warning("[buy] overload Notice is up but its OK could not be found — "
+                           "leaving it rather than tapping blind")
         if "confirm" in txt or "result" in txt or "balance" in txt:  # buy OR sell
             pos = find_text_button(tokens, "ok", min_ratio=0.85)
             if pos:
@@ -273,6 +319,28 @@ react_after_commit = _react_after_purchase
 # real money). See vision/region_detectors/market_restock.py + memory
 # project_unified_purchase_goal_design.
 
+# How long a nearly-expired restock timer is worth waiting out after a refresh that did not
+# confirm. Long enough for the race below, short enough that a leg never parks on a shelf.
+_WAIT_OUT_RESTOCK_S = 90
+
+
+def _timer_seconds(text) -> Optional[int]:
+    """`'00.00:11'` -> 11. The restock clock, with OCR's separators taken as read.
+
+    The glyphs come back inconsistently — '00:18.26', '00.28.40', '00.00:11' are all real
+    readings of the same field — so the SEPARATORS carry no meaning and only the digit groups
+    do: h:m:s, or m:s. Same rule as utils.digits: on these screens a separator is a separator.
+    """
+    groups = re.findall(r"\d+", str(text or ""))
+    if not groups or len(groups) > 3:
+        return None
+    parts = [int(g) for g in groups][-3:]
+    while len(parts) < 3:
+        parts.insert(0, 0)
+    h, m, sec = parts
+    return h * 3600 + m * 60 + sec
+
+
 def refresh_market(capture_fn=None, tap_fn=None, *, ocr_fn=None, settle: float = 1.2,
                    verify_good: Optional[str] = None, port: Optional[str] = None,
                    read_market_fn=None, omni_fn=None) -> dict:
@@ -293,9 +361,16 @@ def refresh_market(capture_fn=None, tap_fn=None, *, ocr_fn=None, settle: float =
 
     btn = find_restock_button(capture_fn(), ocr_fn)
     if btn is None:
-        return {"ok": False, "reason": "no restock control (market fresh or not on Purchase grid)"}
+        # NOTHING WAS TAPPED AND NO GEM WAS SPENT, so this refusal is about THIS LOOK, not
+        # about the shelf. `acted=False` says so, and lets the caller tell "the control was
+        # not on screen" — true whenever the live screen has drifted from the tick's — from
+        # "this shelf cannot be restocked", which is a fact about the world.
+        return {"ok": False, "acted": False,
+                "reason": "no restock control (market fresh or not on Purchase grid)"}
     if btn.currency != "blue_gem":
-        return {"ok": False, "refused": True, "currency": btn.currency,
+        # ACTED, in the sense that matters: the control WAS found and its price read. Looking
+        # again cannot change a red-gem price, and red gems are real money.
+        return {"ok": False, "refused": True, "acted": True, "currency": btn.currency,
                 "reason": f"restock cost is {btn.currency} (not a confirmed blue gem) — refused"}
     logger.info(f"[refresh] tap ↻ refresh icon @ ({btn.cx},{btn.cy}) (timer was {btn.timer})")
     tap_fn(btn.cx, btn.cy)
@@ -337,8 +412,63 @@ def refresh_market(capture_fn=None, tap_fn=None, *, ocr_fn=None, settle: float =
         ok = _timer_went_up(btn.timer, after.timer if after else None)
         signal = f"timer {btn.timer}→{after.timer if after else '??'}"
     logger.info(f"[refresh] verify: accepted={accepted} {signal} → refreshed={ok}")
-    return {"ok": ok, "currency": "blue_gem",
+
+    # A SHELF ABOUT TO RESTOCK ITSELF IS NOT A REFUSED SHELF (user, 2026-09-05: "it tapped at
+    # the refresh, but the market was refreshing at the time, so there is no blue gem dialog").
+    #
+    # Live at Madeira the ↻ went in with the timer reading 00.00:11. The game was already
+    # turning the market over, so no Replenish-Stock dialog appeared, nothing could be
+    # confirmed, and an unconfirmed refresh BREAKS the buy loop — the Raisin leg stopped at
+    # 868 of 1,260 eleven seconds before the shelf refilled for free.
+    #
+    # The timer still does not GATE the refresh (user, 2026-09-05: "right now the timer
+    # should not be used at all... it should not interfere with the refresh") — the tap has
+    # already happened. It only answers the question that arises AFTERWARDS: having failed to
+    # confirm, is this shelf dead, or about to refill by itself?
+    if not ok:
+        left = _timer_seconds(btn.timer)
+        if left is not None and 0 <= left <= _WAIT_OUT_RESTOCK_S:
+            logger.info(f"[refresh] not confirmed, but the restock timer read {btn.timer} "
+                        f"({left}s) — waiting it out rather than calling the shelf empty")
+            time.sleep(left + settle + 2.0)
+            frame4 = capture_fn()
+            again = _good_in_stock(frame4, verify_good, port, read_market_fn, omni_fn) \
+                if verify_good else None
+            if again:
+                logger.info(f"[refresh] the shelf restocked on its own timer — "
+                            f"tile[{verify_good}] is active again, no gem spent")
+                return {"ok": True, "currency": None,
+                        "reason": f"the restock timer came round ({btn.timer})"}
+            logger.info(f"[refresh] still empty after waiting out {btn.timer}")
+
+    # THE TAP WENT IN, so a gem may be spent whatever the verification says. Never a free
+    # retry: `acted=True` keeps the caller from spending another on a look.
+    return {"ok": ok, "currency": "blue_gem", "acted": True,
             "reason": f"refresh {'ok' if ok else 'NOT confirmed'} ({signal})"}
+
+
+def _qty_of(goods: Mapping, name: str) -> Optional[int]:
+    """A good's shelf quantity from a grid reading, or None when it was not read."""
+    g = (goods or {}).get((name or "").lower())
+    q = getattr(g, "available_qty", None) if g is not None else None
+    return int(q) if isinstance(q, int) else None
+
+
+def _shelf_drop(before: Mapping, after: Mapping, name: str) -> int:
+    """How far one good's shelf fell across a buy — 0 when it cannot be said.
+
+    Only meaningful for a SINGLE-good round; with two goods bought together the drop of one
+    says nothing about the other, which is the same reason the tracked cargo tile cannot be
+    credited to both (see the ledger call in `buy_to_goal`).
+
+    A shelf that RISES has been refreshed rather than bought from, and a missing reading is
+    not a drop of zero — both return 0 so the ledger keeps its "amount unknown" meaning
+    rather than being told a fiction.
+    """
+    b, a = _qty_of(before, name), _qty_of(after, name)
+    if b is None or a is None:
+        return 0
+    return max(0, b - a)
 
 
 def tile_in_stock(good_obj) -> bool:
@@ -513,41 +643,38 @@ def ensure_sell_tab(capture_fn, tap_fn, settle: float = 1.2) -> bool:
     if _on_sell_tab(frame):
         return True
 
-    # OUR OWN TAP RAISED A CONFIRM, SO COMPLETE IT (live 2026-09-01 at Tripoli). Switching
-    # tabs with goods staged makes the game ask "Moving to another menu will empty the cart.
-    # Continue?" — the same dialog `abandon_basket_confirm` names. The tab does not change
-    # until it is answered, so refusing here leaves a leg failed over a question nobody
-    # replied to: the trim reported "could not reach the Sell grid", the dispatcher cleared
-    # the dialog a few seconds later, and the switch then completed with the mission already
-    # dead. A dialog the bot's OWN action provoked is COMPLETED, never left for someone else.
-    ok = _cart_confirm_ok(frame)
-    if ok is not None:
-        logger.info("[market] the staged cart raised a confirm — answering it, the cart is "
-                    "the shop's, not the hold's")
-        tap_fn(*ok)
-        time.sleep(settle)
-        frame = capture_fn()
-    return bool(_on_sell_tab(frame))
-
-
-def _cart_confirm_ok(frame):
-    """(x, y) of OK on the empty-the-cart confirm, or None. Never a blind OK.
-
-    Answering an unidentified dialog is how a bot confirms a purchase it never chose, so this
-    reads the SAME two words the `abandon_basket_confirm` interruptor keys on before it will
-    touch anything. The button itself comes from DialogModel, the canonical dialog reader.
-    """
-    try:
-        from vision.omniparser import parse_fast_cached
-        words = " ".join((getattr(e, "label", "") or "") for e in parse_fast_cached(frame))
-        low = words.lower()
-        if "cart" not in low or "empty" not in low:
-            return None
-        from actions.market_actions import _dialog_ok_pos
-        return _dialog_ok_pos(frame)
-    except Exception as exc:                       # noqa: BLE001 — a miss is a refusal
-        logger.debug(f"[market] cart-confirm read failed: {exc}")
-        return None
+    # A DIALOG BELONGS TO THE DISPATCHER, NOT TO THIS PRIMITIVE (user, 2026-09-07: "The
+    # dialog should be checked by the dispatcher, and dispatch to the activity, not being
+    # perceived and handled by the activity").
+    #
+    # SO THIS TAPS ONCE AND REPORTS. It does not look again, and above all it does not tap
+    # again — because the second tap is what destroyed the evidence.
+    #
+    # Live 2026-09-07 at Faro, frames 8-11 of trace_barter_cmd_2026-09-07T15-00-05, four
+    # times over. 454 Pig were staged in the cart and the hold was 52 units OVER capacity:
+    #
+    #     frame 8   tap (174,276) on the Sell rail item
+    #     frame 9   the tap LANDED — title 'Sell', and over it the game asked
+    #               "Moving to another menu will empty the cart. Continue?"  [Cancel] [Ok]
+    #     frame 10  `_on_sell_tab` said no, so this logged "nothing asked us anything —
+    #               the tap was dropped" and re-tapped the rail at (68,276)
+    #     frame 11  back on Purchase, no dialog, cart intact
+    #
+    # The rail is OUTSIDE the modal, so the re-tap dismissed the card as a Cancel. The
+    # dispatcher DID re-perceive between calls and found nothing, because by then the retry
+    # had cleared the very thing it needed to see. Measured on frame 9: `market_context`
+    # classifies it `confirm_dialog`, `detect_dialog` offers ['Ok', 'Cancel'], and
+    # `game_rules` answers 'Ok'. The whole path worked and was never allowed to run.
+    #
+    # AND THE PREMISE WAS WRONG ANYWAY. "The page did not change" has two causes — the tap
+    # missed, or something is covering it — and the retry enumerated one (Guiding Principle
+    # #3). A dropped tap is still retried, by the NEXT TICK: this returns False, the activity
+    # hands back, the dispatcher re-perceives and dispatches the goal again, and the tap
+    # happens once more against a screen somebody has looked at. That is where the ~5%-to-
+    # ~0.25% arithmetic lives now, and it costs a tick instead of a modal.
+    logger.info("[market] tapped 'Sell' and the page has not changed — handing back rather "
+                "than tapping again, which lands outside anything the game may have raised")
+    return False
 
 
 def _sell_menu_item(frame):
@@ -689,16 +816,39 @@ def material_states(ledger, goal: Mapping[str, int]) -> dict:
     UNKNOWN IS NOT MET, deliberately. The ledger marks an unreadable purchase pending so
     the caller goes and reads the sell grid; calling it satisfied would turn "I could not
     read it" into "I have enough".
+
+    BUT `believed` IS A LOWER BOUND, AND UNCERTAINTY ONLY POINTS UP. An unreadable purchase
+    is one we MADE and could not quantify, so the true holding is `believed` PLUS something
+    non-negative. When `believed` already clears the goal, "how much more" cannot make us
+    short, and the material is met — with certainty, not by assumption.
+
+    Testing `amount_unknown` FIRST made that unreachable, and the result was a loop with no
+    exit. Live 2026-09-05 at Madeira, goal 1,719:
+
+        [ledger] bought 110 Raisin — believed 1802 (fleet 1540 + pending 262)
+        not met — amount unknown for Raisin — the sell grid must settle it
+        [ledger] bought 110 Raisin — believed 1912 ...            (and again, and again)
+
+    One unreadable purchase early in the leg poisoned the good for the rest of it: every
+    later reading said "unknown" however large the total grew. The escape hatch the message
+    names — go and read the sell grid — is gated on the CARGO COUNT being unreadable, and
+    the cargo tile was reading perfectly (1,870, 1,980, ...). So the one thing that could
+    clear the flag was unreachable exactly because the other reading worked. Six blue-gem
+    refreshes in, it was still buying, and it would have run to the 60-round cap.
     """
     out: dict = {}
     for material, want in goal.items():
         want = int(want)
-        if ledger.amount_unknown(material):
-            out[material] = {"have": None, "want": want, "state": "unknown"}
-            continue
         have = ledger.believed(material)
-        out[material] = {"have": have, "want": want,
-                         "state": "met" if have >= want else "short"}
+        if have >= want:
+            # Certain even when amounts are unknown: the unread purchases only ADD.
+            out[material] = {"have": have, "want": want, "state": "met"}
+        elif ledger.amount_unknown(material):
+            # Genuinely undecidable HERE — we may or may not have enough, and only the sell
+            # grid can say. `have` stays None so no caller mistakes a floor for a count.
+            out[material] = {"have": None, "want": want, "state": "unknown"}
+        else:
+            out[material] = {"have": have, "want": want, "state": "short"}
     return out
 
 
@@ -817,11 +967,61 @@ def buy_to_goal(port: str, goal: Mapping[str, int], *, max_rounds: int = 6,
         goods, els = _read(frame)
         return frame, goods, els, cleared_any
 
+    def _still_worth_a_gem(goods_seen) -> Optional[str]:
+        """A good that justifies spending a gem HERE, or None. Never raises.
+
+        A REFRESH IS MARKET-WIDE, so the good that justifies it need NOT be the one whose
+        shelf just emptied. Barcelona stocks Iron AND Matchlock Gun: with Iron met and
+        Matchlock short, restocking is exactly right — it refills Matchlock too. Narrowing
+        this to "the emptied good must be the short one" would stop the refresh there and
+        leave the leg short, which is the failure this file already carries twice.
+
+        What it rules out is the other case: nothing this market sells is still wanted.
+        Live 2026-09-05 at Faro, order {Pig 1719, Raisin 1719} with Pig MET at 1828 and
+        Raisin not stocked at Faro at all:
+
+            not met — short: Raisin 0/1719
+            [refresh] tap the refresh icon (timer was 00.28.43)      <- gem spent
+            [refresh] verify: accepted=True tile[Pig] active=True    <- restocked PIG
+            leg finished
+
+        It restocked the good it already had enough of, for a gem, and ended the leg. The
+        price escalates with use — by the 14th refresh that evening the dialog read 345 blue
+        gems — so this is not a rounding error.
+
+        UNKNOWN COUNTS AS STILL WANTED: an unread amount is not a reason to stop buying, and
+        `material_states` already distinguishes it from `met`.
+        """
+        try:
+            for material, state in material_states(ledger, goal).items():
+                if state["state"] == "met":
+                    continue
+                if (goods_seen or {}).get(material.lower()) is not None:
+                    return material
+        except Exception as exc:                 # a guard must not break the loop it guards
+            logger.debug(f"[buy_to_goal] could not weigh the refresh: {exc}")
+            return "unreadable"                  # cannot rule it out — behave as before
+        return None
+
     def _do_refresh(attempt, verify_good):
-        """Blue-gem refresh to restock a sold-out shelf; append to rounds. Returns ok."""
+        """Blue-gem refresh to restock a sold-out shelf; append to rounds. Returns ok.
+
+        SAY WHY WHEN IT DOES NOT HAPPEN. A False here BREAKS the buy loop, and it used to do
+        so in silence: `refresh_market`'s refusals all return without logging, so the run
+        jumped from "not met — short: Mutton 595/1015" straight to "no further progress" with
+        nothing in between. Live 2026-09-05 at Antalya that hid a one-frame OCR miss on the
+        restock timer — the shelf was sold out, the control was on screen at 3 blue gems, and
+        the leg ended three barter rounds short. It took a frame-by-frame diff to find, and
+        the reason was a string the function already had in hand.
+        """
         r = refresh_fn(capture_fn=capture_fn, tap_fn=tap_fn, verify_good=verify_good, port=port)
         rounds.append({"attempt": attempt, "refresh": r})
-        return bool(r.get("ok"))
+        if not r.get("ok"):
+            logger.warning(f"[buy_to_goal] no refresh for {verify_good!r} — "
+                           f"{r.get('reason', '(no reason given)')}; the shelf stays empty "
+                           "and this leg stops here")
+            return False
+        return True
 
     goal_total = sum(goal.values())
     bought_total = 0              # best-known OWNED count of the good (from the tracked tile)
@@ -850,11 +1050,26 @@ def buy_to_goal(port: str, goal: Mapping[str, int], *, max_rounds: int = 6,
         # loop must not stall waiting for a tile read it already has the answer to. This is
         # the ONLY case where a total may stand in: with two goods it is exactly the
         # attribution that failed at Barcelona (Iron's +324 credited to Matchlock Gun too).
-        if len(goal) == 1:
-            only, want = next(iter(goal.items()))
+        #
+        # AND ONLY WHILE THE LEDGER CANNOT ANSWER. `total_seen` is the TRACKED TILE's
+        # absolute count, not the arrivals this premise describes, so when the tracker
+        # follows the wrong tile it is another good's number entirely. Live 2026-09-05 at
+        # Madeira, ordering Raisin alone with 1,368 Pig already aboard:
+        #
+        #   bought 217 Raisin — believed 651        (three shelves, every amount READ)
+        #   round 4/60: owned=1368 (+717)           (Pig's count, and no 717 shelf exists)
+        #   goal met — Raisin ~1368/1260
+        #
+        # It reported `met` and `state: 'short'` in the same result, and the mission sailed
+        # on believing Raisin gathered. A ledger with nothing pending has read every purchase
+        # it made and IS the answer; overriding it with a tile that may have wandered is how
+        # a leg reports a hold it does not have.
+        only_good = next(iter(goal)) if len(goal) == 1 else None
+        if only_good is not None and ledger.amount_unknown(only_good):
+            only, want = only_good, goal[only_good]
             if total_seen >= int(want):
-                return True, (f"{only} ~{total_seen}/{want} — the only good in the order, "
-                              "so the cargo total is its count")
+                return True, (f"{only} ~{total_seen}/{want} — the only good in the order and "
+                              "its amounts are unread, so the cargo total is its count")
         return met, why
 
     # COLD pre-check via the SELL tab (no buying): how many do we ALREADY own?  Read from the Sell
@@ -1015,7 +1230,34 @@ def buy_to_goal(port: str, goal: Mapping[str, int], *, max_rounds: int = 6,
                 # bought-amount-unknown, which routes the loop to the sell grid — the only
                 # panel where a per-good quantity is legible.
                 if len(buyable) == 1:
-                    ledger.bought(buyable[0], int(got or 0))
+                    # THE SHELF'S OWN QUANTITY IS READABLE WHEN THE OWNED COUNT IS NOT, and
+                    # with ONE good in the order its drop IS what we bought.
+                    #
+                    # Live 2026-09-04 at Faro the Sell tab would not confirm, so every round
+                    # logged `owned=UNREADABLE ... 0/2520` while the grid said plainly:
+                    #
+                    #     'Pig' owned was unreadable on the page; its tile reads 684
+                    #     [Faro] load Pig — tap tile @ (1007, 555)
+                    #     'Pig' owned was unreadable on the page; its tile reads 0
+                    #
+                    # 684 to 0 is 684 bought, and nothing about it depends on the panel that
+                    # failed. Without it the ledger recorded "amount unknown", `buyable_now`
+                    # could never mark Pig met, and the loop bought FOUR shelves — 2,736
+                    # against a goal of 1,260 — stopping only on the summed runaway guard.
+                    # The 1,476 surplus then filled the hold, left 105 free slots, and cost
+                    # the mission its Raisin and a barter round.
+                    #
+                    # Strictly a fallback: a measured `got` is a real per-tile delta and
+                    # always wins. This only speaks where the alternative is silence.
+                    amount = int(got or 0)
+                    if amount <= 0:
+                        amount = _shelf_drop(goods, goods_after, buyable[0])
+                        if amount:
+                            logger.info(f"[buy_to_goal] owned unreadable, but {buyable[0]!r}'s "
+                                        f"shelf went {_qty_of(goods, buyable[0])} → "
+                                        f"{_qty_of(goods_after, buyable[0])} — crediting "
+                                        f"{amount} bought")
+                    ledger.bought(buyable[0], amount)
                 else:
                     logger.info(f"[buy_to_goal] {len(buyable)} goods bought together "
                                 f"({', '.join(buyable)}) — one tracked tile cannot say how "
@@ -1146,6 +1388,16 @@ def buy_to_goal(port: str, goal: Mapping[str, int], *, max_rounds: int = 6,
                 # shelf SOLD OUT (tile grayed) → restock with a blue-gem refresh (if a round remains),
                 # regardless of whether we bought some this round.  Only count it toward "cargo full"
                 # if this round made NO progress.
+                #
+                # BUT ONLY IF THIS MARKET STILL SELLS SOMETHING WE WANT. The shelf emptying
+                # says a restock is POSSIBLE; it does not say it is worth a gem.
+                wanted_here = _still_worth_a_gem(goods_after)
+                if wanted_here is None:
+                    logger.info("[buy_to_goal] the shelf is empty, but nothing this market "
+                                "sells is still wanted — stopping rather than spending a gem "
+                                "to restock goods we already have enough of")
+                    rounds.append({"attempt": attempt, "nothing_wanted_here": True})
+                    break
                 if attempt >= max_rounds - 1 or not _do_refresh(attempt, emptied[0]):
                     break
                 refreshed_last = not made_progress
@@ -1162,6 +1414,28 @@ def buy_to_goal(port: str, goal: Mapping[str, int], *, max_rounds: int = 6,
                     # button disabled.]
                     logger.info("[buy_to_goal] still 0 after a refresh → can't load (cargo full) — "
                                 "stopping; sell surplus to free space")
+                    rounds.append({"attempt": attempt, "cargo_full": True})
+                    break
+                # A VISIBLY STOCKED SHELF IS NOT A STOCK PROBLEM, SO IT IS NOT WORTH A GEM
+                # (user, 2026-09-04: "blue gem should only be used when the tile is greyed
+                # out and stock is 0; on 259 it should not use blue gem to refresh as it is
+                # still available").
+                #
+                # The speculative refresh below exists for a shelf the READER missed. When
+                # the reader can see the shelf and it is stocked, buying nothing means the
+                # hold could not take it — and no amount of restocking fixes that. Live
+                # 2026-09-04 at Madeira, frame 259: Raisin 217 on the tile, fully active,
+                # 105 free slots, and the hold full of the Pig surplus. The buy raised
+                # "The Cargo Hold's Trade Goods slot will be exceeded by 52 slots"; the loop
+                # read the 0 as a possible sold-out and spent a gem at 205 and rising, then
+                # discovered the hold was full one round later anyway.
+                stocked = [m for m in buyable
+                           if (goods_after.get(m.lower()) is not None
+                               and tile_in_stock(goods_after[m.lower()]))]
+                if stocked:
+                    logger.info(f"[buy_to_goal] bought 0 while {stocked[0]!r} is still in "
+                                "stock — the shelf is not the problem, the room is; stopping "
+                                "rather than spending a gem that cannot help")
                     rounds.append({"attempt": attempt, "cargo_full": True})
                     break
                 # Maybe the reader just missed a sold-out shelf → refresh ONCE and retry next round.
@@ -1584,18 +1858,34 @@ def read_cargo_good(frame, good_name, elements=None, min_score=0.70, min_margin=
 
 
 def _read_cargo_used_cap(frame):
+    import re as _re
     """(used, capacity) from the 'N/M' cargo-load counter in the cart panel (RIGHT side), or None.
     Reliable OCR, unlike per-good available_qty."""
-    import re
     from actions.sail_actions import _ocr_frame
+    from utils.digits import parse_pair
     best = None
     for w, _c, x, y in _ocr_frame(frame, min_conf=0.3):
-        m = re.search(r"([\d,]{2,})\s*/\s*([\d,]{2,})", w)
-        if m and x > 1850:                       # cart panel, not Trade Points (left)
-            try:
-                cur, cap = int(m.group(1).replace(",", "")), int(m.group(2).replace(",", ""))
-            except ValueError:
-                continue
+        # THE SEPARATOR IS WHATEVER THE READER SAW, not always a comma. This matched on
+        # `[\d,]`, which a period breaks: '3.129/4,952' (live frame 236, 2026-09-05) could
+        # only match '129/4,952', so the hold read 129 of 3,129 and the leg stopped two
+        # barter rounds short. See utils.digits.
+        # WHAT IS STAGED IS NOT YET HELD. While a tile is in the cart the counter reads
+        # `4,572(+280)/4,952` — held, plus pending, of capacity — and `parse_pair` returns
+        # None for it, because the bracket sits between the number and the slash.
+        #
+        # That is every reading taken DURING a purchase, which is exactly when the ledger
+        # needs one. `_credit_the_cargo_rise` got `cargo_before=None`, made no claim, and the
+        # ledger was dropped — so the hold could only be learned by switching to the Sell tab
+        # and reading the whole grid back. Live 2026-09-10, seven purchases and eight trips
+        # to the Sell tab, once per buy (user: "the bot is checking by tapping the Sell panel
+        # after every buy... it should record it as market buy").
+        #
+        # The HELD figure is the one to take: the pending units are not bought yet, and after
+        # the purchase the bracket is gone and the same number includes them. Same family as
+        # the separator fix above — the counter has a form, and the parser has to know it.
+        pair = parse_pair(_re.sub(r"\([^)]*\)", "", w))
+        if pair and x > 1850:                    # cart panel, not Trade Points (left)
+            cur, cap = pair
             if cap >= 500 and (best is None or cap > best[1]):   # largest cap = cargo hold
                 best = (cur, cap)
     return best

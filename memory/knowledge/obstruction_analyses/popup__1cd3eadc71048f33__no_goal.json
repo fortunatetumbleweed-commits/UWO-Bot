@@ -1,0 +1,21 @@
+{
+  "purpose": "Merchant Pieter Gerardus is offering to negotiate a 21.5% price reduction on a purchase, requiring the player to choose whether to spend negotiation attempts at a 76.2% success rate",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. Price: 164,736 → 120,912 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Pieter Gerardus: This product can be bought for 21.5% less. Want me to try negotiating?",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "1cd3eadc71048f33",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T04:27:02.171689+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Merchant Pieter Gerardus is offering to negotiate a 21.5% price reduction on a purchase, requiring the player to choose whether to spend negotiation attempts at a 76.2% success rate",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. Price: 164,736 → 120,912 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Pieter Gerardus: This product can be bought for 21.5% less. Want me to try negotiating?",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

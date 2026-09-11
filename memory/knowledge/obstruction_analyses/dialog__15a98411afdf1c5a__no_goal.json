@@ -1,0 +1,21 @@
+{
+  "purpose": "The market is prompting the player to spend 138 Ducats to replenish the Coral stock (currently 36/50 units) without affecting the market price",
+  "full_text": "Replenish Stock? (Does not affect market price) Remaining: 36/50. Cost: 138 Ducats. Cancel | OK",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "15a98411afdf1c5a",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T17:52:43.777477+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The market is prompting the player to spend 138 Ducats to replenish the Coral stock (currently 36/50 units) without affecting the market price",
+    "full_text": "Replenish Stock? (Does not affect market price) Remaining: 36/50. Cost: 138 Ducats. Cancel | OK",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

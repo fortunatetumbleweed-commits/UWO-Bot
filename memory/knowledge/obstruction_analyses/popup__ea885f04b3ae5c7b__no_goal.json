@@ -1,0 +1,21 @@
+{
+  "purpose": "This is not a true popup — the bounding box overlaps standard map port labels (Ceuta 409, Casablanca 108, Las Palmas 409) on the World Map screen, which are normal port name and trade-index markers, not an obstruction.",
+  "full_text": "Ceuta 409 | 108 | Casablanca 108 | Las Palmas 409",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "ea885f04b3ae5c7b",
+  "goal_intent": null,
+  "cached_at": "2026-09-07T23:53:53.293452+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "This is not a true popup — the bounding box overlaps standard map port labels (Ceuta 409, Casablanca 108, Las Palmas 409) on the World Map screen, which are normal port name and trade-index markers, not an obstruction.",
+    "full_text": "Ceuta 409 | 108 | Casablanca 108 | Las Palmas 409",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

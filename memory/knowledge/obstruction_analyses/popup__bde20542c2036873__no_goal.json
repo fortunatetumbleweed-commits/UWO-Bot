@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is displaying available trade goods (Coral/Jewelry and Textiles/Fabrics) with their current market prices and specialty bonuses at this port — this is the normal sell interface, not a popup obstruction",
+  "full_text": "Coral (Jewelry) qty 169 at 97% — 11,947 (669 profit); Textiles (Fabrics) qty 1,536 marked as Specialties at 108% — 120 (-947 loss)",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "bde20542c2036873",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T17:28:59.259649+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Sell screen is displaying available trade goods (Coral/Jewelry and Textiles/Fabrics) with their current market prices and specialty bonuses at this port — this is the normal sell interface, not a popup obstruction",
+    "full_text": "Coral (Jewelry) qty 169 at 97% — 11,947 (669 profit); Textiles (Fabrics) qty 1,536 marked as Specialties at 108% — 120 (-947 loss)",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

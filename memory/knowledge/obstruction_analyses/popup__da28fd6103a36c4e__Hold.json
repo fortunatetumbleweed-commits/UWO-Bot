@@ -1,0 +1,21 @@
+{
+  "purpose": "Normal purchase screen showing available trade goods including Kutnu as a time-limited specialty; no actual popup is blocking — this is the standard purchase tab layout the bot just switched to",
+  "full_text": "Carpet Fabrics 177 101% 1,091 | Pomegranate Food 641 94% 280 | Peony Medicine 491 97% 314 | Kutnu Fabrics 0 Specialties 10/26/2026/00:00:00",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "da28fd6103a36c4e",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T14:31:03.011021+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Normal purchase screen showing available trade goods including Kutnu as a time-limited specialty; no actual popup is blocking — this is the standard purchase tab layout the bot just switched to",
+    "full_text": "Carpet Fabrics 177 101% 1,091 | Pomegranate Food 641 94% 280 | Peony Medicine 491 97% 314 | Kutnu Fabrics 0 Specialties 10/26/2026/00:00:00",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade negotiation prompt asking whether to spend negotiation attempts to raise the Ebony sale price by 22.5%, with a 76.2% success rate",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 1,201,077 → 1,406,913 (22.5% increase). Negotiation Success Rate: Failed | 76.2% | Success.",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "ea6ad7237b388c89",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T18:09:20.283700+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade negotiation prompt asking whether to spend negotiation attempts to raise the Ebony sale price by 22.5%, with a 76.2% success rate",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 1,201,077 → 1,406,913 (22.5% increase). Negotiation Success Rate: Failed | 76.2% | Success.",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

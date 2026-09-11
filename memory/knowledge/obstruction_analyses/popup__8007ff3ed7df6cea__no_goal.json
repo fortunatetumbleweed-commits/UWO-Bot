@@ -1,0 +1,21 @@
+{
+  "purpose": "A trade item card for Bambara Groundnut (Luxuries) is overlapping the sell panel, showing the market is buying at 104% of base price for 48,606 gold (base 43,823)",
+  "full_text": "Bambara Groundnut, Luxuries, 104%, 48,606 (43,823)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "8007ff3ed7df6cea",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T00:49:43.531025+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A trade item card for Bambara Groundnut (Luxuries) is overlapping the sell panel, showing the market is buying at 104% of base price for 48,606 gold (base 43,823)",
+    "full_text": "Bambara Groundnut, Luxuries, 104%, 48,606 (43,823)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

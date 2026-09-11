@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase Result dialog showing the completed bulk buy of Hand Cannon (or another item selected during negotiation decline), displaying cost breakdown: 349,790 base cost, 17,095 tax, -63,120 discount, for a total of 303,765 ducats deducted from the balance",
+  "full_text": "Result — Purchase Cost: 349,790 | Tax: 17,095 | Discount: -63,120 | Total Amount: 303,765 | Balance: 77,566,530,996 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "f6e393b243533b02",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T22:10:48.645824+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase Result dialog showing the completed bulk buy of Hand Cannon (or another item selected during negotiation decline), displaying cost breakdown: 349,790 base cost, 17,095 tax, -63,120 discount, for a total of 303,765 ducats deducted from the balance",
+    "full_text": "Result — Purchase Cost: 349,790 | Tax: 17,095 | Discount: -63,120 | Total Amount: 303,765 | Balance: 77,566,530,996 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

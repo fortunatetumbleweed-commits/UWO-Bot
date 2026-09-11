@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is displaying available trade goods (Coral and Textiles) with their quantities, market prices, and demand percentages for the player to select and sell cargo at port",
+  "full_text": "Coral Jewelry 1,081 units | 98% demand | price 951 (-10,941 vs base). Textiles Fabrics 1,536 units | 96% demand | price 3,840 (2,773 vs base). Textiles are a Specialty good.",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "918a1a1a29c096df",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T17:54:28.246684+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Sell screen is displaying available trade goods (Coral and Textiles) with their quantities, market prices, and demand percentages for the player to select and sell cargo at port",
+    "full_text": "Coral Jewelry 1,081 units | 98% demand | price 951 (-10,941 vs base). Textiles Fabrics 1,536 units | 96% demand | price 3,840 (2,773 vs base). Textiles are a Specialty good.",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

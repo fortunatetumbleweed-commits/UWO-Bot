@@ -1,0 +1,21 @@
+{
+  "purpose": "Mini-map and nearby ship/player labels panel showing surrounding fleet members and alliance tags (Patron rank, TaylorFP / Johnson Defense Force) in the open ocean area near Kolkata",
+  "full_text": "C/TW 27.1 | Patron | TaylorFP Johnson Defense Force | ~ | 04",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "9a4fdf108b6fe753",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T16:55:06.262798+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Mini-map and nearby ship/player labels panel showing surrounding fleet members and alliance tags (Patron rank, TaylorFP / Johnson Defense Force) in the open ocean area near Kolkata",
+    "full_text": "C/TW 27.1 | Patron | TaylorFP Johnson Defense Force | ~ | 04",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

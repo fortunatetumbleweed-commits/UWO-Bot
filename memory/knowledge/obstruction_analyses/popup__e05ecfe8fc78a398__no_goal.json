@@ -1,0 +1,21 @@
+{
+  "purpose": "The minimap/navigation panel on the right side of the HUD is displaying fleet and environmental status information (level 27.1, Patron rank, location near Dili, Dry Season, May, Night) — this is a persistent HUD element, not a blocking popup",
+  "full_text": "1 | 27.1 | Patron | 3 7 | Dili | TaylorFP | 4 4 | Dry Season May Night",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "e05ecfe8fc78a398",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T18:36:00.240146+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The minimap/navigation panel on the right side of the HUD is displaying fleet and environmental status information (level 27.1, Patron rank, location near Dili, Dry Season, May, Night) — this is a persistent HUD element, not a blocking popup",
+    "full_text": "1 | 27.1 | Patron | 3 7 | Dili | TaylorFP | 4 4 | Dry Season May Night",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

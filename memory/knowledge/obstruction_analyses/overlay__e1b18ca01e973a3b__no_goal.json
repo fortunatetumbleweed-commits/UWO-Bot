@@ -1,0 +1,21 @@
+{
+  "purpose": "A 'Source' information panel showing where Damascus Steel (a Wares item) can be obtained — via Market in Beirut, a Turk Village, or by crafting with the Casting Handbook: Blade - Damascus Steel — along with a world map highlighting source locations",
+  "full_text": "Source: Damascus Steel — Wares — Market, Village, Production. Market: Beirut. Village: Turk Village. Production: Casting Handbook: Blade - Damascus Steel. Map legend: My Location, Village, Combat Loot Area, Explore Land. Show Powerful Opponent. Move.",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "overlay",
+  "structural_hash": "e1b18ca01e973a3b",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T23:49:11.957458+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A 'Source' information panel showing where Damascus Steel (a Wares item) can be obtained — via Market in Beirut, a Turk Village, or by crafting with the Casting Handbook: Blade - Damascus Steel — along with a world map highlighting source locations",
+    "full_text": "Source: Damascus Steel — Wares — Market, Village, Production. Market: Beirut. Village: Turk Village. Production: Casting Handbook: Blade - Damascus Steel. Map legend: My Location, Village, Combat Loot Area, Explore Land. Show Powerful Opponent. Move.",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

@@ -108,8 +108,22 @@ class BotObservation:
     # ── Persistent across ticks ────────────────────────────────────
     # Carried forward when the current tick can't re-derive them.
     last_known_base_scene:  Optional[str] = None
-    last_known_settlement:  Optional[str] = None    # port OR village; carried forward across sea/world_map ticks as the voyage's origin
+    last_known_settlement:  Optional[str] = None    # the port or village we are IN; None once at sea
     last_action:            Optional[ActionRecord] = None
+    # WHERE THIS VOYAGE STARTED — the sea's own datum, and only the sea's (user, 2026-09-08:
+    # "clear the port name when departed, or move it to a variable that belongs to the sea
+    # activity called departed_from").
+    #
+    # The two facts were one field, and the field could not say which it held. Standing in a
+    # port, `last_known_settlement` is WHERE WE ARE; at sea it silently became WHERE WE LEFT,
+    # and every reader had to guess from the scene which one it was holding. That guess is
+    # what routed an Indonesian mission to the Caribbean on 2026-09-08 (see
+    # `barter_mission_live.current_position`).
+    #
+    # Now they are separate: the settlement is the port we are in and goes to None on
+    # departure; `departed_from` is the port we left and is set at the same moment. Reading
+    # the wrong one is no longer possible, because each says what it is.
+    departed_from:          Optional[str] = None
 
     # Ticks since each last_known_* was directly observed (not
     # remembered).  0 = freshly observed this tick.
@@ -293,7 +307,41 @@ def update(
     #   2. otherwise reuse the previous observation's value
     #   3. otherwise seed from the disk-persisted value (only happens
     #      on the first update of a new process, when prev is None)
-    if detected_settlement:
+    # THE PORT ACTIVITY IS POPPED WHEN THE SEA BECOMES THE WORLD (user, 2026-08-30, on the
+    # Android model: "Only when switching to sea, the port activity is popped and Sea becomes
+    # the activity at the bottom of the stack"). So the name we were standing on moves to
+    # `departed_from`, which the sea owns, and the settlement goes to None — we are not in a
+    # port any more, and saying so is what stops a reader treating an origin as a position.
+    #
+    # THE WORLD MAP IS NOT A DEPARTURE. It is opened FROM somewhere and moves nothing, so it
+    # carries the settlement forward unchanged — that is how the map knows where it was
+    # opened from, without needing to be told separately.
+    departed = (base in ("sea", "sea_cinematic")
+                and (prev is None or prev.last_known_base_scene not in ("sea", "sea_cinematic")))
+    if departed:
+        # A PROCESS THAT WAKES AT SEA still knows where it sailed from — that is what the
+        # disk record is for. It seeds the ORIGIN here, never the position.
+        left = (prev.last_known_settlement if prev is not None
+                else _ensure_persisted_loaded())
+        if left:
+            logger.info(f"[observation] departed {left!r} — the port is popped; it is the "
+                        "voyage's origin now, not our position")
+        departed_from = left or (prev.departed_from if prev is not None else None)
+    elif base in ("sea", "sea_cinematic", "world_map"):
+        # THE MAP CARRIES THE VOYAGE. Opening it mid-passage does not end the voyage, so the
+        # origin holds; opening it in port leaves `departed_from` as it was, which is None.
+        departed_from = prev.departed_from if prev is not None else None
+    else:
+        # Ashore again: the voyage is over and its origin is no longer anybody's answer.
+        departed_from = None
+
+    if departed_from and not detected_settlement:
+        # WE ARE NOT IN A PORT. Once the port is popped the settlement stays None for the
+        # whole voyage — including on the world map, which is why this keys off
+        # `departed_from` rather than the scene. Re-seeding it from disk here is what let a
+        # cleared position come back to life one tick later.
+        settlement, settlement_age, settlement_at = None, 0, None
+    elif detected_settlement:
         settlement     = detected_settlement
         settlement_age = 0
         settlement_at  = time.time()          # seen right now
@@ -324,6 +372,7 @@ def update(
         scene_source=src,
         last_known_base_scene=base,
         last_known_settlement=settlement,
+        departed_from=departed_from,
         last_action=last_action or (prev.last_action if prev else None),
         last_known_settlement_seen_at=settlement_at,
         last_known_base_scene_age_ticks=base_age,

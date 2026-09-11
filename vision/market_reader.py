@@ -28,6 +28,7 @@ from loguru import logger
 from PIL import Image
 
 from memory.market_kb import MarketGood, MarketSnapshot
+from utils.digits import SEPARATORS as _SEP
 
 
 # ── Grid geometry (2400 × 1080 landscape) ─────────────────────────────────────
@@ -44,6 +45,7 @@ _TILE_H       = 230    # tile pitch vertically — measured: Whisky name y=221,
 _TILE_COLS    = 3
 _TILE_ROWS    = 3      # 3 full rows visible per page
 _IMG_ZONE_W   = 160    # item thumbnail width inside tile — skip for name OCR
+_IMG_ZONE_FRAC = 160 / 431   # the same split as a fraction of a MEASURED card (431 wide)
 _BOTTOM_ZONE  = 80     # tile-relative y threshold: above → name/category zone;
                        # at/below → price/qty zone (qty at rel_y≈83, price at ≈169)
 
@@ -62,6 +64,10 @@ _BADGES = frozenset([
     "specialties", "specialty", "on sale", "onsale", "recommended",
     "favorites",
 ])
+# The subset that marks a SPECIALTY GOOD. The rest of `_BADGES` are promotional ("On Sale",
+# "Recommended") and are about this port on this day; a specialty is not -- it travels with
+# the good (user, 2026-09-10).
+_SPECIALTY_WORDS = frozenset(["specialties", "specialty"])
 
 _SKIP_WORDS = frozenset([
     "purchase", "sell", "trade", "goods", "sale", "load", "bulk",
@@ -258,6 +264,7 @@ def read_market_page_ocr(
     frame: Image.Image,
     tab: str = "purchase",
     port: str = "unknown",
+    prices_for: Optional[set] = None,
 ) -> list[MarketGood]:
     """
     Read one visible page of the market using EasyOCR.
@@ -309,7 +316,7 @@ def read_market_page_ocr(
     # ── Claude fallback for tiles that OCR failed to parse ─────────────────────
     # Any tile with name=None or price=None is re-tried via Claude Vision.
     # The result fixes the good in-place and saves the example as training data.
-    goods = _apply_claude_fallback(frame, goods, tab)
+    goods = _apply_claude_fallback(frame, goods, tab, prices_for)
 
     logger.info(f"[{tab}] page: {len(goods)} goods parsed")
     return goods
@@ -319,6 +326,7 @@ def _apply_claude_fallback(
     frame: Image.Image,
     goods: list[MarketGood],
     tab: str,
+    prices_for: Optional[set] = None,
 ) -> list[MarketGood]:
     """
     For each good that OCR failed on (missing name or price), crop the tile
@@ -329,10 +337,28 @@ def _apply_claude_fallback(
     for good in goods:
         price = good.buy_price if tab == "purchase" else good.sell_price
         need_name  = good.name is None
-        need_price = price is None and not good.sold_out
+        # A GATED TILE HAS NO PRICE TO READ. Where the price row belongs it shows an unlock
+        # condition, so asking is asking about something that is not on the tile — the same
+        # reason `sold_out` has always been excluded here. Live 2026-09-08 'Dhaka Muslin' was
+        # detected as gated nineteen times and consulted nineteen times.
+        need_price = price is None and not good.sold_out and not good.conditional
 
         if not need_name and not need_price:
             continue
+
+        # AND ONLY FOR A GOOD SOMEBODY ASKED ABOUT. The fallback exists so a candidate can be
+        # PRICED for a profit decision; a good the caller will never look at needs no price
+        # at any cost, let alone an LLM call.
+        #
+        # Live 2026-09-08: 94 consults over one run, and 91 of them priced goods the mission
+        # had no interest in — it wanted Ebony, Textiles and Coral, and paid for Indian
+        # String, Henna, Dhaka Muslin, Cubeb and T'nalak nineteen times each. 59 of the 94
+        # came back `price=None`, because most were tiles no reader can price.
+        #
+        # `None` means "everything", which is what every caller did before this existed.
+        if prices_for is not None and need_price and not need_name:
+            if (good.name or "").strip().lower() not in prices_for:
+                continue
 
         trigger = "no_name" if need_name else "no_price"
         logger.info(
@@ -388,17 +414,43 @@ def _apply_claude_fallback(
 # buildings/port=precise via OmniParser).
 
 def _parse_tile_from_button(button, text_els, tab: str,
-                            label: Optional[str] = None) -> Optional[MarketGood]:
+                            label: Optional[str] = None,
+                            row_h: Optional[int] = None) -> Optional[MarketGood]:
     """Build a MarketGood from an OmniParser tile BUTTON + the text elements
     inside it. Name = the button label (clean); price/index/qty/etc. from the
     inner text via `_classify_token`, with y scaled to the `_TILE_H` reference so
-    the zone thresholds hold regardless of the detected tile's actual height."""
+    the zone thresholds hold regardless of the detected tile's actual height.
+
+    `row_h` is the ROW PITCH, and it is what that scaling must divide by — not the
+    detected box, which is CLIPPED often enough to have its own note upstream ("A
+    SHORT-BOXED CELL STILL OWNS A FULL ROW OF TEXT"). A short box makes every token
+    look LOWER in the tile than it is, because the same offset is divided by a smaller
+    height.
+
+    Live 2026-09-10 at Lisboa, frame 205: the Almond card runs y 195-425, but
+    OmniParser boxed only its top, y 195-369 — the `Specialties` bar and the `109%`
+    row fell outside. The owned-qty badge `1,841` sits 119px down, which against the
+    true 230 pitch scales to 119 and lands in the (80,150) band; against the clipped
+    174 it scales to 157 and misses. The badge was read correctly and thrown away for
+    being in the wrong place, `owned_qty` fell to the targeted crops, and the buy loop
+    read "short" against a hold of 1,841 and bought to 2.1x its target.
+    """
     name = re.sub(r"\s+", " ", ((button.label if label is None else label) or "").strip())
-    tile_h = max(1, button.y2 - button.y1)
-    text_x0 = button.x1 + _IMG_ZONE_W
+    # NEVER SHORTER THAN THE REFERENCE PITCH. A box taller than `_TILE_H` is a real tile
+    # on a taller layout and is trusted; a shorter one is the clipping above, and there
+    # is no layout in this game where a market tile is genuinely stubbier than its own
+    # text needs. With one cell on the page there is no median to appeal to, which is
+    # exactly when this bites.
+    tile_h = max(1, button.y2 - button.y1, int(row_h or 0), _TILE_H)
+    # THE THUMBNAIL IS A FRACTION OF THE CARD, not 160 absolute pixels. This line decides
+    # whether a number is the shelf's STOCK (left of it, on the artwork) or the PRICE (right
+    # of it), so a card of a different width would mis-sort every number on it. 160 of the
+    # measured 431 is 0.371, which is what the constant has always meant.
+    text_x0 = button.x1 + int(_IMG_ZONE_FRAC * max(1, button.x2 - button.x1))
 
     index_pct = price = available_qty = profit = owned_qty = None
     sold_out = False
+    specialty = False
     category = ""
     trend = "unknown"
     # Text in the tile's upper zone, right of the thumbnail — the good's name sits on the TOP
@@ -413,14 +465,24 @@ def _parse_tile_from_button(button, text_els, tab: str,
         rel_y = int((e.cy - button.y1) * _TILE_H / tile_h)   # scale to _TILE_H frame
         # SELL-tile tokens, matched by SHAPE before the buy-oriented _classify_token (which drops
         # comma'd "price (profit)" as skip and mistakes the owned-qty badge for a price):
-        m = re.match(r"^([\d,]+)\s*\(\s*([-+]?[\d,]+)\s*\)$", text)
+        m = re.match(r"^(\d[\d,.']*)\s*\(\s*([-+]?\d[\d,.']*)\s*\)$", text)
         if m:                                     # "price (profit/unit)" — sell price + profit
-            pv = int(m.group(1).replace(",", ""))
+            pv = int(m.group(1).translate(_SEP))
             if price is None or pv > price:
-                price, profit = pv, int(m.group(2).replace(",", ""))
+                price, profit = pv, int(m.group(2).translate(_SEP))
             continue
-        if tab != "purchase" and re.fullmatch(r"\d{1,4}", text) and 80 < rel_y < 150:
-            owned_qty = int(text)                 # units of this good in cargo (upper-middle badge)
+        # SEPARATORS ALLOWED, because the badge HAS one past 999 and this is the reading we
+        # already got right. OmniParser returned `'1,841'` for the Almond tile at Lisboa
+        # (2026-09-10, frame 205) — correct, in the right place, rel_y 119 — and
+        # `\d{1,4}` refused it for the comma. `owned_qty` then fell to the targeted crops,
+        # which on that page returned 7, 4, 8 and nothing, and the buy loop read "short"
+        # against a hold of 1,841 and bought to 2.1x its target.
+        #
+        # The price branch three lines up has always done `translate(_SEP)` for exactly this
+        # (`the-separator-is-whatever-ocr-saw`: '3,129' comes back as '3.129', per glyph).
+        # The owned-qty branch never did. Digits-only also capped the badge at 9,999.
+        if tab != "purchase" and re.fullmatch(r"\d[\d,.']{0,6}", text) and 80 < rel_y < 150:
+            owned_qty = int(text.translate(_SEP))  # units of this good in cargo (upper-middle badge)
             continue
         kind = _classify_token(text, rel_y)
         if kind == "timer":
@@ -440,6 +502,11 @@ def _parse_tile_from_button(button, text_els, tab: str,
                     available_qty = v
             elif price is None or v > price:
                 price = v
+        elif kind == "badge":
+            # KEPT, NOT DROPPED. This branch did not exist: a badge fell through the chain
+            # and the banner was discarded, so the one thing it actually tells you — that
+            # this port PRODUCES this good — was never recorded.
+            specialty = specialty or text.strip().lower() in _SPECIALTY_WORDS
         elif kind == "trend":
             trend = _TREND_MAP[text.lower()]
         elif kind == "category":
@@ -454,6 +521,9 @@ def _parse_tile_from_button(button, text_els, tab: str,
     # tile came back named "Specialties", so the hold read as 0 Textiles and the bot re-bought
     # 920 units it was already carrying for 235,520 ducats. A banner is never a good's name.
     if name.lower() in _BADGES:
+        # The banner won the tile's label — which is itself evidence of a specialty, so take
+        # the fact before dropping the word.
+        specialty = specialty or name.lower() in _SPECIALTY_WORDS
         name = ""
     # Fall back to the tile's own text: the TOP line of the upper zone.
     if len(name) < 3 and top_tokens:
@@ -470,7 +540,7 @@ def _parse_tile_from_button(button, text_els, tab: str,
     tile_cy = (button.y1 + button.y2) // 2
     good = MarketGood(
         name=name, category=category, index_pct=index_pct, trend=trend,
-        sold_out=sold_out, available_qty=available_qty,
+        sold_out=sold_out, available_qty=available_qty, specialty=specialty,
         tap_x=tile_cx, tap_y=tile_cy,
     )
     if tab == "purchase":
@@ -481,6 +551,52 @@ def _parse_tile_from_button(button, text_els, tab: str,
         good.is_loss = profit is not None and profit < 0
         good.owned_qty = owned_qty
     return good
+
+
+def _name_inside(cell, elements) -> str:
+    """The good's name, from the OmniParser BUTTON lying inside a MEASURED card.
+
+    A measured card carries no label of its own — `detect_goods_tiles` reads pixels, not
+    text. So take the words from the parse and the box from the pixels, which plays each to
+    its strength: OmniParser reads `Almond` and `1,841` correctly and boxes the card wrong.
+
+    Prefer a button that names a GOOD over one naming the banner or the category. Both sit
+    inside the card, and a specialty tile is routinely reported twice — once as the good,
+    once as `Specialties` painted across it (Kolkata 2026-08-22: the banner won the slot, the
+    Textiles tile read as 'Specialties', and the bot re-bought 920 units it already held).
+    """
+    best = ""
+    for e in elements or ():
+        if getattr(e, "element_type", "") != "button":
+            continue
+        if not cell.contains(getattr(e, "cx", -1), getattr(e, "cy", -1)):
+            continue
+        lab = (getattr(e, "label", "") or "").strip()
+        low = lab.lower()
+        if not lab or low in _BADGES:
+            continue
+        if low in _CATEGORIES:
+            best = best or lab          # a fallback, never a preference
+            continue
+        return lab
+    return best
+
+
+def _specialty_inside(cell, elements) -> bool:
+    """Does a "Specialties" banner lie on this card?
+
+    Asked of EVERY element, not just the text ones: on the Purchase page OmniParser reports
+    the banner as `text` and the tile parser sees it, but on the SELL page it reports it as a
+    `button` — measured at Lisboa, `button 'Specialties' x[360,783] y[336,374]` — which the
+    token loop never walks. The flag came back False on the very card whose banner sold 1,841
+    Almond -- read on the Purchase page and missed on the Sell page, for a fact that is the
+    same on both because it belongs to the GOOD and not to the port.
+    """
+    for e in elements or ():
+        lab = (getattr(e, "label", "") or "").strip().lower()
+        if lab in _SPECIALTY_WORDS and cell.contains(getattr(e, "cx", -1), getattr(e, "cy", -1)):
+            return True
+    return False
 
 
 def _tile_label(cell, elements) -> str:
@@ -518,6 +634,10 @@ def _tile_label(cell, elements) -> str:
 # A ~60x gap, so the threshold is not delicate. Brightness agrees (18.5 vs 43.9-119.8) and is
 # kept as a second condition so a legitimately dark-but-colourful tile is not condemned.
 _SOLD_OUT_MAX_SAT = 0.10
+# The CARD BODY's brightness below which the tile is greyed out. Live tiles measured
+# 197.1-203.8 over twelve tiles on two frames; the two sold-out ones read 99.6 and 107.8.
+# The boundary sits in ~90 points of empty space on either side.
+_SOLD_OUT_MAX_CARD_BRIGHT = 150.0
 _SOLD_OUT_MAX_BRIGHT = 35.0
 
 
@@ -527,12 +647,63 @@ _SOLD_OUT_MAX_BRIGHT = 35.0
 _RIBBON_MIN_MAGENTA = 0.15
 
 
+# THE SEASON RIBBON sits in the tile's TOP-RIGHT corner, opposite the guild one, carrying a
+# flower icon: RED when the good is scarce this season, GREEN when it is abundant, absent when
+# it is ordinary. `memory/stock-status-is-a-colour` records the pairing — "top-right seasonal
+# stock, top-left guild monopoly".
+#
+# Measured on the Madeira Purchase grid, frame 158 of
+# `data/sessions/trace_barter_cmd_2026-09-06T21-45-01`, over a 60x52 band:
+#
+#     Sugar Cane   red 0.447  green 0.000     LOW
+#     Shea Butter  red 0.000  green 0.469     ABUNDANT
+#     four ordinary tiles      0.000/0.000
+#
+# A 0.45-against-0.00 gap, so this is not a delicate threshold either.
+_SEASON_MIN_FRAC = 0.15
+
+
+def tile_season(frame, cell) -> Optional[str]:
+    """"low" | "abundant" | None, from the tile's top-right season ribbon.
+
+    A SOLD-OUT TILE IS NOT A SCARCE SEASON, and the two want opposite things: a blue gem
+    restocks an empty shelf and can do nothing about a bad season. They are easy to confuse
+    because an empty tile is ALSO reddish — the Sold Out stamp and a red `0` badge — so the
+    caller must not ask this of a tile it has already judged sold out. Measured on that same
+    grid: Raisin, sold out and with no ribbon at all, reads red 0.138.
+    """
+    try:
+        import numpy as np
+        # CROP FIRST, THEN CONVERT. Converting the whole 2400x1080 frame to read a 60x52
+        # corner allocates ~62MB per tile and nine tiles per grid — measured as a large
+        # slowdown across the functional suite, which reads real grids.
+        box = (max(0, cell.x2 - 64), cell.y1, max(0, cell.x2 - 4), cell.y1 + 52)
+        if box[2] <= box[0] or box[3] <= box[1]:
+            return None
+        cor = np.asarray(frame.crop(box).convert("RGB")).astype(float)
+        if cor.size == 0:
+            return None
+        R, G, B = cor[..., 0], cor[..., 1], cor[..., 2]
+        red = float(((R > 110) & (R - G > 45) & (R - B > 45)).mean())
+        green = float(((G > 90) & (G - R > 25) & (G - B > 15)).mean())
+        if green >= _SEASON_MIN_FRAC and green > red:
+            return "abundant"
+        if red >= _SEASON_MIN_FRAC and red > green:
+            return "low"
+        return None
+    except Exception as exc:
+        logger.debug(f"[market] season-ribbon check skipped: {exc}")
+        return None
+
+
 def _tile_has_condition_ribbon(frame, cell) -> bool:
     """True when the tile carries a corner ribbon marking it as CONDITIONAL."""
     try:
         import numpy as np
-        cor = np.asarray(frame.convert("RGB")).astype(float)[
-            cell.y1:cell.y1 + 40, cell.x1:cell.x1 + 40]
+        # Cropped first for the same reason as `tile_season` next door — this one has always
+        # converted the whole frame to read a 40x40 corner.
+        cor = np.asarray(frame.crop((cell.x1, cell.y1, cell.x1 + 40,
+                                     cell.y1 + 40)).convert("RGB")).astype(float)
         if cor.size == 0:
             return False
         R, G, B = cor[..., 0], cor[..., 1], cor[..., 2]
@@ -544,19 +715,97 @@ def _tile_has_condition_ribbon(frame, cell) -> bool:
 
 
 def _tile_looks_sold_out(frame, cell) -> bool:
-    """True when the tile's artwork is greyed — the single-frame sold-out signal."""
+    """True when the tile's CARD is greyed — the single-frame sold-out signal.
+
+    THE CARD, NOT THE ARTWORK (user, 2026-09-07: "the whole tile is greyed out, that should
+    be the most prominent determining factor").
+
+    This used to measure the thumbnail and ask for `sat <= 0.10 and brightness <= 35`. The
+    artwork is the GOOD'S OWN PICTURE, so neither number means anything across goods: dark
+    brown Ebony reads sat 0.28 / brightness 21 when SOLD OUT, while Rosewood reads 0.45 / 54
+    while perfectly in stock. The test failed Ebony on saturation and called a sold-out shelf
+    buyable.
+
+    What it cost, live 2026-09-07 at Ambon (frame 131 of trace_barter_cmd_2026-09-07T23-05-09):
+    the tile was greyed, stamped `Sold Out`, and its badge read 0, and the buy loop tapped it
+    twice, found the cart still empty, concluded "the tile is not taking taps" and failed the
+    mission. Claude's own consult on that frame said "Ebony is sold out" three times over.
+
+    The CARD BODY is chrome with a fixed palette — cream when live, grey when dead — and it
+    separates cleanly. Measured over two frames and twelve tiles:
+
+        live tiles          197.1 .. 203.8      (spread 6.7, and that includes both GATED
+                                                 tiles, which must not read as sold out)
+        Palm Oil sold out    99.6
+        Ebony sold out      107.8
+
+    ~90 points of clear air either side of the boundary, against 33 points of overlap on the
+    artwork. Saturation is dropped: the card body reads 0.09-0.14 whether live or dead, so it
+    discriminates nothing here.
+
+    Same rule as everywhere else in this file — judge the chrome, never the artwork
+    (`memory/stock-status-is-a-colour`: "never scan the whole tile, the artwork is coloured").
+    """
     try:
         import numpy as np
-        art = np.asarray(frame.convert("RGB")).astype(float)[
-            cell.y1 + 18:cell.y1 + 110, cell.x1 + 14:cell.x1 + 120]
-        if art.size == 0:
+        w, h = cell.x2 - cell.x1, cell.y2 - cell.y1
+        if w <= 0 or h <= 0:
             return False
-        mx, mn = art.max(axis=2), art.min(axis=2)
-        sat = float(((mx - mn) / np.maximum(mx, 1)).mean())
-        return sat <= _SOLD_OUT_MAX_SAT and float(art.mean()) <= _SOLD_OUT_MAX_BRIGHT
+        body = np.asarray(frame.convert("RGB")).astype(float)[
+            cell.y1 + int(0.12 * h):cell.y1 + int(0.40 * h),
+            cell.x1 + int(0.41 * w):cell.x1 + int(0.92 * w)]
+        if body.size == 0:
+            return False
+        return float(body.mean()) <= _SOLD_OUT_MAX_CARD_BRIGHT
     except Exception as exc:
         logger.debug(f"[market] grey-tile check skipped: {exc}")
         return False
+
+
+def sell_page_can_have_more_below(frame, elements=None) -> bool:
+    """Could this goods grid continue past the bottom of the screen?
+
+    A GRID THAT DOES NOT FILL THE PAGE HAS NOTHING UNDER IT (user, 2026-09-08). The grid
+    fills row-major, so a page that is not full IS the end of the list, and scrolling it
+    costs a swipe, a capture and a whole dispatcher tick to learn what the picture already
+    said. Live 2026-09-08 at Jakarta the Sell page held two tiles — Ebony and Coral, seven
+    empty cells — and the clear scrolled anyway before finishing.
+
+    Asks the SHAPE, not the cell count. Measured over the 2026-09-08 run: a full purchase
+    shelf detects 8 of its 9 tiles about as often as 9, so `len(cells) == 9` would call a
+    full page partial and stop a clear early — the failure this guards against is exactly
+    the one that ended a clear four pages deep on 2026-08-26 with the hold still aboard.
+    The row and column COUNTS are stable at 3x3 across those same frames, and every Sell
+    page in that run measured 1 row x 2 columns.
+
+    Unreadable is not the same as absent: when no grid is detected at all, say True and let
+    the caller scroll as it always has.
+    """
+    from vision.omniparser import parse_fast_cached
+    from vision.grid_detector import detect_grid
+    try:
+        W, H = frame.width, frame.height
+        zone = (0.17 * W, 0.14 * H, 0.78 * W, 0.92 * H)
+        # MEASURED, for the same reason the reader is: this counts CARDS to decide whether
+        # the page is full, and a count taken from OmniParser's boxes is a count of however
+        # many it happened to box. Falls back to the element grid when the cream is not found.
+        from vision.region_detectors.goods_tiles import measure_goods_grid
+        grid = measure_goods_grid(frame, zone=zone)
+        if grid is None:
+            if elements is None:
+                elements = parse_fast_cached(frame)
+            grid = detect_grid(elements, W, H, zone=zone,
+                               cell_types=("button",), min_cells=1, size_tol_h=0.45)
+    except Exception as exc:                    # noqa: BLE001 — never end a clear on this
+        logger.debug(f"[sell] could not measure the grid: {exc}")
+        return True
+    if grid is None:
+        return True
+    full = grid.n_rows >= _TILE_ROWS and grid.n_cols >= _TILE_COLS
+    if not full:
+        logger.info(f"[sell] the grid is {grid.n_rows}x{grid.n_cols}, not "
+                    f"{_TILE_ROWS}x{_TILE_COLS} — it ends on this page, nothing to scroll to")
+    return full
 
 
 def read_market_page_omni(
@@ -565,6 +814,7 @@ def read_market_page_omni(
     port: str = "unknown",
     elements=None,
     claude_fallback: bool = True,
+    prices_for: Optional[set] = None,
 ) -> list[MarketGood]:
     """Read one visible market page from OmniParser-detected tiles.
 
@@ -594,8 +844,23 @@ def read_market_page_omni(
     # OmniParser (432x181 against 435x231 neighbours, Bremen 2026-08-24). Width still
     # identifies the column, so only the height tolerance is loosened. Without this the Box
     # of Nutmeg at 211% was filtered out of a live bazaar and the page read as "no Spices".
-    grid = detect_grid(elements, W, H, zone=zone, cell_types=("button",),
-                       min_cells=(1 if tab != "purchase" else 4), size_tol_h=0.45)
+    # MEASURED CELLS FIRST. `detect_grid` groups OmniParser's BOXES, so it inherits their
+    # errors — and a card's box is what caused 2026-09-10's overbuy: the Lisboa Almond card
+    # runs y 198-432 and OmniParser boxed y 195-369, which scaled the owned badge out of its
+    # band and read a hold of 1,841 as `have: 0`. `measure_goods_grid` finds the cards in the
+    # pixels, so the boundary is the card's own.
+    #
+    # The element path stays as the fallback rather than being deleted: it is what runs if the
+    # cream ever moves, and a reader that returns nothing is worse than one reading a box that
+    # is merely imperfect.
+    from vision.region_detectors.goods_tiles import measure_goods_grid
+    grid = measure_goods_grid(frame, zone=zone)
+    measured = grid is not None
+    if measured:
+        logger.debug(f"[{tab}] measured grid {grid.n_rows}x{grid.n_cols} from the frame")
+    else:
+        grid = detect_grid(elements, W, H, zone=zone, cell_types=("button",),
+                           min_cells=(1 if tab != "purchase" else 4), size_tol_h=0.45)
     if grid is None:
         logger.info(f"[{tab}] omni: no goods grid detected")
         return []
@@ -614,9 +879,11 @@ def read_market_page_omni(
         if cell.h < _row_h:
             cell = _replace(cell, y2=cell.y1 + _row_h)
         cell_text = [e for e in text_els if cell.contains(e.cx, e.cy)]
-        good = _parse_tile_from_button(cell, cell_text, tab, label=_tile_label(cell, elements))
+        label = _name_inside(cell, elements) if measured else _tile_label(cell, elements)
+        good = _parse_tile_from_button(cell, cell_text, tab, label=label, row_h=_row_h)
         if not good:
             continue
+        good.specialty = good.specialty or _specialty_inside(cell, elements)
         # Template-guided recovery: the index % sits at the bottom-left of EVERY
         # cell (congruent layout). OmniParser's tiny-text detection is flaky, so
         # when it's missing, re-read exactly that sub-region instead of guessing.
@@ -632,6 +899,13 @@ def read_market_page_omni(
         elif tab == "purchase" and not good.sold_out and _tile_looks_sold_out(frame, cell):
             logger.info(f"[{tab}] {good.name!r} tile is greyed — sold out")
             good.sold_out = True
+        # THE SEASON, asked only of a tile we have NOT judged sold out. An empty tile is also
+        # reddish (the stamp, the red `0`) and would read as a scarce season — a different
+        # fact with the opposite remedy, since a gem restocks a shelf and cannot mend a season.
+        if tab == "purchase" and not good.sold_out and not good.conditional:
+            good.season = tile_season(frame, cell)
+            if good.season:
+                logger.info(f"[{tab}] {good.name!r} season ribbon: {good.season}")
         # SELL tab: the owned-count overlay (white, bottom-left of the icon) is too small for
         # the general OmniParser pass — it mangles multi-digit counts (1,444→444/14444), so
         # read it directly from that sub-region (threshold the white digits + targeted OCR).
@@ -645,16 +919,33 @@ def read_market_page_omni(
         if tab != "purchase":
             q = _read_owned_qty(frame, cell)
             if q is not None:
-                if good.owned_qty is not None and int(good.owned_qty) != int(q):
-                    owned_candidates[good.name] = [int(q), int(good.owned_qty)]
-                good.owned_qty = q
+                if good.owned_qty is None:
+                    good.owned_qty = q            # the page had none — fill the gap
+                elif int(good.owned_qty) != int(q):
+                    # THE PAGE READING WINS NOW, and the precedence is inverted deliberately.
+                    #
+                    # The specialist crop was written because the page parse could not be
+                    # trusted on this badge, and BOTH reasons are gone: the token is matched
+                    # with its separator, and the cell is MEASURED rather than taken from a
+                    # box that was routinely clipped. What is left is a thresholded crop that
+                    # discards its own confidence — the comment below already records it
+                    # reading Candle's 148 as 2148 — against a parse of the whole card.
+                    #
+                    # Live 2026-09-10 at Lisboa: page `1,841`, specialist `841`. The
+                    # specialist dropped the leading digit and, winning unconditionally,
+                    # handed the buy loop a hold 1,000 short of the truth.
+                    #
+                    # The disagreement still goes to `_reconcile_owned_against_the_hold`,
+                    # which checks both against what the hold can contain — neither reader
+                    # is being trusted blindly, only ordered.
+                    owned_candidates[good.name] = [int(good.owned_qty), int(q)]
         goods.append(good)
 
     if tab != "purchase" and owned_candidates:
         _reconcile_owned_against_the_hold(frame, goods, owned_candidates)
 
     if claude_fallback:
-        goods = _apply_claude_fallback(frame, goods, tab)
+        goods = _apply_claude_fallback(frame, goods, tab, prices_for)
 
     # THE RECOVERY BELONGS TO THE READ, NOT TO ONE CALLER OF IT. This used to live only in
     # `read_market_all_pages`, so the ledger got the tile fallback and `sell_down_to` — which
@@ -663,7 +954,9 @@ def read_market_page_omni(
     # page, got None, and skipped Candle as unreadable. Both were individually right. Fill the
     # gaps HERE, while this frame's tiles are still where they were, and every caller gets the
     # combined read instead of each choosing.
-    fill_missing_quantities(frame, goods)
+    fill_missing_quantities(frame, goods, cells=(grid.cells if measured else None))
+    if tab != "purchase":
+        fill_missing_prices(frame, goods)
 
     logger.info(
         f"[{tab}] omni grid {grid.n_rows}×{grid.n_cols}: {len(goods)} goods"
@@ -758,14 +1051,23 @@ def read_market_page_claude(
 # ── Multi-page helpers (unchanged interface) ───────────────────────────────────
 
 
+def _cell_for(cells, x, y):
+    """The measured card a tap point falls in, or None when the cards were not measured."""
+    for c in cells or ():
+        if c.contains(x, y):
+            return c
+    return None
+
+
 # The quantity badge sits in the lower-right of a tile's THUMBNAIL, which is left of the
 # label. Offsets from the tile's tap point, measured on Barcelona sell pages 2026-08-27.
+# FALLBACK ONLY now — used when the cards could not be measured.
 _TILE_QTY_BOX = (-215, -120, -40, 40)
 # x4, because x2 was not enough for the smallest badge measured (`Lemon Oil 1`).
 _TILE_QTY_SCALE = 4
 
 
-def fill_missing_quantities(frame, goods, *, read_text_fn=None):
+def fill_missing_quantities(frame, goods, *, read_text_fn=None, cells=None):
     """Re-read `owned_qty` for goods the page read left as None, from EACH GOOD'S OWN TILE.
 
     A whole-frame parse is silent about the smallest badges, and upscaling the WHOLE FRAME is
@@ -791,8 +1093,20 @@ def fill_missing_quantities(frame, goods, *, read_text_fn=None):
         if x is None or y is None:
             continue
         try:
-            tile = frame.crop((max(0, x + dx1), max(0, y + dy1),
-                               max(0, x + dx2), min(frame.height, y + dy2)))
+            # FROM THE CARD WHEN THE CARD IS KNOWN. The offsets below are from the tile's
+            # TAP POINT, which is the last crop in this reader still not tied to a measured
+            # boundary — and it is the one with the worst record: it returned 7, 4 and 8 for
+            # a hold of 1,841 while the buy loop read "short" and bought to 2.1x target.
+            #
+            # The window is also looser than it needs to be. Centred on a 431x234 card it
+            # spans y 195-355 against the badge's own region of 296-352, so it takes in the
+            # name row and any stray digit there. Given the card, ask for the badge's region.
+            box = _cell_for(cells, x, y)
+            if box is not None:
+                tile = frame.crop(box.rel_region(0.0, 0.42, 0.37, 0.66))
+            else:
+                tile = frame.crop((max(0, x + dx1), max(0, y + dy1),
+                                   max(0, x + dx2), min(frame.height, y + dy2)))
             tile = tile.resize((tile.width * _TILE_QTY_SCALE, tile.height * _TILE_QTY_SCALE))
             digits = [t for t in (read_text_fn(tile) or "").replace(",", "").split()
                       if t.isdigit()]
@@ -803,6 +1117,75 @@ def fill_missing_quantities(frame, goods, *, read_text_fn=None):
             g.owned_qty = int(digits[-1])
             logger.info(f"[market] {g.name!r} owned was unreadable on the page; its tile "
                         f"reads {g.owned_qty}")
+    return goods
+
+
+# The tile's price BAR — the dark pill holding "price (profit)", with the index badge left
+# out. Offsets from the tile's tap point, measured on both grid rows of
+# trace_barter_cmd_2026-09-06T18-08-54 frame 209 (row 1 taps y=315, row 2 y=556).
+_TILE_PRICE_BOX = (-125, 58, 235, 127)
+# Tried in order, first CLEAN read wins. Noise is not monotonic in scale — the same bar read
+# '13,322' at x4-rejected, '13, 4 322' at x6 and '13,322' at x8 — so one scale is a gamble
+# and a short ladder is not.
+_TILE_PRICE_SCALES = (8, 4, 6)
+
+# STRICT, AND ANCHORED AT THE START. This is the whole safety of the re-read: a bar that OCR'd
+# as '13 1 322 (10,330)' must be REJECTED, not read as 322 by a pattern that is happy to start
+# matching in the middle. `^` plus a number that may hold only separators does that — '13'
+# then a space is not followed by '(', so the match fails and the price stays unreadable.
+#
+# `fill_missing_quantities` states the reason: "A wrong number is worse than a missing one
+# because nothing downstream can tell." Here it is worth 10x — 131,322 against 13,322.
+_PRICE_PAIR = re.compile(r"^\s*(\d[\d,.']*)\s*\(\s*([-+]?\d[\d,.']*)\s*\)")
+
+
+def fill_missing_prices(frame, goods, *, read_text_fn=None):
+    """Re-read `price`/`profit_per_unit` from EACH GOOD'S OWN TILE, for goods the page missed.
+
+    The same remedy `fill_missing_quantities` applies to badges, for the price bar — and the
+    same reason. CLAUDE.md: "DOWNSCALED IMAGES ARE FOR COARSE JUDGMENTS ONLY — never for
+    CONTENT... the `44` on Matchlock Gun's thumbnail was NEVER PROPOSED AS TEXT... The same
+    detector on a 750x520 CROP read the `44` without trouble."
+
+    Live 2026-09-06 at Lisboa, and it cost the mission its cargo. The Birch Tree tile reads
+    `99%  13,322 (10,330)`; the whole-frame parse proposed ONE token for that row — '990',
+    which is the 99% badge with its '%' read as '0' — and no price at all. `select_sellable`
+    then skipped the good ("we hold 3668 but its price is unreadable, and this pass sells on
+    profit") and the mission reported DONE holding 3,668 units it had sailed there to sell.
+    The three neighbouring tiles, whose prices are four digits, parsed perfectly from the same
+    frame.
+
+    Mutates and returns `goods`. A bar that will not read CLEANLY stays None — unreadable is
+    not zero, and a guessed price is worse than none.
+    """
+    if read_text_fn is None:
+        from vision.ocr import read_text as read_text_fn
+
+    dx1, dy1, dx2, dy2 = _TILE_PRICE_BOX
+    for g in goods:
+        if getattr(g, "profit_per_unit", None) is not None:
+            continue
+        if not getattr(g, "owned_qty", None):
+            continue                          # not aboard — no sale to price
+        x, y = getattr(g, "tap_x", None), getattr(g, "tap_y", None)
+        if x is None or y is None:
+            continue
+        for scale in _TILE_PRICE_SCALES:
+            try:
+                bar = frame.crop((max(0, x + dx1), max(0, y + dy1),
+                                  max(0, x + dx2), min(frame.height, y + dy2)))
+                bar = bar.resize((bar.width * scale, bar.height * scale))
+                m = _PRICE_PAIR.match(read_text_fn(bar) or "")
+            except Exception as exc:
+                logger.debug(f"[market] price re-read failed for {g.name!r}: {exc}")
+                break
+            if m is None:
+                continue
+            g.price = int(m.group(1).translate(_SEP))
+            g.profit_per_unit = int(m.group(2).translate(_SEP))
+            logger.info(f"[market] {g.name!r} price was unreadable on the page; its tile "
+                        f"reads {g.price:,} ({g.profit_per_unit:,}) at x{scale}")
+            break
     return goods
 
 

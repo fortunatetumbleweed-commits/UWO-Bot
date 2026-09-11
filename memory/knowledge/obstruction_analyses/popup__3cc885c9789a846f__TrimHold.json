@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell sub-menu is showing the current cargo hold contents (Pig x103, Raisin x1081) with their market prices, which is the normal state of the Sell screen — not an obstruction but the active trading interface the bot needs to interact with to trim cargo quantities",
+  "full_text": "Raisin Luxuries 1,081 96% 1,732 (1,098)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "3cc885c9789a846f",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-10T15:12:10.570243+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Sell sub-menu is showing the current cargo hold contents (Pig x103, Raisin x1081) with their market prices, which is the normal state of the Sell screen — not an obstruction but the active trading interface the bot needs to interact with to trim cargo quantities",
+    "full_text": "Raisin Luxuries 1,081 96% 1,732 (1,098)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

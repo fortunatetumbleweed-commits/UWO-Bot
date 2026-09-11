@@ -1,0 +1,21 @@
+{
+  "purpose": "A Market building tooltip has appeared showing its operating hours (00:00–23:59) and function (buy and sell Trade Goods), likely triggered by the bot hovering over or tapping the Market icon in the city navigation panel on the right side of the screen.",
+  "full_text": "Market. 00:00–23:59. Buy and sell Trade Goods.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "1e14c9ce357ab5cc",
+  "goal_intent": null,
+  "cached_at": "2026-09-10T18:20:20.777312+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "A Market building tooltip has appeared showing its operating hours (00:00–23:59) and function (buy and sell Trade Goods), likely triggered by the bot hovering over or tapping the Market icon in the city navigation panel on the right side of the screen.",
+    "full_text": "Market. 00:00–23:59. Buy and sell Trade Goods.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

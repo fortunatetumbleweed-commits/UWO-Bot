@@ -1,0 +1,21 @@
+{
+  "purpose": "Market stock replenishment prompt asking the player to spend 49 gems to restock Iron (which is sold out), unrelated to the bot's hold-cargo goal",
+  "full_text": "Replenish Stock? (Does not affect market price) Remaining: 33/50. Cost: 49 gems. Cancel | OK",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "6d8a397cd006d0bb",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-08T21:25:27.406533+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Market stock replenishment prompt asking the player to spend 49 gems to restock Iron (which is sold out), unrelated to the bot's hold-cargo goal",
+    "full_text": "Replenish Stock? (Does not affect market price) Remaining: 33/50. Cost: 49 gems. Cancel | OK",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

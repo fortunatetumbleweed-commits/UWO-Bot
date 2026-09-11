@@ -123,9 +123,12 @@ def build_barter_graph(opp: Opportunity, plan, tail: Optional[MissionTail] = Non
     before = SubTask("trim_before_gather", "sell_surplus", "",
                      params={"good": opp.good, "keep_qty": keep_qty, "clear": True},
                      optional=True)          # an optimisation, not a precondition
+    # `keep_qty` goes to EVERY gather, not only to the trim nodes. A leg that overshoots
+    # must hand the next leg a hold with room in it — see `barter_mission_live.gather`, which
+    # trims while it is still standing in the market it bought from.
     gathers = [
         SubTask(id=f"gather:{port}", kind="gather", location=port,
-                params={"port": port, "orders": dict(orders)},
+                params={"port": port, "orders": dict(orders), "keep_qty": keep_qty},
                 deps=("trim_before_gather",))
         for port, orders in plan.purchases.items()
     ]

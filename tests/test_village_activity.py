@@ -307,3 +307,91 @@ class SelectionIsBounded(unittest.TestCase):
         a.work(GOAL, _state())
         a.work(GOAL, _state())
         self.assertEqual(selected, [], "the panel already shows ours — do not tap")
+
+
+class AnUnnamedPanelWeSelectedOurselvesIsNotReSelected(unittest.TestCase):
+    """Live 2026-09-05 at Berber: Argan Oil's name does not OCR on the panel on ANY frame.
+
+    `_select_trade_good` picked its tile and accepted it on the game's own live Exchange —
+    and `_wrong_good` then called the result 'unreadable' and sent it back to select again,
+    forever. Six taps a minute, no rounds, then BLOCKED with every material aboard.
+
+    Confirming an unreadable name BY SELECTING means re-tapping the same tile and re-reading
+    the same label that already failed. A repeat read measures the reader, not the panel.
+    """
+
+    ARGAN = Barter("Argan Oil", "Berber Village")
+
+    def _unnamed(self):
+        # What Berber actually read back: no name, the yield and the materials present.
+        return _panel(good=None, materials={"Medicine": 73, "Food": 126})
+
+    def test_the_first_unnamed_panel_is_still_confirmed_by_selecting(self):
+        """Before WE have selected, a populated panel is somebody else's good until proven
+        otherwise — the Svear case, and it is untouched."""
+        selected = []
+        a = _activity(context=C.BARTER_PANEL_READY, panels=[self._unnamed()], refused=False)
+        a._select = lambda g, r: selected.append(g) or True
+        res = a.work(self.ARGAN, _state())
+        self.assertEqual(selected, ["Argan Oil"], "an unexplained panel is selected once")
+        self.assertEqual(res.status, WORKING)
+
+    def test_after_selecting_it_is_accepted_and_bartered(self):
+        commits = []
+        a = _activity(context=C.BARTER_PANEL_READY, panels=[self._unnamed()], refused=False,
+                      commit=lambda: commits.append(1) or {"ok": True})
+        a.work(self.ARGAN, _state())            # tick 1 — selects
+        a.work(self.ARGAN, _state())            # tick 2 — must commit, not re-select
+        self.assertEqual(commits, [1], "the tile we chose ourselves must not be re-litigated")
+
+    def test_it_does_not_block_at_the_select_cap(self):
+        a = _activity(context=C.BARTER_PANEL_READY, panels=[self._unnamed()], refused=False)
+        res, _ = _run_to_completion(a, self.ARGAN, _state())
+        self.assertNotIn("still shows", str((res.observed or {}).get("stopped_because") or ""),
+                         "the unreadable name must not be what stops the barter")
+
+    def test_a_panel_that_NAMES_another_good_is_still_rejected(self):
+        """The protection that matters is untouched: a positive identification of somebody
+        else's good sends us back to select, however many times we have already tried."""
+        a = _activity(context=C.BARTER_PANEL_READY, refused=False,
+                      panels=[_panel(good="Naverslojd")])
+        a._selects = 1                          # we have already selected once
+        self.assertEqual(a._wrong_good(self.ARGAN), "Naverslojd")
+
+
+class ABarterThatCommittedRoundsAndStoppedIsSuccess(unittest.TestCase):
+    """Live 2026-09-05 at Berber. The fifth round consumed the last Mutton AND the last of
+    the day's five barters. Exchange greyed, no tile could light it, and the activity
+    reported "'Argan Oil' is not on offer today" — as a FAILURE.
+
+    The mission ended on that verdict with ~3,900 units of Argan Oil aboard. It never
+    sailed to London and never sold. The good was manifestly on offer: it had just been
+    bartered five times in four minutes.
+    """
+
+    ARGAN = Barter("Argan Oil", "Berber Village")
+
+    def _spent(self, committed):
+        """A village that will not select: the materials are gone and the day is spent."""
+        a = _activity(context=C.BARTER_PANEL_NO_GOOD, selected=False, refused=True)
+        # The count belongs to THIS barter, so the goal key must match or work() resets it.
+        a._goal_key = (self.ARGAN.good, self.ARGAN.village)
+        a._committed = committed
+        return a
+
+    def test_it_does_not_call_a_finished_barter_a_failure(self):
+        res = self._spent(5).work(self.ARGAN, _state())
+        self.assertEqual(res.status, FINISHED,
+                         "five committed rounds then a grey Exchange is a barter that WORKED")
+        self.assertEqual(res.observed["rounds_committed"], 5)
+
+    def test_it_does_not_claim_the_good_was_never_on_offer(self):
+        res = self._spent(5).work(self.ARGAN, _state())
+        self.assertNotIn("not on offer", res.observed["stopped_because"],
+                         "it was on offer — we bartered it five times")
+
+    def test_with_no_rounds_committed_it_IS_still_not_on_offer(self):
+        """The original reading is right when nothing was ever bartered — untouched."""
+        res = self._spent(0).work(self.ARGAN, _state())
+        self.assertEqual(res.status, BLOCKED)
+        self.assertIn("not on offer", res.observed["stopped_because"])

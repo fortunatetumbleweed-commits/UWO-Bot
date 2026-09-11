@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade result summary showing the completed sale of Mutton (1,015 units), displaying earnings, tax, surcharge, profit, and updated gold balance after the transaction",
+  "full_text": "Result — Mate Trade EXP: 1,665 | Contribution: 19 | Obtained Trade Point: 0 | Trade Fame: 434 | Sales Cost: 317,624 | Tax: -24,164 | Surcharge: 92,193 | Profit: 136,163 | Total Amount: 385,653 | Balance: 77,516,106,822 | Ok",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "165f04dac00fa047",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-11T20:01:36.669399+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade result summary showing the completed sale of Mutton (1,015 units), displaying earnings, tax, surcharge, profit, and updated gold balance after the transaction",
+    "full_text": "Result — Mate Trade EXP: 1,665 | Contribution: 19 | Obtained Trade Point: 0 | Trade Fame: 434 | Sales Cost: 317,624 | Tax: -24,164 | Surcharge: 92,193 | Profit: 136,163 | Total Amount: 385,653 | Balance: 77,516,106,822 | Ok",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

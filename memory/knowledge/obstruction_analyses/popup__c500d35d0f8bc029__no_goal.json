@@ -1,0 +1,21 @@
+{
+  "purpose": "The right-side panel is showing the minimap, seasonal info (Wet Season, May, Night), and a quest log listing active chronicles including an Admiral Chronicle task to complete an Anonymous Threatening Letter Request from Istanbul Union, plus Auction House notifications and a Major Trend alert.",
+  "full_text": "TW 27.1 | 10 | 13 | 3 | 2.82,75.85 | Wet Season May Night | Major Trend Oc... | Auction House ... | Auction House ... | Admiral Chronicle: Complete Anonymous Threatening Letter Request from Istanbul Union (0/1)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "c500d35d0f8bc029",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T18:14:48.749019+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The right-side panel is showing the minimap, seasonal info (Wet Season, May, Night), and a quest log listing active chronicles including an Admiral Chronicle task to complete an Anonymous Threatening Letter Request from Istanbul Union, plus Auction House notifications and a Major Trend alert.",
+    "full_text": "TW 27.1 | 10 | 13 | 3 | 2.82,75.85 | Wet Season May Night | Major Trend Oc... | Auction House ... | Auction House ... | Admiral Chronicle: Complete Anonymous Threatening Letter Request from Istanbul Union (0/1)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

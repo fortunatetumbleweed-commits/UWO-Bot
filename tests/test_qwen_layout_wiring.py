@@ -64,11 +64,10 @@ class BuildPromptIncludesLayoutTests(unittest.TestCase):
             nav_detail="some detail",
             ocr_tokens=[],
         )
-        # `_universal.md` is loaded for EVERY nav_state (bottom-bar
-        # chrome is on every screen), so the section header IS present.
-        # But scene-specific content (port_overworld, building, etc.)
-        # is NOT.
-        self.assertIn("Universal chrome", out)
+        # `_universal.md` was DELETED on 2026-09-08 — it described the phone's OS bar and
+        # the account watermark, which are filtered out of the data now, so describing them
+        # only planted the words. Scene-specific content is not loaded here either.
+        self.assertNotIn("Universal chrome", out)
         # Use a marker unique to the port_overworld scene layout, not
         # the bare word "port_overworld" — the chrome glossary mentions
         # the latter in the hamburger-icon description.
@@ -97,7 +96,11 @@ class ChromeGlossaryTests(unittest.TestCase):
         )
         self.assertIn("UWO UI Chrome", out)
         self.assertIn("Anti-hallucination rules", out)
-        self.assertIn("Wi-Fi", out)
+        # Gold is still SENT, so the glossary still explains it. `Wi-Fi` used to be asserted
+        # here and is now the counter-example: furniture we filter out must not be named,
+        # because naming a phrase to forbid it still puts it in the model's context.
+        self.assertIn("Gold counter", out)
+        self.assertNotIn("Wi-Fi", out)
 
     def test_chrome_glossary_loaded_for_unknown_state_too(self):
         from vision.qwen_perception import _build_prompt

@@ -1,0 +1,21 @@
+{
+  "purpose": "Another player's ship (TaylorFP, rank Patron) has appeared nearby on the open sea, triggering a proximity/encounter indicator on the minimap panel showing their name and distance details",
+  "full_text": "Patron TaylorFP — Candia 27.6 k 24",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "9e5c0d9f54359103",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-11T01:32:07.162785+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Another player's ship (TaylorFP, rank Patron) has appeared nearby on the open sea, triggering a proximity/encounter indicator on the minimap panel showing their name and distance details",
+    "full_text": "Patron TaylorFP — Candia 27.6 k 24",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

@@ -134,8 +134,19 @@ class VillageActivity:
         self._committed = 0
         self._taps = 0
         self._last_after = None
+        # HOW MANY ROUNDS THE PANEL FUNDED, read just before the exchange that may raise an
+        # overflow card. Carried for the same reason `_last_after` is: the card COVERS the
+        # panel, so the reading cannot be taken on the tick that needs it.
+        self._funded_rounds = None
         self._goal_key = None
         self._selects = 0
+        # The game's own "daily Trade Count is spent" Notice, heard by `on_dialog` on one
+        # tick and acted on by the next. It holds the GOAL it was heard for, not a bare
+        # flag: `on_dialog` runs before `work` has registered the goal, so a bool would be
+        # set on one tick and cleared by the key check on the very next. What it means is
+        # "this barter is over", and a fact belongs to what it is about (Guiding Principle
+        # #4) — so it is stored that way and expires when the goal does.
+        self._day_spent_for = None
 
     # ── the one entry point: classify in context, take ONE action ────────────
     def work(self, goal: Any, state: Any) -> ActivityResult:
@@ -172,6 +183,8 @@ class VillageActivity:
         key = (getattr(goal, "good", None), getattr(goal, "village", None))
         if key != self._goal_key:
             self._goal_key, self._committed, self._selects = key, 0, 0
+            if self._day_spent_for != key:
+                self._day_spent_for = None
 
         local = self._classify(state)
 
@@ -223,6 +236,15 @@ class VillageActivity:
         logger.info(f"[village] {local} -> {handler.__name__}")
         return handler(self, goal)
 
+    def on_tick_frame(self, frame) -> None:
+        """The dispatcher's frame for THIS tick, handed over before `on_dialog`.
+
+        `work()` sets this itself; `on_dialog` runs earlier in the same tick and would
+        otherwise read the previous screen — which is what `_on_overflow` would then be
+        jettisoning against.
+        """
+        self._tick_frame = frame
+
     def on_dialog(self, dialog, goal):
         """First refusal on a dialog covering the village. None means "not mine".
 
@@ -245,6 +267,54 @@ class VillageActivity:
         decision the game has already made for us.
         """
         text = " ".join(getattr(dialog, "body_text", ()) or ()).lower()
+
+        # THE DAY'S ROUNDS ARE GONE, and this Notice is the game saying so:
+        #
+        #     Notice / You have used all your daily Trade Count: / 17.3348 / OK
+        #
+        # Live 2026-08-30 at Svear the Barter item was not locked — the tap went through and
+        # the game answered AFTER it. `_open_barter_panel` used to capture its own frame to
+        # catch this, and without that catch the run looped: tap, notice, dismiss, tap. The
+        # dispatcher sees the Notice as what it is, so the fact is recorded here and the next
+        # tick ends the goal on it. OK is still the right button, so this hands back.
+        from actions.barter_panel import _DAILY_COUNT_SPENT
+        if _DAILY_COUNT_SPENT in text:
+            logger.info("[village] the game says the daily Trade Count is spent — the "
+                        "bartering is finished and the fleet should leave")
+            self._day_spent_for = (getattr(goal, "good", None),
+                                   getattr(goal, "village", None))
+            return None
+
+        # THE OVERFLOW CARD IS NOT THE DISCARD NOTICE, and only one of them can be acted on.
+        #
+        #   the NOTICE   "Complete the trade? 486 Bambara Groundnut has not been claimed yet.
+        #                 Unclaimed trade goods will be discarded."      [Cancel] [Ok]
+        #                 -- nothing to organise; the goods are gone either way, so Ok.
+        #
+        #   the CARD     "Insufficient Empty Space -- Cannot receive item due to insufficient
+        #                 space. Please organize your Cargo Hold."
+        #                 Received: 379   Cargo 4,952/4,952: water 223, food 213, Pig 1,812,
+        #                 Groundnut 2,704                                [Receive]
+        #                 -- it SHOWS the hold and invites us to free it. Receive here keeps
+        #                 what fits and discards the rest.
+        #
+        # Both say "will be discarded", so the single text test below claimed the card too,
+        # logged the notice's reasoning at it, and handed back — and the default answer to a
+        # card whose only button is `Receive` is Receive. Live 2026-09-07 at San Village
+        # (frame 222 of trace_barter_cmd_2026-09-07T15-20-16) that threw away 379 Bambara
+        # Groundnut while 1,812 Pig sat aboard that NO remaining round could use, the Raisin
+        # having run out two rounds earlier — the exact condition that makes a material safe
+        # to jettison.
+        #
+        # `vision.region_detectors.overflow_cards` owns telling them apart, by the furniture
+        # rather than the wording, and the notice is tested first because it opens OVER the
+        # card and only the innermost is live.
+        from vision.region_detectors.overflow_cards import is_discard_notice, is_overflow_card
+        if not is_discard_notice(text) and is_overflow_card(text) and isinstance(goal, Barter):
+            logger.info("[village] the hold is full and the card is showing it — freeing "
+                        "space before receiving, rather than letting the overflow be dropped")
+            return self._on_overflow(goal)
+
         if "has not been claimed" in text or "will be discarded" in text:
             logger.warning(
                 "[village] the hold is full, so this round's output cannot be received — "
@@ -252,6 +322,11 @@ class VillageActivity:
                 "return to the same prompt with nowhere to put the goods. Said: "
                 f"{' '.join(getattr(dialog, 'body_text', ()) or ())!r}")
         return None
+
+    @property
+    def _day_spent(self) -> bool:
+        """True when THIS goal is the one the Notice was raised against."""
+        return self._day_spent_for is not None and self._day_spent_for == self._goal_key
 
     def _frame(self):
         """The frame for THIS tick — the dispatcher's, or a fresh one if it carried none."""
@@ -274,7 +349,13 @@ class VillageActivity:
     def _on_top_menu(self, goal: Barter) -> ActivityResult:
         """The submenu is not up. Either we have not opened it, or the game CLOSED it
         because the day's rounds are spent — `_open_barter_panel` says which."""
-        opened = (self._open_panel or _default_open)()
+        # THE DAY IS SPENT, AS THE DISPATCHER HEARD IT. The opener used to capture again
+        # after its tap and look for the Notice itself; now that Notice arrives as a dialog
+        # and `on_dialog` records it, which is the same fact read in the place that already
+        # sees dialogs. Checked before tapping, or we would tap Barter once more first.
+        if self._day_spent:
+            return self._done(goal, "the village's barters for today are used up")
+        opened = _call_frame_reader(self._open_panel or _default_open, self._frame())
         if opened == "unavailable":
             return self._done(goal, "the village's barters for today are used up")
         if not opened:
@@ -300,6 +381,23 @@ class VillageActivity:
                                   {"rounds_committed": self._committed, "good": goal.good},
                                   detail="the Barter panel's goods row could not be read")
         if not picked:
+            # "NOT ON OFFER TODAY" IS ONE EXPLANATION OF "NO TILE LIT EXCHANGE", AND AFTER A
+            # ROUND HAS BEEN COMMITTED IT IS THE ONE EXPLANATION WE CAN RULE OUT.
+            #
+            # The others: the day's barters are spent, or the materials are gone. Guiding
+            # Principle #3 — enumerate the causes, do not hardcode one.
+            #
+            # Live 2026-09-05 at Berber, having just bartered Argan Oil FIVE TIMES in four
+            # minutes: the fifth round consumed the last Mutton and used the last of the
+            # day's five barters, Exchange greyed, no tile could light it, and this reported
+            # "'Argan Oil' is not on offer today" as a FAILURE. The mission ended there —
+            # ~3,900 units aboard, never sailed, never sold.
+            #
+            # A barter that committed rounds and then stopped is a barter that WORKED. That
+            # is what `_why_it_stopped` is for, and it is already the rule on the ready path:
+            # "three situations the task treats differently, and none is a failure".
+            if self._committed:
+                return self._done(goal, self._why_it_stopped({}, self._panel()))
             return self._done(goal, f"{goal.good!r} is not on offer today", ok=False)
         return ActivityResult(WORKING, {"rounds_committed": self._committed, "did": f"selected {goal.good}"}, detail=str(goal))
 
@@ -308,6 +406,12 @@ class VillageActivity:
         the round did — including whether it was the last one the day allows."""
         panel = self._panel()
         _log_shortfall(panel)
+        # READ IT NOW, WHILE THE PANEL IS THE FRONT WINDOW. If this exchange fills the hold
+        # the game raises "Insufficient Empty Space" OVER the panel, and the one question the
+        # overflow handler must answer — is this the last round? — is answered here, not
+        # there. Re-deriving it from the card meant tapping every cargo tile to learn its
+        # name; see `_is_last_round`.
+        self._funded_rounds = getattr(panel, "rounds_remaining", None)
         before = _amity(panel)
         # HAND THE COMMIT WHAT WE ALREADY SAW. The previous round's `after` is this round's
         # `before` — between them only a dispatcher tick passed, and a tick that ACTED would
@@ -371,6 +475,38 @@ class VillageActivity:
         path — a dialog, a reopen, a grey button — means the screen moved for a reason we did
         not cause, and a carried reading would describe a panel that no longer exists."""
         self._last_after = None
+        self._funded_rounds = None
+
+    def _is_last_round(self) -> Optional[bool]:
+        """Is the round that just ran the last one available? None when it cannot be told.
+
+        TWO WAYS TO BE LAST, and both are read BEFORE the overflow card exists: the DAY is
+        spent, or the MATERIALS are. `_funded_rounds` was read on the tick that committed, so
+        a panel funding exactly one more round was funding THIS one — after it, none remain.
+
+        This used to be derived from the overflow card instead, by tapping every cargo tile
+        to learn its name and summing the materials. That probe is what the answer is for, so
+        deriving the answer from it put the cost before the decision that justifies it.
+
+        THE ROUND IN FLIGHT IS NOT YET COUNTED. The overflow card is raised BY an exchange,
+        and `_committed` is incremented only once the panel confirms it — so at the card the
+        round being asked about is `_committed + 1` (user, 2026-09-11: *"after 6 committed,
+        then the next is the 7th, so the count needs to be modified"*).
+
+        Live 2026-09-11 at Berber: the card arrived with `_committed` at 6 against an
+        allowance of 7, so `6 >= 7` said "not the last round" and the 233 pending Argan Oil
+        were let go. Forty-four seconds later the village said its barters for today were
+        used up — it HAD been the last round, `materials_left` was empty, and the last-round
+        dump that would have made room never ran.
+        """
+        if self._committed + 1 >= _MAX_DAILY_ROUNDS:
+            return True
+        if self._funded_rounds is None:
+            return None
+        try:
+            return int(self._funded_rounds) <= 1
+        except (TypeError, ValueError):
+            return None
 
     def _on_blocked(self, goal: Barter) -> ActivityResult:
         """Exchange is GREY with the panel still OPEN, so rounds REMAIN and something is
@@ -389,21 +525,62 @@ class VillageActivity:
         return self._done(goal, why)
 
     def _on_confirm(self, goal: Barter) -> ActivityResult:
-        """OUR OWN dialog, raised by our own Exchange tap — complete it, never dismiss it."""
-        from brain.commit_actions import commit_via_positive_taps
-        commit_via_positive_taps(goal_keywords=["ok", "confirm"])
+        """OUR OWN dialog, raised by our own Exchange tap — complete it, never dismiss it.
+
+        ONE TAP, THEN HAND BACK. This used the LOOPING form, and that is how FC-3 happened
+        (`docs/market_as_contexts.md`): iteration 1 pressed `OK`, the game raised
+        "Insufficient Empty Space", iteration 2 pressed its `Receive`, and a third pressed
+        `OK` on "Unclaimed trade goods will be discarded" — three screens inside one handler
+        call. The dispatcher never ticked, so `_on_overflow` below, which owns exactly that
+        card, was never reachable, and 360 units were discarded in silence.
+
+        The dispatcher re-perceives after every action. If a confirm is still up next tick,
+        this handler runs again on a screen that has been LOOKED at; if the overflow card is
+        up instead, its own handler gets it.
+        """
+        from brain.commit_actions import tap_one_positive
+        tap_one_positive(goal_keywords=["ok", "confirm"])
         return ActivityResult(WORKING, {"rounds_committed": self._committed, "did": "confirmed the exchange"}, detail=str(goal))
 
     def _on_result(self, goal: Barter) -> ActivityResult:
-        """The result dialog is the PROOF the round happened. Clear it and carry on."""
-        from brain.commit_actions import commit_via_positive_taps
-        commit_via_positive_taps(goal_keywords=["ok", "confirm"])
+        """The result dialog is the PROOF the round happened. Clear it and carry on.
+
+        One tap, then hand back — see `_on_confirm`. The result card is also where the
+        overflow appears behind, so pressing on past it is precisely FC-3.
+        """
+        from brain.commit_actions import tap_one_positive
+        tap_one_positive(goal_keywords=["ok", "confirm"])
         return ActivityResult(WORKING, {"rounds_committed": self._committed, "did": "cleared the result dialog"}, detail=str(goal))
+
+    def _on_discard_notice(self, goal: Barter) -> ActivityResult:
+        """"Complete the trade? N has not been claimed yet." — answer it, do not dump here.
+
+        REACHING THIS CARD MEANS THE CHANCE TO MAKE ROOM HAS PASSED. It opens only after
+        `Receive` has been pressed on the overflow card, and by then the game has already
+        decided what fits. `_on_overflow` is where space is freed, and it now gets its tick
+        first (FC-3: it never used to, because the context could not be classified).
+
+        So the answer is the positive one, for the reasons `docs/dialogs_are_windows.md`
+        already set out: Cancel returns to "Insufficient Empty Space", whose `Receive` cannot
+        succeed with a full hold, which raises this card again — it LOOPS. And the goods are
+        lost either way; OK acknowledges that, it does not cause it. Same rule as flow
+        completeness: Back/Cancel is refusing to play, not progress.
+        """
+        from brain.commit_actions import tap_one_positive
+        tap_one_positive(goal_keywords=["ok", "confirm"])
+        return ActivityResult(WORKING,
+                              {"rounds_committed": self._committed,
+                               "did": "acknowledged the discard notice"},
+                              detail=str(goal))
 
     def _on_overflow(self, goal: Barter) -> ActivityResult:
         """Units held PENDING because the hold is full. Dismissing this loses them."""
-        pending = (self._overflow or _read_overflow)()
-        (self._jettison or _default_jettison(goal.good))(pending)
+        pending = _call_frame_reader(self._overflow or _read_overflow, self._frame())
+        jettison = (self._jettison
+                    or _default_jettison(goal.good, self._recipe_for(goal.good),
+                                         rounds_done=self._committed,
+                                         last_round=self._is_last_round()))
+        jettison(pending)
         return ActivityResult(WORKING, {"rounds_committed": self._committed, "did": f"jettisoned for {pending} pending"},
                               detail=str(goal))
 
@@ -435,7 +612,25 @@ class VillageActivity:
         if showing:
             return None if _same_good(showing, goal.good) else str(showing)
         if getattr(panel, "materials", None):
-            return "unreadable"          # populated, unnamed — confirm by selecting
+            # A REPEAT READ MEASURES THE READER, NOT THE PANEL. "unreadable" asks to confirm
+            # BY SELECTING — but once we have selected, confirming means re-tapping the same
+            # tile and re-reading the same label that already failed. That cannot produce
+            # evidence it did not produce the first time; it only spends taps.
+            #
+            # Live 2026-09-05 at Berber: Argan Oil's name does not OCR on this panel on ANY
+            # frame. `_select_trade_good` picked its tile correctly and accepted it on the
+            # game's own live Exchange, and this then called the result "unreadable" and sent
+            # it back to select again — six taps a minute, no rounds, then BLOCKED at the
+            # attempt cap with every material aboard.
+            #
+            # The wrong-good protection is NOT weakened, because it does not live here: it
+            # lives at the selection point, where there is still a choice to make.
+            # `_try` matches the recipe first and REJECTS a tile that names another good,
+            # falling back to the live Exchange only when our own reading is inconclusive.
+            # After that there is nothing left for this check to decide.
+            if self._selects:
+                return None
+            return "unreadable"          # populated, unnamed, and NOT ours to explain yet
         return None
 
     def _reading(self):
@@ -552,6 +747,7 @@ VillageActivity._HANDLERS = {
     _ctx.EXCHANGE_CONFIRM:      VillageActivity._on_confirm,
     _ctx.BARTER_RESULT:         VillageActivity._on_result,
     _ctx.OVERFLOW_PROMPT:       VillageActivity._on_overflow,
+    _ctx.DISCARD_NOTICE:        VillageActivity._on_discard_notice,
 }
 assert set(VillageActivity._HANDLERS) == set(VillageActivity.CONTEXT_STATES), \
     "every declared context state needs a handler, and vice versa"
@@ -562,9 +758,15 @@ _MAX_SELECT_ATTEMPTS = 2
 
 
 def _same_good(a: str, b: str) -> bool:
-    """Loose match — the panel's OCR of a name need not be byte-identical to the plan's."""
-    norm = lambda t: "".join(ch for ch in str(t).lower() if ch.isalnum())
-    return norm(a) == norm(b) or norm(a) in norm(b) or norm(b) in norm(a)
+    """Loose match — the panel's OCR of a name need not be byte-identical to the plan's.
+
+    Loose about SPELLING, strict about WORDS. This stripped to alphanumerics and asked
+    whether either contained the other, so 'almond' matched 'almondoil' — and the game is
+    full of such pairs (Almond / Almond Oil, Duck / Duck Meat, Olive / Olive Oil). The same
+    test in `_find_material_tile` bought 1,020 of the wrong good at Lisboa on 2026-09-05.
+    """
+    from utils.fuzzy import same_good_name
+    return same_good_name(a, b)
 
 
 def _what_it_saw() -> dict:
@@ -615,14 +817,22 @@ def _amity(panel) -> Optional[tuple]:
     return getattr(panel, "amity_points", None)
 
 
-def _read_overflow() -> int:
+def _read_overflow(frame=None) -> int:
     """Units the game is holding PENDING because the hold is full. Non-zero must be cleared
-    before they are discarded — dismissing that dialog loses them."""
+    before they are discarded — dismissing that dialog loses them.
+
+    Reads the TICK'S frame. It used to capture its own, which is a second look at the same
+    screen taken a moment later — and the screen it is reading is a dialog the dispatcher
+    has just classified, so the fresh capture could only disagree with the routing, never
+    improve on it.
+    """
     try:
         from actions.overflow_dialog import read_overflow
-        from capture.adb_capture import capture_screen
         from vision.omniparser import parse_fast_cached
-        ov = read_overflow(parse_fast_cached(capture_screen()))
+        if frame is None:                     # no tick frame — the caller is not a handler
+            from capture.adb_capture import capture_screen
+            frame = capture_screen()
+        ov = read_overflow(parse_fast_cached(frame))
         if ov is not None and ov.pending:
             logger.warning(f"[village] OVERFLOW — {int(ov.pending)} unit(s) pending")
             return int(ov.pending)
@@ -633,9 +843,22 @@ def _read_overflow() -> int:
 
 # ── the defaults, which touch the device ─────────────────────────────────────
 
-def _default_open():
+def _call_frame_reader(fn, frame):
+    """Call an injected reader that may or may not want the tick's frame.
+
+    The injection points predate the frame and their stubs are written `lambda: 0` /
+    `lambda: True`; an argument the caller cannot accept is not a reason to fail to read the
+    screen or to open a panel.
+    """
+    try:
+        return fn(frame)
+    except TypeError:
+        return fn()
+
+
+def _default_open(frame=None):
     from actions.barter_panel import _open_barter_panel
-    return _open_barter_panel()
+    return _open_barter_panel(frame)
 
 
 def _default_select(good: str, recipe) -> bool:
@@ -649,16 +872,31 @@ def _default_commit(before_state=None) -> dict:
     return barter_commit_verified(refresh_fn=refresh_stale_panel, before_state=before_state)
 
 
-def _default_jettison(good: str):
+def _default_jettison(good: str, needs_per_round=None, rounds_done: Optional[int] = None,
+                      last_round: Optional[bool] = None):
     """THE ORDER OF SACRIFICE, decided in advance so nothing is escalated mid-round
     (user, 2026-08-26): dump the non-barter goods first; if that is not enough, spend supply
     down to a six-day floor; abandon barter goods only after both. Barter goods fetch very
-    high profit, so the only real constraint is that the fleet must not run out of supply."""
+    high profit, so the only real constraint is that the fleet must not run out of supply.
+
+    `needs_per_round` is the recipe, and it is what lets the overflow module tell a MATERIAL
+    from any other trade good. Without it materials are dumped on any round, which can throw
+    away the inputs for every round still to come (user, 2026-09-04).
+
+    `rounds_done` is this activity's committed count, which the overflow module needs for the
+    one last-round test it cannot read off the dialog: the day's seventh round.
+
+    `last_round` is the village's own answer, taken from the barter panel before the exchange
+    covered it. It decides whether the card is worth working at all: while a round remains
+    there is nothing aboard worth dumping for the overflow — materials are protected, the
+    output is never a candidate, and the surplus supply that is left cannot cover it and is
+    needed at sea (user, 2026-09-10: *"if it is not the last round, just receive"*)."""
     def jettison(pending: int) -> dict:
         from actions.overflow_dialog import clear_overflow
         from brain.supply_planner import supply_needed_each, VILLAGE_LEG_RESERVE_DAYS
         reserve = supply_needed_each(VILLAGE_LEG_RESERVE_DAYS)
-        res = clear_overflow(output_good=good,
+        res = clear_overflow(output_good=good, needs_per_round=needs_per_round,
+                             rounds_done=rounds_done, last_round=last_round,
                              reserves={"water": reserve, "food": reserve})
         if res.get("sacrificed"):
             logger.warning(f"[village] {res['sacrificed']} unit(s) of {good} given up — the "

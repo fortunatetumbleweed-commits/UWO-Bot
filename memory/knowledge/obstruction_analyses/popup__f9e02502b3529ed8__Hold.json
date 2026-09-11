@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase panel is showing the available goods at Gijón, including Pig (Livestock) at 100% stock with 257 units priced, and Pork, Raspberry, and Turron — this is the normal purchase sub-menu view, not a popup obstruction; the 'popup' detected is the Purchase sidebar/cart panel showing staged cargo contents (Pig 985, Raisin 1081, bread 319, mystery item 294, 326) ready to confirm purchase",
+  "full_text": "Purchase | Cargo 3,005/4,952 | [staged items: 294, 985 Pig, 1081 Raisin, 319, 326] | Pig Livestock 100% 257 gold | Pork Food 95% 188 gold | Raspberry Luxuries 96% 274 gold | Turron Luxuries Specialties 10/12/2026/00:00:00 | Nego. Chance 63.7% Success Rate 76.2% | Tax 0% 0 gold | Purchase 75,558 gold | Time remaining 00:28:55 | Diamonds 39",
+  "dismissal": "tap_accept",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "f9e02502b3529ed8",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T15:33:20.549917+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase panel is showing the available goods at Gijón, including Pig (Livestock) at 100% stock with 257 units priced, and Pork, Raspberry, and Turron — this is the normal purchase sub-menu view, not a popup obstruction; the 'popup' detected is the Purchase sidebar/cart panel showing staged cargo contents (Pig 985, Raisin 1081, bread 319, mystery item 294, 326) ready to confirm purchase",
+    "full_text": "Purchase | Cargo 3,005/4,952 | [staged items: 294, 985 Pig, 1081 Raisin, 319, 326] | Pig Livestock 100% 257 gold | Pork Food 95% 188 gold | Raspberry Luxuries 96% 274 gold | Turron Luxuries Specialties 10/12/2026/00:00:00 | Nego. Chance 63.7% Success Rate 76.2% | Tax 0% 0 gold | Purchase 75,558 gold | Time remaining 00:28:55 | Diamonds 39",
+    "dismissal": "tap_accept",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

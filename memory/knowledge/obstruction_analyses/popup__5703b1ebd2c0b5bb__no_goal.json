@@ -1,0 +1,21 @@
+{
+  "purpose": "Merchant Pieter Gerardus is offering to negotiate a 21.5% price reduction on a purchase (Gold metal), showing a 76.2% success rate with remaining negotiation attempts available",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts: [icons shown]. 165,648 → 119,952 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success.",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "5703b1ebd2c0b5bb",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T04:12:23.446108+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Merchant Pieter Gerardus is offering to negotiate a 21.5% price reduction on a purchase (Gold metal), showing a 76.2% success rate with remaining negotiation attempts available",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts: [icons shown]. 165,648 → 119,952 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success.",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "A level-up or achievement summary popup showing TaylorFP's (or Patron's) accumulated activity points across Sea Exploration, Explore Land, Fishing, and Cannot Salvage categories near Melanesian Village",
+  "full_text": "Patron / TaylorFP — Sea Exploration x780, Explore Land x1,466, Fishing x726, Cannot Salvage x140 (near Melanesian Village)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "a6a4f320e61b4615",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T18:32:50.710696+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "A level-up or achievement summary popup showing TaylorFP's (or Patron's) accumulated activity points across Sea Exploration, Explore Land, Fishing, and Cannot Salvage categories near Melanesian Village",
+    "full_text": "Patron / TaylorFP — Sea Exploration x780, Explore Land x1,466, Fishing x726, Cannot Salvage x140 (near Melanesian Village)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

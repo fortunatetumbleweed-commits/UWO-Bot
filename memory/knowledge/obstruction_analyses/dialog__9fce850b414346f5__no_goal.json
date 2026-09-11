@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade post is asking the player to confirm the purchase of 816 units of Palm Oil (Seasoning) for a total of 165,648 gold after applying a 6% tax of 8,976 and a discount of -44,880",
+  "full_text": "Confirm Purchase — Trade Goods: Palm Oil (Seasoning) x816 | Purchase Cost: 201,552 | Tax 6%: 8,976 | Discount: -44,880 | Purchase Price: 165,648 | Total Price: 201,552 + 8,976 - 44,880 = 165,648 gold | [Cancel] [OK]",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "9fce850b414346f5",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T04:11:57.024754+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade post is asking the player to confirm the purchase of 816 units of Palm Oil (Seasoning) for a total of 165,648 gold after applying a 6% tax of 8,976 and a discount of -44,880",
+    "full_text": "Confirm Purchase — Trade Goods: Palm Oil (Seasoning) x816 | Purchase Cost: 201,552 | Tax 6%: 8,976 | Discount: -44,880 | Purchase Price: 165,648 | Total Price: 201,552 + 8,976 - 44,880 = 165,648 gold | [Cancel] [OK]",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell sub-menu is now visible showing the current hold contents — Iron (1,065 units), Matchlock Gun (528 units), and Candle (990 units) with their market prices — this is the hold/cargo readout the bot navigated to in order to check Candle stock",
+  "full_text": "Iron Wares 1,065 96% 1,166 (703) | Matchlock Gun Firearms 528 90% 2,540 (1,603) | Candle Sundries 990 104% 18 (-187)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "5b4a5b2f03aa162b",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-09T21:03:04.477231+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Sell sub-menu is now visible showing the current hold contents — Iron (1,065 units), Matchlock Gun (528 units), and Candle (990 units) with their market prices — this is the hold/cargo readout the bot navigated to in order to check Candle stock",
+    "full_text": "Iron Wares 1,065 96% 1,166 (703) | Matchlock Gun Firearms 528 90% 2,540 (1,603) | Candle Sundries 990 104% 18 (-187)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "medium"
+  }
+}

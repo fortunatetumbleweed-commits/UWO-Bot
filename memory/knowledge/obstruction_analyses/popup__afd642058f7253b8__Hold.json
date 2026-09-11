@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase panel is showing the current market goods list at Gijón, including Pig at 99% stock with price 254 — this is the normal purchase sub-menu view, not a blocking popup; the bot has staged a bulk purchase and the screen reflects the updated cargo state (Pig 492 held so far, short of 1081 target)",
+  "full_text": "00:03:44 | 9 diamonds | Pig Livestock 99% 254 | Pork Food 775 106% 209 | Raspberry Luxuries 363 105% 300 | Turron Luxuries Specialties 10/12/2026/00:00:00",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "afd642058f7253b8",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T02:28:13.364883+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase panel is showing the current market goods list at Gijón, including Pig at 99% stock with price 254 — this is the normal purchase sub-menu view, not a blocking popup; the bot has staged a bulk purchase and the screen reflects the updated cargo state (Pig 492 held so far, short of 1081 target)",
+    "full_text": "00:03:44 | 9 diamonds | Pig Livestock 99% 254 | Pork Food 775 106% 209 | Raspberry Luxuries 363 105% 300 | Turron Luxuries Specialties 10/12/2026/00:00:00",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

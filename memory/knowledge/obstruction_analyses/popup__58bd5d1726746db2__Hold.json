@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is showing the Raisin cargo item details (540 units at 97% market saturation, selling for 50 gold with a loss of -579), which appeared when the bot navigated to inspect the hold contents at the market sell interface",
+  "full_text": "Raisin Luxuries 540 97% 50 (-579)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "58bd5d1726746db2",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T14:37:08.003577+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Sell screen is showing the Raisin cargo item details (540 units at 97% market saturation, selling for 50 gold with a loss of -579), which appeared when the bot navigated to inspect the hold contents at the market sell interface",
+    "full_text": "Raisin Luxuries 540 97% 50 (-579)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

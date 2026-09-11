@@ -1,0 +1,21 @@
+{
+  "purpose": "The market is prompting the player to spend 88 Blue Gems to replenish a trade good's stock (41 out of 50 units remaining) without affecting the market price",
+  "full_text": "Replenish Stock? (Does not affect market price) Remaining: 41/50. Cost: 88 Blue Gems. Cancel | OK",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "2c93f6a7e2b23888",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T17:22:56.740038+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The market is prompting the player to spend 88 Blue Gems to replenish a trade good's stock (41 out of 50 units remaining) without affecting the market price",
+    "full_text": "Replenish Stock? (Does not affect market price) Remaining: 41/50. Cost: 88 Blue Gems. Cancel | OK",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

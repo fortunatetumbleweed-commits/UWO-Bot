@@ -1,0 +1,21 @@
+{
+  "purpose": "The purchase screen is showing the normal market listing after the negotiation was declined — no popup obstruction exists; the bot is back at the purchase sub-menu and can attempt to buy Raisin again (though Raisin shows as Sold Out with 0 stock currently visible)",
+  "full_text": "00:26:38 | 151 diamonds | Carpet (Fabrics) 101% 1,091 | Pomegranate (Food) 641 94% 280 | Peony (Medicine) 491 97% 314 | Kutnu (Fabrics) Specialties 10/26/2026/00:00:00",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "8cb5e0108bf6d73c",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T14:43:30.016378+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The purchase screen is showing the normal market listing after the negotiation was declined — no popup obstruction exists; the bot is back at the purchase sub-menu and can attempt to buy Raisin again (though Raisin shows as Sold Out with 0 stock currently visible)",
+    "full_text": "00:26:38 | 151 diamonds | Carpet (Fabrics) 101% 1,091 | Pomegranate (Food) 641 94% 280 | Peony (Medicine) 491 97% 314 | Kutnu (Fabrics) Specialties 10/26/2026/00:00:00",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

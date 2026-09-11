@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell panel is showing the loaded cargo summary — Raisin (Luxuries) at 104% price with quantity 1,514 — as part of the Load All action the bot just triggered to prepare selling Pig and Raisin.",
+  "full_text": "Raisin Luxuries 1,514 104% 55 (-567)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "912a49c968431812",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-10T15:56:13.518838+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Sell panel is showing the loaded cargo summary — Raisin (Luxuries) at 104% price with quantity 1,514 — as part of the Load All action the bot just triggered to prepare selling Pig and Raisin.",
+    "full_text": "Raisin Luxuries 1,514 104% 55 (-567)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Sale result summary showing the proceeds from selling Raisins at London, including profit, tax, surcharge, and updated gold balance",
+  "full_text": "Result: Mate Trade EXP 1,322,126 | Contribution 0 | Obtained Trade Point 18,635 | Trade Fame 0 | Sales Cost 154,161,421 | Tax -10,956,825 | Surcharge 49,639,951 | Profit 171,670,206 | Total Amount 192,844,547 | Balance 76,973,626,584 | OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "247523eb3afd9ff0",
+  "goal_intent": "SellHold",
+  "cached_at": "2026-09-10T19:40:23.551651+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Sale result summary showing the proceeds from selling Raisins at London, including profit, tax, surcharge, and updated gold balance",
+    "full_text": "Result: Mate Trade EXP 1,322,126 | Contribution 0 | Obtained Trade Point 18,635 | Trade Fame 0 | Sales Cost 154,161,421 | Tax -10,956,825 | Surcharge 49,639,951 | Profit 171,670,206 | Total Amount 192,844,547 | Balance 76,973,626,584 | OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

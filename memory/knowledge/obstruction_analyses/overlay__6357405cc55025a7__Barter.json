@@ -1,0 +1,21 @@
+{
+  "purpose": "The barter screen is showing the current trade round state at Svear Village after committing a round of Birch Tree bartering, displaying trade goods available, trade count timer, and slot 8 is locked — this is the normal barter interface mid-session, not a popup obstruction",
+  "full_text": "Trade Count (Current) ? [slots 1-8, slot 8 locked] 17:32:40 — Tradable Trade Goods: Recommended Wares (x7), Abundant Crafts (x9), Abundant Spices (x7), Recommended Wares (x8). Svear Village. Coeckebacker Transporters, Gloria Garrison, Whitney Merchant Fleet nearby.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "overlay",
+  "structural_hash": "6357405cc55025a7",
+  "goal_intent": "Barter",
+  "cached_at": "2026-09-09T21:27:34.236141+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The barter screen is showing the current trade round state at Svear Village after committing a round of Birch Tree bartering, displaying trade goods available, trade count timer, and slot 8 is locked — this is the normal barter interface mid-session, not a popup obstruction",
+    "full_text": "Trade Count (Current) ? [slots 1-8, slot 8 locked] 17:32:40 — Tradable Trade Goods: Recommended Wares (x7), Abundant Crafts (x9), Abundant Spices (x7), Recommended Wares (x8). Svear Village. Coeckebacker Transporters, Gloria Garrison, Whitney Merchant Fleet nearby.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

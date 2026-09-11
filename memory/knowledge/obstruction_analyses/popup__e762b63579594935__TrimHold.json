@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell sub-panel is showing the current cargo loaded for sale, displaying Matchlock Gun (528 units, 90% price) and Candle (822 units, 104% price) — this is the sell screen state after the bot tapped Load, reflecting what is queued to sell, not a blocking popup",
+  "full_text": "Matchlock Gun Firearms 528 90% 2,540 (1,603) | Candle Sundries 822 104% 18 (-187)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "e762b63579594935",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-09T21:05:56.232939+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The Sell sub-panel is showing the current cargo loaded for sale, displaying Matchlock Gun (528 units, 90% price) and Candle (822 units, 104% price) — this is the sell screen state after the bot tapped Load, reflecting what is queued to sell, not a blocking popup",
+    "full_text": "Matchlock Gun Firearms 528 90% 2,540 (1,603) | Candle Sundries 822 104% 18 (-187)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

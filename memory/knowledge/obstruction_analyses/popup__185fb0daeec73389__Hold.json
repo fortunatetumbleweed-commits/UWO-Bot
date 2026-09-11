@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase Result confirmation showing the completed bulk buy of Hand Cannon (Firearms) with cost breakdown: 349,790 base price, 17,095 tax, -63,120 discount, totalling 303,765 gold, with remaining balance displayed",
+  "full_text": "Result — Purchase Cost: 349,790 | Tax: 17,095 | Discount: -63,120 | Total Amount: 303,765 | Balance: 77,567,138,526 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "185fb0daeec73389",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T22:05:34.071753+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase Result confirmation showing the completed bulk buy of Hand Cannon (Firearms) with cost breakdown: 349,790 base price, 17,095 tax, -63,120 discount, totalling 303,765 gold, with remaining balance displayed",
+    "full_text": "Result — Purchase Cost: 349,790 | Tax: 17,095 | Discount: -63,120 | Total Amount: 303,765 | Balance: 77,567,138,526 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

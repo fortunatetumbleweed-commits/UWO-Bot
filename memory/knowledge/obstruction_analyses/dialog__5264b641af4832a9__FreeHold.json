@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade result summary showing the successful sale of goods (Birch Tree), displaying profit, tax, surcharge, and updated gold balance after the transaction",
+  "full_text": "Result — Mate Trade EXP: 1,410 | Contribution: 0 | Obtained Trade Point: 0 | Trade Fame: 0 | Sales Cost: 245,916 | Tax: -20,240 | Surcharge: 76,153 | Profit: 184,301 | Total Amount: 301,829 | Balance: 72,451,593,086 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "5264b641af4832a9",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-09T23:17:30.835980+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade result summary showing the successful sale of goods (Birch Tree), displaying profit, tax, surcharge, and updated gold balance after the transaction",
+    "full_text": "Result — Mate Trade EXP: 1,410 | Contribution: 0 | Obtained Trade Point: 0 | Trade Fame: 0 | Sales Cost: 245,916 | Tax: -20,240 | Surcharge: 76,153 | Profit: 184,301 | Total Amount: 301,829 | Balance: 72,451,593,086 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

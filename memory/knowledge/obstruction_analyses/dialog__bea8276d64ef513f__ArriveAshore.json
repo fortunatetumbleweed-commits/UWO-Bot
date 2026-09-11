@@ -1,0 +1,21 @@
+{
+  "purpose": "A limited-time in-game shop offer appeared offering a 'Build LV 26 Celebration Package' containing speedup items, resources, and bonus materials, triggered automatically by the game as a milestone purchase prompt",
+  "full_text": "Build LV 26 Celebration Package. This item may be shown again in the same form. Even if not purchased, it may be displayed again after a certain time. [Items: 15, 223, 2, 1, 10 with Bonus quantities: 35, 1577, 3, 59, 65] Time left: 23:59:39. Purchase.",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "bea8276d64ef513f",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-11T20:30:38.902994+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A limited-time in-game shop offer appeared offering a 'Build LV 26 Celebration Package' containing speedup items, resources, and bonus materials, triggered automatically by the game as a milestone purchase prompt",
+    "full_text": "Build LV 26 Celebration Package. This item may be shown again in the same form. Even if not purchased, it may be displayed again after a certain time. [Items: 15, 223, 2, 1, 10 with Bonus quantities: 35, 1577, 3, 59, 65] Time left: 23:59:39. Purchase.",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

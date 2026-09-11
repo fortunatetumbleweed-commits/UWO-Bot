@@ -1,0 +1,21 @@
+{
+  "purpose": "The C/TW (Crew/Trade Wind) side panel is open, showing nearby ships (Tornabuoni Pill... LV20 at 5.3km and terestrade LV106 at 8.8km), repel support status (211 owned, 5 used), and current season/time info — this is a persistent UI panel, not a blocking popup",
+  "full_text": "C/TW panel: 10 | 27.6 | Summer Jun Night | Use Repel | Repel Support Owned 211 | Repel Support Used 5 | Tornabuoni Pill.. LV 20 5.3 km | terestrade LV 106 8.8 km",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "ee9a758d48571bb5",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-09T23:42:09.246052+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The C/TW (Crew/Trade Wind) side panel is open, showing nearby ships (Tornabuoni Pill... LV20 at 5.3km and terestrade LV106 at 8.8km), repel support status (211 owned, 5 used), and current season/time info — this is a persistent UI panel, not a blocking popup",
+    "full_text": "C/TW panel: 10 | 27.6 | Summer Jun Night | Use Repel | Repel Support Owned 211 | Repel Support Used 5 | Tornabuoni Pill.. LV 20 5.3 km | terestrade LV 106 8.8 km",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

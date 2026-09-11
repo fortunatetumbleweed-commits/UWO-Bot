@@ -1,0 +1,21 @@
+{
+  "purpose": "Merchant confirmation dialog showing the cost breakdown for purchasing 263 units of Almond (Luxuries/Specialties) at a total purchase price of 303,765 gold after tax and discount, awaiting player confirmation to complete the transaction",
+  "full_text": "Confirm Purchase — Trade Goods: Almond (Specialties, Luxuries, qty 263) | Purchase Cost: 349,790 | Tax 6%: 17,095 | Discount: -63,120 | Purchase Price: 303,765 | Total Price: 349,790 + 17,095 - 63,120 = 303,765 gold | [Cancel] [OK]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "37dfba7c3e6f2d0d",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T21:59:52.326890+00:00",
+  "visit_count": 8,
+  "raw_api_response": {
+    "purpose": "Merchant confirmation dialog showing the cost breakdown for purchasing 263 units of Almond (Luxuries/Specialties) at a total purchase price of 303,765 gold after tax and discount, awaiting player confirmation to complete the transaction",
+    "full_text": "Confirm Purchase — Trade Goods: Almond (Specialties, Luxuries, qty 263) | Purchase Cost: 349,790 | Tax 6%: 17,095 | Discount: -63,120 | Purchase Price: 303,765 | Total Price: 349,790 + 17,095 - 63,120 = 303,765 gold | [Cancel] [OK]",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

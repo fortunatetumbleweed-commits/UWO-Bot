@@ -1,0 +1,21 @@
+{
+  "purpose": "The sell tab is now open at the market, showing Iron and Matchlock Gun as available goods to sell — this is the expected next state after opening the sell tab, not an obstruction",
+  "full_text": "Matchlock Gun Firearms 355 96% 94 (-861)",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "3221bd3ba9b1bed6",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-09T20:08:36.683533+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The sell tab is now open at the market, showing Iron and Matchlock Gun as available goods to sell — this is the expected next state after opening the sell tab, not an obstruction",
+    "full_text": "Matchlock Gun Firearms 355 96% 94 (-861)",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

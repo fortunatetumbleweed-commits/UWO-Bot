@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase Result confirmation dialog showing the cost breakdown (119,295 base + 5,445 tax − 24,255 discount = 100,485 total) for a bulk buy of goods, likely Candles, with the player's remaining balance displayed",
+  "full_text": "Result — Purchase Cost: 119,295 | Tax: 5,445 | Discount: -24,255 | Total Amount: 100,485 | Balance: 71,645,359,930 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "24eab61292b29850",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-09T20:57:58.995696+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase Result confirmation dialog showing the cost breakdown (119,295 base + 5,445 tax − 24,255 discount = 100,485 total) for a bulk buy of goods, likely Candles, with the player's remaining balance displayed",
+    "full_text": "Result — Purchase Cost: 119,295 | Tax: 5,445 | Discount: -24,255 | Total Amount: 100,485 | Balance: 71,645,359,930 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "high"
+  }
+}

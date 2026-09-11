@@ -268,7 +268,11 @@ def test_a_graduated_module_does_not_reach_ui_through_a_facade(path):
 # The activities that legitimately declare no GOALS. Each is in the way of EVERY goal and
 # must run whatever the order is — that is what makes it a clearing activity, and it is why
 # declaring none is the right answer for these and the wrong one for everybody else.
-CLEARING = {"idle_lock", "transient", "unrecognized_chromed_screen"}
+# `main_menu` joined them on 2026-09-07: the menu overlays whatever the fleet was looking at
+# and is in the way of every order, so it clears rather than serving a goal. Nothing served it
+# before, and the bot simply LOOKED at it — wake, unlock swipe, then three identical captures
+# and the no-progress guard — because it had no move, not a wrong one.
+CLEARING = {"idle_lock", "transient", "unrecognized_chromed_screen", "main_menu"}
 
 
 def test_every_activity_declares_where_it_serves():

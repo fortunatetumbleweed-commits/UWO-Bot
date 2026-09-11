@@ -12,7 +12,7 @@ runner and its make_*_fn phase factories were removed 2026-08-20 (superseded and
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Mapping, Optional
 
 from loguru import logger
@@ -105,6 +105,9 @@ class TaskPlan:
     purchases: dict             # {port: {material: qty}}
     unsourced: list             # materials with no known source (read live)
     total_output: int
+    # Materials whose EVERY known source is recorded scarce this season. A finding, not a
+    # verdict — the caller decides whether that is a reason to stay home.
+    low_everywhere: list = field(default_factory=list)
 
 
 def plan_barter_task(recipe: BarterRecipe, village: str, sell_port: str,
@@ -142,14 +145,22 @@ def plan_barter_task(recipe: BarterRecipe, village: str, sell_port: str,
         needs = short
 
     sources = material_sources_from_recipe(recipe, village)
-    gp = plan_gathering(list(needs), sources, port_coords, start, quantities=needs)
+    # THE SEASON RANKS THE PORTS. A drained shelf still refreshes, at about a quarter the
+    # yield, so coverage alone will happily route the fleet to one and grind it.
+    from memory.market_kb import season_of, shelf_of
+    gp = plan_gathering(list(needs), sources, port_coords, start, quantities=needs,
+                        season_fn=season_of, shelf_fn=shelf_of)
+    if gp.low_everywhere:
+        logger.warning(f"[plan] every known source is scarce this season for "
+                       f"{sorted(gp.low_everywhere)} — this task is not profitable now")
     purchases = assign_purchases(gp.route, sources, needs)
     out_per_round = output_per_round if output_per_round is not None else (
         (recipe.output_per_round or {}).get("Neutral") or 0)
     return TaskPlan(good=recipe.good, village=village, sell_port=sell_port,
                     rounds=rounds, needs=needs, gather_route=gp.route,
                     purchases=purchases, unsourced=sorted(gp.unsourced),
-                    total_output=out_per_round * rounds)
+                    total_output=out_per_round * rounds,
+                    low_everywhere=sorted(gp.low_everywhere))
 
 
 def _strip_accents(s: str) -> str:
@@ -157,8 +168,8 @@ def _strip_accents(s: str) -> str:
     Source panel reads port names WITHOUT accents (OmniParser 'Male'), but the
     catalogue stores them accented ('malé') — normalise both sides to match."""
     import unicodedata
-    return "".join(c for c in unicodedata.normalize("NFKD", s or "")
-                   if not unicodedata.combining(c)).lower()
+    from memory.places import fold_name          # one fold, shared — see its docstring
+    return fold_name(s)
 
 
 @_facade
@@ -231,12 +242,84 @@ def current_position(coords: Mapping[str, tuple], fallback=None, tries: int = 3)
         # 2026-08-22 this loop retried three times on the MAIN MENU and aborted the mission,
         # two minutes after 'Kolkata' had been confirmed twice on the overworld.
         if not screen_shows_settlement(state):
+            # TWO RECORDS OF WHERE WE ARE, AND THE FRESHER ONE WINS.
+            #
+            # `observation.last_known_settlement` and `observed_facts.recall("settlement")`
+            # are both written when the overworld paints the name, so they normally agree —
+            # but they can drift, and when they do, the question is not which module owns the
+            # fact, it is which reading is more recent. Both carry a timestamp, so ask.
+            #
+            # Live 2026-09-07, eighteen seconds apart, planning from inside LONDON's market:
+            #
+            #     18:39:37  [observation] loaded persisted settlement: 'London'
+            #     18:39:55  [mission] 'sub_menu' does not show the port name —
+            #               using 'Madeira', seen 21674s ago
+            #
+            # The route is scored `worth / (distance + 1)`, so a start of Madeira gives
+            # Madeira's own score 0.24/1 against Bordeaux's 1.0/687 — it wins by 165x for
+            # being where we supposedly already are. The fleet sailed to the one port the KB
+            # had recorded scarce for Raisin. From the true start it inverts: Bordeaux first.
+            #
+            # AT SEA THE REMEMBERED NAME IS THE VOYAGE'S ORIGIN, not our position, and no
+            # port is where the fleet is — so that one gets no answer.
+            #
+            # BUT THE WORLD MAP IS NOT A DEPARTURE. It is a screen opened FROM somewhere, and
+            # standing in a port with the map up leaves the fleet exactly where it was. This
+            # asked `is_departed`, which counts `world_map` alongside `sea` — a fair reading
+            # of "left a settlement and en route", and the wrong question here.
+            #
+            # The plan is computed immediately after the REMOTE VILLAGE CHECK, and that check
+            # runs on the world map. So this fired on essentially every mission. Live
+            # 2026-09-08, planning Box of Nutmeg with the fleet moored at Ambon:
+            #
+            #     [mission] the fleet is between ports — placing it nowhere rather than at
+            #               the port it sailed from
+            #     graph: [... 'gather:Santo Domingo', 'gather:Masulipatnam', 'gather:Jakarta' ...]
+            #
+            # With no origin the solver cannot compare distances and orders by COVERAGE
+            # alone, which sent an Indonesian mission to the Caribbean for Coral:
+            #
+            #     real origin (Ambon) -> ['Ambon', 'Guam', 'Kolkata']
+            #     placed nowhere      -> ['Santo Domingo', 'Masulipatnam', 'Jakarta']
+            #
+            # Masulipatnam->Santo Domingo is 4,181 against 1,722 to Guam. The fleet was
+            # standing on the Ebony it was about to sail away from (user, 2026-09-08: "it
+            # should not lose origin when at a port, that info is readily available").
+            best, best_age, best_how = None, None, ""
+            try:
+                from brain import observation as _obs
+                cur = _obs.current()
+                # THE OBSERVATION NOW SAYS WHICH FACT IT HOLDS, so this no longer has to
+                # infer it from the scene. `departed_from` is set exactly when the port was
+                # popped, and `last_known_settlement` is None for the whole voyage — so a
+                # departed fleet is one that has an origin and no position.
+                if cur is not None and cur.departed_from and not cur.last_known_settlement:
+                    logger.info(f"[mission] the fleet sailed from {cur.departed_from!r} and "
+                                "is not in a port — placing it nowhere rather than at its "
+                                "origin")
+                    return fallback
+                held = (cur.last_known_settlement if cur else None) \
+                    or _obs._ensure_persisted_loaded()
+                if held:
+                    age = (cur.settlement_age_s() if cur else None)
+                    best, best_age = str(held), age
+                    best_how = (f" (the place, seen {age:.0f}s ago)" if age is not None
+                                else " (the place)")
+            except Exception as exc:              # noqa: BLE001 — one record is enough
+                logger.debug(f"[mission] could not ask the place: {exc}")
+
             seen = recall("settlement")
             if seen is not None:
                 name, age = seen
+                # UNDATED LOSES TO DATED. A place we cannot date might be from any time;
+                # a reading that says how old it is can at least be compared.
+                if best is None or best_age is None or age < best_age:
+                    best, best_age = name, age
+                    best_how = f" (remembered {age:.0f}s ago)"
+            if best is not None:
                 logger.info(f"[mission] {state!r} does not show the port name — "
-                            f"using {name!r}, seen {age:.0f}s ago")
-                return _place(name, f" (remembered {age:.0f}s ago)")
+                            f"using {best!r}{best_how}")
+                return _place(best, best_how)
             logger.warning(f"[mission] {state!r} does not show the port name and none is "
                            "remembered — cannot place the fleet on the map")
             return fallback
@@ -330,6 +413,34 @@ def make_live_executors(opp=None) -> dict:
         #
         # Getting to the market is an INTENT the loop dispatches; the tab tap, the shelf
         # rounds and the gem refresh are the activity's business and no longer appear here.
+        # TRIM BEFORE BUYING, NOT AFTER (user, 2026-09-04: "at 171 it saw there are too many
+        # pigs, trim there"). Space is what a purchase needs, so a trim that runs after the
+        # buying is a trim that could not help it.
+        #
+        # `buy_to_goal` buys by the shelf, so a leg routinely overshoots — and the graph's
+        # `sell_surplus` node depends on ALL the gathers, so the surplus rode to the NEXT
+        # port and took the room that port's material needed. Live 2026-09-04: Faro bought
+        # 2,736 Pig against a goal of 1,260; the fleet reached Madeira at 4,847/4,952 with
+        # 105 free slots; Raisin came home 391 short and the barter lost a round. Frame 171
+        # is the moment it could have been fixed — the Sell grid open at Madeira, the hold
+        # in plain view, before a single Raisin had been bought.
+        #
+        # Both goals are MARKET goals, so this is one visit and one walk: TrimHold enters the
+        # market, Hold finds itself already there. The end-of-gathering `sell_surplus` node
+        # stays — it is what catches the LAST leg, which has no next port to trim before.
+        keep_qty = task.params.get("keep_qty") or {}
+        trimmed = None
+        if keep_qty:
+            from brain.activities.market import TrimHold
+            trim = run_goal(TrimHold(dict(keep_qty)))
+            if trim is None:
+                logger.warning(f"[mission.gather] {port}: could not trim before buying — "
+                               "buying into whatever room is left")
+            else:
+                trimmed = dict(trim.observed).get("trimmed")
+                logger.info(f"[mission.gather] {port}: trimmed to plan before buying "
+                            f"{trimmed}")
+
         result = run_goal(Hold(dict(orders)))
         if result is None:
             return {"ok": False, "reason": f"could not reach the market at {port}"}
@@ -337,7 +448,7 @@ def make_live_executors(opp=None) -> dict:
         _exit_market_to_overworld()   # clean hand-off: leave port_overworld for the next leg
         return {"ok": bool(result.ok), "port": port,
                 "bought_total": observed.get("bought_total"),
-                "met": observed.get("met"),
+                "met": observed.get("met"), "trimmed": trimmed,
                 "reason": observed.get("stopped_because") or result.detail}
 
     @_facade

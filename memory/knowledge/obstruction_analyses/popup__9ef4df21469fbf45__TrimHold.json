@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell sub-panel is showing the Raisin item card details (quantity 950, price 1,098 with +475 profit margin) after the bot interacted with it — this is the normal item-selected state of the Sell screen, not a blocking popup",
+  "full_text": "Raisin Luxuries 950 100% 1,098 (475)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "9ef4df21469fbf45",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-10T18:25:25.331535+00:00",
+  "visit_count": 10,
+  "raw_api_response": {
+    "purpose": "The Sell sub-panel is showing the Raisin item card details (quantity 950, price 1,098 with +475 profit margin) after the bot interacted with it — this is the normal item-selected state of the Sell screen, not a blocking popup",
+    "full_text": "Raisin Luxuries 950 100% 1,098 (475)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

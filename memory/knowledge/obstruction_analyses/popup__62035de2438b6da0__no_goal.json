@@ -1,0 +1,21 @@
+{
+  "purpose": "The right-side panel is showing the Chronicle quest tracker and market/trend notifications, including an active Admiral Chronicle quest to complete an Anonymous Threatening Letter Request from the Istanbul Union (0/1 progress).",
+  "full_text": "C/TW 10 | 27.1 | 1.11, 81.03 | Tropical | May | Daytime | Major Trend Oc... | Auction House ... | Auction House ... | Admiral Chronicle: Complete Anonymous Threatening Letter Request from Istanbul Union (0/1) | Proceed with another Relationship Chronicle | New Royal Order available. Visit Seville Palace.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "62035de2438b6da0",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T18:15:36.266497+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The right-side panel is showing the Chronicle quest tracker and market/trend notifications, including an active Admiral Chronicle quest to complete an Anonymous Threatening Letter Request from the Istanbul Union (0/1 progress).",
+    "full_text": "C/TW 10 | 27.1 | 1.11, 81.03 | Tropical | May | Daytime | Major Trend Oc... | Auction House ... | Auction House ... | Admiral Chronicle: Complete Anonymous Threatening Letter Request from Istanbul Union (0/1) | Proceed with another Relationship Chronicle | New Royal Order available. Visit Seville Palace.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

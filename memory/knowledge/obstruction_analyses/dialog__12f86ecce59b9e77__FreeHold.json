@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade Goods Info dialog showing Iron's price breakdown (Sales Cost 1,010, Tax -85, Surcharge +313, Per Price 1,238) with quantity set to 1/253, opened as part of staging Iron for sale to free hold space",
+  "full_text": "Trade Goods Info — Iron, Wares, 253 units. Calculation: Sales Cost 1,010 | Tax -85 | Surcharge +313 | Per Price 1,238. Description: Metal extracted from iron ore. Often serves as the symbol of all metals. Prices: Current Price 1,010 | Max Price 1,058 | Min Price 865. Quantity: 1/253. Final Sales Price: 1,238. Buttons: Cancel | Load",
+  "dismissal": "tap_accept",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "12f86ecce59b9e77",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-09T21:52:09.925642+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Trade Goods Info dialog showing Iron's price breakdown (Sales Cost 1,010, Tax -85, Surcharge +313, Per Price 1,238) with quantity set to 1/253, opened as part of staging Iron for sale to free hold space",
+    "full_text": "Trade Goods Info — Iron, Wares, 253 units. Calculation: Sales Cost 1,010 | Tax -85 | Surcharge +313 | Per Price 1,238. Description: Metal extracted from iron ore. Often serves as the symbol of all metals. Prices: Current Price 1,010 | Max Price 1,058 | Min Price 865. Quantity: 1/253. Final Sales Price: 1,238. Buttons: Cancel | Load",
+    "relates_to_goal": true,
+    "dismissal": "tap_accept",
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

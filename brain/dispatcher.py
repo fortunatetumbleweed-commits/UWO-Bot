@@ -131,6 +131,35 @@ class ActivityResult:
         return self.status == FINISHED
 
 
+def _did(result) -> Optional[str]:
+    """What the activity last did, from its own report. None when it did not say.
+
+    Prefers `acted` — the ACTION, "tapped the restock" — over `did`, the outcome verb,
+    "refreshed". Whoever reads a dialog needs to know which button put it there.
+    """
+    try:
+        seen = getattr(result, "observed", None) or {}
+        return seen.get("acted") or seen.get("did") or None
+    except Exception:                                # noqa: BLE001 — a label, never a failure
+        return None
+
+
+def _progress(result) -> Optional[dict]:
+    """How far the goal has got, from the activity's own ledger. None when it did not say."""
+    try:
+        seen = getattr(result, "observed", None) or {}
+        return seen.get("materials") or None
+    except Exception:                                # noqa: BLE001
+        return None
+
+
+def _where_we_are(result) -> Optional[str]:
+    try:
+        return (getattr(result, "observed", None) or {}).get("port") or None
+    except Exception:                                # noqa: BLE001
+        return None
+
+
 class Activity(Protocol):
     """A world the bot can be resumed in and do work in.
 
@@ -213,8 +242,26 @@ _RETRY_ONCE_IF_UNCHANGED = frozenset({"ENTER_BUILDING", "EXIT_BUILDING"})
 #
 # The retry only fires on an OBSERVED-unchanged screen, so a Back that worked is never
 # followed by another — but the blast radius when that observation is wrong is a lost village
-# on one side and a re-entered market on the other, and only one of those is worth risking.
-_RETRY_EXIT_FROM = ("building", "sub_menu")
+# on one side and a re-entered market on the other.
+#
+# VILLAGE IS HERE NOW (user, 2026-09-04), and what changed is the reading of that cost. A
+# second Back at a village lands at SEA, which is only a loss while there is still work in the
+# village. EXIT_BUILDING is dispatched when leaving IS the goal — the barter is over and the
+# tail leg is next — so "lost the village" and "left the village" are the same event, and the
+# guard was protecting nothing at the only moment it fires.
+#
+# What it cost live 2026-09-04 at San: four rounds committed, 4,455 Bambara Groundnut aboard,
+# and one swallowed Back stranded the lot. Back was pressed at 19:11:47 and never again;
+# three unchanged ticks later the mission failed with the fleet standing in the village.
+#
+#     19:12:03  EXIT_BUILDING ... already dispatched — letting it land
+#     19:12:12  EXIT_BUILDING ... already dispatched — letting it land
+#     19:12:21  NOTHING CHANGED for 3 ticks (state='village')
+#
+# The old note is still right about the ORIGINAL failure it records: that loop pressed Back
+# "up to four times at a screen that never moved". This is one extra press, gated on an
+# unchanged observation, and still bounded by the same stall guard — not that loop returning.
+_RETRY_EXIT_FROM = ("building", "sub_menu", "village")
 
 # When the family classifier's answer stands on its own. Measured on the frames that
 # defeated the label test: 0.9998, 0.958, 0.996 — it is either sure or it is not.
@@ -272,7 +319,9 @@ class Dispatcher:
         self._refresh = refresh          # lost -> drop what the wrong belief cached
         self._unblock = unblock          # clear an obstruction laid OVER the world
         self._dialog = dialog            # frame -> DialogModel | None (injectable for tests)
-        self._dialog_looks = 0           # consecutive ticks with a dialog still up
+        self._last_transaction = (0, 0)  # (goods sold, units bought) at the last progress
+        self._dialog_looks = 0           # presses at ONE dialog that changed nothing
+        self._dialog_seen = None         # the dialog AND the world it was over
         # WHERE WE WERE, for an `unknown` that is a presentation change and not a move.
         self._standing_in: Optional[str] = None   # state an activity last worked in
         self._standing_looks = 0                  # consecutive unknowns carried on it
@@ -343,8 +392,11 @@ class Dispatcher:
             logger.debug(f"[dispatch] could not tell whether the port is drawn: {exc}")
             return True
 
-    def _wait_out_the_wake_timer(self) -> None:
+    def _wait_out_the_wake_timer(self) -> bool:
         """Sleep until the activity asked to be looked at again. Waiting only.
+
+        RETURNS WHETHER IT ACTUALLY SLEPT, because a sleep spends the look that preceded it
+        — see `step`, which drops `_fresh` when this returns True.
 
         THE ACTIVITY STATES A WAKE TIME AND HANDS BACK; IT NEVER SLEEPS (user, 2026-08-31).
         That keeps it passive — it reports `checkback_s` in its observation and the dispatcher
@@ -361,17 +413,19 @@ class Dispatcher:
         its next look is driven by its own action rather than by a clock.
         """
         if not self._wake_at:
-            return
+            return False
         remaining = self._wake_at - _time.monotonic()
         self._wake_at = 0.0
-        if remaining > 0:
-            # Imported here, not at module scope: `run_goal` imports this module, so a
-            # top-level import would be a cycle. The jitter matters — a fixed cadence is
-            # what the game's anti-cheat looks for.
-            from brain.run_goal import _sleep_jittered
-            logger.info(f"[dispatch] {self._wake_why} — waiting "
-                        f"{remaining / 60:.1f} min before the next look")
-            _sleep_jittered(remaining)
+        if remaining <= 0:
+            return False
+        # Imported here, not at module scope: `run_goal` imports this module, so a top-level
+        # import would be a cycle. The jitter matters — a fixed cadence is what the game's
+        # anti-cheat looks for.
+        from brain.run_goal import _sleep_jittered
+        logger.info(f"[dispatch] {self._wake_why} — waiting "
+                    f"{remaining / 60:.1f} min before the next look")
+        _sleep_jittered(remaining)
+        return True
 
     def _afforded_here(self, intent, where, state):
         """`intent` if this world can start it — otherwise ask the task for other work.
@@ -464,6 +518,44 @@ class Dispatcher:
                    if intent_name in (affordances(w, self._activities) or ())}
         return first_hop_toward(where, targets, self._activities)
 
+    def _publish_goal(self, doing: Optional[str] = None, *,
+                      port: Optional[str] = None,
+                      progress: Optional[dict] = None) -> None:
+        """Say what the bot is working on, so perception can read it.
+
+        THE DISPATCHER IS THE ONLY LAYER THAT KNOWS BOTH. The task runner owns the work
+        order and the activity owns the screen; only this sees the pair, which is why the
+        goal is published from here and nowhere else.
+
+        `doing` is the ACTION intent — the thing the activity last did — and it is what
+        makes the goal usable for reading a screen. "hold Ebony, Textiles, Coral" says why
+        we are in the market; "tapped Sell" says what the dialog now in front of us is. It
+        defaults to None, and a None reads exactly as today's behaviour did.
+        """
+        try:
+            from brain.goal_context import GoalContext, set_ambient_goal
+        except Exception as exc:                     # noqa: BLE001 — never fail a tick on this
+            logger.debug(f"[dispatch] could not publish the goal: {exc}")
+            return
+        if self.goal is None:
+            set_ambient_goal(None)
+            return
+        # A LABEL IS NOT A SITUATION (user, 2026-09-08). The consult used to be handed
+        # `goal='Hold'` and a dialog, and asked whether the two were related — with no way
+        # to know the bot was at a market, what it had already bought, or that its own tap
+        # is what put the dialog on the screen. It answered "decline", correctly for the
+        # question it was asked, and the bot cancelled its own restock five times running.
+        target = {"goal": str(self.goal)}
+        if doing:
+            target["doing"] = doing
+        if self._standing_in:
+            target["where"] = str(self._standing_in)
+        if port:
+            target["port"] = port
+        if progress:
+            target["progress"] = progress
+        set_ambient_goal(GoalContext(intent=type(self.goal).__name__, target=target))
+
     def _is_a_covering_screen(self, where) -> bool:
         """Is this a screen drawn OVER the world rather than a world of its own?"""
         found = self._activities.get(where)
@@ -519,7 +611,24 @@ class Dispatcher:
         return a `TickResult` and are driven at 0.15-0.40 s by their own control loop. Those
         really are ticks. This is not one.
         """
-        self._wait_out_the_wake_timer()
+        # A SLEEP SPENDS THE LOOK THAT PRECEDED IT, exactly as an intent does. `_fresh` is
+        # captured at the END of the previous step — BEFORE this wait — so reusing it here
+        # decides a 9-minute-old world, and then sets the NEXT sleep from it too.
+        #
+        # Live 2026-09-04 sailing to San Village, four readings:
+        #     18:28:50  eta=11d -> 0.5 min      18:29:59  eta=6d -> 9.0 min
+        #     18:29:31  eta=7d  -> 0.3 min      18:38:17  eta=6d -> 9.0 min
+        # The ETA did not move across 8.3 minutes of sailing, because the fourth reading WAS
+        # the third: the frame behind it was captured at 18:30:00. The fleet is always one
+        # whole sleep behind, so it notices arrival a sleep late and re-books the same wait
+        # from an ETA that can never fall.
+        #
+        # At sea this never self-corrected: `_fresh` is only dropped after an INTENT is
+        # dispatched, and a sea tick dispatches none. The rule is the architecture's own —
+        # never act on a reading the world has already contradicted — and nine minutes of
+        # sailing contradicts one.
+        if self._wait_out_the_wake_timer():
+            self._fresh = None
 
         # EVERY STEP TAKES A FRESH LOOK. The dispatcher regaining control IS the caller that
         # expects the world to have changed (user, 2026-08-31) — and that is every step, not
@@ -536,6 +645,12 @@ class Dispatcher:
         # expectation it genuinely holds, at the one moment it holds it. And it costs nothing
         # extra: `perceive` reads THROUGH the repository now, so a step captures once and
         # every reader in that step shares it.
+        # WHAT WE ARE WORKING ON, said before anything looks. `_detect_interruptors` consults
+        # Claude about a dialog and asks whether it relates to the goal; without this it was
+        # asking with no goal to relate it to. See `_publish_goal`.
+        self._publish_goal(_did(self.last), port=_where_we_are(self.last),
+                           progress=_progress(self.last))
+
         try:
             from actions.perception import screen
             screen().expect_changed("the dispatcher is taking a fresh look")
@@ -642,12 +757,37 @@ class Dispatcher:
 
         dialog = self._dialog_on(state)
         if dialog is not None:
-            self._dialog_looks += 1
+            # THE SAME DIALOG, NOT ANY DIALOG. The budget below exists to stop grinding at
+            # ONE screen that will not close, and this counted every tick that had a dialog
+            # on it — so a market visit's ordinary chain spent it on progress.
+            #
+            # It has been failing safe by a single look for a long time. Across the session
+            # logs the generic answer fired 69 times and THIRTY-ONE of those were at 3/3,
+            # the last look it had. Live 2026-09-09 at Bordeaux the hold was full of Birch
+            # Tree, which added a `cargo_full_notice` to the front of the chain —
+            # notice, negotiation, result, three DIFFERENT dialogs each answered
+            # successfully — and the purchase result card reached the guard at 4/3. It was
+            # reported as "a system dialog will not close" without ever being answered once.
+            # WHAT THE BUDGET MEASURES IS A PRESS THAT DID NOT LAND, not a look at a
+            # dialog (user, 2026-09-09: "it should only have a limit when looking at the
+            # same thing that is stuck, if it has finished a successful transaction, the
+            # counter should be cleared").
+            #
+            # So it only rises when NOTHING moved: the same dialog, over the same world.
+            # A different dialog is the last answer having worked. And so is the SAME
+            # dialog over a CHANGED world — three purchases in a row each raise a Result
+            # card identical in title and buttons, and counting those as one stuck card
+            # would block the third. The screen behind it is what tells them apart: the
+            # cargo, the gold and the shelf have all moved.
+            here = (self._dialog_signature(dialog), self._screen_signature(state))
+            self._dialog_looks = (self._dialog_looks + 1) if here == self._dialog_seen else 1
+            self._dialog_seen = here
             handled = self._offer_dialog(activity, dialog, state)
             if handled is not None:
                 return handled
         else:
             self._dialog_looks = 0
+            self._dialog_seen = None
 
         if activity is None:
             # AN ACTIVITY BEHIND A DIALOG HAS NOT GONE ANYWHERE (user, 2026-09-04).
@@ -750,6 +890,20 @@ class Dispatcher:
     # never a sub-loop waiting in place for its own effect.
     _MAX_DIALOG_LOOKS = 3
 
+    @staticmethod
+    def _dialog_signature(dialog) -> tuple:
+        """What tells one dialog from the next — its title and the buttons it offers.
+
+        Coarse on purpose. It has to survive a re-read of the same card (so not pixels, and
+        not a number that ticks) while separating a negotiation from a result from a cargo
+        notice, which is all the budget above needs.
+        """
+        title = getattr(getattr(dialog, "title", None), "text", None) or getattr(
+            dialog, "kind", None) or ""
+        actions = tuple(sorted(str(getattr(a, "label", "") or "").strip().lower()
+                               for a in (getattr(dialog, "actions", None) or ())))
+        return (str(title).strip().lower(), actions)
+
     def _dialog_on(self, state) -> Any:
         """The dialog covering this tick's screen, or None. Never raises."""
         if self._dialog is not None:
@@ -766,6 +920,107 @@ class Dispatcher:
             logger.debug(f"[dispatch] could not look for a dialog: {exc}")
             return None
 
+    def _button_by_text(self, state: Any, label) -> Optional[tuple]:
+        """Where a NAMED button is, read off the frame — the second reader.
+
+        Only ever asked about a label a written rule chose, never swept for candidates: a
+        sweep turns up page furniture, and a point with a plausible name is exactly the kind
+        of guess that lands a tap somewhere nobody meant.
+        """
+        frame = getattr(state, "frame", None)
+        if frame is None or not label:
+            return None
+        try:
+            from actions.route_execution import find_text_button
+            from actions.sail_actions import _ocr_frame
+            where = find_text_button(_ocr_frame(frame, min_conf=0.3), str(label),
+                                     min_ratio=0.95)
+        except Exception as exc:              # noqa: BLE001 — a poorer read, not a broken one
+            logger.debug(f"[dispatch] could not re-read the dialog's buttons: {exc}")
+            return None
+        return (int(where[0]), int(where[1])) if where is not None else None
+
+    def _dimmed(self, state: Any) -> bool:
+        """Is something dimming the screen — i.e. is a window actually over it?
+
+        Unknown reads as DIMMED, which is the safe direction here: it leaves the long-standing
+        behaviour in place and only the confident "nothing is dimmed" refuses a tap.
+        """
+        frame = getattr(state, "frame", None)
+        if frame is None:
+            return True
+        try:
+            from vision.overlay import CLEAR, scrim_state
+            return scrim_state(frame) != CLEAR
+        except Exception as exc:              # noqa: BLE001 — a poorer read, not a broken one
+            logger.debug(f"[dispatch] could not read the scrim: {exc}")
+            return True
+
+    def _words_inside(self, dialog: Any, state: Any) -> list:
+        """Every label the dialog's own bounds contain — the rules decide, we OBSERVE.
+
+        `body_text` is the detector's INTERPRETATION: the text between the title bar and the
+        topmost action button, taken from the cluster it thinks is the card. When the card is
+        not shaped like a card that reading loses the very words a rule needs.
+
+        Live 2026-09-06, the Attempt Negotiation screen. It is not a centred modal at all —
+        the mate's portrait and "Want me to try negotiating?" sit LEFT, the three choices
+        RIGHT — so the detector bounded it at (33,121)-(2239,1080), essentially the frame, and
+        `body_text` came back `['Purchase', '3,330/4,952', '162']`: page furniture, with
+        'Attempt Negotiation' and 'Remaining negotiation attempts' both present on screen and
+        both dropped. `game_rules` was then asked to rule on a card it could not read, said
+        so honestly, and bootstrap died at step 1 on a screen left over from a previous run.
+
+        THE COST OF WIDENING IT. On a well-bounded dialog this is exactly the card's text. On
+        a mis-bounded one it is closer to the whole frame, so a rule could in principle match
+        something behind the card. That is bounded by keeping rule phrase-sets narrow and
+        specific — `DialogRule` requires ALL phrases — and it is the better failure: a rule
+        that occasionally sees too much beats a decision layer that is handed nothing and
+        wedges the run. Deciding stays in `game_rules`; this only widens what it is shown.
+        """
+        bbox = getattr(dialog, "bbox", None)
+        frame = getattr(state, "frame", None)
+        if bbox is None or frame is None:
+            return []
+        x1, y1, x2, y2 = bbox
+        try:
+            from vision.omniparser import parse_fast_cached
+            return [str(e.label).strip() for e in parse_fast_cached(frame)
+                    if (e.label or "").strip()
+                    and x1 <= e.cx <= x2 and y1 <= e.cy <= y2]
+        except Exception as exc:              # noqa: BLE001 — a poorer read, not a broken one
+            logger.debug(f"[dispatch] could not read inside the dialog: {exc}")
+            return []
+
+    def _note_any_progress(self, result) -> None:
+        """A completed transaction clears every "am I stuck?" counter.
+
+        A SUCCESSFUL BUY OR SELL IS PROGRESS, AND PROGRESS IS NOT A STALL (user, 2026-09-09:
+        "like a successful buy or successful sell, then all the counters should be cleared").
+        Every counter here answers the same question — has this stopped moving? — and a
+        transaction landing is the plainest possible No. Leaving them standing is how a
+        guard fires on a run that is working: at Bordeaux on 2026-09-09 three dialogs were
+        answered, two purchases went through, and the budget still ran out because it had
+        been counting since before any of it.
+
+        Read from the activity's own report, so nothing new is threaded through: `sold`
+        grows on a sale and `bought_total` on a purchase.
+        """
+        seen = getattr(result, "observed", None) or {}
+        try:
+            now = (len(seen.get("sold") or ()), int(seen.get("bought_total") or 0))
+        except Exception:                             # noqa: BLE001 — a label, never a failure
+            return
+        if now == (0, 0) or now == self._last_transaction:
+            return
+        logger.info(f"[dispatch] a transaction landed (sold {now[0]}, bought {now[1]}) — "
+                    "clearing the stall counters, because this is not stuck")
+        self._last_transaction = now
+        self._dialog_looks, self._dialog_seen = 0, None
+        self._in_flight_looks = 0
+        self._standing_looks = 0
+        self._undrawn_looks = 0
+
     def _offer_dialog(self, activity: Activity, dialog: Any, state: Any):
         """Give the activity first refusal on the dialog; fall back to the safe exit.
 
@@ -776,6 +1031,18 @@ class Dispatcher:
         who = getattr(activity, "name", None) or "no activity"
         handler = getattr(activity, "on_dialog", None) if activity is not None else None
         if handler is not None:
+            # THE ACTIVITY MUST SEE THIS TICK'S SCREEN, NOT THE LAST ONE. `on_dialog` runs
+            # BEFORE `work()`, which is where an activity normally receives the tick's frame,
+            # so without this it classifies whatever the previous tick left behind.
+            #
+            # Live 2026-09-06 at Tripoli: the market's `on_dialog` read the PURCHASE PAGE from
+            # the previous tick, concluded "a page is not a dialog", and returned None without
+            # a word — so its own negotiation handler never ran, the card fell through to
+            # `game_rules`, and the leg failed with "a confirmation dialog will not close".
+            # The market classifies that frame as `negotiation` correctly when it is given it.
+            seen = getattr(activity, "on_tick_frame", None)
+            if seen is not None:
+                seen(getattr(state, "frame", None))
             result = handler(dialog, self.goal)
             if result is not None and result.status != UNRECOGNISED:
                 logger.info(f"[dispatch] {who} answered the {kind} dialog -> "
@@ -822,6 +1089,46 @@ class Dispatcher:
         # system pressing a positive button; there is no positive button to press.
         options = [a.label for a in dialog.actions]
         close = getattr(dialog, "close_button", None)
+        # THE X MAY NOT BE BOTH THE EVIDENCE AND THE TARGET. `detect_dialog` rests on two
+        # anchors — a close X, and a row of action buttons — and reports which fired. When
+        # `close` is the ONLY one, the sole reason to believe a dialog is open is the very
+        # thing this branch would tap. That is circular, and it is how a tap gets spent on a
+        # screen with no dialog at all.
+        #
+        # Live 2026-09-06 on the Seville leg, this tapped the bare WORLD MAP. The detector
+        # returned bbox (973,296)-(2246,1046), `actions=[]`, `anchors_fired=('close',)`, and
+        # its "close button" (1335,359)-(1413,414) was the '108 108' trade-value badge beside
+        # the Montpellier label. The tap went in at (1374,386) — which on a world map OPENS a
+        # port's Location Info. Marseille's. The world-map activity then found a panel for the
+        # wrong place, rightly refused to sail from it, and the leg died two attempts later.
+        # Every later symptom came from this one tap.
+        #
+        # A TITLE BAR WOULD NOT HAVE CAUGHT IT, which is worth recording because it was the
+        # first fix tried: `_find_title_bar` runs over the cluster AFTER the anchors and
+        # happily returned `TitleBar(text='Montpellierlle')` — the map's own port label. Only
+        # the anchor set distinguishes the two cases.
+        #
+        # `Gear Info` — the informational dialog this branch was written for — is unaffected:
+        # it is a real card whose X sits in real chrome, and nothing about it changes here.
+        # What is refused is acting on ONE weak geometric anchor; the screen still reaches the
+        # activity and the state classifier, which is where a real dialog gets recognised.
+        # AND THE SCRIM IS WHAT SETTLES IT. A dialog is a WINDOW: it dims what it covers
+        # (`docs/dialogs_are_windows.md`, measured x1.98), and `vision.overlay.scrim_state`
+        # already reads that. So a lone close-X anchor is refused only when NOTHING is dimmed
+        # — no scrim, no window, nothing to close. Measured on the two frames:
+        #
+        #     world map, no dialog at all   anchors=('close',)  scrim=clear
+        #     a real card after a purchase  anchors=('close',)  scrim=scrim
+        #
+        # Refusing on the anchor alone was too broad and cost a run of its own: at Barcelona
+        # a genuine card sat at (813,329)-(1587,754) with only an X, nothing closed it, and
+        # the task stopped with "NOTHING CHANGED for 3 ticks".
+        anchors = tuple(getattr(dialog, "anchors_fired", ()) or ())
+        if not options and close is not None and anchors == ("close",) and not self._dimmed(state):
+            logger.info(f"[dispatch] this {kind} rests on a close-X alone and nothing on "
+                        "screen is dimmed — the X is the only evidence for it AND the thing "
+                        "we would tap, so not tapping it")
+            return None
         if not options and close is not None:
             x1, y1, x2, y2 = close
             from actions import ui
@@ -831,12 +1138,35 @@ class Dispatcher:
             ui.tap_at((x1 + x2) // 2, (y1 + y2) // 2, why=f"close an unowned {kind} dialog")
             return {"did": f"closed a {kind} dialog with no buttons"}
 
-        from brain.game_rules import answer_dialog
+        from brain.game_rules import answer_dialog, rule_answer
         text = list(getattr(dialog, "body_text", ()) or ())
         if getattr(dialog, "title_bar", None) is not None and dialog.title_bar.text:
             text.append(dialog.title_bar.text)
+        text.extend(self._words_inside(dialog, state))
         choice = answer_dialog(options, text)
         if choice is None:
+            # A WRITTEN RULE MAY NAME A BUTTON THE PARSER MISSED. `answer_dialog` will not
+            # pick an option nobody offered, which is right — but the option list came from
+            # OmniParser's action boxes, and a mis-boxed button simply is not in it.
+            #
+            # Live 2026-09-06 at bootstrap: the Attempt Negotiation card, its 'No' returned as
+            # a 725x364 phantom that the size guard rightly dropped, leaving `options=['buy']`.
+            # The rules refused — "'attempt_negotiation' applies but 'no' is not offered" —
+            # honest, and still stuck, because the 'No' was plainly on screen. OCR puts it at
+            # (1803,639).
+            #
+            # ONLY A NAMED RULE GETS THIS. The positive DEFAULT does not, deliberately: a
+            # free text sweep also turns up 'Purchase' at (200,49) and 'Sell' at (64,275) —
+            # the market's TAB labels — and "take the positive option" among words nobody
+            # placed is how a tab gets tapped instead of a button.
+            named = rule_answer(text)
+            spot = self._button_by_text(state, named) if named else None
+            if spot is not None:
+                from actions import ui
+                logger.info(f"[dispatch] the rules say {named!r} and the box parser missed "
+                            f"it — read off the frame at {spot}")
+                ui.tap_at(spot[0], spot[1], why=f"{named} on an unowned {kind} dialog")
+                return {"did": f"answered a {kind} dialog with {named!r}"}
             logger.warning(f"[dispatch] nothing owns this {kind} dialog and the game rules "
                            f"will not answer it (options={options}) — reporting rather than "
                            "pressing something at random")
@@ -846,13 +1176,16 @@ class Dispatcher:
 
         target = next((a.bbox for a in dialog.actions if a.label == choice), None)
         from actions import ui
-        if target is None:
+        point = None
+        if target is not None:
+            x1, y1, x2, y2 = target
+            point = ((x1 + x2) // 2, (y1 + y2) // 2)
+        if point is None:
             logger.warning(f"[dispatch] {choice!r} is not on screen after all — not guessing")
             return None
-        x1, y1, x2, y2 = target
         logger.info(f"[dispatch] nothing owns the {kind} dialog — the game rules say "
                     f"{choice!r} ({self._dialog_looks}/{self._MAX_DIALOG_LOOKS})")
-        ui.tap_at((x1 + x2) // 2, (y1 + y2) // 2, why=f"{choice} on an unowned {kind} dialog")
+        ui.tap_at(point[0], point[1], why=f"{choice} on an unowned {kind} dialog")
         return {"did": f"answered a {kind} dialog with {choice!r}"}
 
     # How many consecutive `unknown` ticks may be carried on a remembered activity. A dialog
@@ -967,14 +1300,35 @@ class Dispatcher:
         village.
         """
         self.last = result
+        self._note_any_progress(result)
+        # THE LOOK BELOW SHOWS WHAT THE ACTION PRODUCED, so it is read under the action that
+        # produced it — a result card is only recognisable as one when "tapped Sell" is on
+        # the record.
+        self._publish_goal(_did(result), port=_where_we_are(result),
+                           progress=_progress(result))
         if result.status == UNRECOGNISED:
             logger.info("[dispatch] activity is lost — perceiving, transitioning, refreshing")
             state = self._regain_bearings(state)
         else:
             state = self._perceive()
         self._fresh = state
+        # WHY THERE IS NO COVERING-SCREEN CHECK HERE. There was one, added 2026-09-09,
+        # and it was both redundant and wrong.
+        #
+        # Redundant: `step` already converts a FINISHED from a `CLEARS_SCREEN` activity into
+        # UNRECOGNISED before calling this, so the runner is asked again and returns the same
+        # goal, still unfilled. Last night's main-menu failure was not a missing guard — it
+        # was `MainMenuActivity` missing the MARKER that guard is gated on.
+        #
+        # Wrong: `state` has just been REASSIGNED by the re-perceive above, so a check here
+        # reads whatever is on screen NOW, not the screen the activity ran in. Live
+        # 2026-09-10 the course for Trabzon was set and the leg completed; a departure notice
+        # appeared during the re-perceive; the check saw `transient`, called it "a covering
+        # screen finished", and suppressed the ask — freezing a goal that was already done.
+        # The world map was then opened a second time and Trabzon selected again, mid-voyage.
+        #
+        # The guard belongs where it is: on the activity, before the result is interpreted.
         self.goal = self._next_goal(result, state)
-
         intent = self._to_intent(self.goal, state) if self.goal is not None else None
         where = getattr(state, "state", None)
         if intent is not None:

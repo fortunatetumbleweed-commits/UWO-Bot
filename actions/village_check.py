@@ -51,6 +51,10 @@ _ROW_SPAN = 130             # px from a row's name down to its quantity badge
 _NAME_GAP = 150             # px a name may sit right of its badge (overlays sit far off)
 _NAME_OVERLAP = 60          # px a name may start LEFT of the badge's right edge (observed −2)
 _INDENT_PX = 15             # x1 offset beyond the flush-left base that marks a material
+# How far the CATEGORY PILL sits right of the name column. Measured on frame 13 of
+# trade_barter_cmd_2026-09-07T22-37-17: names at x1 1827-1833, pills at 1869-1872 — a 36px
+# gap with 6px of jitter inside each column, so the boundary is not delicate.
+_PILL_INDENT_PX = 20
 _PANEL_FRAC = 0.60          # the info panel occupies the right ~40% of the frame
 
 
@@ -186,14 +190,46 @@ def _row_names(elements, qtys) -> list:
     # excludes it without measuring any box's width.
     top = min(q.y1 for q in qtys) - _CHROME_MARGIN
     bottom = max(q.y2 for q in qtys) + _CHROME_MARGIN
-    out = []
+    kept = []
     for e in _labelled(elements):
         lab = (e.label or "").strip()
         if e.x2 < left or "." in lab or re.fullmatch(r"[\d,]+", lab):
             continue
         if e.y2 < top or e.y1 > bottom:
             continue                     # panel chrome above the list, controls below it
-        if lab.lower() in _CATEGORY_WORDS:
+        kept.append(e)
+
+    # A CATEGORY IS A COLUMN, NOT A WORD.
+    #
+    # The category pill beside each row (Wares, Jewelry, Fabrics) was excluded by MATCHING
+    # ITS TEXT — and the game names a material `Textiles`, which is also a category. So the
+    # material was thrown away as if it were the pill. Live 2026-09-07, planning Box of
+    # Nutmeg at Melanesian Village (frame 13 of trace_barter_cmd_2026-09-07T22-37-17):
+    #
+    #     Box of Nutmeg 616 · Ebony 101 · Coral 175 · Textiles 175      <- all four legible
+    #     [village_check] 'Box of Nutmeg' not complete yet — still missing ['textiles']
+    #     ... eight scrolls later ...
+    #     the trade list did not complete in 8 scrolls — PARTIAL     -> the mission failed
+    #
+    # It scrolled past the row it already had, and the third material slot was filled with
+    # a `Bow 73` picked up far down the list. The good has never been bartered on this path,
+    # which is why it took until now: no earlier recipe took Textiles.
+    #
+    # The pill is INDENTED from the name column, and measurably so — names on that frame
+    # start at x1 1827/1829/1831/1833 and pills at 1869/1871/1872/1872, four rows out of
+    # four. Same idiom the row parser already uses to tell a material from a good, applied
+    # to the label column instead of the tile column.
+    #
+    # The word list still has the final say inside the pill column, so nothing it caught
+    # before escapes; what changes is that a word in the NAME column is a name, whatever it
+    # says. `Livestock`, `Firearms`, `Medicine`, `Perfume` and `Ore` are all in that list and
+    # all plausible material names — this was one collision of several waiting.
+    name_left = min((e.x1 for e in kept), default=None)
+    out = []
+    for e in kept:
+        if (name_left is not None
+                and e.x1 - name_left > _PILL_INDENT_PX
+                and (e.label or "").strip().lower() in _CATEGORY_WORDS):
             continue
         out.append(e)
     return out
@@ -360,11 +396,45 @@ def parse_trade_list(elements) -> list[VillageTrade]:
 
 def merge_trade_screens(screens: list[list[VillageTrade]]) -> list[VillageTrade]:
     """Accumulate scrolled Trade List screens.  A screen that STARTS with a continuation
-    (good=='') appends its materials to the last good seen so far; duplicate goods merge."""
+    (good=='') appends its materials to the good ABOVE them; duplicate goods merge.
+
+    ORPHANS AT THE TOP OF A SCREEN BELONG TO THE GOOD BEFORE THE SCREEN'S FIRST NAMED ONE,
+    which is not always the last good seen. Two ways a screen can open with unowned material
+    rows, and they need opposite answers:
+
+      * the previous screen was CUT OFF mid-recipe, so these continue its last good; or
+      * the screens OVERLAP and the owner has scrolled off the TOP, its name clipped away —
+        so these belong to a good ALREADY READ, sitting above the screen's first named good.
+
+    The old rule assumed the first case and silently did the second wrong, which made the
+    overlap that exists to stop materials being LOST the thing that duplicated them onto the
+    wrong recipe. Live 2026-09-10 at Cheyenne: the list runs
+    `Goldenseal 1,073 -> Chicle 182, Corn 157, Gold Dust 182 -> American Bison 859`; screen 0
+    read all of it, so `last` was American Bison; screen 1 was the same rows scrolled a
+    little, with Goldenseal's NAME clipped off the top. Its orphans went to American Bison,
+    which came out of the read with FIVE materials instead of three — Corn (as 'Touu') and
+    Gold Dust, both Goldenseal's, at Goldenseal's own ratios.
+
+    Position answers both cases with one rule, because the panel is a linear list: the good
+    immediately preceding the screen's first named good. When that good has not been seen
+    before, there is nothing above it in the accumulation and the last good seen is right,
+    which is the cut-off case.
+
+    A recipe cannot GAIN an ingredient any more than it can lose one — see `_target_complete`
+    for the other half of that invariant.
+    """
     order: list[str] = []
     acc: dict[str, VillageTrade] = {}
     last: Optional[str] = None
     for screen in screens:
+        # WHO OWNS ROWS THAT COME BEFORE THIS SCREEN'S FIRST NAMED GOOD. Decided per screen,
+        # before walking it, because the answer is about what sits ABOVE the screen.
+        head_owner = last
+        first_named = next((t.good for t in screen if t.good), None)
+        if first_named is not None and first_named in acc:
+            i = order.index(first_named)
+            head_owner = order[i - 1] if i > 0 else None
+        seen_named = False
         for t in screen:
             if t.good:
                 if t.good not in acc:
@@ -372,8 +442,13 @@ def merge_trade_screens(screens: list[list[VillageTrade]]) -> list[VillageTrade]
                     order.append(t.good)
                 acc[t.good].materials.update(t.materials)
                 last = t.good
-            elif last:                                    # continuation rows
-                acc[last].materials.update(t.materials)
+                seen_named = True
+            else:
+                # Past the first named good, an orphan is a row whose NAME failed to read
+                # inside this screen, so it continues the good above it here.
+                owner = last if seen_named else head_owner
+                if owner:
+                    acc[owner].materials.update(t.materials)
     return [acc[g] for g in order]
 
 
@@ -667,6 +742,7 @@ class VillageCheck:
     barters_total: Optional[int] = None
     trades: list = field(default_factory=list)          # list[VillageTrade]
     sources: dict = field(default_factory=dict)         # {material: [source ports]}
+    source_villages: dict = field(default_factory=dict)  # {material: [source villages]}
 
     @property
     def rounds_remaining(self) -> Optional[int]:
@@ -845,7 +921,9 @@ def read_village_barter_remote(village: str, *, good: Optional[str] = None,
             wanted = _materials_needing_sources([partial], partial, good, known,
                                                 check.sources)
             if wanted:
-                check.sources.update(_learn_sources_on_screen(elements, wanted))
+                learned_ports, learned_villages = _learn_sources_on_screen(elements, wanted)
+                check.sources.update(learned_ports)
+                check.source_villages.update(learned_villages)
 
         # THE LIST DECIDES WHEN IT IS FINISHED, not the parse. A screen that produced nothing
         # new may be a screen we failed to READ; only the scrollbar and a measured absence of
@@ -918,10 +996,10 @@ def _materials_needing_sources(screens, trades, good, known, learned) -> dict:
     return wanted
 
 
-def _learn_sources_on_screen(elements, wanted: dict) -> dict:
+def _learn_sources_on_screen(elements, wanted: dict) -> tuple:
     """Tap the location pin of each wanted material → read its Source panel → Back.
 
-    Returns {material: [ports]} for the ones read.  Best-effort: a material whose
+    Returns ({material: [ports]}, {material: [villages]}) for the ones read.  Best-effort: a material whose
     pin or Source panel doesn't read is simply left unlearned (the caller reports it
     as unsourced rather than the check failing)."""
     from loguru import logger
@@ -931,7 +1009,7 @@ def _learn_sources_on_screen(elements, wanted: dict) -> dict:
     from actions.village_remote_reader import read_material_sources_frame
 
     pins = material_pins(elements)
-    out = {}
+    out, out_villages = {}, {}
     for material in wanted:
         pin = pins.get(material)
         if pin is None:
@@ -939,10 +1017,16 @@ def _learn_sources_on_screen(elements, wanted: dict) -> dict:
         ui.tap_at(*pin, dwell="dialog", why=f"source pin for {material}")
         frame = capture_screen()
         try:
-            ports = read_material_sources_frame(frame)
+            from actions.village_remote_reader import read_material_sources_by_kind_frame
+            by_kind = read_material_sources_by_kind_frame(frame)
+            ports = list(by_kind.get("market") or [])
+            villages = list(by_kind.get("village") or [])
+            if villages:
+                out_villages[material] = villages
+                logger.info(f"[village_check] {material} ← villages {villages}")
         except Exception as exc:
             logger.warning(f"[village_check] source read for {material!r} failed: {exc}")
-            ports = []
+            ports, villages = [], []
         if ports:
             out[material] = ports
             logger.info(f"[village_check] {material} ← sources {ports}")
@@ -953,7 +1037,7 @@ def _learn_sources_on_screen(elements, wanted: dict) -> dict:
         else:
             logger.warning(f"[village_check] no Source panel opened for {material!r} "
                            "— not pressing Back (would close the village panel)")
-    return out
+    return out, out_villages
 
 
 def _kb_sources() -> dict:
@@ -1107,8 +1191,15 @@ def write_back_invariants(check: VillageCheck) -> None:
         for material, need in trade.materials.items():
             old = prior.get(_norm_name(material))
             sources = check.sources.get(material) or (old.source_ports if old else []) or []
+            # `getattr` because a caller may hand in any object with `.trades` — the
+            # world-map activity passes a SimpleNamespace, and a missing field must read as
+            # "nothing learned this pass", not blow up the whole write-back.
+            learned_villages = getattr(check, "source_villages", None) or {}
+            villages = (learned_villages.get(material)
+                        or (getattr(old, "source_villages", None) if old else []) or [])
             inputs.append(RecipeInput(material=material, ratio=int(need),
-                                      source_ports=list(sources)))
+                                      source_ports=list(sources),
+                                      source_villages=list(villages)))
             seen.add(_norm_name(material))
         # MERGE, never replace.  A material list is INVARIANT — if this read did not see
         # one the KB already knows, that is a partial READ, not a recipe change.  The

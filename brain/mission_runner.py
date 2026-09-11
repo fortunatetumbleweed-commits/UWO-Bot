@@ -117,6 +117,24 @@ class _VoyageStep:
             return
         if _same_place(arrived_at, self.destination):
             return
+        # AN UNREAD NAME NEVER STOPS A VOYAGE — only a CONFIDENT reading of somewhere else.
+        #
+        # The rule (user, 2026-09-07): "Unable to read port name should not stop things except
+        # on the world map. No other activities really depend on port name... If the bot does
+        # not know if it has arrived at a port it needs to buy stuff, should still go to the
+        # market to check." That is already how this behaves — an `arrived_at` of None returns
+        # above — and the misreading that stranded the Faro leg no longer reaches here at all:
+        # `read_port_name` rejects prose, and the title picker returns `Faro` rather than the
+        # 'north?' it had taken from an NPC bubble.
+        #
+        # WHAT SURVIVES IS NARROWER AND STILL WORTH KEEPING. A name that IS read and IS a
+        # different port is not a bad read: live 2026-09-01 it was Tripoli, the port the fleet
+        # had never left, reported as the arrival for a Barcelona leg — a voyage that never
+        # happened, checking itself off. Absence of evidence lets the mission go and look;
+        # evidence of the wrong place does not.
+        #
+        # Where the name genuinely DECIDES something is the world map, and that is guarded
+        # there — `world_map._on_location_info` refuses to commit a panel it cannot confirm.
         self.status = FAILED
         self.reason = (f"the voyage ended at {arrived_at!r}, not {self.destination!r} — "
                        "the leg is not done")
@@ -199,6 +217,16 @@ class MissionRunner:
     _leg: Any = None               # the SubTask being worked
     _runner: Any = None            # the step being worked
     _steps: list = field(default_factory=list)   # the steps left in this leg
+    # What the last gather actually READ off the sell grid, per material. An OBSERVATION,
+    # kept because it is what tells us how many rounds the materials can fund — and a
+    # material missing from it is UNREAD, never zero.
+    _materials_aboard: dict = field(default_factory=dict)
+    # The per-material breakdown the last gather reported — what is short, and how much was
+    # wanted. Read by the reroute, which needs to know WHICH material a port failed to supply.
+    _last_materials: dict = field(default_factory=dict)
+    # Material -> the port that reported it scarce this season. The market says so outright;
+    # the reroute acts on it without having to infer a gap from a breakdown it may not have.
+    _cannot_supply: dict = field(default_factory=dict)
 
     # A LEG IS ONE OR MORE STEPS, and the mission advances through them exactly as it
     # advances through legs. `_SailThenLeg` used to nest a sequencer inside a sequencer to
@@ -240,6 +268,13 @@ class MissionRunner:
         if self._leg is not None and getattr(self._leg, "kind", None) == "gather":
             _obs = getattr(result, "observed", None) or {}
             self._settle_gathers(bool(_obs.get("met")), _obs.get("materials"))
+            # A PORT SAYING WHAT IT CANNOT SUPPLY, in its own words. The market reports
+            # `season: low, good: Raisin` when it finds a scarce shelf, and that is a direct
+            # statement — stronger than inferring a gap from the have/want breakdown, which
+            # is exactly what was missing at Madeira when the ledger had just been cleared.
+            if _obs.get("season") == "low" and _obs.get("good"):
+                port = str(_obs.get("port") or getattr(self._leg, "location", "") or "")
+                self._cannot_supply[str(_obs["good"]).lower()] = port
 
         for _ in range(len(self.subtasks) * 4 + 8):     # a leg cannot need more turns
             if self._runner is None:
@@ -252,8 +287,27 @@ class MissionRunner:
                 return goal
 
             if self._runner.status != DONE:              # the step gave up
+                # ...WHICH IS NOT ALWAYS THE END OF THE MISSION. `_finish_leg` STEPS OVER a
+                # refused trim — trimming is support, not a leg — and leaves the mission
+                # RUNNING. Returning None here anyway threw that decision away: the runner
+                # said "carry on without it" and then reported it had nothing to ask for.
+                #
+                # Live 2026-09-06 at Tripoli, with every material aboard and the barter one
+                # sail away:
+                #
+                #     sell_surplus refused (trim to Candle 709, Iron 822, Matchlock Gun 411)
+                #       — trimming is support, so the mission carries on without it
+                #     MissionRunner has nothing more to ask for after 37 step(s)
+                #       — status running
+                #
+                # `status running` with no work order is the shape of this bug: a FAILED
+                # mission is meant to stop, a RUNNING one is meant to be asked again. So ask
+                # the same question the DONE path below already asks.
                 self._finish_leg()
-                return None
+                if self.status != RUNNING:
+                    return None
+                result = None
+                continue
             if self._steps:                              # more of THIS leg to do
                 self._runner = self._steps.pop(0)
             else:
@@ -282,7 +336,132 @@ class MissionRunner:
                 continue
             for material, qty in (getattr(t, "params", None) or {}).get("orders", {}).items():
                 wanted[material] = max(wanted.get(material, 0), int(qty))
+        return self._capped_to_fundable_rounds(wanted)
+
+    def _capped_to_fundable_rounds(self, wanted: dict) -> dict:
+        """Never want more of a material than the rounds we can actually run will consume.
+
+        A ROUND CONSUMES ALL ITS MATERIALS, so the barter is capped by the SCARCEST one, and
+        every unit of the others bought past that cap is dead weight — money, gems, hold
+        space, and the refreshes that fetched it.
+
+        Live 2026-09-06, the Hutu run: Pig 1,828 bought and 1,099 used; Raisin 1,100 bought
+        and 1,099 used. Raisin capped the barter at 6 rounds, so 729 Pig — 40% of what was
+        bought — was carried to the village and back unused. The plan had bought each
+        material to its own padded 1,755 as though they were independent.
+
+        WHAT THIS DOES NOT FIX, stated because the numbers above are exactly the case it
+        misses: Pig was gathered FIRST, before Raisin's shortfall could be known, so no cap
+        computed here could have seen it coming. This guard bites when the scarce material is
+        gathered first, or when a later leg would top up a material already past the cap.
+        Knowing in ADVANCE that Madeira's Raisin is thin is the season flag's job
+        (`docs/low_stock_as_a_planning_input.md`), and the two are meant to compound.
+
+        Silent when the recipe is unknown: a cap computed from a guess is worse than none.
+        """
+        recipe = self._per_round_needs()
+        if not recipe or not wanted:
+            return wanted
+        # THE BOTTLENECK RULE RUNS FIRST, and that ordering is the whole of it: the cap below
+        # needs a FINISHED material and returns early without one — which is the very case
+        # this is for, two materials both still being gathered. Placed after, it was dead code
+        # in the situation it exists to fix.
+        capped = self._not_ahead_of_the_bottleneck(dict(wanted), recipe)
+        rounds = self._rounds_fundable(recipe, still_shopping=set(wanted))
+        if rounds is None:
+            return capped
+        for material, per_round in recipe.items():
+            if per_round <= 0:
+                continue
+            key = next((k for k in capped if k.lower() == material.lower()), None)
+            if key is None:
+                continue
+            cap = rounds * per_round
+            if cap < capped[key]:
+                logger.info(f"[mission_runner] {key}: wanting {cap} rather than {capped[key]} "
+                            f"— the scarcest material funds {rounds} round(s), and a round "
+                            "consumes them all")
+                capped[key] = cap
+        return capped
+
+    def _not_ahead_of_the_bottleneck(self, wanted: dict, recipe: dict) -> dict:
+        """Stop topping up a material that is already further ahead than the bottleneck.
+
+        THE HOLD IS THE THING THIS PROTECTS. Rounds are limited by the SCARCEST material, so
+        buying more of a plentiful one buys no rounds at all — it buys cargo space away from
+        the material that would.
+
+        Live 2026-09-07 at Faro. Pig read 1,505 against a padded 1,755 and so read SHORT, and
+        the buy round did what it was told: it kept buying. Raisin stood at 881 — three rounds
+        — which needs 654 Pig, so the hold already carried more than twice what any round
+        could use. The ship finished at 4,952/4,952, FULL OF PIG, with no room left for the
+        Raisin that actually gates the barter.
+
+        The padded target was not wrong, it was answering the wrong question: "how much would
+        seven rounds take?" rather than "how much can we currently use?".
+
+        NOT THE SAME AS CAPPING ON WHAT IS ABOARD, which is self-fulfilling and was caught by
+        a test earlier: the BOTTLENECK itself is never capped, so it always keeps buying. Only
+        materials that are AHEAD of it stop, and they resume the moment it catches up.
+        """
+        rounds = {}
+        for material, per_round in recipe.items():
+            have = self._materials_aboard.get(str(material).lower())
+            if have is None:
+                return wanted                 # unread — no honest bottleneck to find
+            rounds[str(material).lower()] = have // per_round
+        if len(rounds) < 2:
+            return wanted
+        floor = min(rounds.values())
+        for material in list(wanted):
+            key = str(material).lower()
+            if key not in rounds or rounds[key] <= floor:
+                continue                      # the bottleneck, or level with it — keep buying
+            have = self._materials_aboard.get(key, 0)
+            if have < wanted[material]:
+                logger.info(f"[mission_runner] {material}: {have} is already "
+                            f"{rounds[key]} round(s) against the bottleneck's {floor} — not "
+                            "topping it up while that is short; the hold is needed for the "
+                            "material that is behind")
+                wanted[material] = have
         return wanted
+
+    def _per_round_needs(self) -> dict:
+        """The pinned recipe's per-round materials, or {} when it is not known."""
+        try:
+            from brain import mission_progress
+            cur = mission_progress.current() or {}
+            return {str(m): int(q) for m, q in (cur.get("recipe") or {}).items() if int(q) > 0}
+        except Exception as exc:              # noqa: BLE001 — no cap is better than a wrong one
+            logger.debug(f"[mission_runner] could not read the recipe: {exc}")
+            return {}
+
+    def _rounds_fundable(self, recipe: dict, *, still_shopping: set) -> Optional[int]:
+        """How many rounds the FINISHED materials can run, or None while that is unknown.
+
+        ONLY A MATERIAL WE HAVE STOPPED BUYING IS A CONSTRAINT. One still on the shopping
+        list can still grow, and capping on it makes the cap self-fulfilling — the want falls
+        to what is already aboard, so no more can ever be bought. (Caught by
+        `test_a_material_still_UNDER_the_cap_is_untouched`: Pig at 200 mid-gather would have
+        capped the whole mission to one round.)
+
+        A material we have not READ yet makes the answer unknown, not zero — the same rule
+        the ledger follows, and for the same reason: an unread amount is not an absent one.
+        """
+        held = self._materials_aboard
+        if not held:
+            return None
+        shopping = {str(m).lower() for m in still_shopping}
+        rounds = None
+        for material, per_round in recipe.items():
+            key = str(material).lower()
+            if key in shopping:
+                continue                      # still being gathered — not a constraint yet
+            have = held.get(key)
+            if have is None:
+                return None                   # unread — no honest cap to compute
+            rounds = have // per_round if rounds is None else min(rounds, have // per_round)
+        return rounds
 
     def _settle_gathers(self, met: bool, materials: Optional[dict] = None) -> None:
         """Finish every gather leg whose OWN materials are aboard.
@@ -309,6 +488,30 @@ class MissionRunner:
         boolean over the union — which is why the comment above used to say there was "no
         breakdown to give".
         """
+        # AN ABSENT BREAKDOWN IS NOT AN EMPTY ONE. This assigned unconditionally, so any
+        # result without a `materials` key wiped what the last good reading said — and the
+        # reroute below is driven entirely by this field.
+        #
+        # Live 2026-09-07 at Madeira, the exact sequence that cost the mission a barter round:
+        #
+        #     15:38:41  the shelf could not be read across that purchase — re-reading the hold
+        #     15:38:41  market -> finished {'sold': [], 'port': 'Madeira',
+        #                                   'stopped_because': "'Raisin' is scarce here..."}
+        #
+        # That re-read clears the ledger on purpose, and `_observed` gates `materials` on the
+        # ledger — so the result that ENDS a scarce gather is the one most likely to carry no
+        # breakdown, because an unreadable shelf is the same condition that makes a port
+        # scarce. The reroute then saw nothing short and returned silently, and the fleet
+        # sailed with Raisin 1,211 of 1,712.
+        #
+        # Same rule as `_sell_page` returning None rather than []: "I could not look" and
+        # "I looked and there is nothing" are different answers, and only one of them is news.
+        if materials:
+            self._last_materials = dict(materials)
+        for material, st in (materials or {}).items():
+            have = (st or {}).get("have")
+            if have is not None:
+                self._materials_aboard[str(material).lower()] = int(have)
         if met:
             for t in self.subtasks:
                 if not t.done and t.kind == "gather":
@@ -345,13 +548,255 @@ class MissionRunner:
         if runner.status == DONE:
             leg.done = True
             self.completed.append(leg.id)
+            # THE BARTER IS THE PHASE BOUNDARY. Past it the goods are aboard and nothing
+            # upstream may be revisited — which is exactly what the next run needs to know.
+            if leg.kind == "barter":
+                self._record_progress("advance", "sailing_route")
+            if leg.kind == "gather":
+                self._reroute_what_this_port_cannot_supply(leg, runner)
             logger.info(f"[mission_runner] {leg.id} done")
             return
+        # TRIMMING IS SUPPORT, NOT A LEG OF THE MISSION (CLAUDE.md: "the task is gather,
+        # barter, sell; trim, supply and capacity are SUPPORT — opportunistic when the place
+        # affords them, never mandatory legs"). It frees space, and a hold that stays full is
+        # something the barter already handles: the overflow dialog trades space for product.
+        #
+        # Live 2026-09-05 at Madeira the Sell tab did not open — the game drops roughly one
+        # tap in twenty — so the trim REFUSED rather than reporting a hold it never saw,
+        # which is correct. That refusal then failed the whole mission: the fleet sat one
+        # port from Hutu with both materials aboard, and the run ended having bartered
+        # nothing. The trim was over-stock by 108 Pig.
+        #
+        # So a refused trim is reported and stepped over. Every other leg still fails the
+        # mission, because gather, barter and sell ARE the mission.
+        if leg.kind == "sell_surplus":
+            self.completed.append(leg.id)
+            leg.done = True
+            logger.warning(f"[mission_runner] {leg.id} refused ({runner.reason or 'failed'}) "
+                           "— trimming is support, so the mission carries on without it")
+            return
+
         # A LEG THAT REFUSED IS THE MISSION'S PROBLEM, not the leg's. Reported rather than
         # retried here: what to do about a port that will not sell needs the plan.
         self.status = FAILED
         self.reason = f"{leg.id}: {runner.reason or 'failed'}"
         logger.warning(f"[mission_runner] {self.reason}")
+
+    def _reroute_what_this_port_cannot_supply(self, leg, runner) -> None:
+        """A material this port cannot supply gets another port — now, not next run.
+
+        STOPPING THE WASTE IS ONLY HALF OF IT. The buy round already refuses to grind a
+        scarce shelf: "'Raisin' is scarce here this season — 2 refresh(es) is all this port is
+        worth". But the mission then carried on regardless, and live 2026-09-07 it set off for
+        San Village with ONE Raisin against 248 a round — zero barter rounds, a voyage spent
+        to arrive unable to trade. The user asked for the other half: "it records the data and
+        replans immediately".
+
+        Raisin has three sources — Bordeaux, Madeira, Trabzon — and only Madeira was flagged.
+        There was somewhere to go.
+
+        A PORT IS ONLY TRIED ONCE, and a port already known scarce for that material is not
+        tried at all; when neither leaves a candidate the mission carries on short, exactly as
+        before, because a leg that cannot help is worse than no leg.
+
+        `brain/mission.py::recover` does this for the OLD `run_mission` path, which the live
+        mission stopped using — it is imported and unreachable. This is the same idea where
+        the mission actually runs.
+        """
+        # Nothing reported yet is a real state — a gather that never reached a market has no
+        # breakdown to reroute from.
+        reported = getattr(self, "_last_materials", None) or {}
+        short = [m for m, st in reported.items() if (st or {}).get("state") == "short"]
+        # A PORT THAT SAID SO OUTRANKS AN INFERENCE. `_cannot_supply` holds what the market
+        # itself reported scarce — `season: low, good: Raisin` — and that needs no breakdown
+        # to be true. At Madeira the breakdown was the one thing missing, because the shelf
+        # that could not be read is what made the port scarce in the first place.
+        # MATCHED BY NAME, NOT BY SPELLING. `_cannot_supply` is keyed lower-case and
+        # `_last_materials` however the market reported it, so `"raisin" not in ["Raisin"]`
+        # was true and the same material was rerouted twice. Live 2026-09-07 at Bordeaux:
+        #
+        #     [mission_runner] Raisin: no other source to try — carrying on short
+        #     [mission_runner] raisin: no other source to try — carrying on short
+        #
+        # It cost nothing there because both attempts reached the same answer, but with a
+        # candidate available it would have added two identical gather legs.
+        seen = {str(m).lower() for m in short}
+        for material, where in (getattr(self, "_cannot_supply", None) or {}).items():
+            if (str(where).lower() == str(leg.location or "").lower()
+                    and str(material).lower() not in seen):
+                short.append(material)
+                seen.add(str(material).lower())
+        if not short:
+            return
+        tried = {str((getattr(t, "params", None) or {}).get("port") or t.location).lower()
+                 for t in self.subtasks if t.kind == "gather"}
+        # A MATERIAL A PENDING LEG ALREADY COVERS NEEDS NO NEW SOURCE. Short HERE is not
+        # short everywhere: the plan may simply not have reached the port that sells it.
+        #
+        # Live 2026-09-07 at Madeira, this fired twice — rightly for Raisin, and wrongly for
+        # Pig, which `gather:Faro` was on its way to buy. It added `gather:Gijon:Pig` for a
+        # material that was one leg from being met. (The pre-sail settle would have closed it
+        # again, so it cost nothing this time; that is luck, not design.)
+        still_planned = {str(m).lower()
+                         for t in self.subtasks if t.kind == "gather" and not t.done
+                         for m in ((getattr(t, "params", None) or {}).get("orders") or {})}
+        for material in short:
+            if str(material).lower() in still_planned:
+                logger.info(f"[mission_runner] {material} is short here, but a pending leg "
+                            "already goes where it is sold — not rerouting it")
+                continue
+            want = (reported.get(material) or {}).get("want")
+            alt = self._another_source(material, tried)
+            if alt is None:
+                logger.info(f"[mission_runner] {material}: no other source to try — "
+                            "carrying on short")
+                continue
+            ident = f"gather:{alt}:{material}"
+            logger.warning(f"[mission_runner] {material} is short and {leg.location} cannot "
+                           f"supply it — adding {ident}")
+            self.subtasks.append(type(leg)(id=ident, kind="gather", location=alt,
+                                           params={"port": alt,
+                                                   "orders": {material: int(want or 0)}}))
+            # AND NOTHING DOWNSTREAM MAY START WITHOUT IT. Adding the leg is not the same as
+            # ORDERING it: the tail is a dependency chain built at plan time —
+            # `sell_surplus` deps on the ORIGINAL gather ids, `sail_to_village` on
+            # `supply_verify` — so a leg added later hangs outside it and the runner is free
+            # to pick anything else that is runnable.
+            #
+            # Live 2026-09-07 it did exactly that: `adding gather:Bordeaux:Raisin`, then
+            # sell_surplus, supply_verify, and `next leg: sail_to_village` — sailing for San
+            # with 331 Raisin against 248 a round. Past that departure there is no more
+            # gathering at all (`_departed_for_the_village`), so the leg would never have run.
+            self._make_everything_downstream_wait_for(ident)
+            tried.add(alt.lower())
+
+    def _make_everything_downstream_wait_for(self, ident: str) -> None:
+        """Every pending leg that is not itself a gather now depends on `ident`.
+
+        Blunt on purpose. The tail is ordered among itself already, so adding one more
+        predecessor to each pending member cannot reorder it — it only stops the whole tail
+        from starting before the material is aboard. Gathers are left alone because they are
+        mutually unordered by design and ranked by cost.
+        """
+        for other in self.subtasks:
+            if other.done or other.kind == "gather" or other.id == ident:
+                continue
+            if ident not in (other.deps or ()):
+                other.deps = tuple(other.deps or ()) + (ident,)
+
+    def _another_source(self, material: str, tried: set) -> Optional[str]:
+        """A PORT that sells `material`, untried and not known scarce there.
+
+        PORTS ONLY. A village is a real source — some materials are sold at both, some at
+        only one — but reaching one is a barter on a different world-map tab, not a market
+        visit, and this reroute builds a `gather` leg that buys. `source_villages` is
+        recorded beside the ports for the day that leg exists; sending a buyer to a village
+        would fail at the shelf instead of failing here.
+
+        Live 2026-09-08: `gather:Chinook:Matchlock Gun`. 'Chinook' was half of 'Chinook
+        Village', which was never a source at all — it was a row of the world map's village
+        list showing behind the Source dialog, read because the reader used a fixed window
+        instead of the dialog's own box. The fleet searched the PORT list for it twenty
+        times, typed it, scrolled it, and rightly refused. Seville, two entries further
+        down and a real port that sells the gun, was never reached.
+        """
+        try:
+            from memory.barter_kb import load_recipe
+            from memory.market_kb import season_of
+            from memory.places import resolve_source_port
+            recipe = load_recipe(self.good)
+            for inp in (getattr(recipe, "inputs", None) or []):
+                if str(inp.material).lower() != str(material).lower():
+                    continue
+                for port in (inp.source_ports or []):
+                    if str(port).lower() in tried:
+                        continue
+                    # A NAME THAT IS NOT A PORT IS NOT A DESTINATION. The catalogue is the
+                    # same one the reader checks against; a stale entry cannot become a
+                    # course again just because it is sitting in the KB.
+                    if resolve_source_port(port) is None:
+                        logger.info(f"[mission_runner] {port!r} is not a port — not routing "
+                                    f"{material} there")
+                        continue
+                    if season_of(port, material) == "low":
+                        logger.info(f"[mission_runner] skipping {port} for {material} — "
+                                    "recorded scarce there this season")
+                        continue
+                    return port
+        except Exception as exc:              # noqa: BLE001 — no alternative is not a crash
+            logger.debug(f"[mission_runner] could not look for another source: {exc}")
+        return None
+
+    def _record_progress(self, what: str, phase: str = "") -> None:
+        """Tell `mission_progress` how far this mission has got. Never fails the mission.
+
+        THE DISPATCHER PATH RECORDED ONLY ITS START, and that was enough to send a fleet back
+        across the map. `mission_runner` advanced the phase to "bartering" when the sail to
+        the village began and then never touched it again — no `sailing_route`, no `finish`
+        — so a mission that ran to completion still LOOKED in-flight to the next launch:
+
+            [barter_command] already bartering for Svear Village (3705s ago) — skipping the
+                             check and the plan, arriving and bartering with what is aboard
+            [barter_command] not at a village (state is 'sub_menu:sell') — sailing to Svear
+
+        Live 2026-09-06: the fleet was standing in Lisboa's market with 3,668 Birch Tree
+        aboard, its barter six rounds finished an hour earlier, and it set sail for Svear
+        Village to barter again. The record is only stale for six hours, so this cannot be
+        left to expire — it is the window in which a relaunch is most likely.
+        """
+        try:
+            from brain import mission_progress
+            if what == "finish":
+                mission_progress.finish()
+            else:
+                mission_progress.advance(phase)
+        except Exception as exc:              # noqa: BLE001 — bookkeeping, not the mission
+            logger.debug(f"[mission_runner] could not record progress: {exc}")
+
+    def _settle_gathers_already_aboard(self) -> None:
+        """Close a gather leg whose materials are ALREADY ABOARD — before the sail, not after.
+
+        `_settle_gathers` runs on ARRIVAL, from the market's own per-material read, so a leg
+        that needs nothing is only discovered once the voyage has been spent. Live
+        2026-09-06: the fleet finished at Tripoli, sailed to Barcelona, read the hold, found
+        Iron and Matchlock Gun both already aboard —
+
+            gather:Barcelona settled — Iron, Matchlock Gun already aboard, bought elsewhere
+
+        — and sailed BACK to Tripoli for the Candle. Everything needed to skip it was in the
+        ledger before the fleet left.
+
+        This is the predicate half of `docs/the_plan_is_a_checklist.md`: "an item is done when
+        the WORLD says so". The world had already said so.
+
+        AN UNREAD MATERIAL NEVER CLOSES A LEG. `_materials_aboard` holds what was actually
+        read off a sell grid; a material missing from it is unknown, not absent, and skipping
+        a voyage on an unknown would strand the material — the same rule `_settle_gathers`
+        follows for exactly the same reason.
+        """
+        held = self._materials_aboard
+        if not held:
+            return
+        wanted = self._everything_still_wanted()
+        for leg in self.subtasks:
+            if leg.done or leg.kind != "gather":
+                continue
+            orders = (getattr(leg, "params", None) or {}).get("orders") or {}
+            if not orders:
+                continue
+            covered = []
+            for material in orders:
+                have = held.get(str(material).lower())
+                want = wanted.get(material)
+                if have is None or want is None or have < want:
+                    covered = None
+                    break
+                covered.append(material)
+            if covered:
+                leg.done = True
+                self.completed.append(leg.id)
+                logger.info(f"[mission_runner] {leg.id} needs nothing — "
+                            f"{', '.join(covered)} already aboard, so no voyage is spent")
 
     def _can_run_here(self, leg, state) -> Optional[str]:
         """Why this leg cannot run from where the fleet is, or None if it can.
@@ -429,6 +874,18 @@ class MissionRunner:
         pending = [t for t in self.subtasks if not t.done]
         if not pending:
             self.status = DONE
+            # THE MISSION IS OVER, SO SAY SO WHERE THE NEXT RUN WILL LOOK. `mission_progress`
+            # survives the process; a mission left recorded as in-flight is what the next
+            # launch RESUMES, and resuming skips planning entirely.
+            self._record_progress("finish")
+            logger.info("[mission_runner] every leg is done")
+            return False
+
+        self._settle_gathers_already_aboard()
+        pending = [t for t in self.subtasks if not t.done]
+        if not pending:
+            self.status = DONE
+            self._record_progress("finish")
             logger.info("[mission_runner] every leg is done")
             return False
 
@@ -579,8 +1036,25 @@ class MissionRunner:
             return [_OneGoalLeg(ReadHold())]
 
         if leg.kind == "sell_surplus":
+            # CLEARING AND TRIMMING ARE TWO JOBS, and `trim_before_gather` asks for both:
+            # `params={"good": ..., "keep_qty": ..., "clear": True}`. This branched on
+            # `clear` and returned, dropping `keep_qty` on the floor — so the node its own
+            # comment describes as "clear the non-materials AND trim the materials to plan
+            # before buying anything" only ever did the first half.
+            #
+            # They are not interchangeable. `FreeHold` protects everything in `self.keep`,
+            # which is exactly the barter's materials — so a clear cannot touch a MATERIAL
+            # surplus by construction. Live 2026-09-07 the hold reached San Village carrying
+            # 2,876 Pig against a plan of 1,505; `trim_before_gather` had run, sold nothing,
+            # and reported done. 1,812 of that Pig came home unused.
+            #
+            # Clear first: it disposes of whole goods and shortens the grid the trim then
+            # has to read.
             keep_qty = p.get("keep_qty") or {}
+            steps = []
             if p.get("clear"):
-                return [_OneGoalLeg(FreeHold(keep=tuple(self.keep)))]
-            return [_OneGoalLeg(TrimHold(keep_qty=dict(keep_qty)))]
+                steps.append(_OneGoalLeg(FreeHold(keep=tuple(self.keep))))
+            if keep_qty:
+                steps.append(_OneGoalLeg(TrimHold(keep_qty=dict(keep_qty))))
+            return steps or None
         return None

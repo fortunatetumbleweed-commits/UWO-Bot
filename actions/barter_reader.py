@@ -23,7 +23,11 @@ from PIL import Image
 
 _AMITY_RE = re.compile(r"Amity\s*\(([A-Za-z]+)\)")
 _PAIR_RE = re.compile(r"(\d[\d,]*)\s*/\s*(\d[\d,]*)")
-_TRADE_QTY_RE = re.compile(r"Trade Quantity\s*(\d+)")
+# THOUSANDS SEPARATORS. `\d+` stopped at the comma, so every yield of 1,000 or more was read
+# as its leading digit: San Village 2026-09-04 reported `out=1` for a panel showing "Trade
+# Quantity 1,122(+522)". Its neighbours here already allowed commas, which is what made the
+# odd one out easy to miss.
+_TRADE_QTY_RE = re.compile(r"Trade Quantity\s*(\d[\d,]*)")
 _AMITY_CHANGE_RE = re.compile(r"Total Amity Change\s*([+-][\d,]*\d)")
 
 # Category words that appear as material tile labels but aren't a good name.
@@ -113,7 +117,7 @@ def _parse_barter_panel(tokens) -> Optional[BarterPanelReading]:
     for text, *_ in tokens:
         m = _TRADE_QTY_RE.search(text or "")
         if m:
-            r.output_quantity = int(m.group(1))
+            r.output_quantity = _to_int(m.group(1))
         m = _AMITY_CHANGE_RE.search(text or "")
         if m:
             r.total_amity_change = _to_int(m.group(1))

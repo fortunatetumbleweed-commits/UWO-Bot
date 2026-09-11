@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase confirmation summary showing the cost breakdown (base price, tax, discount, and total) for a completed trade goods buy transaction, with the player's remaining gold balance displayed",
+  "full_text": "Result — Purchase Cost: 318,464 | Tax: 15,360 | Discount: -60,672 | Total Amount: 273,152 | Balance: 70,953,807,830 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "abf11e44be9ba6e9",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T17:13:17.424710+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase confirmation summary showing the cost breakdown (base price, tax, discount, and total) for a completed trade goods buy transaction, with the player's remaining gold balance displayed",
+    "full_text": "Result — Purchase Cost: 318,464 | Tax: 15,360 | Discount: -60,672 | Total Amount: 273,152 | Balance: 70,953,807,830 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

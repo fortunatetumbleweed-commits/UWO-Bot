@@ -169,8 +169,10 @@ def plan_barter_rounds(output_per_round: int,
     materials and reserves `(1+cushion)` × the hold, so it can cost a round when the hold
     is nearly full; pass 0.0 to plan on the snapshot exactly.
 
-    `output_qty` stays the NOMINAL estimate — the snapshot is the best guess of the yield,
-    and the cushion is space held in reserve, not extra output being predicted.
+    `output_qty` is what the fleet CARRIES AWAY, which past the point where the hold
+    saturates is less than `rounds x output_per_round` — the game hands back only what fits.
+    It is still built from the nominal snapshot, not the cushioned one: the cushion is space
+    and material held in reserve, not extra output being predicted.
 
     Two quantity views come back: `total_needs` = what the hold must OWN for all rounds
     (what `buy_to_goal` wants — it does its own owned pre-check at the market), and
@@ -191,21 +193,81 @@ def plan_barter_rounds(output_per_round: int,
     held = {str(m).lower(): int(q) for m, q in on_hand.items()}
     funded = min((held.get(str(m).lower(), 0) // int(q)
                   for m, q in needs.items() if int(q) > 0), default=0)
-    reserved_funded = math.ceil(max(0, int(output_per_round) - per_round_in) * (1.0 + cushion))
+
+    # A FUNDED ROUND COSTS NO SPACE AT ALL, because it is a SWAP and the game caps what it
+    # hands back (user, 2026-09-04). The materials are already aboard; the round takes them
+    # out and puts product in, and when the product does not fit the game offers to discard
+    # the surplus — the "N has not been claimed yet, unclaimed trade goods will be discarded"
+    # prompt. A full hold is therefore not a reason to refuse the round.
+    #
+    # THE VALUE RATIO IS WHY. Bambara Groundnut sold at 40,600 profit/unit against Pig and
+    # Raisin at a few hundred; one round turns ~434 units of ~300-ducat material into up to
+    # 1,036 units of 40,600-ducat product, about 300:1. At a full hold the round is a straight
+    # UPGRADE of what is already there — 434 cheap units out, 434 expensive units in — and the
+    # discard falls only on surplus that was never carryable.
+    #
+    # Live 2026-09-04 at Hutu the mission stopped holding 501 Pig and 1 Raisin. Converting
+    # that dead weight was worth roughly 30M ducats: one more round would have taken 434 units
+    # of material out and brought ~741 groundnut in before the hold filled.
+    #
+    # This was `max(0, output - per_round_in) * (1 + cushion)` — the NET growth, 692 here.
+    # That is the right number for "how much does the hold grow", and the wrong one for "may
+    # this round happen": growth that does not fit is discarded, not refused.
+    #
+    # UNFUNDED rounds still price the peak below. Their materials have to be BOUGHT, and space
+    # for a purchase is a real constraint — you cannot discard your way into carrying it.
+    reserved_funded = 0
 
     allowed = int(max(0, rounds_remaining))
-    space, rounds = int(free_space), 0
-    while rounds < allowed:
-        cost = reserved_funded if rounds < funded else reserved
-        if cost > space:
-            break
-        space -= cost
-        rounds += 1
+
+    # SIMULATE THE ROUNDS INSTEAD OF PRICING THEM (user, 2026-09-04: "buying say 200 raisins
+    # can do another round, and the exchange will swap the pigs and raisin to groundnuts, so
+    # it will need to abandon some groundnuts, but still will get more profits").
+    #
+    # The old loop subtracted a per-round reservation from `free_space` until it ran out. That
+    # cannot find the answer, because it prices a round BEFORE accounting for the materials
+    # leaving the hold — and because it treats "the output does not all fit" as a REFUSAL when
+    # the game's own answer is to hand back what fits and discard the rest.
+    #
+    # Measured on the 2026-09-04 Hutu run (free 4,568, 434 in, 1,036 out per round):
+    #
+    #     3 rounds  buy 1,302 material  ->  3,108 kept    <- what the old loop planned
+    #     4 rounds  buy 1,736 material  ->  4,144 kept    <- what the game actually allowed
+    #     5 rounds  buy 2,170 material  ->  4,568 kept    <- the hold saturates here
+    #    10 rounds  buy 4,340 material  ->  4,568 kept    <- nothing further is gained
+    #
+    # At 40,600 profit/unit that is ~59M ducats between the plan and the optimum. Past
+    # saturation more rounds only burn daily counts, gems and material for no cargo, so the
+    # smallest round count that reaches the best yield is the one to take.
+    def _kept(n: int) -> Optional[int]:
+        """Units actually carried away after `n` rounds, or None if the materials cannot be
+        loaded. Funded rounds' materials are already aboard and so are not in `free_space`."""
+        space = int(free_space) - max(0, n - funded) * per_round_in
+        if space < 0:
+            return None
+        kept = 0
+        for _ in range(n):
+            space += per_round_in                    # the round consumes them, freeing space
+            got = min(int(output_per_round), space)  # the game hands back only what fits
+            space -= got
+            kept += got
+        return kept
+
+    rounds, best = 0, 0
+    for n in range(1, allowed + 1):
+        k = _kept(n)
+        if k is None:
+            break                                    # no room even to load the materials
+        if k > best:
+            best, rounds = k, n                      # strictly better, so take it
     limited_by = "space" if rounds < allowed else "rounds"
 
     total_needs = {m: math.ceil(int(q) * rounds * (1.0 + cushion)) for m, q in needs.items()}
     buy_targets = {m: max(0, q - int(on_hand.get(m, 0))) for m, q in total_needs.items()}
-    return BarterRoundsPlan(rounds=rounds, output_qty=rounds * int(output_per_round),
+    # `best` is the SIMULATED yield, not `rounds x output_per_round`. Those parted company
+    # when rounds stopped being sized so the whole output fits: at Hutu the nominal product of
+    # 5 x 1,036 = 5,180 overstates by 612 units the hold cannot hold and the game discards.
+    return BarterRoundsPlan(rounds=rounds, output_qty=best,
                             needs_per_round=dict(needs), total_needs=total_needs,
                             buy_targets=buy_targets,
                             free_space=int(free_space), peak_per_round=peak,

@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade result summary showing the completed bulk sale of Ebony (Wares/Specialties), detailing sales cost, tax, surcharge, profit, total amount received, and new gold balance after the transaction",
+  "full_text": "Result — Mate Trade EXP: 6,378,427 | Contribution: 0 | Obtained Trade Point: 92,278 | Trade Fame: 0 | Sales Cost: 683,757,984 | Tax: -52,863,384 | Surcharge: 208,543,944 | Profit: 828,198,168 | Total Amount: 839,438,544 | Balance: 71,777,121,944 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "a0d32a1fdaba5293",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T19:15:04.454496+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade result summary showing the completed bulk sale of Ebony (Wares/Specialties), detailing sales cost, tax, surcharge, profit, total amount received, and new gold balance after the transaction",
+    "full_text": "Result — Mate Trade EXP: 6,378,427 | Contribution: 0 | Obtained Trade Point: 92,278 | Trade Fame: 0 | Sales Cost: 683,757,984 | Tax: -52,863,384 | Surcharge: 208,543,944 | Profit: 828,198,168 | Total Amount: 839,438,544 | Balance: 71,777,121,944 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

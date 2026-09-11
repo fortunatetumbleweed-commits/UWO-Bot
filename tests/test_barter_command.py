@@ -123,19 +123,24 @@ class DriverTests(unittest.TestCase):
         res = self._run("barter Camas at Apache Village, and sail to Edinburgh", _check())
         self.assertTrue(res["ok"])
         plan = res["plan"]
-        # free space = 4108 − 0 − 7-day water+food reserve (192 each) = 3724;
-        # peak/round = max(130+150, 953) = 953, reserved 1096 with the default cushion
-        # → 3 rounds, under the 7 available.
+        # free space = 4108 − 0 − 7-day water+food reserve (192 each) = 3724, 280 in and
+        # 953 out per round. Simulated, carried away by round count:
+        #
+        #     1 -> 953     2 -> 1906     3 -> 2859     4 -> 3724     5+ -> 3724
+        #
+        # This asserted 3 rounds / 2,859 units while the planner sized rounds so the whole
+        # output fit (reserved 1096 against 3724). A round is a SWAP and the game hands back
+        # only what fits, so the 4th round is real and carries 865 more (user, 2026-09-04).
         self.assertEqual(plan.peak_per_round, 953)
-        self.assertEqual(plan.rounds, 3)
+        self.assertEqual(plan.rounds, 4)
         self.assertEqual(plan.limited_by, "space")
-        self.assertEqual(plan.output_qty, 2859)          # nominal yield, uncushioned
-        # materials carry the cushion: ceil(130×3×1.15), ceil(150×3×1.15)
-        self.assertEqual(plan.total_needs, {"Avocado": 449, "Cassava": 518})
+        self.assertEqual(plan.output_qty, 3724)   # what COMES HOME: 4x953 is 88 more
+        # materials carry the cushion: ceil(130×4×1.15), ceil(150×4×1.15)
+        self.assertEqual(plan.total_needs, {"Avocado": 598, "Cassava": 690})
 
     def test_cushion_can_be_overridden_from_the_command_line(self):
         res = self._run("barter Camas at Apache Village", _check(), cushion=0.0)
-        self.assertEqual(res["plan"].total_needs, {"Avocado": 390, "Cassava": 450})
+        self.assertEqual(res["plan"].total_needs, {"Avocado": 520, "Cassava": 600})
         self.assertEqual(res["plan"].cushion, 0.0)
 
     def test_daily_rounds_can_be_the_binding_limit(self):
@@ -181,7 +186,7 @@ class DriverTests(unittest.TestCase):
                         status={"cargo_capacity": None, "cargo_used": None},
                         cargo_capacity=4108, cargo_used=0)
         self.assertTrue(res["ok"])
-        self.assertEqual(res["plan"].rounds, 3)
+        self.assertEqual(res["plan"].rounds, 4)
 
     def test_hold_too_small_for_one_round(self):
         res = self._run("barter Camas at Apache Village", _check(),
@@ -354,7 +359,7 @@ class CommandToGraphTests(unittest.TestCase):
         # the cushioned total for the planned rounds, not the KB's raw ratio.
         res, _ = self._run("barter Camas at Apache Village, and sail to Edinburgh")
         self.assertEqual(res["task_plan"].purchases["Havana"],
-                         {"Avocado": 449, "Cassava": 518})
+                         {"Avocado": 598, "Cassava": 690})
 
     def test_an_unsourced_material_stops_before_sailing(self):
         from memory.barter_kb import BarterRecipe, RecipeInput

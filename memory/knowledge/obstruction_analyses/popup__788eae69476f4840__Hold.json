@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase sub-menu is showing the available goods at Tripoli, including Turnip, Pickle, Darbuka (a Specialties item available from 10/12/2026), and the cargo panel on the right — this is the normal purchase screen, not an obstruction",
+  "full_text": "00:28:54 | 29 diamonds | Turnip Food 783 | 102% 148 | Pickle Luxuries 263 | 91% 343 | Darbuka Crafts | Specialties 10/12/2026/00:00:00",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "788eae69476f4840",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-09T21:00:16.230995+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase sub-menu is showing the available goods at Tripoli, including Turnip, Pickle, Darbuka (a Specialties item available from 10/12/2026), and the cargo panel on the right — this is the normal purchase screen, not an obstruction",
+    "full_text": "00:28:54 | 29 diamonds | Turnip Food 783 | 102% 148 | Pickle Luxuries 263 | 91% 343 | Darbuka Crafts | Specialties 10/12/2026/00:00:00",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

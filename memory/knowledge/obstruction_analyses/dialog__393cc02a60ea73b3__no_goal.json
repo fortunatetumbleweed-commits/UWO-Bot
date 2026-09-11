@@ -1,0 +1,21 @@
+{
+  "purpose": "Market dialog asking the player to confirm spending 46 Azurite (premium currency) to replenish the stock of a trade good back toward its cap of 50 units, without affecting the market price",
+  "full_text": "Replenish Stock? (Does not affect market price) Remaining: 46/50. Cost: 46 Azurite. Cancel | OK",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "393cc02a60ea73b3",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T16:49:37.990731+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Market dialog asking the player to confirm spending 46 Azurite (premium currency) to replenish the stock of a trade good back toward its cap of 50 units, without affecting the market price",
+    "full_text": "Replenish Stock? (Does not affect market price) Remaining: 46/50. Cost: 46 Azurite. Cancel | OK",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

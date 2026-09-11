@@ -1,0 +1,21 @@
+{
+  "purpose": "Game is asking the bot to confirm a sale of 20 Pigs at 0 gold (likely because the port price is 0), as part of the hold-trim operation that requires selling excess Pigs",
+  "full_text": "Confirm Sales — Trade Goods: Pig (Livestock, qty 20), Sales Cost: 0, Tax 6%: 0, Surcharge: 0, Price: 0 — Total Sales: 0 — Cancel | OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "553f2cb1df17a47d",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-10T18:27:21.508258+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Game is asking the bot to confirm a sale of 20 Pigs at 0 gold (likely because the port price is 0), as part of the hold-trim operation that requires selling excess Pigs",
+    "full_text": "Confirm Sales — Trade Goods: Pig (Livestock, qty 20), Sales Cost: 0, Tax 6%: 0, Surcharge: 0, Price: 0 — Total Sales: 0 — Cancel | OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

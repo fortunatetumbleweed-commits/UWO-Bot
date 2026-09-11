@@ -1,0 +1,21 @@
+{
+  "purpose": "The purchase sub-menu is now showing the available goods for sale at Faro, including Pig (Livestock) listed at 99% price for 269 gold — this is the normal purchase screen the bot needs to interact with to buy Pig.",
+  "full_text": "00:11:57 | 28 diamonds | Sherry Liquor -89 | 96% 646 | Egg Food 755 | 96% 149 | Pig Livestock 246 | 99% 269 | Parsley Spices 272 | 102% 342",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "a7664ca605c001cd",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-09T23:46:51.267345+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The purchase sub-menu is now showing the available goods for sale at Faro, including Pig (Livestock) listed at 99% price for 269 gold — this is the normal purchase screen the bot needs to interact with to buy Pig.",
+    "full_text": "00:11:57 | 28 diamonds | Sherry Liquor -89 | 96% 646 | Egg Food 755 | 96% 149 | Pig Livestock 246 | 99% 269 | Parsley Spices 272 | 102% 342",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

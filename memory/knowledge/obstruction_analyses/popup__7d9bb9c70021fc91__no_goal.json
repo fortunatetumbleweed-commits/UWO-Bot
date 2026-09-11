@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is displaying available trade goods (Coral and Textiles) with their current market prices, quantities, and profit/loss figures for the player to select items to sell at this port.",
+  "full_text": "Coral (Jewelry) 853 units — 98% — 951 (-10,910). Textiles (Fabrics) 1,536 units — 96% — 3,840 (2,773). Specialties.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "7d9bb9c70021fc91",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T17:50:31.067470+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Sell screen is displaying available trade goods (Coral and Textiles) with their current market prices, quantities, and profit/loss figures for the player to select items to sell at this port.",
+    "full_text": "Coral (Jewelry) 853 units — 98% — 951 (-10,910). Textiles (Fabrics) 1,536 units — 96% — 3,840 (2,773). Specialties.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

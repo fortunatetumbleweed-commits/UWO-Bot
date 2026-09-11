@@ -1,0 +1,21 @@
+{
+  "purpose": "The purchase screen is showing the market goods list at Antalya, including Mutton (Food) which is currently at 0 stock and 99% price — this is the normal purchase sub-menu view, not an obstruction; the bot has staged a bulk purchase and is viewing the current state of available goods including Mutton at 258 gold with 0 units remaining in stock",
+  "full_text": "00:28:48 | 202 | Sugar Beet Food 633 — 222 gold | Mutton Food 0 — 258 gold | Rose Perfume 177 — 694 gold 108% | Kutnu Fabrics 194 — Specialties — Unlock Condition (0/1)",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "010b837f53022630",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T01:39:29.844703+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The purchase screen is showing the market goods list at Antalya, including Mutton (Food) which is currently at 0 stock and 99% price — this is the normal purchase sub-menu view, not an obstruction; the bot has staged a bulk purchase and is viewing the current state of available goods including Mutton at 258 gold with 0 units remaining in stock",
+    "full_text": "00:28:48 | 202 | Sugar Beet Food 633 — 222 gold | Mutton Food 0 — 258 gold | Rose Perfume 177 — 694 gold 108% | Kutnu Fabrics 194 — Specialties — Unlock Condition (0/1)",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

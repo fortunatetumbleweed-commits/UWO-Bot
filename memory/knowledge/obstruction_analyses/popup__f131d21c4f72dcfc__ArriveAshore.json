@@ -1,0 +1,21 @@
+{
+  "purpose": "The bot has arrived ashore at Antalya port and the port's location menu has appeared, listing available facilities (Harbor, Market, Shipyard, Bank, etc.) and showing a Market interaction prompt — this is the standard port arrival overlay.",
+  "full_text": "Harbor Market Shipyard Bank — Market (Summer Aug 01:16)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "f131d21c4f72dcfc",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-11T19:47:37.979099+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The bot has arrived ashore at Antalya port and the port's location menu has appeared, listing available facilities (Harbor, Market, Shipyard, Bank, etc.) and showing a Market interaction prompt — this is the standard port arrival overlay.",
+    "full_text": "Harbor Market Shipyard Bank — Market (Summer Aug 01:16)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "high"
+  }
+}

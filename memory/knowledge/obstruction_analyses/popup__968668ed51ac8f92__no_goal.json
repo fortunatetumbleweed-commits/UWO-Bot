@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase confirmation summary showing the cost breakdown (base price, tax, discount, and total) for a bulk buy of Sapphires, with the resulting gold balance displayed before the player confirms",
+  "full_text": "Result — Purchase Cost: 3,208,416 | Tax: 154,812 | Discount: -625,860 | Total Amount: 2,737,368 | Balance: 70,947,505,838 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "968668ed51ac8f92",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T17:43:31.221041+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase confirmation summary showing the cost breakdown (base price, tax, discount, and total) for a bulk buy of Sapphires, with the resulting gold balance displayed before the player confirms",
+    "full_text": "Result — Purchase Cost: 3,208,416 | Tax: 154,812 | Discount: -625,860 | Total Amount: 2,737,368 | Balance: 70,947,505,838 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

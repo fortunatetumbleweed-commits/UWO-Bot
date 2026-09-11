@@ -16,6 +16,11 @@
 # planning, to free hold space (sell_goods goal="clear").  Opt-in: a clear-sell ignores
 # profit, so it can dump cargo you were carrying to sell at a better market.
 #
+# --ignore-low-stock sails even when EVERY known source of a material is recorded scarce
+# this season.  Off by default: a season where nothing restocks properly is a season to sit
+# out (user, 2026-08-30).  Turn it on for a mission worth running regardless — the stock is
+# thin, not absent, so the gather simply takes longer and returns less.
+#
 # --cushion=0.15 (default) hedges the village check going stale under the mission: the
 # quantities re-roll every ~6h, and bartering moves amity — crossing a tier changes the
 # ratio.  --cushion=0 plans on the snapshot exactly (more rounds, no headroom).
@@ -79,7 +84,7 @@ if _task:
 if not command:
     print('Usage: python run_barter.py "barter <good> at <village>'
           '[, then take the route <name> | and sail to <port>]"'
-          ' [--dry-run] [--no-trace] [--clear-surplus] [--from=<port>]'
+          ' [--dry-run] [--no-trace] [--clear-surplus] [--ignore-low-stock] [--from=<port>]'
           ' [--capacity=N --cargo=N] [--cushion=0.15]')
     print('   or: python run_barter.py --task=<name>          # run a saved mission')
     print('       python run_barter.py --save=<name> "<cmd>"  # save one')
@@ -88,6 +93,7 @@ if not command:
 
 dry_run = "--dry-run" in args
 clear_surplus = "--clear-surplus" in args
+allow_low_stock = "--ignore-low-stock" in args
 # Tracing is ON by default: every run should be reviewable afterwards. The per-tap cost
 # is one screencap — action_trace REUSES the perception the bot just computed (cache
 # hits, no fresh OmniParser), so this is cheap. Skipping it on 2026-08-21 is what left the
@@ -169,6 +175,7 @@ try:
                                 cargo_used=_int_flag("cargo"),
                                 cushion=_flag("cushion", float),
                                 clear_surplus=clear_surplus,
+                                allow_low_stock=allow_low_stock,
                                 from_port=_str_flag("from"),
                                 dry_run=dry_run)
 finally:

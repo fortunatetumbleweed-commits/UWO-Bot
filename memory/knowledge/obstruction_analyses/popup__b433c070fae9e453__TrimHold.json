@@ -1,0 +1,21 @@
+{
+  "purpose": "Negotiation dialog asking whether to use negotiation attempts to raise the sell price of a trade good by 22.5% (from 16,186 to 18,995 gold), with a 76.2% success rate",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 16,186 → 18,995 (22.5% ↑). Negotiation Success Rate: Failed | 76.2% | Success. 102%",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "b433c070fae9e453",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-08T23:55:36.955210+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Negotiation dialog asking whether to use negotiation attempts to raise the sell price of a trade good by 22.5% (from 16,186 to 18,995 gold), with a 76.2% success rate",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 16,186 → 18,995 (22.5% ↑). Negotiation Success Rate: Failed | 76.2% | Success. 102%",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

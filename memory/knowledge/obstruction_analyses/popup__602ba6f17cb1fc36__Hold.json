@@ -1,0 +1,21 @@
+{
+  "purpose": "The purchase sub-menu at Trabzon is now visible, showing available goods including Raisin (244 in stock at 97% price, 638 gold), which is exactly what the bot needs to continue buying toward its 1081 target.",
+  "full_text": "00:28:59 | 165 diamonds | Carpet (Fabrics) 177 stock 101% 1,091g | Pomegranate (Food) 641 stock 94% 280g | Peony (Medicine) 491 stock 97% 314g | Kutnu (Fabrics) Specialties 10/26/2026/00:00:00 | Cargo 1,574/4,952",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "602ba6f17cb1fc36",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T14:41:12.953168+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The purchase sub-menu at Trabzon is now visible, showing available goods including Raisin (244 in stock at 97% price, 638 gold), which is exactly what the bot needs to continue buying toward its 1081 target.",
+    "full_text": "00:28:59 | 165 diamonds | Carpet (Fabrics) 177 stock 101% 1,091g | Pomegranate (Food) 641 stock 94% 280g | Peony (Medicine) 491 stock 97% 314g | Kutnu (Fabrics) Specialties 10/26/2026/00:00:00 | Cargo 1,574/4,952",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase panel is showing available goods at Gijón including Pig (Livestock, 100% stock, 257 gold) and Pork (Food, 95% stock, 188 gold), with the cargo sidebar showing current holdings — this is the normal purchase sub-menu the bot is actively working within to buy Pig toward its hold target",
+  "full_text": "00:28:51 | 20 diamonds | Pig Livestock 100% 257 gold | Pork Food 95% 188 gold 775 quantity | Raspberry Luxuries 96% 274 gold 363 quantity | Turron Luxuries Specialties available from 10/12/2026/00:00:00",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "a6ddd0f0bdcef4a0",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T15:27:13.344425+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase panel is showing available goods at Gijón including Pig (Livestock, 100% stock, 257 gold) and Pork (Food, 95% stock, 188 gold), with the cargo sidebar showing current holdings — this is the normal purchase sub-menu the bot is actively working within to buy Pig toward its hold target",
+    "full_text": "00:28:51 | 20 diamonds | Pig Livestock 100% 257 gold | Pork Food 95% 188 gold 775 quantity | Raspberry Luxuries 96% 274 gold 363 quantity | Turron Luxuries Specialties available from 10/12/2026/00:00:00",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

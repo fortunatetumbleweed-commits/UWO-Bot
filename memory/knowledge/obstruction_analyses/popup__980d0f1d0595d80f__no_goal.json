@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is displaying available trade goods (Ebony, Coral, Textiles) with their current market prices and specialty bonuses, awaiting the player to select goods to sell — no actual popup obstruction is present, this is the normal sell interface.",
+  "full_text": "Coral Jewelry 169 units 97% 11,947 (669); Textiles Fabrics 512 units 108% Specialties 120 (-947)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "980d0f1d0595d80f",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T17:11:15.173592+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Sell screen is displaying available trade goods (Ebony, Coral, Textiles) with their current market prices and specialty bonuses, awaiting the player to select goods to sell — no actual popup obstruction is present, this is the normal sell interface.",
+    "full_text": "Coral Jewelry 169 units 97% 11,947 (669); Textiles Fabrics 512 units 108% Specialties 120 (-947)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

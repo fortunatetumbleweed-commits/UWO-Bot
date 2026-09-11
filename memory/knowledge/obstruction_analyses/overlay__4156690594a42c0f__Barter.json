@@ -1,0 +1,21 @@
+{
+  "purpose": "The barter screen is showing the normal trade interface after committing a round of Birch Tree bartering at Svear Village, displaying trade counts, stock refresh timer, and the active trade goods — this is the expected state after a round was committed, not an obstruction",
+  "full_text": "Trade Count (Current) ? 17:29:54 — Svear Village — Recommended Wares (x7), Abundant Crafts (x9), Abundant Spices (x7), Recommended Wares (x8) — Gerardus Coast Guards, Maurice Robbers, Janszoon Searchers, Gloria Transporters nearby",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "overlay",
+  "structural_hash": "4156690594a42c0f",
+  "goal_intent": "Barter",
+  "cached_at": "2026-09-09T21:30:22.616785+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The barter screen is showing the normal trade interface after committing a round of Birch Tree bartering at Svear Village, displaying trade counts, stock refresh timer, and the active trade goods — this is the expected state after a round was committed, not an obstruction",
+    "full_text": "Trade Count (Current) ? 17:29:54 — Svear Village — Recommended Wares (x7), Abundant Crafts (x9), Abundant Spices (x7), Recommended Wares (x8) — Gerardus Coast Guards, Maurice Robbers, Janszoon Searchers, Gloria Transporters nearby",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

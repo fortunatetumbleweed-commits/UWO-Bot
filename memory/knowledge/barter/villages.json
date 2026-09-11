@@ -30,10 +30,13 @@
     "name": "San Village",
     "lat": null,
     "lon": null,
-    "amity": "Neutral",
-    "amity_points": null,
-    "barter_rounds_total": 5,
-    "barter_rounds_remaining": 5,
+    "amity": "Friendly",
+    "amity_points": [
+      97241,
+      100000
+    ],
+    "barter_rounds_total": 7,
+    "barter_rounds_remaining": 7,
     "eligible_goods": [
       "Bambara Groundnut",
       "Prunus Padus"
@@ -44,9 +47,9 @@
     "name": "Hutu Village",
     "lat": null,
     "lon": null,
-    "amity": null,
+    "amity": "Friendly",
     "amity_points": null,
-    "barter_rounds_total": 5,
+    "barter_rounds_total": 7,
     "barter_rounds_remaining": 7,
     "eligible_goods": [
       "Bambara Groundnut",
@@ -58,9 +61,9 @@
     "name": "Svear Village",
     "lat": null,
     "lon": null,
-    "amity": null,
+    "amity": "Friendly",
     "amity_points": null,
-    "barter_rounds_total": 5,
+    "barter_rounds_total": 7,
     "barter_rounds_remaining": 7,
     "eligible_goods": [
       "Birch Tree"
@@ -71,11 +74,62 @@
     "name": "Cheyenne Village",
     "lat": null,
     "lon": null,
-    "amity": null,
+    "amity": "Neutral",
     "amity_points": null,
-    "barter_rounds_total": null,
-    "barter_rounds_remaining": null,
-    "eligible_goods": [],
+    "barter_rounds_total": 5,
+    "barter_rounds_remaining": 5,
+    "eligible_goods": [
+      "American Bison",
+      "Eagle Feather",
+      "Goldenseal",
+      "Moccasin"
+    ],
+    "locked_goods": []
+  },
+  "berber_village": {
+    "name": "Berber Village",
+    "lat": null,
+    "lon": null,
+    "amity": "Friendly",
+    "amity_points": [
+      99340,
+      100000
+    ],
+    "barter_rounds_total": 7,
+    "barter_rounds_remaining": 7,
+    "eligible_goods": [
+      "Argan Oil"
+    ],
+    "locked_goods": []
+  },
+  "sioux_village": {
+    "name": "Sioux Village",
+    "lat": null,
+    "lon": null,
+    "amity": "Neutral",
+    "amity_points": null,
+    "barter_rounds_total": 5,
+    "barter_rounds_remaining": 5,
+    "eligible_goods": [
+      "American Bison",
+      "Eagle Feather",
+      "Goldenseal",
+      "Moccasin"
+    ],
+    "locked_goods": []
+  },
+  "pawnee_village": {
+    "name": "Pawnee Village",
+    "lat": null,
+    "lon": null,
+    "amity": "Neutral",
+    "amity_points": null,
+    "barter_rounds_total": 5,
+    "barter_rounds_remaining": 5,
+    "eligible_goods": [
+      "American Bison",
+      "Goldenseal"
+    ],
     "locked_goods": []
   }
 }

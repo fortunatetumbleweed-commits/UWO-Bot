@@ -1,0 +1,21 @@
+{
+  "purpose": "Another player's ship (TaylorFP, flagged as Patron) has appeared nearby on the open sea, displaying their fleet info tooltip or encounter bubble at wind speed 27.6 — this is a passive player sighting overlay, not an interactive dialog",
+  "full_text": "Patron 27.6 ~ TaylorFP 1A",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "410cacd2edee4d40",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-10T02:33:29.741680+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Another player's ship (TaylorFP, flagged as Patron) has appeared nearby on the open sea, displaying their fleet info tooltip or encounter bubble at wind speed 27.6 — this is a passive player sighting overlay, not an interactive dialog",
+    "full_text": "Patron 27.6 ~ TaylorFP 1A",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

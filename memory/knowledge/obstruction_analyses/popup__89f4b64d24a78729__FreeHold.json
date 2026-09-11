@@ -1,0 +1,21 @@
+{
+  "purpose": "John Rolfe is prompting the bot to attempt a price negotiation on Raisin, offering a 24.5% price increase (467,172 → 550,107 gold) with a 76.2% success rate and multiple negotiation attempts remaining",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 467,172 → 550,107 (24.5% up). Negotiation Success Rate: Failed | 76.2% | Success.",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "89f4b64d24a78729",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-09T23:18:40.154572+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "John Rolfe is prompting the bot to attempt a price negotiation on Raisin, offering a 24.5% price increase (467,172 → 550,107 gold) with a 76.2% success rate and multiple negotiation attempts remaining",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 467,172 → 550,107 (24.5% up). Negotiation Success Rate: Failed | 76.2% | Success.",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

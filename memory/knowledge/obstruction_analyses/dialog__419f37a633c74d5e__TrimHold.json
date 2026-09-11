@@ -1,0 +1,21 @@
+{
+  "purpose": "Numeric keypad dialog asking the bot to enter how many units of Mutton to load, opened as part of setting the sell/load quantity for Mutton (currently holding 1,278, target is 870)",
+  "full_text": "Trade Goods Info — Mutton (Food) — 1278 in hold. Enter Number: [input field showing '1']. Buttons: 1 2 3 4 5 6 7 8 9 0 Max. Cancel | Load. Final Sales Price: 20. Max Price: 17, Min Price: 15.",
+  "dismissal": "tap_accept",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "419f37a633c74d5e",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-11T01:45:19.425862+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Numeric keypad dialog asking the bot to enter how many units of Mutton to load, opened as part of setting the sell/load quantity for Mutton (currently holding 1,278, target is 870)",
+    "full_text": "Trade Goods Info — Mutton (Food) — 1278 in hold. Enter Number: [input field showing '1']. Buttons: 1 2 3 4 5 6 7 8 9 0 Max. Cancel | Load. Final Sales Price: 20. Max Price: 17, Min Price: 15.",
+    "dismissal": "tap_accept",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

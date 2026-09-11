@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase Result dialog confirming a bulk buy transaction completed — showing cost, tax, discount, and total paid, with current gold balance displayed",
+  "full_text": "Result — Purchase Cost: 157,136 | Tax: 26,840 | Discount: -28,304 | Total Amount: 155,672 | Balance: 76,734,255,319 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "9e3310083fe03268",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T14:43:09.085185+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase Result dialog confirming a bulk buy transaction completed — showing cost, tax, discount, and total paid, with current gold balance displayed",
+    "full_text": "Result — Purchase Cost: 157,136 | Tax: 26,840 | Discount: -28,304 | Total Amount: 155,672 | Balance: 76,734,255,319 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

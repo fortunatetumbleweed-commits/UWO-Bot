@@ -1,0 +1,21 @@
+{
+  "purpose": "Confirm Sales dialog asking the bot to approve selling 191 Raisin for 9,550 gold (7,449 base + 2,101 surcharge, 0 tax) as part of the hold-trim operation",
+  "full_text": "Confirm Sales — Trade Goods: Raisin (Luxuries, qty 191), Sales Cost: 7,449, Tax 21%: 0, Surcharge: +2,101, Price: 9,550 — Total Sales: 7,449 + 2,101 = 9,550. Cancel | OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "667047138c895d64",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-10T14:51:27.084050+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Confirm Sales dialog asking the bot to approve selling 191 Raisin for 9,550 gold (7,449 base + 2,101 surcharge, 0 tax) as part of the hold-trim operation",
+    "full_text": "Confirm Sales — Trade Goods: Raisin (Luxuries, qty 191), Sales Cost: 7,449, Tax 21%: 0, Surcharge: +2,101, Price: 9,550 — Total Sales: 7,449 + 2,101 = 9,550. Cancel | OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

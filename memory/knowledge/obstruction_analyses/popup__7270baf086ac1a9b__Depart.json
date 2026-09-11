@@ -1,0 +1,21 @@
+{
+  "purpose": "The right-side panel is showing the nearby ships/fleets radar list (C/HW panel) including a player named TaylorFP with a Patron badge nearby — this is the standard in-sea UI sidebar, not a popup obstruction",
+  "full_text": "C/HW | 26.8 | Patron | TaylorFP",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "7270baf086ac1a9b",
+  "goal_intent": "Depart",
+  "cached_at": "2026-09-09T23:41:02.584136+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The right-side panel is showing the nearby ships/fleets radar list (C/HW panel) including a player named TaylorFP with a Patron badge nearby — this is the standard in-sea UI sidebar, not a popup obstruction",
+    "full_text": "C/HW | 26.8 | Patron | TaylorFP",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase screen's right-hand cargo/item panel is visible, showing currently staged cargo items including Pickle, Turnip, and Darbuka — this is the normal purchase sidebar, not a blocking popup; the structural classifier has misidentified the right-side purchase panel as a popup",
+  "full_text": "Cargo 2836/4952 | Timer 00:06:22 | Diamonds: 5 | Turnip Food 783 units 102% 148 gold | Pickle Luxuries 263 units 91% 343 gold | Darbuka Crafts | Specialties available from 10/12/2026/00:00:00",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "6b3604e35c9cc3cd",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-09T20:57:16.351255+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase screen's right-hand cargo/item panel is visible, showing currently staged cargo items including Pickle, Turnip, and Darbuka — this is the normal purchase sidebar, not a blocking popup; the structural classifier has misidentified the right-side purchase panel as a popup",
+    "full_text": "Cargo 2836/4952 | Timer 00:06:22 | Diamonds: 5 | Turnip Food 783 units 102% 148 gold | Pickle Luxuries 263 units 91% 343 gold | Darbuka Crafts | Specialties available from 10/12/2026/00:00:00",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

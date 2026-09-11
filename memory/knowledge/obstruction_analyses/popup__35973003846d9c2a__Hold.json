@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase sub-menu is showing available trade goods at Gijón, including Pig (sold out at 100%), Pork, Raspberry, and Turron — this is the normal purchase screen the bot navigated to, not an obstruction",
+  "full_text": "Purchase screen at Gijón. Timer: 00:26:11. Diamonds: 53. Pig (Livestock) — Sold Out, 100%, 257 gold. Pork (Food) — 95%, 188 gold, quantity 775. Raspberry (Luxuries) — 96%, 274 gold, quantity 363. Turron (Luxuries) — Specialties, available from 10/12/2026/00:00:00.",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "35973003846d9c2a",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T15:42:01.071728+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase sub-menu is showing available trade goods at Gijón, including Pig (sold out at 100%), Pork, Raspberry, and Turron — this is the normal purchase screen the bot navigated to, not an obstruction",
+    "full_text": "Purchase screen at Gijón. Timer: 00:26:11. Diamonds: 53. Pig (Livestock) — Sold Out, 100%, 257 gold. Pork (Food) — 95%, 188 gold, quantity 775. Raspberry (Luxuries) — 96%, 274 gold, quantity 363. Turron (Luxuries) — Specialties, available from 10/12/2026/00:00:00.",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "dismissal": "unknown",
+    "confidence": "high"
+  }
+}

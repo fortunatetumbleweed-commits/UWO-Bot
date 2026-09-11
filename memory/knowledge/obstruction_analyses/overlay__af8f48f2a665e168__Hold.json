@@ -1,0 +1,21 @@
+{
+  "purpose": "A timed promotional shop popup offering the 'Moon Rabbit's Part Gift Package' (containing 100 rabbit tokens, 3 matchlock-related items, and 50 of another resource) that appeared automatically and is unrelated to the bot's inventory-holding goal",
+  "full_text": "Moon Rabbit's Part Gift Package. This item may be shown again in the same form. Even if not purchased, it may be displayed again after a certain time. [Items: 100, 3, 50] Time left: 23:50:46",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "overlay",
+  "structural_hash": "af8f48f2a665e168",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-09T04:45:48.801745+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "A timed promotional shop popup offering the 'Moon Rabbit's Part Gift Package' (containing 100 rabbit tokens, 3 matchlock-related items, and 50 of another resource) that appeared automatically and is unrelated to the bot's inventory-holding goal",
+    "full_text": "Moon Rabbit's Part Gift Package. This item may be shown again in the same form. Even if not purchased, it may be displayed again after a certain time. [Items: 100, 3, 50] Time left: 23:50:46",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

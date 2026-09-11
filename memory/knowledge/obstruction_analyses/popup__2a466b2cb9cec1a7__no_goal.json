@@ -1,0 +1,21 @@
+{
+  "purpose": "The right-side panel displays the Admiral Chronicle quest log and notification feed, showing an active quest to complete an Anonymous Threatening Letter Request from the Istanbul Union, along with Auction House alerts and environmental info (Tropical, May, Night).",
+  "full_text": "C/TW: 10 anchors, 11 ships. Coordinates: -0.97, 87.36. Tropical | May | Night. Major Trend Oc... Auction House ... Auction House ... Admiral Chronicle: Complete Anonymous Threatening Letter Request from Istanbul Union (0/1).",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "2a466b2cb9cec1a7",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T18:16:29.720122+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The right-side panel displays the Admiral Chronicle quest log and notification feed, showing an active quest to complete an Anonymous Threatening Letter Request from the Istanbul Union, along with Auction House alerts and environmental info (Tropical, May, Night).",
+    "full_text": "C/TW: 10 anchors, 11 ships. Coordinates: -0.97, 87.36. Tropical | May | Night. Major Trend Oc... Auction House ... Auction House ... Admiral Chronicle: Complete Anonymous Threatening Letter Request from Istanbul Union (0/1).",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

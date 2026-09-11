@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell sub-menu is showing the current hold contents (Myrrh 238 units, Almond 1,052 units) at Benghazi — this is the hold/cargo view the bot navigated to in order to check what goods are loaded",
+  "full_text": "Almond Luxuries 1,052 Specialties 97% 3,186 (2,140)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "453483caf52746f3",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T01:23:53.819666+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The Sell sub-menu is showing the current hold contents (Myrrh 238 units, Almond 1,052 units) at Benghazi — this is the hold/cargo view the bot navigated to in order to check what goods are loaded",
+    "full_text": "Almond Luxuries 1,052 Specialties 97% 3,186 (2,140)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Persistent navigation HUD panel showing current wind speed (2.4), headwind indicator, season (Summer, August), and time of day (Daytime) — this is not an obstruction but a normal part of the sailing interface during transit",
+  "full_text": "C/HW 10 2.4 1↓ Summer Aug Daytime",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "unknown",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "9a42e23d6ba43b19",
+  "goal_intent": "Depart",
+  "cached_at": "2026-09-11T01:31:03.980443+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Persistent navigation HUD panel showing current wind speed (2.4), headwind indicator, season (Summer, August), and time of day (Daytime) — this is not an obstruction but a normal part of the sailing interface during transit",
+    "full_text": "C/HW 10 2.4 1↓ Summer Aug Daytime",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "unknown",
+    "confidence": "low"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Mini-map/navigation panel showing nearby ports and distances has expanded or appeared, displaying the route panel with Faro as the nearest port at ~54.6km, likely triggered by the bot initiating the departure route toward Lisboa",
+  "full_text": "HW 10 anchors 14.8 Summer Jul Night Faro 36.85,-8.69 Approx. 54.6km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "cee5aef0cc869c3c",
+  "goal_intent": "Depart",
+  "cached_at": "2026-09-10T21:56:56.523146+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Mini-map/navigation panel showing nearby ports and distances has expanded or appeared, displaying the route panel with Faro as the nearest port at ~54.6km, likely triggered by the bot initiating the departure route toward Lisboa",
+    "full_text": "HW 10 anchors 14.8 Summer Jul Night Faro 36.85,-8.69 Approx. 54.6km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

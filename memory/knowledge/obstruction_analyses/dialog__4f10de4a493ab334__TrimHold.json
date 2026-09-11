@@ -1,0 +1,21 @@
+{
+  "purpose": "Numeric keypad dialog asking the bot to enter how many Almonds to load, opened as part of setting the quantity to 1015 during the hold-trim purchase process",
+  "full_text": "Trade Goods Info — Almond (Luxuries, Specialties, 1040 in stock). Calculation: Sales Cost 4,013 / -459 / +1,211 / Final Sales Price 4,765. Enter Number: [input field showing '1']. Buttons: 1 2 3 4 5 6 7 8 9 0 Max. Max Price 4,205 | Min Price 3,472. Cancel / Load.",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "4f10de4a493ab334",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-11T20:00:03.533381+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Numeric keypad dialog asking the bot to enter how many Almonds to load, opened as part of setting the quantity to 1015 during the hold-trim purchase process",
+    "full_text": "Trade Goods Info — Almond (Luxuries, Specialties, 1040 in stock). Calculation: Sales Cost 4,013 / -459 / +1,211 / Final Sales Price 4,765. Enter Number: [input field showing '1']. Buttons: 1 2 3 4 5 6 7 8 9 0 Max. Max Price 4,205 | Min Price 3,472. Cancel / Load.",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

@@ -34,6 +34,23 @@ from vision.state_fingerprints import (
 
 # Top-left region (port name, building title, sub-menu title, world map title).
 TOP_LEFT_TITLE   = (0.00, 0.00, 0.40, 0.10)
+
+# A SUB-MENU TITLE SITS LOWER THAN A BUILDING TITLE, and this is the box for it.
+#
+# Measured over 552 title detections in the 2026-09-08 Box of Nutmeg run: the building
+# title ('Market') centres at cy 0.045-0.052, well inside TOP_LEFT_TITLE. The market
+# sub-menu title ('Purchase') centres at 0.13-0.17 — OUTSIDE it. `sub_menu` was therefore
+# never matching on its own title. It matched on an intermittent duplicate detection near
+# the top edge, present in only 198 of the 552 looks, and when that duplicate was absent NO
+# standard fingerprint matched at all: frames 0040 and 0042 of that run are the market
+# Purchase page with a Replenish Stock dialog over it, and both came back
+# `learned_cargo_kris` — a learned fingerprint keyed on two goods names, which no activity
+# serves. Sixteen ENTER_BUILDING dispatches were issued at a bot already standing in the
+# market, each refused and each followed by a 20s wait for a walk that never happened.
+#
+# Widened rather than moved, so every frame that classifies correctly today still does. The
+# left rail's 'Sell' button (cy 0.255) stays outside: it is a control, not a title.
+SUB_MENU_TITLE   = (0.00, 0.00, 0.40, 0.22)
 # Wider top-left for multi-row company panel content.
 TOP_LEFT_PANEL   = (0.00, 0.00, 0.30, 0.55)
 # Top-center mode-tab row (world map's Port/Explore/Route/Trade).
@@ -363,7 +380,7 @@ register_fingerprint(Fingerprint(
     positive_signals=(
         LabelSetSignal(
             name="sub_menu_title",
-            region=TOP_LEFT_TITLE,
+            region=SUB_MENU_TITLE,
             labels=KNOWN_SUB_MENU_TITLES,
             min_matches=1,
         ),
@@ -406,7 +423,7 @@ register_fingerprint(Fingerprint(
         # If a known sub-menu title is in top-left, this is sub_menu.
         LabelSetSignal(
             name="not_sub_menu_title",
-            region=TOP_LEFT_TITLE,
+            region=SUB_MENU_TITLE,
             labels=KNOWN_SUB_MENU_TITLES,
             min_matches=1,
         ),
@@ -485,7 +502,7 @@ register_fingerprint(Fingerprint(
         ),
         LabelSetSignal(
             name="not_sub_menu_title",
-            region=TOP_LEFT_TITLE,
+            region=SUB_MENU_TITLE,
             labels=KNOWN_SUB_MENU_TITLES,
             min_matches=1,
         ),
@@ -525,17 +542,26 @@ register_fingerprint(Fingerprint(
 # in prior runs (memory/knowledge/learned_fingerprints/).  Registered
 # AFTER the foundational entries above, so any state_id collision with
 # a foundation entry is resolved in favour of the foundation.
-from vision.state_fingerprints import load_learned_fingerprints as _load_learned
-try:
-    _learned = _load_learned()
-    if _learned:
-        from loguru import logger as _logger
-        _logger.info(
-            f"[state_fingerprints] auto-loaded {len(_learned)} learned "
-            f"fingerprint(s): {[fp.state_id for fp in _learned]}"
-        )
-except Exception as _exc:
-    pass
+# NOT LOADED ANY MORE (2026-09-08). `load_learned_fingerprints` still exists and the
+# discovery hook still WRITES candidates — that half earns its keep, and is how `idle_lock`
+# was found. What is switched off is registering them as classifiers.
+#
+# Measured over every session log the repo holds: 134 learned matches out of 16,176
+# classifications (0.83%), and NOT ONE of them was ever acted on, because no activity serves
+# a `learned_*` state — `default_activities()` has 19 entries and none is learned. 121 of the
+# 134 were screens that already have an owner under their proper name: the market Purchase
+# page (78) and the idle standby lock (43). The rest were two notice popups.
+#
+# The layer's only two successes were PROMOTIONS done by hand — see retired/README.md, where
+# the idle lock became a state with an activity after costing 34 minutes at Svear. Finding a
+# screen is what it is good at; naming one is not.
+#
+# And a wrong name is worse than no name. Precedence already stops a learned fingerprint
+# outranking a standard one (2026-08-26), so it only ever wins in a VACUUM — and an
+# unmatched frame is `unknown`, which IS served, by UnrecognizedChromedActivity and by the
+# dispatcher's standing-activity continuity. Filling that silence with a confident name
+# nothing serves is how the 2026-09-08 run dispatched ENTER_BUILDING sixteen times at a bot
+# standing in the market. The vacuum itself was the SUB_MENU_TITLE box above.
 
 
 # loading (generic transition) — only one stable signal.

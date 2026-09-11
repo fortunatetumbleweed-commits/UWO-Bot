@@ -1,0 +1,21 @@
+{
+  "purpose": "Market dialog asking the player to spend 146 gems to replenish a depleted trade good's stock (Coral, 35/50 remaining) so it can be purchased again",
+  "full_text": "Replenish Stock? (Does not affect market price) Remaining: 35/50. Cost: 146 gems. Cancel | OK",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "b8ed3724785141db",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T17:56:44.009940+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Market dialog asking the player to spend 146 gems to replenish a depleted trade good's stock (Coral, 35/50 remaining) so it can be purchased again",
+    "full_text": "Replenish Stock? (Does not affect market price) Remaining: 35/50. Cost: 146 gems. Cancel | OK",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

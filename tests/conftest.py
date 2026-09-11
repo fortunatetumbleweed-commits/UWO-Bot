@@ -631,3 +631,66 @@ def _sleep_advances_the_clock(request, monkeypatch):
         pass
     yield
 
+
+
+@pytest.fixture(autouse=True)
+def _market_kb_is_not_the_live_one(tmp_path, monkeypatch):
+    """Point the market KB at a scratch directory for every test.
+
+    IT IS PRODUCTION STATE THAT A LIVE RUN WRITES TO. The bot records what it learns about a
+    port's season there — `Madeira {'raisin': 'low'}` was written by a real run on 2026-09-07
+    — and a test that reads it is reading whatever the last voyage happened to see.
+
+    Found the same way the daily-news cell above was: `test_a_refused_refresh_may_be_recoverable`
+    PASSED alone and FAILED in the full suite, because a scarce season legitimately stops the
+    refreshes before that test's own bound is reached. Neither a stale test nor a production
+    bug — a test reading what the bot writes.
+
+    A scratch directory rather than a mock, so the KB's own read/write path is still exercised
+    and a test that WANTS an entry can simply record one.
+    """
+    from memory import market_kb
+    monkeypatch.setattr(market_kb, "_MARKETS_DIR", tmp_path / "markets", raising=False)
+    yield
+
+
+@pytest.fixture(autouse=True)
+def _the_persisted_settlement_is_not_the_live_one(tmp_path, monkeypatch):
+    """Point the persisted settlement at a scratch file for every test.
+
+    IT IS WHERE THE FLEET IS. `observation` writes this to disk whenever a new settlement is
+    detected, so the next process knows where it woke up — and a test that drives the real
+    update path writes it too.
+
+    `test_perceive_observation_wire` does exactly that: it feeds `port_overworld` /
+    `port='Amsterdam'` through the genuine wiring, which is the point of the test, and the
+    genuine wiring saves to disk. So every full-suite run left the file reading:
+
+        {"name": "Amsterdam", "at": ..., "saved_at": "2026-09-07T21:50:34"}
+
+    Six suite runs on 2026-09-07 and the fleet had not been near Amsterdam in 24 hours
+    (user). It is not inert, either — the San mission opened with `loaded persisted
+    settlement: 'Amsterdam'` and stamped every market result that leg with a port it was not
+    in, and `current_position` now compares the two settlement records by AGE, so a
+    test-written value is not merely wrong but freshly wrong.
+
+    Proven by setting the file to a sentinel and running that one test file: it came back
+    'Amsterdam'.
+
+    A scratch file rather than a mock, so the save/load path is still exercised; the two
+    tests that already patch `_SETTLEMENT_PATH` themselves keep working, their patch being
+    the inner one.
+    """
+    from brain import observation
+    monkeypatch.setattr(observation, "_SETTLEMENT_PATH",
+                        tmp_path / "last_settlement.json", raising=False)
+    # THE SAME HAZARD, THE SAME REMEDY. `_DAILY_NEWS_SEEN_PATH` records the Korean date on
+    # which the day's news was closed, and a suite that wrote it would tell the next live run
+    # the news had already been met — suppressing a real popup for the rest of that day.
+    # Added with the record, before it could repeat the Amsterdam lesson.
+    from brain import perceive as _perceive
+    monkeypatch.setattr(_perceive, "_DAILY_NEWS_SEEN_PATH",
+                        tmp_path / "daily_news_seen.json", raising=False)
+    observation.reset()
+    yield
+    observation.reset()

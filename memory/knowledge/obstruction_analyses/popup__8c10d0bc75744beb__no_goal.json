@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade negotiation prompt asking the player whether to spend negotiation attempts to sell goods at a 22.5% price premium, with a 76.2% success rate",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 839,438,544 → 984,056,472 (22.5% increase). Negotiation Success Rate: Failed | 76.2% | Success",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "8c10d0bc75744beb",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T19:14:31.355484+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade negotiation prompt asking the player whether to spend negotiation attempts to sell goods at a 22.5% price premium, with a 76.2% success rate",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 839,438,544 → 984,056,472 (22.5% increase). Negotiation Success Rate: Failed | 76.2% | Success",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

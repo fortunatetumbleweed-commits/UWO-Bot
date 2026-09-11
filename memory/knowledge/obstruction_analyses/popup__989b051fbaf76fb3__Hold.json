@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase screen is showing the available trade goods at Tripoli, including Candle at 990 units already in cargo — this is the normal purchase tab view, not an obstruction popup",
+  "full_text": "00:28:50 | 39 diamonds | Turnip Food 783 units 102% 148 gold | Pickle Luxuries 263 units 99% 373 gold | Darbuka Crafts 0 units Specialties available from 10/12/2026/00:00:00 | Candle 990 in cargo",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "989b051fbaf76fb3",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-09T21:03:42.789607+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase screen is showing the available trade goods at Tripoli, including Candle at 990 units already in cargo — this is the normal purchase tab view, not an obstruction popup",
+    "full_text": "00:28:50 | 39 diamonds | Turnip Food 783 units 102% 148 gold | Pickle Luxuries 263 units 99% 373 gold | Darbuka Crafts 0 units Specialties available from 10/12/2026/00:00:00 | Candle 990 in cargo",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "high"
+  }
+}
