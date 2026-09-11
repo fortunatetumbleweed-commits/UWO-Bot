@@ -356,51 +356,6 @@ class SeaActivity:
         return max(_MIN_CHECKBACK_S, min(wait, _MAX_CHECKBACK_S))
 
 
-class AshoreActivity:
-    """The other half of `ArriveAshore`: the voyage is over the moment we are not at sea.
-
-    NARROW BY CONSTRUCTION. It declares `GOALS = (ArriveAshore,)`, so goal-aware dispatch
-    refuses to hand it anything else and the port overworld keeps behaving exactly as it does
-    today — "no activity for state 'port_overworld' — asking for a goal", 24 times a day,
-    which is correct because a port tick HAS an intent to dispatch.
-
-    Without it, arrival would look like a STALL: `port_overworld` has no activity, so every
-    tick would report UNRECOGNISED, and `run_goal` gives up after six of those. The fleet
-    would arrive and the goal would be abandoned for want of anyone to say "done".
-    """
-
-    name = "ashore"
-    SERVES = ("port_overworld", "village")
-
-    # PER WORLD, because this activity serves two that do not afford the same things — which
-    # is exactly where the earlier wedge was. A port overworld has the ☰, the globe and the
-    # building list. A VILLAGE has none of them: it is a chromed screen with a back arrow and
-    # the Explore/Gifting/Loot/Recruit/Barter menu, and `_is_inside` already says "there is no
-    # world map control in a village at all; you leave to the sea and open it from the
-    # minimap". Live 2026-08-29 OPEN_WORLD_MAP was dispatched at Svear every tick until the
-    # run stopped one leg from done.
-    CAN_START = {"port_overworld": ("OPEN_WORLD_MAP", "ENTER_BUILDING"),
-                 "village":        ("EXIT_BUILDING",)}
-
-    # Per world, like CAN_START. Leaving a BUILDING puts you on the overworld; leaving a
-    # VILLAGE puts you at SEA — the same declared capability, opposite destination, which is
-    # exactly why "can this world start it" could never answer "can I get there from here".
-    LEADS_TO = {"port_overworld": {"OPEN_WORLD_MAP": "world_map"},
-                "village":        {"EXIT_BUILDING": "sea"}}
-    GOALS: tuple = (ArriveAshore, ReadHold)
-
-    def work(self, goal: Any, state: Any) -> ActivityResult:
-        where = getattr(state, "state", None) or getattr(state, "location", None)
-        port = getattr(state, "port", None)
-        logger.info(f"[ashore] {goal} — {where!r}{f' at {port}' if port else ''}")
-
-        if isinstance(goal, ReadHold):
-            return read_the_hold(where, port)
-
-        return ActivityResult(FINISHED, {"port": port, "state": where},
-                              detail=f"ashore at {port or where}")
-
-
 def read_the_hold(where, port) -> ActivityResult:
     """What the ship can carry and what is aboard. ONE implementation, two activities.
 

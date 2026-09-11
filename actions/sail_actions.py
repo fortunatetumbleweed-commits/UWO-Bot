@@ -882,8 +882,8 @@ _BUILDING_NAMES = frozenset({"harbor", "market", "shipyard", "bank", "inn", "san
                              "item shop", "bureau"})
 
 
-# A real building list names SEVERAL buildings; one stray match is not evidence.
-_MIN_BUILDING_MATCHES = 2
+# NOTE: the "several names, not one" threshold moved to `brain.port_context` with the rule it
+# belongs to. `_BUILDING_NAMES` stays here because other readers in this module use it.
 
 
 def _on_buildings_tab(buildings) -> bool:
@@ -900,10 +900,14 @@ def _on_buildings_tab(buildings) -> bool:
     scrolled a list of player names for 60s before giving up. A genuine building list carries
     seven or more matches (harbor, market, shipyard, bank, inn, sanctuary, bureau…), so the
     two cases are not close together.
+
+    ONE IMPLEMENTATION, AND IT BELONGS TO THE PORT. "Is this the building list" is a question
+    about what the PORT OVERWORLD is showing, so it is answered by `brain.port_context`, which
+    the port activity owns — the same split the market and the village already have. This
+    wrapper stays because the callers here read better for it.
     """
-    hits = sum(1 for lbl, *_ in buildings
-               if lbl.strip().strip(":.").lower() in _BUILDING_NAMES)
-    return hits >= _MIN_BUILDING_MATCHES
+    from brain.port_context import _is_the_building_list
+    return _is_the_building_list(buildings)
 
 
 def _tab_strip_band() -> Tuple[int, int, int, int]:

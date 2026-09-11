@@ -147,11 +147,11 @@ def test_a_tick_that_acted_does_not_sleep():
 
 
 class AStateMayHaveMoreThanOneActivity:
-    """`village` is served by VillageActivity for a Barter and AshoreActivity for an
-    ArriveAshore — the same screen, two different jobs. Registering one activity per state
-    silently overwrote whichever came first (found 2026-08-28: AshoreActivity clobbered
-    VillageActivity because it registered later, and every barter would have reported
-    'ashore' instead of bartering).
+    """Every workable state is served by its own activity AND by PositionKnownActivity for
+    the bootstrap, so registering one activity per state silently overwrote whichever came
+    first (found 2026-08-28, when AshoreActivity clobbered VillageActivity at a village and
+    every barter would have reported 'ashore' instead of bartering; that particular pair is
+    gone, the resolution it forced is not).
 
     This is the intent-filter resolution the design describes: SERVES filters on the STATE,
     GOALS on the ORDER, and the pair identifies the handler.
@@ -167,17 +167,41 @@ def _dispatcher():
 
 
 def test_the_same_state_resolves_to_different_activities_by_goal():
-    from brain.activities.sea import ArriveAshore, AshoreActivity
+    """One screen, two jobs, told apart by the ORDER rather than by registration order."""
+    from brain.activities.bootstrap import KnowWhereWeAre, PositionKnownActivity
+    from brain.activities.port import PortActivity
+    from brain.activities.sea import ArriveAshore
+    d = _dispatcher()
+    assert isinstance(d._pick("port_overworld", ArriveAshore()), PortActivity)
+    assert isinstance(d._pick("port_overworld", KnowWhereWeAre()), PositionKnownActivity)
+
+
+def test_the_village_owns_arrival_on_its_own_screen():
+    """A village is a screen a voyage can END at, and the activity that owns a screen is the
+    one that says you have arrived on it.
+
+    It used to be AshoreActivity, which served `port_overworld` AND `village` — two worlds
+    that afford nothing in common, which forced the only per-world CAN_START/LEADS_TO dicts
+    in the codebase. Split into PortActivity 2026-09-11; the village kept the capabilities it
+    already declared and gained the arrival.
+    """
+    from brain.activities.sea import ArriveAshore
     from brain.activities.village import Barter, VillageActivity
+    from brain.dispatcher import FINISHED
     d = _dispatcher()
     assert isinstance(d._pick("village", Barter("Birch Tree", "Svear")), VillageActivity)
-    assert isinstance(d._pick("village", ArriveAshore()), AshoreActivity)
+    act = d._pick("village", ArriveAshore())
+    assert isinstance(act, VillageActivity)
+    res = act.work(ArriveAshore("route 'to svear'"),
+                   types.SimpleNamespace(state="village", port="Svear", frame=None))
+    assert res.status == FINISHED
+    assert res.observed["port"] == "Svear"
 
 
 def test_arriving_ends_the_voyage_rather_than_looking_like_a_stall():
-    """Without AshoreActivity, `port_overworld` has no activity, so every tick after arrival
-    reports UNRECOGNISED — and run_goal gives up after six. The fleet would arrive and the
-    goal be abandoned for want of anyone to say 'done'."""
+    """Without an activity, `port_overworld` reports UNRECOGNISED on every tick after
+    arrival — and run_goal gives up after six. The fleet would arrive and the goal be
+    abandoned for want of anyone to say 'done'."""
     from brain.activities.sea import ArriveAshore
     from brain.dispatcher import FINISHED
     d = _dispatcher()
@@ -189,12 +213,12 @@ def test_arriving_ends_the_voyage_rather_than_looking_like_a_stall():
 
 
 def test_the_port_still_behaves_as_before_for_other_goals():
-    """AshoreActivity declares GOALS=(ArriveAshore,), so goal-aware dispatch refuses to hand
-    it anything else and the port keeps falling through to 'ask for a goal' — which is right,
-    because a port tick HAS an intent to dispatch."""
+    """PortActivity declares GOALS, so goal-aware dispatch refuses to hand it anything else
+    and the port keeps falling through to 'ask for a goal' — which is right, because a port
+    tick HAS an intent to dispatch."""
     from brain.dispatcher import _serves_goal
-    from brain.activities.sea import AshoreActivity
-    assert not _serves_goal(AshoreActivity(), object())
+    from brain.activities.port import PortActivity
+    assert not _serves_goal(PortActivity(), object())
 
 
 def test_the_eta_paces_the_look_not_the_supply():

@@ -35,6 +35,7 @@ from brain import owned_state
 from brain import village_context as _ctx
 from brain.village_context import (BARTER_PANEL_BLOCKED, BARTER_PANEL_NO_GOOD,
                                    BARTER_PANEL_READY)
+from brain.activities.sea import ArriveAshore
 from brain.dispatcher import ActivityResult, BLOCKED, FINISHED, UNRECOGNISED, WORKING
 
 
@@ -96,9 +97,14 @@ class VillageActivity:
     # activity with no GOALS as a state-CLEARING one, "in the way of every goal and must run
     # whatever the order is". So this absorbed EVERY goal at a village and answered BLOCKED
     # to the ones it cannot do, which is the same failure its own comment below names and the
-    # reason AshoreActivity was given GOALS explicitly. Found when `ClearOfTheVillage` was
+    # reason this list is declared explicitly. Found when `ClearOfTheVillage` was
     # swallowed here instead of being routed to a Back.
-    GOALS: tuple = (Barter, ReadBarterPanel)
+    #
+    # `ArriveAshore` JOINED THIS LIST when `AshoreActivity` was split into `PortActivity`
+    # (2026-09-11). A village is a screen a voyage can END at, and the activity that owns a
+    # screen is the one that says you have arrived on it — the same rule the port now states
+    # once instead of a second activity serving both worlds at once.
+    GOALS: tuple = (Barter, ReadBarterPanel, ArriveAshore)
 
     # The screens this activity owns while it is running — its intent filter on SCREENS, the
     # way SERVES filters on states and GOALS on orders. Anything else is a MISS and an exit.
@@ -172,6 +178,16 @@ class VillageActivity:
         if where is not None and where not in self.SERVES:
             return ActivityResult(UNRECOGNISED, {"state": where},
                                   detail=f"not in a village ({where!r})")
+        # ARRIVAL IS AN OBSERVATION, and it is answered before anything is read. Being on
+        # this screen IS the answer, so there is no panel to open and no round to weigh —
+        # and `voyage_runner` reads the port out of `observed` to record where the voyage
+        # ended. Handled ahead of the barter work for the same reason `SeaActivity` answers
+        # a `ReadHold` first: the goal decides which question this tick is.
+        if isinstance(goal, ArriveAshore):
+            return ActivityResult(FINISHED, {"port": getattr(state, "port", None),
+                                             "state": where},
+                                  detail=f"ashore at {getattr(state, 'port', None) or where}")
+
         if not isinstance(goal, (Barter, ReadBarterPanel)):
             return ActivityResult(BLOCKED, {}, detail=f"the village cannot serve {goal!r}")
 

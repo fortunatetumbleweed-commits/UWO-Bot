@@ -87,7 +87,7 @@ class HarborActivity:
     # activity with no GOALS as a state-CLEARING one, in the way of every goal and obliged to
     # run whatever the order is. So this absorbed every goal at the harbour and answered for
     # orders it cannot fill — the same latent bug VillageActivity had, and the reason
-    # AshoreActivity was given GOALS explicitly from the start.
+    # the port and the village were given GOALS explicitly from the start.
     GOALS: tuple = (Depart, RecruitCrew)
 
     def __init__(self, *, readiness_fn=None, depart_fn=None, recruit_fn=None,
