@@ -1,0 +1,21 @@
+{
+  "purpose": "Another player's ship (TaylorFP, ranked Patron) has appeared nearby in the open sea, shown on the mini-map panel as a passing encounter notification — this is a live player presence overlay, not a dialog requiring action",
+  "full_text": "TW 1 Patron TaylorFP 8.2 14",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "f3ec5917789f046c",
+  "goal_intent": "Depart",
+  "cached_at": "2026-09-10T18:53:35.052493+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Another player's ship (TaylorFP, ranked Patron) has appeared nearby in the open sea, shown on the mini-map panel as a passing encounter notification — this is a live player presence overlay, not a dialog requiring action",
+    "full_text": "TW 1 Patron TaylorFP 8.2 14",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

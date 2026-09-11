@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade result summary showing the completed sale of Pigs, including sales cost, surcharge, loss versus market value, total received, and updated gold balance",
+  "full_text": "Result — Mate Trade EXP: 5, Contribution: 0, Obtained Trade Point: 0, Trade Fame: 0, Sales Cost: 3,939, Tax: 0, Surcharge: 1,212, Loss: -56,863, Total Amount: 5,151, Balance: 76,780,813,580 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "181bcea17846bc91",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-10T18:49:14.379966+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade result summary showing the completed sale of Pigs, including sales cost, surcharge, loss versus market value, total received, and updated gold balance",
+    "full_text": "Result — Mate Trade EXP: 5, Contribution: 0, Obtained Trade Point: 0, Trade Fame: 0, Sales Cost: 3,939, Tax: 0, Surcharge: 1,212, Loss: -56,863, Total Amount: 5,151, Balance: 76,780,813,580 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

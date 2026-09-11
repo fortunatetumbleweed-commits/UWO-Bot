@@ -1,0 +1,21 @@
+{
+  "purpose": "Confirmation dialog asking the bot to confirm restocking Duck (livestock) using 28 Contribution Points, with 48 of 50 replenishment uses remaining",
+  "full_text": "Replenish Stock? (Does not affect market price) Remaining: 48/50 [28 Contribution Points] — OK / Cancel",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "16dfbf2facc2a165",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T15:31:49.426614+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Confirmation dialog asking the bot to confirm restocking Duck (livestock) using 28 Contribution Points, with 48 of 50 replenishment uses remaining",
+    "full_text": "Replenish Stock? (Does not affect market price) Remaining: 48/50 [28 Contribution Points] — OK / Cancel",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

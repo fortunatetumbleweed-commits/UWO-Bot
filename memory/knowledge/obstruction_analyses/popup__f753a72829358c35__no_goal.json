@@ -1,0 +1,21 @@
+{
+  "purpose": "A port facilities navigation menu for Willemstad has appeared, listing all available buildings the player can visit (Harbor, Market, Shipyard, Bank, Inn, Cathedral, Union, Bureau), along with the current in-game season and time.",
+  "full_text": "Wet Season Jul 03:12 — Harbor | Market | Shipyard | Bank | Inn | Cathedral | Union | Bureau",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "f753a72829358c35",
+  "goal_intent": null,
+  "cached_at": "2026-09-10T20:04:13.165050+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A port facilities navigation menu for Willemstad has appeared, listing all available buildings the player can visit (Harbor, Market, Shipyard, Bank, Inn, Cathedral, Union, Bureau), along with the current in-game season and time.",
+    "full_text": "Wet Season Jul 03:12 — Harbor | Market | Shipyard | Bank | Inn | Cathedral | Union | Bureau",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

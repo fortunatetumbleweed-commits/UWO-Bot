@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase panel is showing the available goods at Gijón (Pig, Pork, Duck, Raspberry, Turron) after switching to the purchase tab — this is the normal purchase sub-menu, not an obstruction",
+  "full_text": "Purchase screen listing: Pig (Livestock) 294 stock 99% 254 gold; Pork (Food) 775 stock 106% 209 gold; Duck (Livestock) 399 stock 96% 138 gold; Raspberry (Luxuries) 363 stock 105% 300 gold; Turron (Luxuries) Specialties available from 10/12/2026/00:00:00. Cargo: 2314/4952. Timer: 00:04:22.",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "2b0ca10e562ed931",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T02:27:34.791827+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase panel is showing the available goods at Gijón (Pig, Pork, Duck, Raspberry, Turron) after switching to the purchase tab — this is the normal purchase sub-menu, not an obstruction",
+    "full_text": "Purchase screen listing: Pig (Livestock) 294 stock 99% 254 gold; Pork (Food) 775 stock 106% 209 gold; Duck (Livestock) 399 stock 96% 138 gold; Raspberry (Luxuries) 363 stock 105% 300 gold; Turron (Luxuries) Specialties available from 10/12/2026/00:00:00. Cargo: 2314/4952. Timer: 00:04:22.",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "The navigation panel / nearby-ports sidebar has expanded on the right side of the screen, showing distances to nearby ports (Málaga, Ceuta, Seville, Faro, Casablanca, Valencia) along with wind/current info — this is the bot's route/compass HUD, not a blocking popup.",
+  "full_text": "C/HW | 1 | Patron | 27.6 | Málaga | TaylorFP | 0 < | Málaga Approx. 91.1km | Ceuta Approx. 168.2km | Seville Approx. 264.4km | Faro Approx. 403.6km | Casablanca Approx. 454km | Valencia Approx. 463.6km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "58bcced907f06520",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-11T01:15:10.488001+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The navigation panel / nearby-ports sidebar has expanded on the right side of the screen, showing distances to nearby ports (Málaga, Ceuta, Seville, Faro, Casablanca, Valencia) along with wind/current info — this is the bot's route/compass HUD, not a blocking popup.",
+    "full_text": "C/HW | 1 | Patron | 27.6 | Málaga | TaylorFP | 0 < | Málaga Approx. 91.1km | Ceuta Approx. 168.2km | Seville Approx. 264.4km | Faro Approx. 403.6km | Casablanca Approx. 454km | Valencia Approx. 463.6km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

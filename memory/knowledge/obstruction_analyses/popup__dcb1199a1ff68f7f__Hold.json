@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is showing the Raisin cargo card details (1,355 units at 104% price, 55 gold per unit with -572 deviation), which appeared because the bot navigated to read the hold and the Sell sub-menu is now displaying Raisin as one of the available goods in cargo",
+  "full_text": "Raisin Luxuries 1,355 104% 55 (-572)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "dcb1199a1ff68f7f",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T15:49:20.782753+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Sell screen is showing the Raisin cargo card details (1,355 units at 104% price, 55 gold per unit with -572 deviation), which appeared because the bot navigated to read the hold and the Sell sub-menu is now displaying Raisin as one of the available goods in cargo",
+    "full_text": "Raisin Luxuries 1,355 104% 55 (-572)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

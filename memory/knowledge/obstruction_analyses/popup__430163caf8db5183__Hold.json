@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase screen showing available trade goods at Gijón — Pig is sold out (100%/Sold Out), and the bot is viewing the market inventory including Pork, Raspberry, Turron, Duck, and Bullet after completing a purchase dialog action",
+  "full_text": "Purchase | Cargo 3,299/4,952 | Bullet Firearms 260 94% 396 | Pig Livestock 0 Sold Out 100% 257 | Pork Food 775 95% 188 | Duck Livestock 399 98% 141 | Raspberry Luxuries 363 96% 274 | Turron Luxuries Specialties 10/12/2026/00:00:00 | Nego. Chance 63.7% Success Rate 76.2% Tax 0% 0 | Timer 00:27:56 | Gems 47",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "430163caf8db5183",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T15:37:36.142454+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase screen showing available trade goods at Gijón — Pig is sold out (100%/Sold Out), and the bot is viewing the market inventory including Pork, Raspberry, Turron, Duck, and Bullet after completing a purchase dialog action",
+    "full_text": "Purchase | Cargo 3,299/4,952 | Bullet Firearms 260 94% 396 | Pig Livestock 0 Sold Out 100% 257 | Pork Food 775 95% 188 | Duck Livestock 399 98% 141 | Raspberry Luxuries 363 96% 274 | Turron Luxuries Specialties 10/12/2026/00:00:00 | Nego. Chance 63.7% Success Rate 76.2% Tax 0% 0 | Timer 00:27:56 | Gems 47",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

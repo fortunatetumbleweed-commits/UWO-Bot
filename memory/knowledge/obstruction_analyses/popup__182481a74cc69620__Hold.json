@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase Result confirmation showing the cost breakdown (157,136 base + 26,840 tax - 28,304 discount = 155,672 total) for a bulk buy of goods, likely Raisin, awaiting OK to finalise the transaction",
+  "full_text": "Result — Purchase Cost: 157,136 | Tax: 26,840 | Discount: -28,304 | Total Amount: 155,672 | Balance: 76,734,099,647 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "182481a74cc69620",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T14:45:59.087018+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase Result confirmation showing the cost breakdown (157,136 base + 26,840 tax - 28,304 discount = 155,672 total) for a bulk buy of goods, likely Raisin, awaiting OK to finalise the transaction",
+    "full_text": "Result — Purchase Cost: 157,136 | Tax: 26,840 | Discount: -28,304 | Total Amount: 155,672 | Balance: 76,734,099,647 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "high"
+  }
+}

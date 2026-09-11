@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade Goods Info dialog for Raisin showing sell price calculation (Sales Cost 42, Surcharge +13, Per Price 55) with a Load button to stage the goods into the hold",
+  "full_text": "Trade Goods Info — Raisin, Luxuries. Quantity: 1629. Description: Dried grapes. Great as a snack and as a culinary ingredient. Calculation: Sales Cost 42, Tax 0, Surcharge +13, Per Price 55. Prices: Current Price 42, Max Price 45, Min Price 37. Quantity selector: 1/1,629. Final Sales Price: 55. Buttons: Cancel, Load.",
+  "dismissal": "tap_accept",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "cdbfcf087c0b5ab3",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-10T15:55:03.408278+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade Goods Info dialog for Raisin showing sell price calculation (Sales Cost 42, Surcharge +13, Per Price 55) with a Load button to stage the goods into the hold",
+    "full_text": "Trade Goods Info — Raisin, Luxuries. Quantity: 1629. Description: Dried grapes. Great as a snack and as a culinary ingredient. Calculation: Sales Cost 42, Tax 0, Surcharge +13, Per Price 55. Prices: Current Price 42, Max Price 45, Min Price 37. Quantity selector: 1/1,629. Final Sales Price: 55. Buttons: Cancel, Load.",
+    "dismissal": "tap_accept",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Game is asking for confirmation to complete the barter trade, warning that the 54 Bambara Groundnut sitting in the received-trade buffer has not been claimed and will be discarded if the trade is completed now",
+  "full_text": "Complete the trade? 54 Bambara Groundnut has not been claimed yet. Unclaimed trade goods will be discarded.",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "098d3c7d58adc71c",
+  "goal_intent": "Barter",
+  "cached_at": "2026-09-10T19:14:52.764013+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Game is asking for confirmation to complete the barter trade, warning that the 54 Bambara Groundnut sitting in the received-trade buffer has not been claimed and will be discarded if the trade is completed now",
+    "full_text": "Complete the trade? 54 Bambara Groundnut has not been claimed yet. Unclaimed trade goods will be discarded.",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

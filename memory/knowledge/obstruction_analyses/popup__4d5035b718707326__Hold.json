@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase confirmation dialog showing the bot just bought 775 units of Pig (Livestock) for a total of 75,558 gold after a 17,346 discount, with current balance displayed",
+  "full_text": "Result — Purchase Cost: 92,904 | Tax: 0 | Discount: -17,346 | Total Amount: 75,558 | Balance: 76,733,621,539 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "4d5035b718707326",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T15:31:07.302820+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase confirmation dialog showing the bot just bought 775 units of Pig (Livestock) for a total of 75,558 gold after a 17,346 discount, with current balance displayed",
+    "full_text": "Result — Purchase Cost: 92,904 | Tax: 0 | Discount: -17,346 | Total Amount: 75,558 | Balance: 76,733,621,539 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

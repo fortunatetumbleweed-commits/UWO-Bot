@@ -1,0 +1,21 @@
+{
+  "purpose": "Sale confirmation dialog asking the bot to approve selling 171 Matchlock Guns for 467,172 gold (after 10% tax deduction and surcharge bonus), which is the direct result of the bot tapping Sell to free hold space",
+  "full_text": "Confirm Sales — Trade Goods: Matchlock Gun (Firearms, qty 171) | Sales Cost: 376,371 | Tax 10%: -34,029 | Surcharge: +124,830 | Price: 467,172 — Total Sales: 376,371 | -34,029 | +124,830 | 467,172 — Cancel | OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "d6453dc4a8451c16",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-09T23:18:19.318525+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Sale confirmation dialog asking the bot to approve selling 171 Matchlock Guns for 467,172 gold (after 10% tax deduction and surcharge bonus), which is the direct result of the bot tapping Sell to free hold space",
+    "full_text": "Confirm Sales — Trade Goods: Matchlock Gun (Firearms, qty 171) | Sales Cost: 376,371 | Tax 10%: -34,029 | Surcharge: +124,830 | Price: 467,172 — Total Sales: 376,371 | -34,029 | +124,830 | 467,172 — Cancel | OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

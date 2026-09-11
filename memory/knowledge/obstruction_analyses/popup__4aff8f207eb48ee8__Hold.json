@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase sub-menu is displaying the available goods at Benghazi, including Myrrh (96% stock, 707 price) and other items; this is the normal purchase screen the bot is actively working within, not an obstruction",
+  "full_text": "00:28:45 | 183 diamonds | Safflower (Dye) 322 qty, 98%, 515 price — Specialties | Wild Oat (Food) 766 qty, 97%, 144 price | Myrrh (Medicine) Specialties, 96%, 707 price | Darbuka (Crafts) 141 qty — Specialties — Unlock Condition (0/1)",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "4aff8f207eb48ee8",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T01:24:38.875330+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase sub-menu is displaying the available goods at Benghazi, including Myrrh (96% stock, 707 price) and other items; this is the normal purchase screen the bot is actively working within, not an obstruction",
+    "full_text": "00:28:45 | 183 diamonds | Safflower (Dye) 322 qty, 98%, 515 price — Specialties | Wild Oat (Food) 766 qty, 97%, 144 price | Myrrh (Medicine) Specialties, 96%, 707 price | Darbuka (Crafts) 141 qty — Specialties — Unlock Condition (0/1)",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

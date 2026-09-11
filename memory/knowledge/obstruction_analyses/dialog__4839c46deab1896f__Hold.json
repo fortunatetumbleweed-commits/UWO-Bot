@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase Result dialog confirming a bulk buy completed after declining negotiation — shows cost breakdown (187,142 base + 14,796 tax − 37,538 discount = 164,400 total) and updated gold balance of 76,733,226,487",
+  "full_text": "Result — Purchase Cost: 187,142 | Tax: 14,796 | Discount: -37,538 | Total Amount: 164,400 | Balance: 76,733,226,487 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "4839c46deab1896f",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T15:47:59.169866+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase Result dialog confirming a bulk buy completed after declining negotiation — shows cost breakdown (187,142 base + 14,796 tax − 37,538 discount = 164,400 total) and updated gold balance of 76,733,226,487",
+    "full_text": "Result — Purchase Cost: 187,142 | Tax: 14,796 | Discount: -37,538 | Total Amount: 164,400 | Balance: 76,733,226,487 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

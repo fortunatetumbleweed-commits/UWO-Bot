@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade result summary showing the completed sale of 870 Mutton, displaying profit, taxes, surcharge, and updated gold balance after the transaction",
+  "full_text": "Result. Mate Trade EXP 5,964. Contribution 62. Obtained Trade Point 0. Trade Fame 1,378. Sales Cost 713,505. Tax -76,972. Surcharge 214,370. Profit 526,280. Total Amount 850,903. Balance 77,565,184,798. Ok",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "77f17884777ab46e",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-11T01:48:46.400399+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade result summary showing the completed sale of 870 Mutton, displaying profit, taxes, surcharge, and updated gold balance after the transaction",
+    "full_text": "Result. Mate Trade EXP 5,964. Contribution 62. Obtained Trade Point 0. Trade Fame 1,378. Sales Cost 713,505. Tax -76,972. Surcharge 214,370. Profit 526,280. Total Amount 850,903. Balance 77,565,184,798. Ok",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

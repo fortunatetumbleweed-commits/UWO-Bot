@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase confirmation dialog asking the bot to confirm buying 356 Iron and 173 Matchlock Guns at a discounted total price of 326,763 gold",
+  "full_text": "Confirm Purchase — Trade Goods | Purchase Cost | Tax 0% | Discount | Purchase Price — Iron (Wares): 211,464 | 0 | -40,228 | 171,236 — Matchlock Gun (Firearms): 193,241 | 0 | -37,714 | 155,527 — Total Price: 404,705 | 0 | -77,942 | 326,763 — [Cancel] [Ok]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "8e8526921bdcd1ee",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-09T20:12:01.352468+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase confirmation dialog asking the bot to confirm buying 356 Iron and 173 Matchlock Guns at a discounted total price of 326,763 gold",
+    "full_text": "Confirm Purchase — Trade Goods | Purchase Cost | Tax 0% | Discount | Purchase Price — Iron (Wares): 211,464 | 0 | -40,228 | 171,236 — Matchlock Gun (Firearms): 193,241 | 0 | -37,714 | 155,527 — Total Price: 404,705 | 0 | -77,942 | 326,763 — [Cancel] [Ok]",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

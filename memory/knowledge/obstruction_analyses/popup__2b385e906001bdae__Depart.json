@@ -1,0 +1,21 @@
+{
+  "purpose": "The right-hand side panel shows the Chronicle/HotWind (C/HW) quest tracker and world-event notices (Booming Trigger, Major Trend, Auction House, Admiral Chronicle quest to complete an Anonymous Threatening Letter Request from Istanbul Union), overlaying part of the sailing view",
+  "full_text": "C/HW | 10 | 27.1 | Bordeaux | 14 | 45:23 +2.46 | Spring | May | Daytime | Booming Trigger... | Major Trend Oc... | Auction House... | Admiral Chronicle: Complete Anonymous Threatening Letter Request from Istanbul Union (0/1)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "2b385e906001bdae",
+  "goal_intent": "Depart",
+  "cached_at": "2026-09-08T21:16:15.863989+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The right-hand side panel shows the Chronicle/HotWind (C/HW) quest tracker and world-event notices (Booming Trigger, Major Trend, Auction House, Admiral Chronicle quest to complete an Anonymous Threatening Letter Request from Istanbul Union), overlaying part of the sailing view",
+    "full_text": "C/HW | 10 | 27.1 | Bordeaux | 14 | 45:23 +2.46 | Spring | May | Daytime | Booming Trigger... | Major Trend Oc... | Auction House... | Admiral Chronicle: Complete Anonymous Threatening Letter Request from Istanbul Union (0/1)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

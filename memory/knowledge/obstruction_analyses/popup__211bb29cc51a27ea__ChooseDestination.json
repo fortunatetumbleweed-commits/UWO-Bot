@@ -1,0 +1,21 @@
+{
+  "purpose": "This is the right-side navigation/radar panel showing nearby fleets (Cabot Expedition, Doria Pirates), weather info (Rain, Summer/Jul/Night), and repel support status — it is the persistent HUD sidebar, not a blocking popup",
+  "full_text": "C/HW | 0.0 | Trabzon | Summer Jul Night | Use Repel | Repel Support Owned 211 | Repel Support Used 5 | Cabot Expedition LV 20 2.8 km | Doria Pirates LV 20 3.5 km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "211bb29cc51a27ea",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-10T14:56:04.102363+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "This is the right-side navigation/radar panel showing nearby fleets (Cabot Expedition, Doria Pirates), weather info (Rain, Summer/Jul/Night), and repel support status — it is the persistent HUD sidebar, not a blocking popup",
+    "full_text": "C/HW | 0.0 | Trabzon | Summer Jul Night | Use Repel | Repel Support Owned 211 | Repel Support Used 5 | Cabot Expedition LV 20 2.8 km | Doria Pirates LV 20 3.5 km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

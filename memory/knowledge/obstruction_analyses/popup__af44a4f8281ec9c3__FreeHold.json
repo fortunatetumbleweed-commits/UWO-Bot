@@ -1,0 +1,21 @@
+{
+  "purpose": "Trader Pieter Gerardus is offering to negotiate a higher sell price for Raisin, requesting confirmation on whether to spend negotiation attempts for a 24.5% price increase with a 76.2% success rate",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 193,476 → 227,976 (24.5% up). Negotiation Success Rate: Failed | 76.2% | Success",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "af44a4f8281ec9c3",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-09T23:20:24.222616+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trader Pieter Gerardus is offering to negotiate a higher sell price for Raisin, requesting confirmation on whether to spend negotiation attempts for a 24.5% price increase with a 76.2% success rate",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 193,476 → 227,976 (24.5% up). Negotiation Success Rate: Failed | 76.2% | Success",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

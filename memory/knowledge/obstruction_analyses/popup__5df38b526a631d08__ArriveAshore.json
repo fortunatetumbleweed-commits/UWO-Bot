@@ -1,0 +1,21 @@
+{
+  "purpose": "The right-side panel shows the active quest log and market/trend notifications, including an Admiral Chronicle quest to complete an Anonymous Threatening Letter Request from Istanbul Union — this is a persistent HUD panel, not a blocking popup.",
+  "full_text": "C/TW 10 | 23.9 | Spring May Daytime | Booming Trigger... | Major Trend Oc... | Auction House... | Admiral Chronicle: Complete Anonymous Threatening Letter Request from Istanbul Union (0/1)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "5df38b526a631d08",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-08T21:17:15.666827+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The right-side panel shows the active quest log and market/trend notifications, including an Admiral Chronicle quest to complete an Anonymous Threatening Letter Request from Istanbul Union — this is a persistent HUD panel, not a blocking popup.",
+    "full_text": "C/TW 10 | 23.9 | Spring May Daytime | Booming Trigger... | Major Trend Oc... | Auction House... | Admiral Chronicle: Complete Anonymous Threatening Letter Request from Istanbul Union (0/1)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

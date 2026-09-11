@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase sub-menu is displaying the available goods for sale at Antalya — this is the normal purchase screen the bot just navigated to, not an obstruction.",
+  "full_text": "Purchase screen showing: Sugar Beet (Food) 633 qty 101% 226g; Mutton (Food) 639 qty 103% 269g; Rose (Perfume) 177 qty 110% 707g; Kutnu (Fabrics) 194 qty — Specialties, Unlock Condition (0/1). Timer 00:06:57, 51 diamonds.",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "ba261df754e351cb",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T02:34:11.145224+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase sub-menu is displaying the available goods for sale at Antalya — this is the normal purchase screen the bot just navigated to, not an obstruction.",
+    "full_text": "Purchase screen showing: Sugar Beet (Food) 633 qty 101% 226g; Mutton (Food) 639 qty 103% 269g; Rose (Perfume) 177 qty 110% 707g; Kutnu (Fabrics) 194 qty — Specialties, Unlock Condition (0/1). Timer 00:06:57, 51 diamonds.",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "high"
+  }
+}

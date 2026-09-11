@@ -1,0 +1,21 @@
+{
+  "purpose": "A negotiation dialog has appeared asking whether to use negotiation attempts to reduce the purchase price of Gobelin Fabrics by 21.5% (from 158,098 to 115,628 gold), with a 76.2% success rate and multiple attempts remaining — this is part of the trade purchase flow but is unrelated to the bot's goal of holding Raisin and Pig.",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts [icons]. 158,098 → 115,628 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Options: No | Use 1 chance | Use all remaining chances.",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "9ab42aae7291a125",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-09T23:33:33.113124+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A negotiation dialog has appeared asking whether to use negotiation attempts to reduce the purchase price of Gobelin Fabrics by 21.5% (from 158,098 to 115,628 gold), with a 76.2% success rate and multiple attempts remaining — this is part of the trade purchase flow but is unrelated to the bot's goal of holding Raisin and Pig.",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts [icons]. 158,098 → 115,628 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Options: No | Use 1 chance | Use all remaining chances.",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

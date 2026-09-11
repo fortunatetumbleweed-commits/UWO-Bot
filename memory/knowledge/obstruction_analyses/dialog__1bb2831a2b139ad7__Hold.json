@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase confirmation dialog asking the bot to confirm buying 263 units of Almond (Luxuries/Specialties) for a total of 275,098 gold after tax and discount",
+  "full_text": "Confirm Purchase | Trade Goods: Almond (Specialties, Luxuries) qty 263 | Purchase Cost: 316,652 | Tax 6%: 15,517 | Discount: -57,071 | Purchase Price: 275,098 | Total Price: 316,652 | Tax: 15,517 | Discount: -57,071 | Total: 275,098 gold | [Cancel] [OK]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "1bb2831a2b139ad7",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T00:59:09.243283+00:00",
+  "visit_count": 8,
+  "raw_api_response": {
+    "purpose": "Purchase confirmation dialog asking the bot to confirm buying 263 units of Almond (Luxuries/Specialties) for a total of 275,098 gold after tax and discount",
+    "full_text": "Confirm Purchase | Trade Goods: Almond (Specialties, Luxuries) qty 263 | Purchase Cost: 316,652 | Tax 6%: 15,517 | Discount: -57,071 | Purchase Price: 275,098 | Total Price: 316,652 | Tax: 15,517 | Discount: -57,071 | Total: 275,098 gold | [Cancel] [OK]",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

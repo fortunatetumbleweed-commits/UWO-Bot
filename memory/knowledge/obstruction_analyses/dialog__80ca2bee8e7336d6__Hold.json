@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase result confirmation showing the cost, discount applied, and total deducted from the player's gold balance after buying goods at Barcelona",
+  "full_text": "Result — Purchase Cost: 407,203 | Tax: 0 | Discount: -78,584 | Total Amount: 328,619 | Balance: 71,746,123,966 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "80ca2bee8e7336d6",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-08T22:11:27.820326+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase result confirmation showing the cost, discount applied, and total deducted from the player's gold balance after buying goods at Barcelona",
+    "full_text": "Result — Purchase Cost: 407,203 | Tax: 0 | Discount: -78,584 | Total Amount: 328,619 | Balance: 71,746,123,966 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

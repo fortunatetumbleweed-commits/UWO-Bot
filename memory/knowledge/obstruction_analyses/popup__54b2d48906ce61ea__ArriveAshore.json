@@ -1,0 +1,21 @@
+{
+  "purpose": "A nearby-ships/fleet radar panel (C/HW panel) showing surrounding vessels and their distances, including a Patron-rank player 'TaylorFP' and several NPC fleets — this is the minimap/encounter sidebar that is always visible at sea, not a popup obstruction",
+  "full_text": "C/HW | Caccini Assault... LV20 3km | Patron 淡墨桜 / TaylorFP | 25.1 | 3.4 | 1.4",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "54b2d48906ce61ea",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-10T02:17:40.627885+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A nearby-ships/fleet radar panel (C/HW panel) showing surrounding vessels and their distances, including a Patron-rank player 'TaylorFP' and several NPC fleets — this is the minimap/encounter sidebar that is always visible at sea, not a popup obstruction",
+    "full_text": "C/HW | Caccini Assault... LV20 3km | Patron 淡墨桜 / TaylorFP | 25.1 | 3.4 | 1.4",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Game is asking the bot to confirm the sale of 112 Pig (Livestock) and 115 Raisin (Luxuries) for a total of 62,101 gold, as part of the hold-trim operation that sells excess cargo",
+  "full_text": "Confirm Sales — Trade Goods | Sales Cost | Tax 10% | Surcharge | Price — Pig (Livestock) qty 112: 44,464 | -2,912 | +14,224 | 55,776 — Raisin (Luxuries) qty 115: 4,830 | 0 | +1,495 | 6,325 — Total Sales: 49,294 | -2,912 | +15,719 | 62,101 — [Cancel] [OK]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "d9adbbffb3046a84",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-10T15:56:31.797772+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Game is asking the bot to confirm the sale of 112 Pig (Livestock) and 115 Raisin (Luxuries) for a total of 62,101 gold, as part of the hold-trim operation that sells excess cargo",
+    "full_text": "Confirm Sales — Trade Goods | Sales Cost | Tax 10% | Surcharge | Price — Pig (Livestock) qty 112: 44,464 | -2,912 | +14,224 | 55,776 — Raisin (Luxuries) qty 115: 4,830 | 0 | +1,495 | 6,325 — Total Sales: 49,294 | -2,912 | +15,719 | 62,101 — [Cancel] [OK]",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

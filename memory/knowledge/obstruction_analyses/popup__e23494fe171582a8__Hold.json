@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase screen at Gijón is showing the available trade goods panel, with Pig sold out (100% stock depleted) — this is the normal purchase sub-menu state after the bot acted, not a blocking popup",
+  "full_text": "00:27:49 | 28 diamonds | Pig Livestock [Sold Out] 100% 257 | Pork Food 95% 188 775 | Raspberry Luxuries 96% 274 363 | Turron Luxuries Specialties 10/12/2026/00:00:00",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "e23494fe171582a8",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T15:31:30.586227+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase screen at Gijón is showing the available trade goods panel, with Pig sold out (100% stock depleted) — this is the normal purchase sub-menu state after the bot acted, not a blocking popup",
+    "full_text": "00:27:49 | 28 diamonds | Pig Livestock [Sold Out] 100% 257 | Pork Food 95% 188 775 | Raspberry Luxuries 96% 274 363 | Turron Luxuries Specialties 10/12/2026/00:00:00",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

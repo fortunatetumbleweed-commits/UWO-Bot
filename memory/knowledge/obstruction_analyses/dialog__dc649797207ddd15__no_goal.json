@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade confirmation dialog asking the player to approve the sale of 3864 Boxes of Nutmeg (Spices) for a total price of 839,438,544 gold, after a 6% tax deduction and a surcharge bonus",
+  "full_text": "Confirm Sales | Trade Goods: Box of Nutmeg (Spices, qty 3864) | Sales Cost: 683,757,984 | Tax 6%: -52,863,384 | Surcharge: +208,543,944 | Price: 839,438,544 | Total Sales: 683,757,984 - 52,863,384 + 208,543,944 = 839,438,544 | [Cancel] [OK]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "dc649797207ddd15",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T19:13:58.927894+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade confirmation dialog asking the player to approve the sale of 3864 Boxes of Nutmeg (Spices) for a total price of 839,438,544 gold, after a 6% tax deduction and a surcharge bonus",
+    "full_text": "Confirm Sales | Trade Goods: Box of Nutmeg (Spices, qty 3864) | Sales Cost: 683,757,984 | Tax 6%: -52,863,384 | Surcharge: +208,543,944 | Price: 839,438,544 | Total Sales: 683,757,984 - 52,863,384 + 208,543,944 = 839,438,544 | [Cancel] [OK]",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

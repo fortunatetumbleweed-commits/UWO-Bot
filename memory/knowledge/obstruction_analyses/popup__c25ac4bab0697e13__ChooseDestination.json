@@ -1,0 +1,21 @@
+{
+  "purpose": "The world map is displaying the port destination list panel showing Mediterranean ports with their trade indices, which appeared after the bot opened the destination list to find Tripoli — Tripoli is not yet visible in the current scroll position of this panel",
+  "full_text": "104 108 Genoa Pisa 104 Montpellierille 108 104 108 108 Calvic 104 Barcelona Sassari 10 11 104 Palma Valencie Cagliari 104 108 409 Tunis iers 108 108",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "c25ac4bab0697e13",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-09T20:15:56.735418+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The world map is displaying the port destination list panel showing Mediterranean ports with their trade indices, which appeared after the bot opened the destination list to find Tripoli — Tripoli is not yet visible in the current scroll position of this panel",
+    "full_text": "104 108 Genoa Pisa 104 Montpellierille 108 104 108 108 Calvic 104 Barcelona Sassari 10 11 104 Palma Valencie Cagliari 104 108 409 Tunis iers 108 108",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "The world map is open, showing port locations and trade indices across the Mediterranean — this is the map view the bot navigated to in order to remote-check a distant port, but the target port 'Svear Village' (a northern European location) is not visible on screen; the visible area covers Iberia, southern France, and the western Mediterranean only",
+  "full_text": "104 108 Genoa Pisa 104 Montpellierille 108 104 108 108 Calvio 104 Barcelona Sassari 10 11 104 Palma Valencis Cagliari 104 108 409 Tunis iers 108 108",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "9debc70f08243d8f",
+  "goal_intent": "RemoteCheck",
+  "cached_at": "2026-09-09T20:05:35.901861+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The world map is open, showing port locations and trade indices across the Mediterranean — this is the map view the bot navigated to in order to remote-check a distant port, but the target port 'Svear Village' (a northern European location) is not visible on screen; the visible area covers Iberia, southern France, and the western Mediterranean only",
+    "full_text": "104 108 Genoa Pisa 104 Montpellierille 108 104 108 108 Calvio 104 Barcelona Sassari 10 11 104 Palma Valencis Cagliari 104 108 409 Tunis iers 108 108",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

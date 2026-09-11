@@ -1,0 +1,21 @@
+{
+  "purpose": "The sell interface is showing the Birch Tree cargo item card highlighted in the sell panel — this is the bot's own sell screen displaying Birch Tree (Wares, quantity 3,465) as a selected or visible trade good, not an obstruction but part of the normal sell workflow",
+  "full_text": "Birch Tree / Wares / 3,465 / 109% / 10,839 (7,847)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "81657c3a12ca1723",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-09T23:21:11.513057+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The sell interface is showing the Birch Tree cargo item card highlighted in the sell panel — this is the bot's own sell screen displaying Birch Tree (Wares, quantity 3,465) as a selected or visible trade good, not an obstruction but part of the normal sell workflow",
+    "full_text": "Birch Tree / Wares / 3,465 / 109% / 10,839 (7,847)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

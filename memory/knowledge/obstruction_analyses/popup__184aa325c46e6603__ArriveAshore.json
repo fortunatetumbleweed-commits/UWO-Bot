@@ -1,0 +1,21 @@
+{
+  "purpose": "A nearby player ship named 'TaylorFP' is visible in the same sea zone (Safe Waters), shown on the minimap/encounter panel alongside wind and zone information — this is a passive player encounter display, not an interactive dialog",
+  "full_text": "C/TW Safe Waters TaylorFP 27.6",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "184aa325c46e6603",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-09T20:51:51.931577+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A nearby player ship named 'TaylorFP' is visible in the same sea zone (Safe Waters), shown on the minimap/encounter panel alongside wind and zone information — this is a passive player encounter display, not an interactive dialog",
+    "full_text": "C/TW Safe Waters TaylorFP 27.6",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

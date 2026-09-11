@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase tab of the market at Antalya is now open, showing available goods including Mutton (639 in stock at 258 gold, 99% price) — this is the expected next step toward buying Mutton to reach the ~870 hold target",
+  "full_text": "Purchase tab open. Timer: 00:19:31. Diamonds: 131. Items available: Sugar Beet (Food) qty 633, price 222 (99%); Mutton (Food) qty 639, price 258 (99%); Rose (Perfume) qty 177, price 694 (108%); Kutnu (Fabrics) qty 194 — Specialties, Unlock Condition (0/1).",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "58633ef745ba3aae",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T01:34:23.099061+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase tab of the market at Antalya is now open, showing available goods including Mutton (639 in stock at 258 gold, 99% price) — this is the expected next step toward buying Mutton to reach the ~870 hold target",
+    "full_text": "Purchase tab open. Timer: 00:19:31. Diamonds: 131. Items available: Sugar Beet (Food) qty 633, price 222 (99%); Mutton (Food) qty 639, price 258 (99%); Rose (Perfume) qty 177, price 694 (108%); Kutnu (Fabrics) qty 194 — Specialties, Unlock Condition (0/1).",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

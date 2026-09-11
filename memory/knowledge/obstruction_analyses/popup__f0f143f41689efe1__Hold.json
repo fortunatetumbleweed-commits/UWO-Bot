@@ -1,0 +1,21 @@
+{
+  "purpose": "This is the normal Purchase sub-menu screen at Trabzon showing available trade goods including Carpet, Pomegranate, Peony, and Kutnu — not a true popup obstruction, just the purchase tab the bot just switched to",
+  "full_text": "00:29:08 | 175 diamonds | Carpet (Fabrics) 177 stock 101% 1,091 gold | Pomegranate (Food) 641 stock 94% 280 gold | Peony (Medicine) 491 stock 97% 314 gold | Kutnu (Fabrics) Specialties 10/26/2026/00:00:00",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "f0f143f41689efe1",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T14:45:02.731459+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "This is the normal Purchase sub-menu screen at Trabzon showing available trade goods including Carpet, Pomegranate, Peony, and Kutnu — not a true popup obstruction, just the purchase tab the bot just switched to",
+    "full_text": "00:29:08 | 175 diamonds | Carpet (Fabrics) 177 stock 101% 1,091 gold | Pomegranate (Food) 641 stock 94% 280 gold | Peony (Medicine) 491 stock 97% 314 gold | Kutnu (Fabrics) Specialties 10/26/2026/00:00:00",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

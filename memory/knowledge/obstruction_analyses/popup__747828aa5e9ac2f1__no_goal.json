@@ -1,0 +1,21 @@
+{
+  "purpose": "A city navigation menu listing all available port facilities in Antalya (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau), allowing the player to fast-travel to any building within the port.",
+  "full_text": "Summer Aug 14:22 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "747828aa5e9ac2f1",
+  "goal_intent": null,
+  "cached_at": "2026-09-11T02:30:06.034550+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "A city navigation menu listing all available port facilities in Antalya (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau), allowing the player to fast-travel to any building within the port.",
+    "full_text": "Summer Aug 14:22 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

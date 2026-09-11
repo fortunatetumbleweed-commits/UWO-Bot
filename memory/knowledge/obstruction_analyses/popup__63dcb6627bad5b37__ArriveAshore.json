@@ -1,0 +1,21 @@
+{
+  "purpose": "This is the navigation/route panel on the right side of the screen showing nearby ports and their distances, along with wind/speed info — it is part of the normal sailing HUD, not an obstruction.",
+  "full_text": "C/TW 27.6 | 2▼ | 1▲ | Faro Approx. 76.3km | Lisboa Approx. 171km | Seville Approx. 204.2km | Ceuta Approx. 299.8km | Casablanca Approx. 299.9km | Málaga Approx. 388.1km",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "63dcb6627bad5b37",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-11T01:14:20.672208+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "This is the navigation/route panel on the right side of the screen showing nearby ports and their distances, along with wind/speed info — it is part of the normal sailing HUD, not an obstruction.",
+    "full_text": "C/TW 27.6 | 2▼ | 1▲ | Faro Approx. 76.3km | Lisboa Approx. 171km | Seville Approx. 204.2km | Ceuta Approx. 299.8km | Casablanca Approx. 299.9km | Málaga Approx. 388.1km",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Edmund Gilbert is offering to negotiate the purchase price of Cotton Fabric down by 21.5% (from 182,070 to 133,042 gold), with a 76.2% success rate and multiple negotiation attempts remaining — the bot must choose whether to attempt negotiation or decline.",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 182,070 → 133,042 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Edmund Gilbert: Hmm, I think we can purchase this for 21.5% less. Would you like to negotiate? [No] [Use 1 chance] [Use all remaining chances]",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "3c2bac3fba1b1698",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T19:39:09.754921+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Edmund Gilbert is offering to negotiate the purchase price of Cotton Fabric down by 21.5% (from 182,070 to 133,042 gold), with a 76.2% success rate and multiple negotiation attempts remaining — the bot must choose whether to attempt negotiation or decline.",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 182,070 → 133,042 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Edmund Gilbert: Hmm, I think we can purchase this for 21.5% less. Would you like to negotiate? [No] [Use 1 chance] [Use all remaining chances]",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

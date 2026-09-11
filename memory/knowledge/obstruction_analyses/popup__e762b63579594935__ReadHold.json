@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is showing the current cargo in the ship's hold, including Matchlock Guns (528 units, Firearms, 90% market rate, price 2,540 with modifier 1,603) and Candles (822 units, Sundries, 104% market rate, price 18 with modifier -187) — this is the hold/sell interface displaying cargo contents",
+  "full_text": "Matchlock Gun Firearms 528 90% 2,540 (1,603) | Candle Sundries 822 104% 18 (-187)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "e762b63579594935",
+  "goal_intent": "ReadHold",
+  "cached_at": "2026-09-09T21:08:21.866428+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The Sell screen is showing the current cargo in the ship's hold, including Matchlock Guns (528 units, Firearms, 90% market rate, price 2,540 with modifier 1,603) and Candles (822 units, Sundries, 104% market rate, price 18 with modifier -187) — this is the hold/sell interface displaying cargo contents",
+    "full_text": "Matchlock Gun Firearms 528 90% 2,540 (1,603) | Candle Sundries 822 104% 18 (-187)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "high"
+  }
+}

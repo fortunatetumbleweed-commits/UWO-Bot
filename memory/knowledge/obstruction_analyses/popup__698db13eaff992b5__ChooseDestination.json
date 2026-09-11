@@ -1,0 +1,21 @@
+{
+  "purpose": "City Info panel for Benghazi has opened, showing trade cargo details (Almond at 97%, 3,186 units) — this is the expected result of tapping Benghazi in the port list on the world map",
+  "full_text": "City Info — Free Port Benghazi Safe Waters — Base Trade Facility Invest — Market Cargo Preference — Almond 97% 3,186 — Cargo 1,793/4,952",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "698db13eaff992b5",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-11T01:13:04.911047+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "City Info panel for Benghazi has opened, showing trade cargo details (Almond at 97%, 3,186 units) — this is the expected result of tapping Benghazi in the port list on the world map",
+    "full_text": "City Info — Free Port Benghazi Safe Waters — Base Trade Facility Invest — Market Cargo Preference — Almond 97% 3,186 — Cargo 1,793/4,952",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "high"
+  }
+}

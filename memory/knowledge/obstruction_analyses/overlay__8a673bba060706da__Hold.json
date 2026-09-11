@@ -1,0 +1,21 @@
+{
+  "purpose": "The game is warning that purchasing these trade goods will overflow the Cargo Hold's Trade Goods slots by 280 units, and asking the bot to confirm the overloaded purchase",
+  "full_text": "Notice: The Cargo Hold's Trade Goods slot will be exceeded by 280 slots. Purchase the Trade Goods? [Do not ask until next startup of game] [Cancel] [Ok]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "overlay",
+  "structural_hash": "8a673bba060706da",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-09T21:55:59.804103+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The game is warning that purchasing these trade goods will overflow the Cargo Hold's Trade Goods slots by 280 units, and asking the bot to confirm the overloaded purchase",
+    "full_text": "Notice: The Cargo Hold's Trade Goods slot will be exceeded by 280 slots. Purchase the Trade Goods? [Do not ask until next startup of game] [Cancel] [Ok]",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase result dialog showing the completed bulk purchase of Hand Cannon (261 units) with cost breakdown: base price 316,652, tax 15,517, discount -57,071, totalling 275,098 gold, confirming the transaction went through after negotiation was declined",
+  "full_text": "Result — Purchase Cost: 316,652 | Tax: 15,517 | Discount: -57,071 | Total Amount: 275,098 | Balance: 77,565,560,789 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "643938aaf07f68af",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T01:03:13.721612+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase result dialog showing the completed bulk purchase of Hand Cannon (261 units) with cost breakdown: base price 316,652, tax 15,517, discount -57,071, totalling 275,098 gold, confirming the transaction went through after negotiation was declined",
+    "full_text": "Result — Purchase Cost: 316,652 | Tax: 15,517 | Discount: -57,071 | Total Amount: 275,098 | Balance: 77,565,560,789 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

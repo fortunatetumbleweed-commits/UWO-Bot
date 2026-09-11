@@ -1,0 +1,21 @@
+{
+  "purpose": "A nearby Pasha Warship belonging to player TaylorFP (Patron rank) has appeared on screen, likely as an encounter or proximity alert while the bot is sailing toward Berber Village",
+  "full_text": "C/HW 17.7 | Patron TaylorFP | Pasha Warship | 8394",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "25433f6ceb5c8060",
+  "goal_intent": "Depart",
+  "cached_at": "2026-09-11T02:41:52.015352+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A nearby Pasha Warship belonging to player TaylorFP (Patron rank) has appeared on screen, likely as an encounter or proximity alert while the bot is sailing toward Berber Village",
+    "full_text": "C/HW 17.7 | Patron TaylorFP | Pasha Warship | 8394",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

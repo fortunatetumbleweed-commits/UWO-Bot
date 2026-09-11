@@ -1,0 +1,21 @@
+{
+  "purpose": "Another player's ship (TaylorFP, rank 1 Patron) has appeared nearby on the open sea, likely an encounter or proximity notification while sailing",
+  "full_text": "1 Patron 淡墨桜 TaylorFP 0.0 14",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "ea3c156a3a47b3aa",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-10T01:53:53.544738+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Another player's ship (TaylorFP, rank 1 Patron) has appeared nearby on the open sea, likely an encounter or proximity notification while sailing",
+    "full_text": "1 Patron 淡墨桜 TaylorFP 0.0 14",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

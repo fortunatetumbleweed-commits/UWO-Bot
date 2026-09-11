@@ -1,0 +1,21 @@
+{
+  "purpose": "The bot navigated to the Sell screen instead of reading the hold; it is now viewing the port's sellable cargo items (Matchlock Gun, Candle, etc.) at Bordeaux rather than the hold contents needed to plan purchases of Raisin and Pig",
+  "full_text": "Matchlock Gun Firearms 171 units 96% 2,818 (1,881) | Candle Sundries 276 units 95% 661 (456)",
+  "dismissal": "press_back",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "96d0056a96a618fb",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-09T21:54:30.121421+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The bot navigated to the Sell screen instead of reading the hold; it is now viewing the port's sellable cargo items (Matchlock Gun, Candle, etc.) at Bordeaux rather than the hold contents needed to plan purchases of Raisin and Pig",
+    "full_text": "Matchlock Gun Firearms 171 units 96% 2,818 (1,881) | Candle Sundries 276 units 95% 661 (456)",
+    "dismissal": "press_back",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

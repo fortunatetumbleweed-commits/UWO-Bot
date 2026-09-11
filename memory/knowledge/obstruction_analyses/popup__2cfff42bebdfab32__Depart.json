@@ -1,0 +1,21 @@
+{
+  "purpose": "Another player's ship (TaylorFP, rank Patron) has appeared nearby on the open sea, shown as an encounter popup with their flag and level indicator",
+  "full_text": "1 Patron 淡墨桜 TaylorFP 27.6",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "2cfff42bebdfab32",
+  "goal_intent": "Depart",
+  "cached_at": "2026-09-11T02:42:17.889263+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Another player's ship (TaylorFP, rank Patron) has appeared nearby on the open sea, shown as an encounter popup with their flag and level indicator",
+    "full_text": "1 Patron 淡墨桜 TaylorFP 27.6",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

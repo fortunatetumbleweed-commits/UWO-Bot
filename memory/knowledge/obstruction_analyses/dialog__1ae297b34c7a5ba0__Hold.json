@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase Result confirmation showing the cost breakdown (174,447 base + 15,336 tax − 30,033 discount = 159,750 total) for a bulk Mutton buy, with remaining balance displayed",
+  "full_text": "Result — Purchase Cost: 174,447 | Tax: 15,336 | Discount: -30,033 | Total Amount: 159,750 | Balance: 77,515,880,919 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "1ae297b34c7a5ba0",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T19:50:57.124494+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase Result confirmation showing the cost breakdown (174,447 base + 15,336 tax − 30,033 discount = 159,750 total) for a bulk Mutton buy, with remaining balance displayed",
+    "full_text": "Result — Purchase Cost: 174,447 | Tax: 15,336 | Discount: -30,033 | Total Amount: 159,750 | Balance: 77,515,880,919 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

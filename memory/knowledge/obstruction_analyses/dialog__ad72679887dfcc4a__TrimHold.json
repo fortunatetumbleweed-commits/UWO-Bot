@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade Goods Info panel for Pig (Livestock) showing quantity selector and load confirmation — this is the staging dialog that opened after the bot tapped the Pig tile to load it into the sell queue",
+  "full_text": "Trade Goods Info — Pig, Livestock. Description: A domesticated version of the boar. Widely raised for its meat. Prices: Current Price 0. Max Price 0, Min Price 0. Calculation: Sales Cost 0, Tax 0, Surcharge 0, Per Price 0. Quantity: 1/1,101. Min | Max. Final Sales Price: 0. Cancel | Load.",
+  "dismissal": "tap_accept",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "ad72679887dfcc4a",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-10T18:25:52.135082+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade Goods Info panel for Pig (Livestock) showing quantity selector and load confirmation — this is the staging dialog that opened after the bot tapped the Pig tile to load it into the sell queue",
+    "full_text": "Trade Goods Info — Pig, Livestock. Description: A domesticated version of the boar. Widely raised for its meat. Prices: Current Price 0. Max Price 0, Min Price 0. Calculation: Sales Cost 0, Tax 0, Surcharge 0, Per Price 0. Quantity: 1/1,101. Min | Max. Final Sales Price: 0. Cancel | Load.",
+    "dismissal": "tap_accept",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

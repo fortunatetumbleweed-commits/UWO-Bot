@@ -1,0 +1,21 @@
+{
+  "purpose": "Another player's ship (TaylorFP, rank Patron, level 27) has sailed into view and their nameplate/encounter popup is displayed on screen",
+  "full_text": "Patron 27.6 TaylorFP 27",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "385759811ec04a67",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-09T21:24:23.165181+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Another player's ship (TaylorFP, rank Patron, level 27) has sailed into view and their nameplate/encounter popup is displayed on screen",
+    "full_text": "Patron 27.6 TaylorFP 27",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

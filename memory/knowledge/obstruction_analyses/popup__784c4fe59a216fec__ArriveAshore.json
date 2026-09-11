@@ -1,0 +1,21 @@
+{
+  "purpose": "The right-side panel showing navigation info (wind, season, location near Cagliari) and quest chronicle reminders (Admiral Chronicle, Anonymous Threatening Letter from Istanbul Union) — this is the persistent HUD sidebar, not a blocking popup",
+  "full_text": "C/HW 27.6 Cagliari 38.6-50 1 Summer Jun Night Major Trend Oc... Season 7 Key M... Full Moon Luck... Admiral Chronicle: Complete Anonymous Threatening Letter Request from Istanbul Union (0/1)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "784c4fe59a216fec",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-09T20:52:34.080273+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The right-side panel showing navigation info (wind, season, location near Cagliari) and quest chronicle reminders (Admiral Chronicle, Anonymous Threatening Letter from Istanbul Union) — this is the persistent HUD sidebar, not a blocking popup",
+    "full_text": "C/HW 27.6 Cagliari 38.6-50 1 Summer Jun Night Major Trend Oc... Season 7 Key M... Full Moon Luck... Admiral Chronicle: Complete Anonymous Threatening Letter Request from Istanbul Union (0/1)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

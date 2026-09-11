@@ -1,0 +1,21 @@
+{
+  "purpose": "Another player's ship (TaylorFP, flagged with a cross emblem) and an NPC or player named 'Patron' have appeared on the open sea near the bot's vessel, likely in a PvP or encounter zone called 'Lawless Waters'",
+  "full_text": "C/HW 1 Patron TaylorFP 13.5",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "4d7a221426761e6f",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-10T19:22:23.027502+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Another player's ship (TaylorFP, flagged with a cross emblem) and an NPC or player named 'Patron' have appeared on the open sea near the bot's vessel, likely in a PvP or encounter zone called 'Lawless Waters'",
+    "full_text": "C/HW 1 Patron TaylorFP 13.5",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

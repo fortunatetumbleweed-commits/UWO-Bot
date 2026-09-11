@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase tab at the Tripoli market is now open, showing available goods for purchase including Wild Oat, Turnip, Pickle, Candle, and Darbuka — this is the expected next state after opening the purchase tab in order to buy Candle stock",
+  "full_text": "Purchase tab open. Available goods: Wild Oat (Food, 766 stock, 103%, 152g), Turnip (Food, 783 stock, 102%, 148g), Pickle (Luxuries, 263 stock, 91%, 343g), Candle (Sundries, 495 stock, 102%, 203g), Darbuka (Crafts, 0 stock, Specialties, available from 10/12/2026/00:00:00). Cargo: 2,341/4,952. Nego. Chance 63.7%, Success Rate 76.2%, Tax 6%.",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "486ea140e84b50d2",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-09T20:55:59.455309+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase tab at the Tripoli market is now open, showing available goods for purchase including Wild Oat, Turnip, Pickle, Candle, and Darbuka — this is the expected next state after opening the purchase tab in order to buy Candle stock",
+    "full_text": "Purchase tab open. Available goods: Wild Oat (Food, 766 stock, 103%, 152g), Turnip (Food, 783 stock, 102%, 148g), Pickle (Luxuries, 263 stock, 91%, 343g), Candle (Sundries, 495 stock, 102%, 203g), Darbuka (Crafts, 0 stock, Specialties, available from 10/12/2026/00:00:00). Cargo: 2,341/4,952. Nego. Chance 63.7%, Success Rate 76.2%, Tax 6%.",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

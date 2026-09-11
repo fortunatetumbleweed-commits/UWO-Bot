@@ -1,0 +1,21 @@
+{
+  "purpose": "The classifier has misidentified a region of the world map as a popup; the visible text is simply port name labels (Candia, Benghazi, Alexandria, Cairo) and coordinate readouts from the map surface, not a dialog",
+  "full_text": "Candia 104 Benghazi Alexandria Cairo 104 38.20, 6.05",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "cf78792335d44f8f",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-11T01:30:01.867427+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The classifier has misidentified a region of the world map as a popup; the visible text is simply port name labels (Candia, Benghazi, Alexandria, Cairo) and coordinate readouts from the map surface, not a dialog",
+    "full_text": "Candia 104 Benghazi Alexandria Cairo 104 38.20, 6.05",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "low"
+  }
+}

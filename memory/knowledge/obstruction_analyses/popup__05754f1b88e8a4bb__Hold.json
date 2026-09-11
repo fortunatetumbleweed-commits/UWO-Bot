@@ -1,0 +1,21 @@
+{
+  "purpose": "Albrecht Wallenstein (trade advisor) has triggered a negotiation prompt offering to purchase Gobelin Fabrics at a 21.5% discount (158,098 → 115,628 gold) with a 76.2% success rate, asking the player to choose how many negotiation attempts to use",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts [icons]. 158,098 → 115,628 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Options: No / Use 1 chance / Use all remaining chances. Albrecht Wallenstein: Hmm, we should be able to buy it for 21.5% less. Why don't you try negotiating?",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "05754f1b88e8a4bb",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-09T23:29:42.664287+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Albrecht Wallenstein (trade advisor) has triggered a negotiation prompt offering to purchase Gobelin Fabrics at a 21.5% discount (158,098 → 115,628 gold) with a 76.2% success rate, asking the player to choose how many negotiation attempts to use",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts [icons]. 158,098 → 115,628 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Options: No / Use 1 chance / Use all remaining chances. Albrecht Wallenstein: Hmm, we should be able to buy it for 21.5% less. Why don't you try negotiating?",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

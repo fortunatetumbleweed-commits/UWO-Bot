@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is showing the current cargo hold contents — Iron (1,065 units) and Matchlock Gun (528 units) are visible with their sell prices and market saturation percentages, which is the hold-reading result the bot navigated here to see",
+  "full_text": "Matchlock Gun, Firearms, 528 units, 96% market rate, 94 (-843). Also visible: Iron, Wares, 1,065 units, 111%, 45 (-418). Cargo: 1,603/4,952.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "2cd4a86368790ddf",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-09T20:14:10.270862+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The Sell screen is showing the current cargo hold contents — Iron (1,065 units) and Matchlock Gun (528 units) are visible with their sell prices and market saturation percentages, which is the hold-reading result the bot navigated here to see",
+    "full_text": "Matchlock Gun, Firearms, 528 units, 96% market rate, 94 (-843). Also visible: Iron, Wares, 1,065 units, 111%, 45 (-418). Cargo: 1,603/4,952.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

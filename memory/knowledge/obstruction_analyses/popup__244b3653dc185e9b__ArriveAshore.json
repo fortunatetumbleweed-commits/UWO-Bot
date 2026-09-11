@@ -1,0 +1,21 @@
+{
+  "purpose": "An in-game news/patch-notes panel has appeared showing recent update notices and data patch announcements, unrelated to sailing to San Village",
+  "full_text": "Updates — September 9 (Wed) Update Advance Notice [Content Added 9/8 18:30] 3 d ago. August 10 (Mon) Update Advance Notice 2026.08.07. July 8 Patch Notes [7/9 13:40 Update] 2026.07.06. Notices — 9/9 Data Patch [Content Added 9/9 18:04 (UTC+9)] 1 d ago. 09/09 New Products Announcement.",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "244b3653dc185e9b",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-10T15:00:51.009817+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "An in-game news/patch-notes panel has appeared showing recent update notices and data patch announcements, unrelated to sailing to San Village",
+    "full_text": "Updates — September 9 (Wed) Update Advance Notice [Content Added 9/8 18:30] 3 d ago. August 10 (Mon) Update Advance Notice 2026.08.07. July 8 Patch Notes [7/9 13:40 Update] 2026.07.06. Notices — 9/9 Data Patch [Content Added 9/9 18:04 (UTC+9)] 1 d ago. 09/09 New Products Announcement.",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

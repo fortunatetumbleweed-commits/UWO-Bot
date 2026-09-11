@@ -1,0 +1,21 @@
+{
+  "purpose": "The purchase sub-menu is displaying the available goods at Madeira port, showing Raisin at 950 stock and other trade goods — this is the normal purchase screen the bot is already navigating to buy the remaining Raisin needed to reach its 1081 target",
+  "full_text": "Purchase screen showing: Sugar (Seasoning, Specialties) 373 qty 99% 845 gold; Keris (Weapons) 128 qty 93% 895 gold; Raisin (Luxuries) 101% 576 gold; Wooden Statue (Artwork) 155 qty 100% 11,206 gold. Cargo 3,004/4,952. Timer 00:01:32. Diamonds 5.",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "04cbbb3b90c5695c",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T18:34:49.452762+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The purchase sub-menu is displaying the available goods at Madeira port, showing Raisin at 950 stock and other trade goods — this is the normal purchase screen the bot is already navigating to buy the remaining Raisin needed to reach its 1081 target",
+    "full_text": "Purchase screen showing: Sugar (Seasoning, Specialties) 373 qty 99% 845 gold; Keris (Weapons) 128 qty 93% 895 gold; Raisin (Luxuries) 101% 576 gold; Wooden Statue (Artwork) 155 qty 100% 11,206 gold. Cargo 3,004/4,952. Timer 00:01:32. Diamonds 5.",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

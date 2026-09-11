@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase Result dialog confirming a bulk buy of 775 Pork (not Pig) was completed at a total cost of 75,558 gold after an 18.8% discount, showing the updated balance",
+  "full_text": "Result — Purchase Cost: 92,904 | Tax: 0 | Discount: -17,346 | Total Amount: 75,558 | Balance: 76,733,772,655 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "86118444d6a0e621",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T15:25:01.150568+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase Result dialog confirming a bulk buy of 775 Pork (not Pig) was completed at a total cost of 75,558 gold after an 18.8% discount, showing the updated balance",
+    "full_text": "Result — Purchase Cost: 92,904 | Tax: 0 | Discount: -17,346 | Total Amount: 75,558 | Balance: 76,733,772,655 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

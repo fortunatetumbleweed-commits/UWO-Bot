@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade sale result summary showing profit, tax, surcharge, and updated gold balance after selling cargo at port",
+  "full_text": "Result — Mate Trade EXP: 49,739 | Contribution: 429 | Obtained Trade Point: 352 | Trade Fame: 9,493 | Sales Cost: 6,133,015 | Tax: -585,969 | Surcharge: 1,779,053 | Profit: 4,743,262 | Total Amount: 7,326,099 | Balance: 71,746,785,450 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "eb3c4fedec008a6f",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-08T21:12:58.238330+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Trade sale result summary showing profit, tax, surcharge, and updated gold balance after selling cargo at port",
+    "full_text": "Result — Mate Trade EXP: 49,739 | Contribution: 429 | Obtained Trade Point: 352 | Trade Fame: 9,493 | Sales Cost: 6,133,015 | Tax: -585,969 | Surcharge: 1,779,053 | Profit: 4,743,262 | Total Amount: 7,326,099 | Balance: 71,746,785,450 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "John Rolfe is offering to negotiate the purchase price of the current trade good down by 21.5% (from 164,400 to 120,012 gold), with a 76.2% success rate and multiple negotiation attempts remaining — the bot must choose whether to use 1 chance, use all remaining chances, or decline",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 164,400 → 120,012 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. No / Use 1 chance / Use all remaining chances.",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "ecce28cde3f16124",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T15:50:32.277250+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "John Rolfe is offering to negotiate the purchase price of the current trade good down by 21.5% (from 164,400 to 120,012 gold), with a 76.2% success rate and multiple negotiation attempts remaining — the bot must choose whether to use 1 chance, use all remaining chances, or decline",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 164,400 → 120,012 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. No / Use 1 chance / Use all remaining chances.",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

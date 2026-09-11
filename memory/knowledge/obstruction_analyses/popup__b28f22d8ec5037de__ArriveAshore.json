@@ -1,0 +1,21 @@
+{
+  "purpose": "Another player's ship (TaylorFP, flagged as Patron rank) has appeared nearby on the sea, triggering a player-encounter notification overlay showing their name, rank, and distance/bearing information",
+  "full_text": "Patron 27.6 | TaylorFP 3> 14",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "b28f22d8ec5037de",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-10T21:57:13.977763+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Another player's ship (TaylorFP, flagged as Patron rank) has appeared nearby on the sea, triggering a player-encounter notification overlay showing their name, rank, and distance/bearing information",
+    "full_text": "Patron 27.6 | TaylorFP 3> 14",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

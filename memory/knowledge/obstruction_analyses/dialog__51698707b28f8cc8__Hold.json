@@ -1,0 +1,21 @@
+{
+  "purpose": "Game is asking the bot to confirm the purchase of 495 Candles at a total price of 100,485 ducats (after 6% tax and discount applied)",
+  "full_text": "Confirm Purchase. Trade Goods: Candle (Sundries) x495. Purchase Cost: 119,295. Tax 6%: 5,445. Discount: -24,255. Purchase Price: 100,485. Total Price: 119,295 | 5,445 | -24,255 | 100,485. Cancel | OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "51698707b28f8cc8",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-09T20:57:35.767000+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Game is asking the bot to confirm the purchase of 495 Candles at a total price of 100,485 ducats (after 6% tax and discount applied)",
+    "full_text": "Confirm Purchase. Trade Goods: Candle (Sundries) x495. Purchase Cost: 119,295. Tax 6%: 5,445. Discount: -24,255. Purchase Price: 100,485. Total Price: 119,295 | 5,445 | -24,255 | 100,485. Cancel | OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

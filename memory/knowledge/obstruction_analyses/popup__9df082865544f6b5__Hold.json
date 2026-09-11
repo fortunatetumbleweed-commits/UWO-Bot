@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase panel is showing the available goods at Trabzon market, including the staged purchase state — this is the normal purchase sub-menu view, not a blocking obstruction; the 'popup' detected is the Purchase panel itself with cargo contents (grapes 244, pig 103, item 296, item 344, bread 343) and market listings visible",
+  "full_text": "00:28:39 | 144 diamonds | Carpet Fabrics 177 101% 1,091 | Pomegranate Food 641 94% 280 | Peony Medicine 491 97% 314 | Kutnu Fabrics Specialties 10/26/2026/00:00:00",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "9df082865544f6b5",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T14:35:01.072790+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase panel is showing the available goods at Trabzon market, including the staged purchase state — this is the normal purchase sub-menu view, not a blocking obstruction; the 'popup' detected is the Purchase panel itself with cargo contents (grapes 244, pig 103, item 296, item 344, bread 343) and market listings visible",
+    "full_text": "00:28:39 | 144 diamonds | Carpet Fabrics 177 101% 1,091 | Pomegranate Food 641 94% 280 | Peony Medicine 491 97% 314 | Kutnu Fabrics Specialties 10/26/2026/00:00:00",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "low"
+  }
+}

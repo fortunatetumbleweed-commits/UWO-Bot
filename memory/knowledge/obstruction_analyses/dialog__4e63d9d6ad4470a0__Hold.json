@@ -1,0 +1,21 @@
+{
+  "purpose": "A merchant is prompting the bot to spend Pearl (premium currency) to replenish the stock of a sold-out or low-stock trade good at this port, consuming 39 Pearls to restore up to 17 more units (33 of 50 already used)",
+  "full_text": "Replenish Stock? (Does not affect market price) Remaining: 33/50. Cost: 39 Pearls. Cancel / OK",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "4e63d9d6ad4470a0",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-08T21:27:12.577401+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A merchant is prompting the bot to spend Pearl (premium currency) to replenish the stock of a sold-out or low-stock trade good at this port, consuming 39 Pearls to restore up to 17 more units (33 of 50 already used)",
+    "full_text": "Replenish Stock? (Does not affect market price) Remaining: 33/50. Cost: 39 Pearls. Cancel / OK",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

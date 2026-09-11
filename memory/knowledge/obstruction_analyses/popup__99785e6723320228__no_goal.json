@@ -1,0 +1,21 @@
+{
+  "purpose": "City Info panel for Beirut is open, showing the Market tab with current trade goods, prices, and stock levels at this Free Port (flagged as Dangerous Waters)",
+  "full_text": "City Info — Free Port | Beirut | Dangerous Waters — Base | Trade | Facility | Invest — Market | Cargo | Preference — Narcissus 96% 1,177 — Civet 99% 1,138 — Damascus Steel 94% 1,507 — Broad Bean 106% 116 — Herb Salt 101% 271",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "99785e6723320228",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T23:49:55.530186+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "City Info panel for Beirut is open, showing the Market tab with current trade goods, prices, and stock levels at this Free Port (flagged as Dangerous Waters)",
+    "full_text": "City Info — Free Port | Beirut | Dangerous Waters — Base | Trade | Facility | Invest — Market | Cargo | Preference — Narcissus 96% 1,177 — Civet 99% 1,138 — Damascus Steel 94% 1,507 — Broad Bean 106% 116 — Herb Salt 101% 271",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade Goods Info dialog for Matchlock Gun showing sell price calculation (Sales Cost 76, Surcharge +22, Per Price 98) with quantity selector and Load button to stage the goods for selling",
+  "full_text": "Trade Goods Info — Matchlock Gun (Firearms) — Calculation: Sales Cost 76, Tax 0, Surcharge +22, Per Price 98 — Description: A firearm that uses the matchlock mechanism to launch its projectiles. Virtually the first portable gunpowder-based personal weapon in history. — Prices: Current Price 76, Max Price 81, Min Price 65 — Quantity: 1/519 — Final Sales Price: 98 — [Min] [Max] [Cancel] [Load]",
+  "dismissal": "tap_accept",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "5153535f52dba2cb",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-08T23:53:43.180138+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade Goods Info dialog for Matchlock Gun showing sell price calculation (Sales Cost 76, Surcharge +22, Per Price 98) with quantity selector and Load button to stage the goods for selling",
+    "full_text": "Trade Goods Info — Matchlock Gun (Firearms) — Calculation: Sales Cost 76, Tax 0, Surcharge +22, Per Price 98 — Description: A firearm that uses the matchlock mechanism to launch its projectiles. Virtually the first portable gunpowder-based personal weapon in history. — Prices: Current Price 76, Max Price 81, Min Price 65 — Quantity: 1/519 — Final Sales Price: 98 — [Min] [Max] [Cancel] [Load]",
+    "dismissal": "tap_accept",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

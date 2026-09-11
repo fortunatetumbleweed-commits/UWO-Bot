@@ -1,0 +1,21 @@
+{
+  "purpose": "The game's news/announcement panel has appeared showing recent patch notes and update notices, including a new mate 'Melati' and Investment Season 7 content updates",
+  "full_text": "Updates: September 9 (Wed) Update Advance Notice [Content Added 9/8 18:30] 2 d ago. August 10 (Mon) Update Advance Notice 2026.08.07. July 8 Patch Notes [7/9 13:40 Update] 2026.07.06. New Mate Update: Melati. Notices: 9/9 Data Patch [Content Added 9/9 18:04 (UTC+9)] 12 h ago. 09/09 New Products Announcement. Investment Season 7.",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "overlay",
+  "structural_hash": "31642f9cc8a8a833",
+  "goal_intent": null,
+  "cached_at": "2026-09-09T20:44:23.646706+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The game's news/announcement panel has appeared showing recent patch notes and update notices, including a new mate 'Melati' and Investment Season 7 content updates",
+    "full_text": "Updates: September 9 (Wed) Update Advance Notice [Content Added 9/8 18:30] 2 d ago. August 10 (Mon) Update Advance Notice 2026.08.07. July 8 Patch Notes [7/9 13:40 Update] 2026.07.06. New Mate Update: Melati. Notices: 9/9 Data Patch [Content Added 9/9 18:04 (UTC+9)] 12 h ago. 09/09 New Products Announcement. Investment Season 7.",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

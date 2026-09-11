@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is showing the Raisin cargo card selected in the hold panel, displaying current quantity (1,081) and sell price (1,065 gold, base 431) at 94% market saturation — this is the hold contents view the bot navigated to in order to check its Raisin stock",
+  "full_text": "Raisin | Luxuries | 1,081 | 94% | 1,065 (431)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "unknown",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "f8271b220b8d5609",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T15:22:41.364339+00:00",
+  "visit_count": 14,
+  "raw_api_response": {
+    "purpose": "The Sell screen is showing the Raisin cargo card selected in the hold panel, displaying current quantity (1,081) and sell price (1,065 gold, base 431) at 94% market saturation — this is the hold contents view the bot navigated to in order to check its Raisin stock",
+    "full_text": "Raisin | Luxuries | 1,081 | 94% | 1,065 (431)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "unknown",
+    "confidence": "medium"
+  }
+}

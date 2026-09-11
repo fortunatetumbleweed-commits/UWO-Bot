@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade Goods Info popup for Myrrh showing per-unit sale price calculation (1,367 gold after tax and surcharge) and quantity selector, opened when the bot tapped the Myrrh tile to stage it for selling",
+  "full_text": "Trade Goods Info — Myrrh, Medicine, Specialties. Calculation: Sales Cost 1,120 | Tax -74 | Surcharge +321 | Per Price 1,367. Description: A historic fragrance that even appears in the Bible. Ancient Egyptians used this as a preservative for their mummies. Prices — Current Price 1,120 | Max Price 1,187 | Min Price 1,075. Quantity: 1/714. Final Sales Price 1,367. [Cancel] [Load]",
+  "dismissal": "tap_accept",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "b71a3d0da288a3be",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-11T19:56:27.865984+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade Goods Info popup for Myrrh showing per-unit sale price calculation (1,367 gold after tax and surcharge) and quantity selector, opened when the bot tapped the Myrrh tile to stage it for selling",
+    "full_text": "Trade Goods Info — Myrrh, Medicine, Specialties. Calculation: Sales Cost 1,120 | Tax -74 | Surcharge +321 | Per Price 1,367. Description: A historic fragrance that even appears in the Bible. Ancient Egyptians used this as a preservative for their mummies. Prices — Current Price 1,120 | Max Price 1,187 | Min Price 1,075. Quantity: 1/714. Final Sales Price 1,367. [Cancel] [Load]",
+    "dismissal": "tap_accept",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

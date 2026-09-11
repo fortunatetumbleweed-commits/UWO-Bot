@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase screen is showing available goods at Gijón including Pig (Livestock) and Pork (Food), along with Raspberry and Turron (Luxuries) — this is the normal purchase sub-menu state after the restock prompt was answered, ready for the bot to select and buy Pig stock",
+  "full_text": "00:29:53 | 60 diamonds | Pig Livestock 294 units 100% 257 gold | Pork Food 775 units 95% 188 gold | Raspberry Luxuries 363 units 96% 274 gold | Turron Luxuries Specialties available from 10/12/2026/00:00:00",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "4d9268001e900f45",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T15:38:17.017273+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase screen is showing available goods at Gijón including Pig (Livestock) and Pork (Food), along with Raspberry and Turron (Luxuries) — this is the normal purchase sub-menu state after the restock prompt was answered, ready for the bot to select and buy Pig stock",
+    "full_text": "00:29:53 | 60 diamonds | Pig Livestock 294 units 100% 257 gold | Pork Food 775 units 95% 188 gold | Raspberry Luxuries 363 units 96% 274 gold | Turron Luxuries Specialties available from 10/12/2026/00:00:00",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

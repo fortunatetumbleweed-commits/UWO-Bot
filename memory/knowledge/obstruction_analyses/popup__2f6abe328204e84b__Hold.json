@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is open showing current cargo items (Iron and Matchlock Gun) with their quantities and market prices at Barcelona — this is the hold/cargo view the bot navigated to in order to read what it is carrying",
+  "full_text": "Matchlock Gun | Firearms | 173 | 102% | 98 (-885)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "2f6abe328204e84b",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-08T22:10:01.563162+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The Sell screen is open showing current cargo items (Iron and Matchlock Gun) with their quantities and market prices at Barcelona — this is the hold/cargo view the bot navigated to in order to read what it is carrying",
+    "full_text": "Matchlock Gun | Firearms | 173 | 102% | 98 (-885)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

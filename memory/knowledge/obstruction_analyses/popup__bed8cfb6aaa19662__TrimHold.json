@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is showing the current sell panel with Iron (709 units, 97% price, -416 loss) and Matchlock Gun (355 units, 102% price, -866 loss) queued for sale, reflecting the bot's Load action having populated the sell queue — this is the active sell interface, not a blocking popup",
+  "full_text": "Matchlock Gun Firearms 355 102% 98 (-866)",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "bed8cfb6aaa19662",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-08T23:54:57.742249+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Sell screen is showing the current sell panel with Iron (709 units, 97% price, -416 loss) and Matchlock Gun (355 units, 102% price, -866 loss) queued for sale, reflecting the bot's Load action having populated the sell queue — this is the active sell interface, not a blocking popup",
+    "full_text": "Matchlock Gun Firearms 355 102% 98 (-866)",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

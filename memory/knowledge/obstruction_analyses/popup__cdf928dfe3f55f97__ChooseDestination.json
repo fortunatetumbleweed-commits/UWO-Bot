@@ -1,0 +1,21 @@
+{
+  "purpose": "Another player's ship ('TaylorFP', patron-ranked) is nearby and their activity summary panel has appeared on screen, showing their accumulated exploration, fishing, and salvage scores — this is an encounter/inspection popup for a player vessel in the Atlantic Ocean near Berber Village.",
+  "full_text": "C/TW | Patron | 0.0 | TaylorFP | Sea Exploration x780 | Explore Land x1,517 | Fishing x726 | Cannot Salvage x140 | nearby: Arguin",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "cdf928dfe3f55f97",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-11T03:02:29.719157+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Another player's ship ('TaylorFP', patron-ranked) is nearby and their activity summary panel has appeared on screen, showing their accumulated exploration, fishing, and salvage scores — this is an encounter/inspection popup for a player vessel in the Atlantic Ocean near Berber Village.",
+    "full_text": "C/TW | Patron | 0.0 | TaylorFP | Sea Exploration x780 | Explore Land x1,517 | Fishing x726 | Cannot Salvage x140 | nearby: Arguin",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

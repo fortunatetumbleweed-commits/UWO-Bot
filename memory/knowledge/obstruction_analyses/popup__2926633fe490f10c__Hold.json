@@ -1,0 +1,21 @@
+{
+  "purpose": "The purchase screen is showing that Myrrh is sold out (0 stock) and unavailable to buy, which directly blocks the bot's goal of acquiring 435 units of Myrrh at Benghazi.",
+  "full_text": "Safflower Dye 322 Specialties 98% 515 | Wild Oat Food 766 97% 144 | Myrrh Medicine Sold Out 0 Specialties 96% 707 | Darbuka Crafts 141 Specialties Unlock Condition (0/1)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "2926633fe490f10c",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T01:22:46.413447+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The purchase screen is showing that Myrrh is sold out (0 stock) and unavailable to buy, which directly blocks the bot's goal of acquiring 435 units of Myrrh at Benghazi.",
+    "full_text": "Safflower Dye 322 Specialties 98% 515 | Wild Oat Food 766 97% 144 | Myrrh Medicine Sold Out 0 Specialties 96% 707 | Darbuka Crafts 141 Specialties Unlock Condition (0/1)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

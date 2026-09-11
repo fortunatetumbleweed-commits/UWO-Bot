@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is displaying available trade goods in the port's market, showing Coral (Jewelry) and Textiles (Fabrics) with their current sell prices, profit margins, and specialty bonuses — this is the normal sell interface, not a true obstruction.",
+  "full_text": "Coral Jewelry 184 units 104% 18,355 (6,430) | Textiles Fabrics 184 units Specialties 96% 20,336 (19,269)",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "ac7f377762682c67",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T19:13:11.205948+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Sell screen is displaying available trade goods in the port's market, showing Coral (Jewelry) and Textiles (Fabrics) with their current sell prices, profit margins, and specialty bonuses — this is the normal sell interface, not a true obstruction.",
+    "full_text": "Coral Jewelry 184 units 104% 18,355 (6,430) | Textiles Fabrics 184 units Specialties 96% 20,336 (19,269)",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

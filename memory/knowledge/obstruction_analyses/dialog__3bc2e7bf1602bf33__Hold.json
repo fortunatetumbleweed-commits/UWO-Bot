@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase Result confirmation showing the cost breakdown for a bulk buy of goods (likely Anchovy or another item), summarising Purchase Cost, Tax, Discount, and Total Amount deducted, with the resulting gold Balance displayed.",
+  "full_text": "Result — Purchase Cost: 156,520 | Tax: 7,670 | Discount: -28,210 | Total Amount: 135,980 | Balance: 77,517,416,537 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "3bc2e7bf1602bf33",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T19:07:57.229604+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase Result confirmation showing the cost breakdown for a bulk buy of goods (likely Anchovy or another item), summarising Purchase Cost, Tax, Discount, and Total Amount deducted, with the resulting gold Balance displayed.",
+    "full_text": "Result — Purchase Cost: 156,520 | Tax: 7,670 | Discount: -28,210 | Total Amount: 135,980 | Balance: 77,517,416,537 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

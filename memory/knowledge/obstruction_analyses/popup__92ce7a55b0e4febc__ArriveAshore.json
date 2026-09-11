@@ -1,0 +1,21 @@
+{
+  "purpose": "The HW (Harbour Watch / side panel) is showing the navigation dashboard with quest reminders, including an Admiral Chronicle quest to complete an Anonymous Threatening Letter Request from Istanbul Union, along with market trend notifications and current position/season info — this is the persistent right-side UI panel, not a blocking popup.",
+  "full_text": "Spring | May | Night | 27.1 | 44.74, -4.58 | Booming Trigger... | Major Trend Oc... | Auction House... | Admiral Chronicle: Complete Anonymous Threatening Letter Request from Istanbul Union (0/1)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "92ce7a55b0e4febc",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-08T21:16:32.452504+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The HW (Harbour Watch / side panel) is showing the navigation dashboard with quest reminders, including an Admiral Chronicle quest to complete an Anonymous Threatening Letter Request from Istanbul Union, along with market trend notifications and current position/season info — this is the persistent right-side UI panel, not a blocking popup.",
+    "full_text": "Spring | May | Night | 27.1 | 44.74, -4.58 | Booming Trigger... | Major Trend Oc... | Auction House... | Admiral Chronicle: Complete Anonymous Threatening Letter Request from Istanbul Union (0/1)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

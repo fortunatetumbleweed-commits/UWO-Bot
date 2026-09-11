@@ -1,0 +1,21 @@
+{
+  "purpose": "Sale confirmation dialog asking the bot to confirm selling 253 Iron (Wares) for 301,829 gold after 10% tax deduction and trade surcharge — this is the final confirmation step before the sale completes",
+  "full_text": "Confirm Sales. Trade Goods: Iron (Wares, qty 253). Sales Cost: 245,916. Tax 10%: -20,240. Surcharge: +76,153. Price: 301,829. Total Sales: 245,916 | -20,240 | +76,153 | 301,829. [Cancel] [OK]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "4beb773960d4d803",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-09T23:17:09.402194+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Sale confirmation dialog asking the bot to confirm selling 253 Iron (Wares) for 301,829 gold after 10% tax deduction and trade surcharge — this is the final confirmation step before the sale completes",
+    "full_text": "Confirm Sales. Trade Goods: Iron (Wares, qty 253). Sales Cost: 245,916. Tax 10%: -20,240. Surcharge: +76,153. Price: 301,829. Total Sales: 245,916 | -20,240 | +76,153 | 301,829. [Cancel] [OK]",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

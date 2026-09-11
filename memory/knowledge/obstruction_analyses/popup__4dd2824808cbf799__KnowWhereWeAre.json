@@ -1,0 +1,21 @@
+{
+  "purpose": "The port navigation panel listing all available facilities in Faro (Harbor, Market, Shipyard, Bank, Inn, Cathedral, Item Shop, Bureau) along with the current in-game date and time — this is the standard port_overworld sidebar that appears when you are inside a port, confirming our location as Faro.",
+  "full_text": "Summer Jul 09:08 — Harbor, Market, Shipyard, Bank, Inn, Cathedral, Item Shop, Bureau",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "4dd2824808cbf799",
+  "goal_intent": "KnowWhereWeAre",
+  "cached_at": "2026-09-10T00:40:57.825779+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The port navigation panel listing all available facilities in Faro (Harbor, Market, Shipyard, Bank, Inn, Cathedral, Item Shop, Bureau) along with the current in-game date and time — this is the standard port_overworld sidebar that appears when you are inside a port, confirming our location as Faro.",
+    "full_text": "Summer Jul 09:08 — Harbor, Market, Shipyard, Bank, Inn, Cathedral, Item Shop, Bureau",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "high"
+  }
+}

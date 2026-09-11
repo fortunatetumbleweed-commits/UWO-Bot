@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen at a port is open, displaying available cargo (Iron, Matchlock Gun, Candle, Birch Tree) with their prices and quantities — this is an in-port trade interface, not the world map",
+  "full_text": "Matchlock Gun Firearms 171 units 96% 2,818 (1,881) | Candle Sundries 276 units 95% 661 (456)",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "96d0056a96a618fb",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-09T21:52:41.924164+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The Sell screen at a port is open, displaying available cargo (Iron, Matchlock Gun, Candle, Birch Tree) with their prices and quantities — this is an in-port trade interface, not the world map",
+    "full_text": "Matchlock Gun Firearms 171 units 96% 2,818 (1,881) | Candle Sundries 276 units 95% 661 (456)",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

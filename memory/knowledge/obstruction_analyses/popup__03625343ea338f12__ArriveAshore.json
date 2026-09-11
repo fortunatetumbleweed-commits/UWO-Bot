@@ -1,0 +1,21 @@
+{
+  "purpose": "The game's side-panel quest/event tracker is open, showing active chronicles and events (Admiral Chronicle quest to complete an Anonymous Threatening Letter Request from Istanbul Union, seasonal trends, and moon luck notifications) — this is the persistent UI sidebar, not a blocking popup.",
+  "full_text": "TW | 27.6 | 36.02, 12.16 | Summer Jun Daytime | Major Trend Oc... | Season 7 Key M... | Full Moon Luck... | Admiral Chronicle: Complete Anonymous Threatening Letter Request from Istanbul Union (0/1) | Proceed with another Relationship Chronicle | New Royal Order available. Visit Seville Palace.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "03625343ea338f12",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-09T20:53:20.989097+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The game's side-panel quest/event tracker is open, showing active chronicles and events (Admiral Chronicle quest to complete an Anonymous Threatening Letter Request from Istanbul Union, seasonal trends, and moon luck notifications) — this is the persistent UI sidebar, not a blocking popup.",
+    "full_text": "TW | 27.6 | 36.02, 12.16 | Summer Jun Daytime | Major Trend Oc... | Season 7 Key M... | Full Moon Luck... | Admiral Chronicle: Complete Anonymous Threatening Letter Request from Istanbul Union (0/1) | Proceed with another Relationship Chronicle | New Royal Order available. Visit Seville Palace.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

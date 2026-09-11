@@ -1,0 +1,21 @@
+{
+  "purpose": "Confirmation dialog asking whether to spend 39 gems to replenish the stock of an item at this port (3 units remaining to refill, out of 50 max replenishments)",
+  "full_text": "Replenish Stock? (Does not affect market price) Remaining: 47/50 — Cost: 39 gems. Cancel / OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "d7672659f0d2dd16",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-09T23:27:31.248956+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Confirmation dialog asking whether to spend 39 gems to replenish the stock of an item at this port (3 units remaining to refill, out of 50 max replenishments)",
+    "full_text": "Replenish Stock? (Does not affect market price) Remaining: 47/50 — Cost: 39 gems. Cancel / OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

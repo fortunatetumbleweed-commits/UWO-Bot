@@ -1,0 +1,21 @@
+{
+  "purpose": "The cargo hold is completely full (4,952/4,952) and cannot receive the 508 units of trade goods earned from the barter round; unreceived goods will be discarded unless the hold is organised first.",
+  "full_text": "Insufficient Empty Space. Cannot receive item due to insufficient space. Please organize your Cargo Hold. Unreceived trade goods will be discarded. Received Trade Goods: 508. Cargo: 4,952/4,952 (100%). Receive.",
+  "dismissal": "tap_accept",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "09783b70fba8ea24",
+  "goal_intent": "Barter",
+  "cached_at": "2026-09-11T02:56:07.704057+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The cargo hold is completely full (4,952/4,952) and cannot receive the 508 units of trade goods earned from the barter round; unreceived goods will be discarded unless the hold is organised first.",
+    "full_text": "Insufficient Empty Space. Cannot receive item due to insufficient space. Please organize your Cargo Hold. Unreceived trade goods will be discarded. Received Trade Goods: 508. Cargo: 4,952/4,952 (100%). Receive.",
+    "dismissal": "tap_accept",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

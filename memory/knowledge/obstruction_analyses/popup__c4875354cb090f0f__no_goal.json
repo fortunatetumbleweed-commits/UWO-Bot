@@ -1,0 +1,21 @@
+{
+  "purpose": "City Info panel for Beirut is open showing the Trade Market tab, displaying local goods prices including Damascus Steel at 94% demand and 1,507 gold — this is a market overview panel, not a blocking obstruction",
+  "full_text": "City Info — Free Port — Beirut — Dangerous Waters. Base | Trade | Facility | Invest. Market | Cargo | Preference. Narcissus 96% 1,177. Civet 99% 1,138. Damascus Steel 94% 1,507. Broad Bean 106% 116. Herb Salt 101% 271.",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "c4875354cb090f0f",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T23:49:33.903453+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "City Info panel for Beirut is open showing the Trade Market tab, displaying local goods prices including Damascus Steel at 94% demand and 1,507 gold — this is a market overview panel, not a blocking obstruction",
+    "full_text": "City Info — Free Port — Beirut — Dangerous Waters. Base | Trade | Facility | Invest. Market | Cargo | Preference. Narcissus 96% 1,177. Civet 99% 1,138. Damascus Steel 94% 1,507. Broad Bean 106% 116. Herb Salt 101% 271.",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

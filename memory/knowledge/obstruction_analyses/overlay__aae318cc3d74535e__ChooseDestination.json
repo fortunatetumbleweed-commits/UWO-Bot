@@ -1,0 +1,21 @@
+{
+  "purpose": "City Info panel for Bordeaux has appeared after tapping the port, showing it is a Free Port, Allied Port with market and shipyard tax rates, and details about its mayor and monopolizing guild — this is the expected result of selecting Bordeaux on the world map",
+  "full_text": "Free Port | Bordeaux | Safe Waters — Base | Trade | Facility | Invest — Mayor: Matematec — Monopolizing Guild: 小小艦隊 — Market Event Schedule: There is no Market Event. — Status: Allied Port — Market Tax 10% — Shipyard Tax 25% — Disguise: Mediterranean Sea 52/30 — Dev. LV: [value cut off]",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "high",
+  "obstruction_kind": "overlay",
+  "structural_hash": "aae318cc3d74535e",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-10T14:08:33.238794+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "City Info panel for Bordeaux has appeared after tapping the port, showing it is a Free Port, Allied Port with market and shipyard tax rates, and details about its mayor and monopolizing guild — this is the expected result of selecting Bordeaux on the world map",
+    "full_text": "Free Port | Bordeaux | Safe Waters — Base | Trade | Facility | Invest — Mayor: Matematec — Monopolizing Guild: 小小艦隊 — Market Event Schedule: There is no Market Event. — Status: Allied Port — Market Tax 10% — Shipyard Tax 25% — Disguise: Mediterranean Sea 52/30 — Dev. LV: [value cut off]",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade result summary showing the bot successfully sold cargo, earning 138,013 profit and a new balance of 77,568,066,902 gold — part of the hold-freeing sell operation",
+  "full_text": "Result — Mate Trade EXP: 1,057 | Contribution: 0 | Obtained Trade Point: 0 | Trade Fame: 0 | Sales Cost: 179,352 | Tax: -8,742 | Surcharge: 54,144 | Profit: 138,013 | Total Amount: 224,754 | Balance: 77,568,066,902 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "a3dc72af7b483c7e",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-10T21:54:11.914163+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade result summary showing the bot successfully sold cargo, earning 138,013 profit and a new balance of 77,568,066,902 gold — part of the hold-freeing sell operation",
+    "full_text": "Result — Mate Trade EXP: 1,057 | Contribution: 0 | Obtained Trade Point: 0 | Trade Fame: 0 | Sales Cost: 179,352 | Tax: -8,742 | Surcharge: 54,144 | Profit: 138,013 | Total Amount: 224,754 | Balance: 77,568,066,902 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

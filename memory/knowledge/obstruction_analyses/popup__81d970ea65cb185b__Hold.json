@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is showing the Raisin cargo card details (1,272 units at 97% market saturation, selling for 50 gold with a -584 base price penalty), which appeared when the bot navigated to read the hold contents",
+  "full_text": "Raisin Luxuries 1,272 97% 50 (-584)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "81d970ea65cb185b",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T14:47:34.087880+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Sell screen is showing the Raisin cargo card details (1,272 units at 97% market saturation, selling for 50 gold with a -584 base price penalty), which appeared when the bot navigated to read the hold contents",
+    "full_text": "Raisin Luxuries 1,272 97% 50 (-584)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell screen is showing the current hold contents (Matchlock Gun ×528 and Candle ×495) with their market prices at Tripoli, which is the result of the bot navigating to read what goods are in the hold",
+  "full_text": "Matchlock Gun (Firearms) ×528 — 101% — 2,844 (1,907 base); Candle (Sundries) ×495 — 102% — 18 (-185 base)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "6cf4b3a3b2dc0e7c",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-09T20:59:52.881992+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Sell screen is showing the current hold contents (Matchlock Gun ×528 and Candle ×495) with their market prices at Tripoli, which is the result of the bot navigating to read what goods are in the hold",
+    "full_text": "Matchlock Gun (Firearms) ×528 — 101% — 2,844 (1,907 base); Candle (Sundries) ×495 — 102% — 18 (-185 base)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

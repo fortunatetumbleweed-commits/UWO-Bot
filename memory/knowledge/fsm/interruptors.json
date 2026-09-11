@@ -737,5 +737,101 @@
     "learned_at": "2026-09-07T20:36:11.868185+00:00",
     "learned_from": "qwen",
     "correction_count": 0
+  },
+  {
+    "id": "maintenance_notice_popup_for_uncharted_w",
+    "description": "Maintenance notice popup for Uncharted Waters Origin",
+    "atomic": true,
+    "detection_keywords": [
+      "maintenance",
+      "Notice",
+      "Uncharted Waters",
+      "FLOOR",
+      "UTC"
+    ],
+    "dismissal": "tap_ok",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-09-09T00:03:40.752858+00:00",
+    "learned_from": "claude",
+    "correction_count": 0
+  },
+  {
+    "id": "maintenance_notice_dialog_for_uncharted",
+    "description": "Maintenance notice dialog for Uncharted Waters Origin",
+    "atomic": true,
+    "detection_keywords": [
+      "maintenance",
+      "Notice",
+      "Uncharted Waters",
+      "FLOOR",
+      "UTC"
+    ],
+    "dismissal": "tap_ok",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-09-09T00:04:30.108080+00:00",
+    "learned_from": "claude",
+    "correction_count": 0
+  },
+  {
+    "id": "moon_rabbit_s_part_gift_package_purchase",
+    "description": "Moon Rabbit's Part Gift Package purchase dialog with a countdown timer and items shown",
+    "atomic": true,
+    "detection_keywords": [
+      "Moon Rabbit",
+      "Gift Package",
+      "Time left",
+      "Purchase"
+    ],
+    "dismissal": "tap_close_button_only",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-09-09T04:40:44.924179+00:00",
+    "learned_from": "claude",
+    "correction_count": 0
+  },
+  {
+    "id": "a_notice_dialog_informing_the_user_that",
+    "description": "A notice dialog informing the user that a new patch is available and the app is returning to the patch screen",
+    "atomic": true,
+    "detection_keywords": [
+      "Notice",
+      "new patch",
+      "Returning to patch screen"
+    ],
+    "dismissal": "tap_ok",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-09-09T20:19:16.438872+00:00",
+    "learned_from": "claude",
+    "correction_count": 0
+  },
+  {
+    "id": "patch_notice_dialog_informing_user_there",
+    "description": "Patch notice dialog informing user there is a new patch and returning to patch screen",
+    "atomic": true,
+    "detection_keywords": [
+      "Notice",
+      "new patch",
+      "patch screen",
+      "Returning"
+    ],
+    "dismissal": "tap_ok",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-09-09T20:20:01.446254+00:00",
+    "learned_from": "claude",
+    "correction_count": 0
+  },
+  {
+    "id": "patch_notice_dialog_informing_user_of_a",
+    "description": "Patch notice dialog informing user of a new patch and returning to patch screen",
+    "atomic": true,
+    "detection_keywords": [
+      "Notice",
+      "new patch",
+      "Returning to patch screen"
+    ],
+    "dismissal": "tap_ok",
+    "resumes": "current_state_unchanged",
+    "learned_at": "2026-09-09T20:21:07.885987+00:00",
+    "learned_from": "claude",
+    "correction_count": 0
   }
 ]

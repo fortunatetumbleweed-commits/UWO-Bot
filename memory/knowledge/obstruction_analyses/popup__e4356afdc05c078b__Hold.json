@@ -1,0 +1,21 @@
+{
+  "purpose": "The purchase sub-menu is showing the available goods at Antalya, including Mutton (639 units at 99% price, 258 gold), which is the target item the bot wants to hold (~870 units — this is the normal purchase screen state after answering the restock prompt",
+  "full_text": "00:29:54 | 210 diamonds | Sugar Beet Food 633 units 99% 222 gold | Mutton Food 639 units 99% 258 gold | Rose Perfume 177 units 108% 694 gold | Kutnu Fabrics 194 units Specialties Unlock Condition (0/1)",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "e4356afdc05c078b",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T01:38:23.176080+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The purchase sub-menu is showing the available goods at Antalya, including Mutton (639 units at 99% price, 258 gold), which is the target item the bot wants to hold (~870 units — this is the normal purchase screen state after answering the restock prompt",
+    "full_text": "00:29:54 | 210 diamonds | Sugar Beet Food 633 units 99% 222 gold | Mutton Food 639 units 99% 258 gold | Rose Perfume 177 units 108% 694 gold | Kutnu Fabrics 194 units Specialties Unlock Condition (0/1)",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Game is asking the bot to confirm the purchase of 244 Raisins for a total of 155,672 gold (after 21% tax and a discount of 28,304)",
+  "full_text": "Confirm Purchase — Trade Goods: Raisin (Luxuries, qty 244) | Purchase Cost: 157,136 | Tax 21%: 26,840 | Discount: -28,304 | Purchase Price: 155,672 | Total Price: 157,136 / 26,840 / -28,304 / 155,672 | [Cancel] [OK]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "af5d549f227732d4",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T14:31:59.709733+00:00",
+  "visit_count": 10,
+  "raw_api_response": {
+    "purpose": "Game is asking the bot to confirm the purchase of 244 Raisins for a total of 155,672 gold (after 21% tax and a discount of 28,304)",
+    "full_text": "Confirm Purchase — Trade Goods: Raisin (Luxuries, qty 244) | Purchase Cost: 157,136 | Tax 21%: 26,840 | Discount: -28,304 | Purchase Price: 155,672 | Total Price: 157,136 / 26,840 / -28,304 / 155,672 | [Cancel] [OK]",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

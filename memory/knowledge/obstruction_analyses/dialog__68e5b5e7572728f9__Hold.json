@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase result confirmation showing the bot successfully bought goods, with a 40,136 coin discount applied, for a total cost of 165,215 gold, leaving a balance of 71,745,958,751",
+  "full_text": "Result. Purchase Cost 205,351. Tax 0. Discount -40,136. Total Amount 165,215. Balance 71,745,958,751. OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "68e5b5e7572728f9",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-08T22:13:53.774273+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase result confirmation showing the bot successfully bought goods, with a 40,136 coin discount applied, for a total cost of 165,215 gold, leaving a balance of 71,745,958,751",
+    "full_text": "Result. Purchase Cost 205,351. Tax 0. Discount -40,136. Total Amount 165,215. Balance 71,745,958,751. OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

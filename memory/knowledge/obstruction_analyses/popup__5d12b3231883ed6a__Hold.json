@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase Result confirmation dialog showing the cost breakdown (purchase cost, tax, discount, total) for buying Raisin, with the player's remaining gold balance displayed",
+  "full_text": "Result — Purchase Cost: 157,136 | Tax: 26,840 | Discount: -28,304 | Total Amount: 155,672 | Balance: 76,734,722,335 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "5d12b3231883ed6a",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T14:32:30.444439+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase Result confirmation dialog showing the cost breakdown (purchase cost, tax, discount, total) for buying Raisin, with the player's remaining gold balance displayed",
+    "full_text": "Result — Purchase Cost: 157,136 | Tax: 26,840 | Discount: -28,304 | Total Amount: 155,672 | Balance: 76,734,722,335 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "high"
+  }
+}

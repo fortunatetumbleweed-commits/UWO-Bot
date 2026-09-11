@@ -1,0 +1,21 @@
+{
+  "purpose": "A city navigation menu listing all available port facilities (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) has opened — this is the main in-port location selector, not related to viewing the ship's hold.",
+  "full_text": "Summer Aug 16:48 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "ff64993905dad807",
+  "goal_intent": "ReadHold",
+  "cached_at": "2026-09-11T01:55:18.789875+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A city navigation menu listing all available port facilities (Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau) has opened — this is the main in-port location selector, not related to viewing the ship's hold.",
+    "full_text": "Summer Aug 16:48 — Harbor, Market, Shipyard, Bank, Inn, Sanctuary, Union, Bureau",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

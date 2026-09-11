@@ -1,0 +1,21 @@
+{
+  "purpose": "The right-hand panel shows the minimap and a nearby-enemies/fleet sidebar listing hostile ships (Cartier Pillage, Reis Coast Guard, Muslihiddin Sea, Glanie Traders at LV 40) and repel-support status — this is the standard sea HUD sidebar, not a blocking popup. The bot is at sea near San Village and has not yet opened the world map to select a route.",
+  "full_text": "San Village | Winter Jul Night | Use Repel | Repel Support Owned: 211 | Repel Support Used: 5 | Cartier Pillage... LV 40 2.8 km | Reis Coast Guar... LV 40 2.9 km | Muslihiddin Sea... LV 40 4.2 km | Glanie Traders LV 40 6 km | Sea Exploration x780 | Explore Land x1,517 | Fishing x726 | Cannot Salvage x140",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "575b88093dd81748",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-10T16:31:54.814999+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The right-hand panel shows the minimap and a nearby-enemies/fleet sidebar listing hostile ships (Cartier Pillage, Reis Coast Guard, Muslihiddin Sea, Glanie Traders at LV 40) and repel-support status — this is the standard sea HUD sidebar, not a blocking popup. The bot is at sea near San Village and has not yet opened the world map to select a route.",
+    "full_text": "San Village | Winter Jul Night | Use Repel | Repel Support Owned: 211 | Repel Support Used: 5 | Cartier Pillage... LV 40 2.8 km | Reis Coast Guar... LV 40 2.9 km | Muslihiddin Sea... LV 40 4.2 km | Glanie Traders LV 40 6 km | Sea Exploration x780 | Explore Land x1,517 | Fishing x726 | Cannot Salvage x140",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase result summary confirming a bulk trade goods buy completed, showing cost breakdown (194,540 base, 15,344 tax, -38,908 discount) for a total of 170,976 gold, with remaining balance of 72,451,291,257 gold",
+  "full_text": "Result — Purchase Cost: 194,540 | Tax: 15,344 | Discount: -38,908 | Total Amount: 170,976 | Balance: 72,451,291,257 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "a5b583de1c679ec3",
+  "goal_intent": null,
+  "cached_at": "2026-09-09T23:15:09.676953+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase result summary confirming a bulk trade goods buy completed, showing cost breakdown (194,540 base, 15,344 tax, -38,908 discount) for a total of 170,976 gold, with remaining balance of 72,451,291,257 gold",
+    "full_text": "Result — Purchase Cost: 194,540 | Tax: 15,344 | Discount: -38,908 | Total Amount: 170,976 | Balance: 72,451,291,257 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

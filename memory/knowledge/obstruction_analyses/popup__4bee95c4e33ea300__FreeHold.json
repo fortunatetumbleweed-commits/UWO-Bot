@@ -1,0 +1,21 @@
+{
+  "purpose": "The sell tab is showing available goods to sell at Antalya market — specifically Myrrh (Medicine, specialty) and Almond (Luxuries, specialty) are visible as sellable cargo, which the bot must NOT sell since both are in the keep list",
+  "full_text": "Myrrh Medicine 435 Specialties 98% 1,336 (629) | Almond Luxuries 870 Specialties 101% 4,631 (3,585)",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "4bee95c4e33ea300",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-11T02:31:07.192812+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The sell tab is showing available goods to sell at Antalya market — specifically Myrrh (Medicine, specialty) and Almond (Luxuries, specialty) are visible as sellable cargo, which the bot must NOT sell since both are in the keep list",
+    "full_text": "Myrrh Medicine 435 Specialties 98% 1,336 (629) | Almond Luxuries 870 Specialties 101% 4,631 (3,585)",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

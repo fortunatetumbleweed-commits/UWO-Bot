@@ -1,0 +1,21 @@
+{
+  "purpose": "Post-sale result dialog confirming the completed sale of Mutton at London, showing profit of 26,877,708 gold and a new balance of 77,553,225,171 gold after tax and surcharges",
+  "full_text": "Result — Mate Trade EXP: 209,044 | Contribution: 0 | Obtained Trade Point: 2,917 | Trade Fame: 0 | Sales Cost: 29,713,392 | Tax: -1,712,034 | Surcharge: 9,119,952 | Profit: 26,877,708 | Total Amount: 37,121,310 | Balance: 77,553,225,171 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "d79a25f2512d78d8",
+  "goal_intent": "SellHold",
+  "cached_at": "2026-09-11T20:33:44.030073+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Post-sale result dialog confirming the completed sale of Mutton at London, showing profit of 26,877,708 gold and a new balance of 77,553,225,171 gold after tax and surcharges",
+    "full_text": "Result — Mate Trade EXP: 209,044 | Contribution: 0 | Obtained Trade Point: 2,917 | Trade Fame: 0 | Sales Cost: 29,713,392 | Tax: -1,712,034 | Surcharge: 9,119,952 | Profit: 26,877,708 | Total Amount: 37,121,310 | Balance: 77,553,225,171 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "A nearby player presence/fleet panel is visible on screen showing other players (Patron, TaylorFP) and guild/trade wind stats in the Atlantic Ocean area near Lisboa — this is the standard multiplayer world overlay showing other captains in the vicinity, not a blocking dialog",
+  "full_text": "TW 22.7 54 Patron TaylorFP",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "ab19f0e950675ce9",
+  "goal_intent": "Depart",
+  "cached_at": "2026-09-11T01:14:01.947167+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "A nearby player presence/fleet panel is visible on screen showing other players (Patron, TaylorFP) and guild/trade wind stats in the Atlantic Ocean area near Lisboa — this is the standard multiplayer world overlay showing other captains in the vicinity, not a blocking dialog",
+    "full_text": "TW 22.7 54 Patron TaylorFP",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Game is asking the bot to confirm the purchase of 238 units of Myrrh for a total price of 168,266 gold (after 6% tax and specialty discount)",
+  "full_text": "Confirm Purchase — Trade Goods: Myrrh (Medicine, Specialties) x238 — Purchase Cost: 198,968 | Tax 6%: 9,520 | Discount: -40,222 | Purchase Price: 168,266 — Total Price: 198,968 | 9,520 | -40,222 | 168,266 — [Cancel] [OK]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "c1471e7e8f10b255",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T01:21:32.402914+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Game is asking the bot to confirm the purchase of 238 units of Myrrh for a total price of 168,266 gold (after 6% tax and specialty discount)",
+    "full_text": "Confirm Purchase — Trade Goods: Myrrh (Medicine, Specialties) x238 — Purchase Cost: 198,968 | Tax 6%: 9,520 | Discount: -40,222 | Purchase Price: 168,266 — Total Price: 198,968 | 9,520 | -40,222 | 168,266 — [Cancel] [OK]",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

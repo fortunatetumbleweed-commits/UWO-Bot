@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade Goods Info dialog for Candle showing per-unit sale price of 18 gold, with quantity set to 1/990, prompting the bot to confirm how many to load for staging",
+  "full_text": "Trade Goods Info — Candle (Sundries) — quantity held: 990. Calculation: Sales Cost 14, Tax 0, Surcharge +4, Per Price 18. Current Price 14. Max Price 15, Min Price 12. Quantity: 1/990. Final Sales Price: 18. [Min] [Max] [Cancel] [Load]",
+  "dismissal": "tap_accept",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "bcfdb43ab9675a04",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-09T21:04:39.711686+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade Goods Info dialog for Candle showing per-unit sale price of 18 gold, with quantity set to 1/990, prompting the bot to confirm how many to load for staging",
+    "full_text": "Trade Goods Info — Candle (Sundries) — quantity held: 990. Calculation: Sales Cost 14, Tax 0, Surcharge +4, Per Price 18. Current Price 14. Max Price 15, Min Price 12. Quantity: 1/990. Final Sales Price: 18. [Min] [Max] [Cancel] [Load]",
+    "dismissal": "tap_accept",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

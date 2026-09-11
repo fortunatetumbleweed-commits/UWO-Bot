@@ -1,0 +1,21 @@
+{
+  "purpose": "A stock replenishment prompt is asking the player to spend 32 gems to restock a sold-out or low-stock trade good at this port, without affecting the market price",
+  "full_text": "Replenish Stock? (Does not affect market price) Remaining: 33/50. Cost: 32 gems. Cancel | OK",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "90d3f5849ceaa0a1",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-08T21:28:22.468202+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A stock replenishment prompt is asking the player to spend 32 gems to restock a sold-out or low-stock trade good at this port, without affecting the market price",
+    "full_text": "Replenish Stock? (Does not affect market price) Remaining: 33/50. Cost: 32 gems. Cancel | OK",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

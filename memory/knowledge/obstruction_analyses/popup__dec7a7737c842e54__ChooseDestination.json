@@ -1,0 +1,21 @@
+{
+  "purpose": "A wind/weather information panel showing current wind speed (12.8) and the player's Patron status badge has appeared on the navigation HUD — this is a persistent map overlay element, not a blocking dialog.",
+  "full_text": "MW 12.8 Patron",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "dec7a7737c842e54",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-10T02:17:25.501298+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A wind/weather information panel showing current wind speed (12.8) and the player's Patron status badge has appeared on the navigation HUD — this is a persistent map overlay element, not a blocking dialog.",
+    "full_text": "MW 12.8 Patron",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

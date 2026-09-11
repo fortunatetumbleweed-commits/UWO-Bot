@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell panel is showing the Raisin cargo item loaded and ready to sell, with its current market price (96%, 51 gold, -563 vs base) and quantity (1,081) — this is the sell confirmation/staging view after the bot tapped Load All",
+  "full_text": "Raisin Luxuries 1,081 96% 51 (-563)",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "a8b2475141cd71cc",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-10T18:48:31.581341+00:00",
+  "visit_count": 8,
+  "raw_api_response": {
+    "purpose": "The Sell panel is showing the Raisin cargo item loaded and ready to sell, with its current market price (96%, 51 gold, -563 vs base) and quantity (1,081) — this is the sell confirmation/staging view after the bot tapped Load All",
+    "full_text": "Raisin Luxuries 1,081 96% 51 (-563)",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

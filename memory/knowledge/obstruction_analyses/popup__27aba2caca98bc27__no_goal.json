@@ -1,0 +1,21 @@
+{
+  "purpose": "Another player named TaylorFP (with Patron status) has sailed into proximity, triggering a player encounter or greeting overlay on the open sea",
+  "full_text": "Patron 淡墨桜 TaylorFP TW 27.1",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "27aba2caca98bc27",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T18:56:03.738893+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Another player named TaylorFP (with Patron status) has sailed into proximity, triggering a player encounter or greeting overlay on the open sea",
+    "full_text": "Patron 淡墨桜 TaylorFP TW 27.1",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

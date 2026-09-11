@@ -1,0 +1,21 @@
+{
+  "purpose": "Sale result summary showing the pig livestock was sold at a loss of 5,140 gold with zero net proceeds, confirming the sell transaction completed as part of hold-trimming",
+  "full_text": "Result — Mate Trade EXP: 5, Contribution: 0, Obtained Trade Point: 0, Trade Fame: 0, Sales Cost: 0, Tax: 0, Surcharge: 0, Loss: -5,140, Total Amount: 0, Balance: 76,780,963,070 — Ok",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "d713239a2c45cb55",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-10T18:27:48.004574+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Sale result summary showing the pig livestock was sold at a loss of 5,140 gold with zero net proceeds, confirming the sell transaction completed as part of hold-trimming",
+    "full_text": "Result — Mate Trade EXP: 5, Contribution: 0, Obtained Trade Point: 0, Trade Fame: 0, Sales Cost: 0, Tax: 0, Surcharge: 0, Loss: -5,140, Total Amount: 0, Balance: 76,780,963,070 — Ok",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

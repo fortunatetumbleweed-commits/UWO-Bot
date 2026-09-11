@@ -1,0 +1,21 @@
+{
+  "purpose": "Numeric keypad entry dialog has opened so the bot can type a specific quantity of Raisins to load (currently shows 1, max available is 1,629)",
+  "full_text": "Trade Goods Info — Raisin (Luxuries) — 1629 in hold — Calculation: Sales Cost 42, +13, Final Sales Price 55 — Enter Number: 1 — keypad: 1 2 3 4 5 6 7 8 9 0 Max — Cancel | Load — Max Price 45, Min Price 37 — Success Rate 76.2%",
+  "dismissal": "tap_accept",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "57058e400435d113",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-10T15:55:24.930275+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Numeric keypad entry dialog has opened so the bot can type a specific quantity of Raisins to load (currently shows 1, max available is 1,629)",
+    "full_text": "Trade Goods Info — Raisin (Luxuries) — 1629 in hold — Calculation: Sales Cost 42, +13, Final Sales Price 55 — Enter Number: 1 — keypad: 1 2 3 4 5 6 7 8 9 0 Max — Cancel | Load — Max Price 45, Min Price 37 — Success Rate 76.2%",
+    "dismissal": "tap_accept",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

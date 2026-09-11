@@ -1,0 +1,21 @@
+{
+  "purpose": "The sell panel is showing the Raisin cargo card details, which is part of the sell tab the bot just opened to offload non-kept goods at the Syracuse market",
+  "full_text": "Raisin Luxuries 1,081 96% 1,732 (1,098)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "3cc885c9789a846f",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-10T15:11:49.007873+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The sell panel is showing the Raisin cargo card details, which is part of the sell tab the bot just opened to offload non-kept goods at the Syracuse market",
+    "full_text": "Raisin Luxuries 1,081 96% 1,732 (1,098)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

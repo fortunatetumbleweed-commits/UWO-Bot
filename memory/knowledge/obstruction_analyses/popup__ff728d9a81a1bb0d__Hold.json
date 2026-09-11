@@ -1,0 +1,21 @@
+{
+  "purpose": "The purchase screen is showing that Mutton is Sold Out (stock = 0), meaning the bot cannot buy any Mutton at this port right now",
+  "full_text": "Sugar Beet Food 633 | 222 — Mutton Food Sold Out 258 — Rose Perfume 177 | 694 108% — Kutnu Fabrics 194 Specialties Unlock Condition (0/1)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "ff728d9a81a1bb0d",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T01:40:28.348093+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The purchase screen is showing that Mutton is Sold Out (stock = 0), meaning the bot cannot buy any Mutton at this port right now",
+    "full_text": "Sugar Beet Food 633 | 222 — Mutton Food Sold Out 258 — Rose Perfume 177 | 694 108% — Kutnu Fabrics 194 Specialties Unlock Condition (0/1)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

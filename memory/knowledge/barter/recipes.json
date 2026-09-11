@@ -1055,7 +1055,7 @@
     ],
     "output_per_round": {
       "Neutral": 751,
-      "Friendly": 823
+      "Friendly": 617
     },
     "preconditions": {
       "amity_min": null,

@@ -1,0 +1,21 @@
+{
+  "purpose": "Numeric keypad dialog asking the bot to enter how many Matchlock Guns to load into the ship's hold, as part of the trade/trim operation",
+  "full_text": "Trade Goods Info — Matchlock Gun, Firearms. Calculation: Sales Cost 76, +22, Final Sales Price 98. Description: A firearm that uses the matchlock mechanism to launch its projectiles. Virtually the first portable gun used as a personal weapon in history. Prices: Max Price 81, Min Price 65. Enter Number: 1. [Keypad: 1 2 3 4 5 6 7 8 9 0 Max] [Cancel] [Load]. Current quantity 1/519. Success Rate 76.2%.",
+  "dismissal": "tap_accept",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "64a2303d0ed92c65",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-08T23:54:06.435393+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Numeric keypad dialog asking the bot to enter how many Matchlock Guns to load into the ship's hold, as part of the trade/trim operation",
+    "full_text": "Trade Goods Info — Matchlock Gun, Firearms. Calculation: Sales Cost 76, +22, Final Sales Price 98. Description: A firearm that uses the matchlock mechanism to launch its projectiles. Virtually the first portable gun used as a personal weapon in history. Prices: Max Price 81, Min Price 65. Enter Number: 1. [Keypad: 1 2 3 4 5 6 7 8 9 0 Max] [Cancel] [Load]. Current quantity 1/519. Success Rate 76.2%.",
+    "dismissal": "tap_accept",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "A port facilities menu has appeared listing all available buildings in the current port (Harbor, Market, Shipyard, Bank, Inn, Cathedral, Item Shop, Bureau), likely triggered by tapping the port instead of opening the world map to navigate to Gijón.",
+  "full_text": "Summer Jul 06:34 — Harbor, Market, Shipyard, Bank, Inn, Cathedral, Item Shop, Bureau",
+  "dismissal": "press_back",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "841a5953614abfd1",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-10T01:51:41.862502+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A port facilities menu has appeared listing all available buildings in the current port (Harbor, Market, Shipyard, Bank, Inn, Cathedral, Item Shop, Bureau), likely triggered by tapping the port instead of opening the world map to navigate to Gijón.",
+    "full_text": "Summer Jul 06:34 — Harbor, Market, Shipyard, Bank, Inn, Cathedral, Item Shop, Bureau",
+    "dismissal": "press_back",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

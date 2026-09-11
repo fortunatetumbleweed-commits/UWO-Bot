@@ -1,0 +1,21 @@
+{
+  "purpose": "The market is prompting confirmation to replenish (restock) the Raisin stock using 137 blue gems, showing 36 of 50 restocks remaining for this item",
+  "full_text": "Replenish Stock? (Does not affect market price) Remaining: 36/50 [137 gems] Ok / Cancel",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "4b00d82c80c62a83",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T14:36:18.351476+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The market is prompting confirmation to replenish (restock) the Raisin stock using 137 blue gems, showing 36 of 50 restocks remaining for this item",
+    "full_text": "Replenish Stock? (Does not affect market price) Remaining: 36/50 [137 gems] Ok / Cancel",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase Result dialog confirming the bot just bought goods (likely Candle or other items) showing cost 121,275, tax 5,445, discount -24,255, total 102,465, with current balance 71,645,257,465",
+  "full_text": "Result — Purchase Cost: 121,275 | Tax: 5,445 | Discount: -24,255 | Total Amount: 102,465 | Balance: 71,645,257,465 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "85297ba7bae4a049",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-09T21:01:27.501982+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase Result dialog confirming the bot just bought goods (likely Candle or other items) showing cost 121,275, tax 5,445, discount -24,255, total 102,465, with current balance 71,645,257,465",
+    "full_text": "Result — Purchase Cost: 121,275 | Tax: 5,445 | Discount: -24,255 | Total Amount: 102,465 | Balance: 71,645,257,465 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

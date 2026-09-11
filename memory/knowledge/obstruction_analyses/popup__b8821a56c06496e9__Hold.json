@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase tab of the market is now open, showing available goods including Myrrh (238 in stock, 96% supply, 707 gold price) — this is the direct result of the bot opening the purchase tab to begin buying Myrrh toward its hold goal",
+  "full_text": "Purchase screen open. Timer: 00:24:20. Blue tickets: 146. Safflower (Dye) 322 units, 98%, 515g — Specialties. Wild Oat (Food) 766 units, 97%, 144g. Myrrh (Medicine) 238 units, 96%, 707g — Specialties. Darbuka (Crafts) 141 units — Specialties — Unlock Condition (0/1).",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "b8821a56c06496e9",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T01:20:06.607411+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase tab of the market is now open, showing available goods including Myrrh (238 in stock, 96% supply, 707 gold price) — this is the direct result of the bot opening the purchase tab to begin buying Myrrh toward its hold goal",
+    "full_text": "Purchase screen open. Timer: 00:24:20. Blue tickets: 146. Safflower (Dye) 322 units, 98%, 515g — Specialties. Wild Oat (Food) 766 units, 97%, 144g. Myrrh (Medicine) 238 units, 96%, 707g — Specialties. Darbuka (Crafts) 141 units — Specialties — Unlock Condition (0/1).",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

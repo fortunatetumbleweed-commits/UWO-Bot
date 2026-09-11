@@ -1,0 +1,21 @@
+{
+  "purpose": "The purchase sub-menu is displaying the available goods at Trabzon after the restock prompt was answered — this is the normal purchase screen showing Carpet, Pomegranate, Peony, and Kutnu (a specialty fabric), not a blocking popup",
+  "full_text": "00:29:53 180 Carpet Fabrics 177 101% 1,091 Pomegranate Food 641 94% 280 Peony Medicine 491 97% 314 Kutnu Fabrics Specialties 10/26/2026/00:00:00",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "fb46c3a75722d724",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T14:44:10.599340+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The purchase sub-menu is displaying the available goods at Trabzon after the restock prompt was answered — this is the normal purchase screen showing Carpet, Pomegranate, Peony, and Kutnu (a specialty fabric), not a blocking popup",
+    "full_text": "00:29:53 180 Carpet Fabrics 177 101% 1,091 Pomegranate Food 641 94% 280 Peony Medicine 491 97% 314 Kutnu Fabrics Specialties 10/26/2026/00:00:00",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "low"
+  }
+}

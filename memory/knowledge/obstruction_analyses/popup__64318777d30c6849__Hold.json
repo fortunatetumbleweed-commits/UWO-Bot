@@ -1,0 +1,21 @@
+{
+  "purpose": "The purchase screen is showing normally after the bot declined a negotiation — the Raisin item shows as Sold Out (quantity 0), meaning no stock is currently available to buy more Raisin at Trabzon",
+  "full_text": "00:27:14 | 146 diamonds | Carpet Fabrics 101% 1,091 | Pomegranate Food 641 94% 280 | Peony Medicine 491 97% 314 | Kutnu Fabrics Specialties 10/26/2026/00:00:00",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "64318777d30c6849",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T14:39:25.343268+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The purchase screen is showing normally after the bot declined a negotiation — the Raisin item shows as Sold Out (quantity 0), meaning no stock is currently available to buy more Raisin at Trabzon",
+    "full_text": "00:27:14 | 146 diamonds | Carpet Fabrics 101% 1,091 | Pomegranate Food 641 94% 280 | Peony Medicine 491 97% 314 | Kutnu Fabrics Specialties 10/26/2026/00:00:00",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

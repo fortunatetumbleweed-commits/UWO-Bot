@@ -1,0 +1,21 @@
+{
+  "purpose": "Persistent nearby-ships radar panel showing other players in the vicinity (including a Patron-ranked player 'TaylorFP'), which is a normal HUD element and not an obstruction",
+  "full_text": "TW 27.6 | Patron | TaylorFP",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "55bdfebf3c80107d",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-10T14:17:46.014750+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Persistent nearby-ships radar panel showing other players in the vicinity (including a Patron-ranked player 'TaylorFP'), which is a normal HUD element and not an obstruction",
+    "full_text": "TW 27.6 | Patron | TaylorFP",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

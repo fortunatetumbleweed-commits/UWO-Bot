@@ -1,0 +1,21 @@
+{
+  "purpose": "A tooltip or info card for Bambara Groundnut (Luxuries) is displayed, showing the item's current stock (939) and sell price (43,561 / base 38,778) at this port — this appeared as the bot staged the item for selling",
+  "full_text": "Bambara Groundnut — Luxuries — Stock: 939 — Price: 43,561 (38,778)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "aa4fae27fc4d44fe",
+  "goal_intent": "SellHold",
+  "cached_at": "2026-09-10T19:39:16.536191+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A tooltip or info card for Bambara Groundnut (Luxuries) is displayed, showing the item's current stock (939) and sell price (43,561 / base 38,778) at this port — this appeared as the bot staged the item for selling",
+    "full_text": "Bambara Groundnut — Luxuries — Stock: 939 — Price: 43,561 (38,778)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

@@ -1,29 +1,10 @@
 {
   "fleet_capacity": {
-    "at": 1788891103.841609,
+    "at": 1789157013.321944,
     "value": 4952
   },
-  "mission_progress": {
-    "at": 1788892356.0823748,
-    "value": {
-      "good": "Box of Nutmeg",
-      "phase": "sailing_route",
-      "recipe": {
-        "good": "Box of Nutmeg",
-        "materials": {
-          "Coral": 175,
-          "Ebony": 117,
-          "Textiles": 175
-        },
-        "obtain": 616
-      },
-      "rounds": 7,
-      "rounds_remaining": 7,
-      "village": "Melanesian Village"
-    }
-  },
   "settlement": {
-    "at": 1788881274.090088,
-    "value": "Jakarta"
+    "at": 1789093795.7921321,
+    "value": "Antalya"
   }
 }

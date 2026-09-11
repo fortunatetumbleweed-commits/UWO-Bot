@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase sub-menu panel showing available goods at Gijón, including Pig (Livestock) and Pork (Food), which is the normal purchase screen the bot needs to interact with to buy more Pig toward its hold target.",
+  "full_text": "Purchase screen — Timer: 00:29:14, Diamonds: 39. Pig (Livestock) qty 294, price 257 gold (100%). Pork (Food) qty 775, price 188 gold (95%). Raspberry (Luxuries) qty 363, price 274 gold (96%). Turron (Luxuries) — Specialties, available from 10/12/2026/00:00:00.",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "d79723a31c9a922f",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T15:32:52.797843+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase sub-menu panel showing available goods at Gijón, including Pig (Livestock) and Pork (Food), which is the normal purchase screen the bot needs to interact with to buy more Pig toward its hold target.",
+    "full_text": "Purchase screen — Timer: 00:29:14, Diamonds: 39. Pig (Livestock) qty 294, price 257 gold (100%). Pork (Food) qty 775, price 188 gold (95%). Raspberry (Luxuries) qty 363, price 274 gold (96%). Turron (Luxuries) — Specialties, available from 10/12/2026/00:00:00.",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

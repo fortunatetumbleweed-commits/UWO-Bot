@@ -1,0 +1,21 @@
+{
+  "purpose": "False-positive popup detection — the region shows normal world map port labels and trade values for Tunis, Algiers, and Tripoli in the Mediterranean; no actual dialog or obstruction is present",
+  "full_text": "Tunis 108 | Algiers 108 | Tripoli 38,487",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "3b969c2e3375f4ee",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-08T22:16:14.507525+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "False-positive popup detection — the region shows normal world map port labels and trade values for Tunis, Algiers, and Tripoli in the Mediterranean; no actual dialog or obstruction is present",
+    "full_text": "Tunis 108 | Algiers 108 | Tripoli 38,487",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

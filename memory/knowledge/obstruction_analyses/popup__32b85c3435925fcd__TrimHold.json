@@ -1,0 +1,21 @@
+{
+  "purpose": "The Sell sub-menu is showing the Raisin cargo card (1,096 units at 102% price, selling at 1,520 gold with a margin of 932), which is part of the normal sell interface — not an obstruction but the active trading screen the bot needs to interact with to trim its hold.",
+  "full_text": "Raisin Luxuries 1,096 102% 1,520 (932)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "32b85c3435925fcd",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-10T01:44:38.731442+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Sell sub-menu is showing the Raisin cargo card (1,096 units at 102% price, selling at 1,520 gold with a margin of 932), which is part of the normal sell interface — not an obstruction but the active trading screen the bot needs to interact with to trim its hold.",
+    "full_text": "Raisin Luxuries 1,096 102% 1,520 (932)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

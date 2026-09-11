@@ -1,0 +1,21 @@
+{
+  "purpose": "Negotiation dialog offering a 21.5% price reduction on a trade good purchase, asking the bot to choose how many negotiation attempts to use (with a 76.2% success rate and 2 attempts remaining)",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 133,632 → 98,600 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success.",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "028b6e828dc055df",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T18:35:35.796437+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Negotiation dialog offering a 21.5% price reduction on a trade good purchase, asking the bot to choose how many negotiation attempts to use (with a 76.2% success rate and 2 attempts remaining)",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 133,632 → 98,600 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success.",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

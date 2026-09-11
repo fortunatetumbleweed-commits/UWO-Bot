@@ -1,0 +1,21 @@
+{
+  "purpose": "Confirmation dialog asking the bot to approve the sale of Myrrh (206 units), Almond (25 units), and Mutton (263 units) for a total of 405,987 gold before the trim transaction is finalised",
+  "full_text": "Confirm Sales — Trade Goods | Sales Cost | Tax 11% | Surcharge | Price — Myrrh (Medicine, Specialties) 206 units: 230,720 | -15,244 | +66,126 | 281,602 — Almond (Luxuries, Specialties) 25 units: 100,325 | -11,475 | +30,275 | 119,125 — Mutton (Food) 263 units: 4,208 | 0 | +1,052 | 5,260 — Total Sales: 335,253 | -26,719 | +97,453 | 405,987 — [Cancel] [OK]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "a7d301904f33647d",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-11T20:01:12.042154+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Confirmation dialog asking the bot to approve the sale of Myrrh (206 units), Almond (25 units), and Mutton (263 units) for a total of 405,987 gold before the trim transaction is finalised",
+    "full_text": "Confirm Sales — Trade Goods | Sales Cost | Tax 11% | Surcharge | Price — Myrrh (Medicine, Specialties) 206 units: 230,720 | -15,244 | +66,126 | 281,602 — Almond (Luxuries, Specialties) 25 units: 100,325 | -11,475 | +30,275 | 119,125 — Mutton (Food) 263 units: 4,208 | 0 | +1,052 | 5,260 — Total Sales: 335,253 | -26,719 | +97,453 | 405,987 — [Cancel] [OK]",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

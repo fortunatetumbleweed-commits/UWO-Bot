@@ -1,0 +1,21 @@
+{
+  "purpose": "Negotiation dialog asking the bot whether to use negotiation attempts to reduce the purchase price of a trade good by 21.5% (from 164,400 to 120,012 gold), with a 76.2% success rate",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 164,400 → 120,012 (-21.5%). Negotiation Success Rate: Failed ... 76.2% ... Success.",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "33ac11250a9f72cd",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T15:47:34.346250+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Negotiation dialog asking the bot whether to use negotiation attempts to reduce the purchase price of a trade good by 21.5% (from 164,400 to 120,012 gold), with a 76.2% success rate",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 164,400 → 120,012 (-21.5%). Negotiation Success Rate: Failed ... 76.2% ... Success.",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Another player's ship (TaylorFP, a Patron-rank player) is visible on screen in the Dangerous Waters zone — this is a player nameplate/indicator overlay, not a blocking popup",
+  "full_text": "HW 27.1 Patron 1 TaylorFP 1v",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "e92b07445365403d",
+  "goal_intent": null,
+  "cached_at": "2026-09-08T19:05:16.178323+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Another player's ship (TaylorFP, a Patron-rank player) is visible on screen in the Dangerous Waters zone — this is a player nameplate/indicator overlay, not a blocking popup",
+    "full_text": "HW 27.1 Patron 1 TaylorFP 1v",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

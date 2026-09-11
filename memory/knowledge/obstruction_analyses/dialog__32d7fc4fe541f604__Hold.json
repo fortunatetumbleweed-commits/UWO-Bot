@@ -1,0 +1,21 @@
+{
+  "purpose": "Negotiation dialog asking whether to attempt bargaining on a purchase to reduce the price by 21.5% (from 135,980 to 100,230) with a 76.2% success rate, using remaining negotiation chances",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 135,980 → 100,230 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Albrecht Wallenstein: Hmm, we should be able to buy it for 21.5% less. Why don't you try negotiating? Options: No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "32d7fc4fe541f604",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-11T19:10:11.990342+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Negotiation dialog asking whether to attempt bargaining on a purchase to reduce the price by 21.5% (from 135,980 to 100,230) with a 76.2% success rate, using remaining negotiation chances",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 135,980 → 100,230 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Albrecht Wallenstein: Hmm, we should be able to buy it for 21.5% less. Why don't you try negotiating? Options: No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

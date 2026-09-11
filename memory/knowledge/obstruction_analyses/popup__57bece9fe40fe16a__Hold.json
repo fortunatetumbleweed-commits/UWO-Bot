@@ -1,0 +1,21 @@
+{
+  "purpose": "The Purchase tab of the market is now open, showing available goods to buy including Raisin and other trade goods — this is the direct result of the bot opening the purchase tab as its last action",
+  "full_text": "Purchase screen showing: Sugar (Seasoning, Specialties) qty 373, 99%, 845 gold; Keris (Weapons) qty 128, 93%, 895 gold; Raisin (Luxuries) qty 232, 101%, 576 gold; Wooden Statue (Artwork) qty 155, 100%, 11,206 gold. Timer: 00:02:39. Refresh cost: 8 diamonds.",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "57bece9fe40fe16a",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-10T18:33:41.107284+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The Purchase tab of the market is now open, showing available goods to buy including Raisin and other trade goods — this is the direct result of the bot opening the purchase tab as its last action",
+    "full_text": "Purchase screen showing: Sugar (Seasoning, Specialties) qty 373, 99%, 845 gold; Keris (Weapons) qty 128, 93%, 895 gold; Raisin (Luxuries) qty 232, 101%, 576 gold; Wooden Statue (Artwork) qty 155, 100%, 11,206 gold. Timer: 00:02:39. Refresh cost: 8 diamonds.",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

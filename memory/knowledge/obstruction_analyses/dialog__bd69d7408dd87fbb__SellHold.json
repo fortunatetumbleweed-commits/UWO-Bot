@@ -1,0 +1,21 @@
+{
+  "purpose": "Game is asking the bot to confirm the sale of 4494 units of Argan Oil (Seasoning) for a final price of 42,800,856 gold after a 6% tax deduction and surcharge",
+  "full_text": "Confirm Sales — Trade Goods: Argan Oil (Seasoning, qty 4494) | Sales Cost: 34,284,726 | Tax 6%: -2,008,818 | Surcharge: +10,524,948 | Price: 42,800,856 — Total Sales: 34,284,726 | Tax: -2,008,818 | Surcharge: +10,524,948 | Total: 42,800,856 — [Cancel] [OK]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "bd69d7408dd87fbb",
+  "goal_intent": "SellHold",
+  "cached_at": "2026-09-11T03:12:58.628648+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Game is asking the bot to confirm the sale of 4494 units of Argan Oil (Seasoning) for a final price of 42,800,856 gold after a 6% tax deduction and surcharge",
+    "full_text": "Confirm Sales — Trade Goods: Argan Oil (Seasoning, qty 4494) | Sales Cost: 34,284,726 | Tax 6%: -2,008,818 | Surcharge: +10,524,948 | Price: 42,800,856 — Total Sales: 34,284,726 | Tax: -2,008,818 | Surcharge: +10,524,948 | Total: 42,800,856 — [Cancel] [OK]",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

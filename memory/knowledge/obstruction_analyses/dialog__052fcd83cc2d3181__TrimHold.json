@@ -1,0 +1,21 @@
+{
+  "purpose": "Numeric keypad dialog for entering the quantity of Myrrh to load/sell, opened by the bot as part of adjusting hold quantities",
+  "full_text": "Trade Goods Info — Myrrh, Medicine, Specialties. Calculation: Sales Cost 1,120 / -74 / +321 = Final Sales Price 1,367. Max Price 1,187, Min Price 1,075. Enter Number: [input field showing 1]. Buttons: 1 2 3 4 5 6 7 8 9 0 Max. Cancel / Load. Current quantity: 1/714.",
+  "dismissal": "tap_accept",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "052fcd83cc2d3181",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-11T19:56:51.427331+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Numeric keypad dialog for entering the quantity of Myrrh to load/sell, opened by the bot as part of adjusting hold quantities",
+    "full_text": "Trade Goods Info — Myrrh, Medicine, Specialties. Calculation: Sales Cost 1,120 / -74 / +321 = Final Sales Price 1,367. Max Price 1,187, Min Price 1,075. Enter Number: [input field showing 1]. Buttons: 1 2 3 4 5 6 7 8 9 0 Max. Cancel / Load. Current quantity: 1/714.",
+    "dismissal": "tap_accept",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

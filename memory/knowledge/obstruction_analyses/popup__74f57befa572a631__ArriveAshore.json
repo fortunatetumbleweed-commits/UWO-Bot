@@ -1,0 +1,21 @@
+{
+  "purpose": "The Auction screen is open showing the bot's currently listed and expired ship listings — this is an auction management view, not a popup obstruction; it is unrelated to sailing from Santos to London",
+  "full_text": "350 / 53 Registered. 1,300 / 195 Registered. 1,300 / 195 1,300 / 195 1,300 / 195",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "74f57befa572a631",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-10T03:02:54.599070+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "The Auction screen is open showing the bot's currently listed and expired ship listings — this is an auction management view, not a popup obstruction; it is unrelated to sailing from Santos to London",
+    "full_text": "350 / 53 Registered. 1,300 / 195 Registered. 1,300 / 195 1,300 / 195 1,300 / 195",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}
