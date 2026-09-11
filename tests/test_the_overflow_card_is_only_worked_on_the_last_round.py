@@ -105,6 +105,21 @@ class TheLastRoundComesFromThePanelNotTheCard(unittest.TestCase):
         act = self._village(committed=_MAX_DAILY_ROUNDS, funded=99)
         self.assertIs(act._is_last_round(), True)
 
+    def test_THE_ROUND_IN_FLIGHT_IS_NOT_YET_COUNTED(self):
+        """The card is raised BY an exchange, and `_committed` only rises once the panel
+        confirms it — so at the card the round in question is `_committed + 1`.
+
+        Live 2026-09-11 at Berber: 6 committed against an allowance of 7, `6 >= 7` said "not
+        the last round", 233 Argan Oil were let go, and 44 seconds later the village said its
+        barters for today were used up. It HAD been the last round."""
+        act = self._village(committed=_MAX_DAILY_ROUNDS - 1, funded=99)
+        self.assertIs(act._is_last_round(), True)
+
+    def test_and_the_round_before_that_is_not(self):
+        """The +1 must not make every round look like the last."""
+        act = self._village(committed=_MAX_DAILY_ROUNDS - 2, funded=99)
+        self.assertIs(act._is_last_round(), False)
+
     def test_UNKNOWN_STAYS_UNKNOWN(self):
         """No reading is not a licence to guess — None lets the card decide as it used to."""
         self.assertIsNone(self._village(committed=3, funded=None)._is_last_round())

@@ -487,8 +487,19 @@ class VillageActivity:
         This used to be derived from the overflow card instead, by tapping every cargo tile
         to learn its name and summing the materials. That probe is what the answer is for, so
         deriving the answer from it put the cost before the decision that justifies it.
+
+        THE ROUND IN FLIGHT IS NOT YET COUNTED. The overflow card is raised BY an exchange,
+        and `_committed` is incremented only once the panel confirms it — so at the card the
+        round being asked about is `_committed + 1` (user, 2026-09-11: *"after 6 committed,
+        then the next is the 7th, so the count needs to be modified"*).
+
+        Live 2026-09-11 at Berber: the card arrived with `_committed` at 6 against an
+        allowance of 7, so `6 >= 7` said "not the last round" and the 233 pending Argan Oil
+        were let go. Forty-four seconds later the village said its barters for today were
+        used up — it HAD been the last round, `materials_left` was empty, and the last-round
+        dump that would have made room never ran.
         """
-        if self._committed >= _MAX_DAILY_ROUNDS:
+        if self._committed + 1 >= _MAX_DAILY_ROUNDS:
             return True
         if self._funded_rounds is None:
             return None
