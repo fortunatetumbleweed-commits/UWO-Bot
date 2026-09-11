@@ -857,10 +857,16 @@ def _detect_interruptors(frame, ocr_tokens: list):
                     # Claude recommended press_back; bot back-pressed
                     # out of the village to sea.
                     if dismissal == "press_back" and _is_top_level_screen(frame):
+                        # WHICH top-level screen, because the downgrade is only safe where
+                        # a dialog-shaped popup really is present. On a bare overworld there
+                        # is nothing to close, and tap_close_x falls through to a blind
+                        # corner tap that lands on the hamburger — see `_dismiss_close_button`.
+                        _where = getattr(frame, "_nav_state", None) or "unknown"
                         logger.info(
                             "[perceive] consult recommended press_back on a "
                             "top-level screen (village/port/sea) — downgrading "
-                            "to tap_close_x to avoid exiting the location"
+                            f"to tap_close_x to avoid exiting the location "
+                            f"(screen={_where!r}, obstruction={obstruction!r})"
                         )
                         dismissal = "tap_close_x"
                     found.append(f"_consult:{dismissal}")
@@ -1303,11 +1309,31 @@ def _dismiss_close_button(frame, iid: str, position) -> None:
         # Last-resort heuristic.  Likely wrong when popups are stacked —
         # the KB should declare close_position for any popup hitting this
         # path more than once.
+        # SAY WHAT IS UNDER THE FINGER BEFORE IT LANDS. This fallback is blind — 0.92W x
+        # 0.08H, which on a 2400x1080 frame is (2208, 86) — and on an OVERWORLD that corner
+        # is the hamburger, so the "dismissal" OPENS the main menu.
+        #
+        # Live 2026-09-10 at Antalya: a consult recommended press_back on the port overworld,
+        # the guard above downgraded it to tap_close_x, nothing close-shaped was found, and
+        # this fired. The menu opened, the dispatcher then routed ReadHold to the activity
+        # that owns the main-menu screen, that activity closed it, ashore reopened it, and
+        # supply_verify ping-ponged eight times until the mission gave up.
+        #
+        # Logging only, for now: naming the element makes the next occurrence self-evident
+        # instead of a coordinate nobody recognises.
+        fx, fy = int(frame.width * 0.92), int(frame.height * 0.08)
+        under = None
+        try:
+            under = _element_under_point(frame, fx, fy)
+        except Exception as exc:                  # noqa: BLE001 — a log line, never the flow
+            logger.debug(f"[perceive] could not look under the corner: {exc}")
         logger.warning(
             f"[perceive] No close button found for {iid!r} and no KB position — "
-            "tapping screen-corner fallback (may close the wrong popup)"
+            f"tapping screen-corner fallback @ ({fx}, {fy})"
+            + (f", which is {under!r}" if under else ", which reads as nothing")
+            + " (may close the wrong popup — on an overworld this corner is the hamburger)"
         )
-        tap(int(frame.width * 0.92), int(frame.height * 0.08))
+        tap(fx, fy)
         _telem("dismiss_close_button", "noop")
     time.sleep(1.0)
 
