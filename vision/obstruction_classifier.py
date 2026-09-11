@@ -163,6 +163,18 @@ _POPUP_CLOSE_X_ZONE  = (0.65, 0.08, 1.00, 0.35)   # normalised
 # where the right panel + central in-world icons matched the body
 # criteria across a 1316×869 bbox.  The bbox cap below is the
 # primary defense; these reach values are a permissive first filter.
+# How far a popup's centre may sit from the screen's, as a fraction of the width. Measured
+# and fixture cases, all on 2400:
+#
+#     the overflow card                       centre 1433   off by 0.10
+#     the suite's "centred popup" fixture     centre 1700   off by 0.21
+#     ------------------------------- the gap -------------------------------
+#     the port overworld's RIGHT PANEL        centre 2129   off by 0.39
+#
+# 0.25 sits in that gap with ~0.14 of headroom on the side that matters. A first attempt at
+# 0.15 also rejected the existing fixture, which encodes what the suite already considered a
+# real popup — widening to keep it is better than rewriting a test to suit a new threshold.
+_POPUP_CENTRED_TOL   = 0.25
 _POPUP_BODY_X_REACH  = 800
 _POPUP_BODY_Y_REACH  = 700
 # Hard cap on the resulting popup bbox — primary false-positive
@@ -439,6 +451,46 @@ def _detect_dialog_legacy_heuristic(inventory) -> Optional[ObstructionResult]:
     )
 
 
+# A CLOSE X IS INK ON THE DIAGONALS AND BARE DOWN THE MIDDLE (user, 2026-09-10: *"when
+# tapping a close icon, it needs to be at least somehow like a X, a globe does not look like
+# it"*). Measured on the live frames, 68px boxes:
+#
+#     icon                        diagonal ink   midline ink   ratio
+#     the real close X            0.42           0.17          2.28
+#     the GLOBE, taken for one    0.34           0.48          0.66
+#     the hamburger               0.32           0.40          0.73
+#
+# A first attempt scored only diagonal ink and could not tell them apart at all — the
+# hamburger came back 0.68 "on-diagonal", which is meaningless for horizontal bars, because
+# the band was wide enough to cover the whole glyph. What separates an X is not that it HAS
+# diagonals but that it has NOTHING on the horizontal and vertical midlines.
+_X_DIAG_OVER_CROSS = 1.3
+
+
+def _looks_like_an_x(frame, e) -> bool:
+    """Is this icon actually an X glyph? True when pixels are unavailable to judge."""
+    if frame is None:
+        return True
+    try:
+        import numpy as _np
+        a = _np.asarray(frame.convert("L")).astype(float)
+        x1, y1, x2, y2 = int(e.x1), int(e.y1), int(e.x2), int(e.y2)
+        c = a[max(0, y1):y2, max(0, x1):x2]
+        if c.size == 0 or min(c.shape) < 8:
+            return True
+        ink = c > (c.mean() + 0.5 * c.std())
+        h, w = ink.shape
+        yy, xx = _np.mgrid[0:h, 0:w]
+        band = max(2, int(min(h, w) * 0.10))
+        diag = (_np.abs(xx - yy * (w / max(1, h))) < band) | \
+               (_np.abs(xx + yy * (w / max(1, h)) - (w - 1)) < band)
+        cross = (_np.abs(xx - (w - 1) / 2) < band) | (_np.abs(yy - (h - 1) / 2) < band)
+        d, cr = (ink & diag).sum(), (ink & cross).sum()
+        return (d / max(1, cr)) >= _X_DIAG_OVER_CROSS
+    except Exception:                              # noqa: BLE001 — a filter, never the flow
+        return True
+
+
 def _detect_popup(inventory) -> Optional[ObstructionResult]:
     """Small bounded frame with a close-X icon near top-right.
 
@@ -460,6 +512,11 @@ def _detect_popup(inventory) -> Optional[ObstructionResult]:
         and 30 <= e.width <= 120
         and 30 <= e.height <= 120
     ]
+    # AND IT MUST LOOK LIKE AN X. The globe under the port overworld's minimap sat squarely
+    # in the top-right zone at the right size, was taken for a close button, and the
+    # dismissal that followed opened the main menu.
+    _frame = getattr(inventory, "frame", None)
+    close_x_candidates = [e for e in close_x_candidates if _looks_like_an_x(_frame, e)]
     if not close_x_candidates:
         return None
 
@@ -505,18 +562,21 @@ def _detect_popup(inventory) -> Optional[ObstructionResult]:
         return None
 
     # Right-edge anchor guard.  The persistent right-side HUD panel on
-    # port_overworld and sea (building list + mini-map + nearby ports)
-    # has the same close-X-glyph + below-body shape as a popup, but is
-    # anchored flush to the right screen edge and runs from near the top
-    # of the screen.  Real popups have a margin from the right edge and
-    # appear centred or middle-anchored.  Reject when the bbox right
-    # edge is within ~50 px of the screen edge AND the bbox top is at
-    # the screen-top area (y < 200).
-    # Origin: 2026-05-22 Palma harbor entry — the right-side panel was
-    # flagged as popup repeatedly, costing ~10 s per consult+dismiss
-    # cycle.  Each frame produced a slightly different bbox so cache
-    # hits never fired.
-    if bbox[2] >= fw - 50 and bbox[1] < 200:
+    # A POPUP IS CENTRED, NEVER ON THE SIDE (user, 2026-09-10). The port overworld's right
+    # panel — buildings list, minimap, nearby ports — has the same close-X-glyph-plus-body
+    # shape, and the only durable thing that parts them is WHERE it sits.
+    #
+    # This replaces a two-condition guard written for this exact screen on 2026-05-22 (Palma
+    # harbour) which required the bbox to be flush right AND to start above y=200. It was
+    # defeated on 2026-09-10 by 114 pixels: the close-X candidate picked was the globe BELOW
+    # the minimap, so the synthesised bbox started at y=314 rather than near the screen top,
+    # and the second condition failed. The bbox is `_bbox_from_elements`, so its top depends
+    # on which element got chosen — a fragile thing to test. Where its CENTRE lies does not.
+    #
+    # Measured: the overflow dialog's centre is x=1200 on a 2400-wide frame, dead centre; the
+    # right panel's is x=2129, off by 0.39 of the width. The tolerance sits in that gulf.
+    bbox_cx = (bbox[0] + bbox[2]) / 2
+    if abs(bbox_cx - fw / 2) > _POPUP_CENTRED_TOL * fw:
         return None
 
     return ObstructionResult(
