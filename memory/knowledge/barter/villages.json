@@ -32,7 +32,7 @@
     "lon": null,
     "amity": "Friendly",
     "amity_points": [
-      98505,
+      97241,
       100000
     ],
     "barter_rounds_total": 7,
@@ -48,10 +48,7 @@
     "lat": null,
     "lon": null,
     "amity": "Friendly",
-    "amity_points": [
-      99207,
-      100000
-    ],
+    "amity_points": null,
     "barter_rounds_total": 7,
     "barter_rounds_remaining": 7,
     "eligible_goods": [
@@ -77,15 +74,33 @@
     "name": "Cheyenne Village",
     "lat": null,
     "lon": null,
-    "amity": null,
+    "amity": "Neutral",
     "amity_points": null,
-    "barter_rounds_total": null,
-    "barter_rounds_remaining": null,
-    "eligible_goods": [],
+    "barter_rounds_total": 5,
+    "barter_rounds_remaining": 5,
+    "eligible_goods": [
+      "American Bison",
+      "Eagle Feather",
+      "Goldenseal",
+      "Moccasin"
+    ],
     "locked_goods": []
   },
   "berber_village": {
     "name": "Berber Village",
+    "lat": null,
+    "lon": null,
+    "amity": "Friendly",
+    "amity_points": null,
+    "barter_rounds_total": 7,
+    "barter_rounds_remaining": 7,
+    "eligible_goods": [
+      "Argan Oil"
+    ],
+    "locked_goods": []
+  },
+  "sioux_village": {
+    "name": "Sioux Village",
     "lat": null,
     "lon": null,
     "amity": "Neutral",
@@ -93,7 +108,24 @@
     "barter_rounds_total": 5,
     "barter_rounds_remaining": 5,
     "eligible_goods": [
-      "Argan Oil"
+      "American Bison",
+      "Eagle Feather",
+      "Goldenseal",
+      "Moccasin"
+    ],
+    "locked_goods": []
+  },
+  "pawnee_village": {
+    "name": "Pawnee Village",
+    "lat": null,
+    "lon": null,
+    "amity": "Neutral",
+    "amity_points": null,
+    "barter_rounds_total": 5,
+    "barter_rounds_remaining": 5,
+    "eligible_goods": [
+      "American Bison",
+      "Goldenseal"
     ],
     "locked_goods": []
   }
