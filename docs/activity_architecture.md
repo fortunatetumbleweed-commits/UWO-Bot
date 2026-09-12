@@ -6,45 +6,76 @@ than drawing what ought to be there.
 
 ---
 
-## 1. One tick, end to end
+## 1. One step, end to end
 
-Four routings, each answering a different question.
+**`Dispatcher.step()` IS the loop.** Everything below happens inside it; nothing else drives.
+It was called `tick` until 2026-08-31 and the rename says why: a tick implies a periodic
+sample, and this runs when the previous step returned. In a port or a village nothing changes
+unless we change it, so a step ADVANCES the work rather than checking on it.
+
+Two collaborators sit outside it and neither calls in. The TASK RUNNER is consulted for a work
+order and answers; the ACTIVITY is handed one and does a single thing.
 
 ```mermaid
-flowchart TD
-    P["perceive()<br/><i>one capture per tick</i>"] --> NS["nav state<br/><code>building:market</code>"]
+flowchart TB
+    subgraph D["<b>Dispatcher.step()</b> — the one loop"]
+        direction TB
+        W["wait out a wake timer<br/><i>only if an activity asked for one</i>"]
+        P["perceive<br/><i>or reuse the look _advance already took</i>"]
+        OB["clear obstructions<br/><i>daily news, promo — a film OVER a world</i>"]
+        PK{"_pick(state, goal)<br/><i>registry, then the GOALS filter</i>"}
+        DG["offer any dialog to that activity"]
+        SG{"_serves_goal?"}
+        WK["activity.work(goal, state)"]
+        ADV["<b>_advance(result, state)</b><br/>re-perceive · consult · route · dispatch"]
 
-    NS --> REG{"registry<br/><i>state → [activities]</i><br/>built from each SERVES"}
-    REG --> GF{"_serves_goal<br/><i>isinstance(goal, GOALS)</i>"}
+        W --> P --> OB --> PK
+        PK -->|"an activity serves here"| DG --> SG
+        SG -->|"yes"| WK --> ADV
+        SG -->|"wrong order for it"| ADV
+        PK -->|"nobody serves this state"| ADV
+    end
 
-    GF -->|"no activity<br/>or none accepts"| INT["to_intent(goal, state)<br/>→ <b>Intent</b><br/><code>ENTER_BUILDING(purpose=…)</code>"]
-    INT --> DISPATCH["dispatch(intent)<br/><i>a transition, never awaited</i>"]
-    DISPATCH --> P
+    TR["<b>task runner</b><br/>next_goal(result, state)<br/><i>PASSIVE — answers, never calls</i>"]
+    ACT["<b>the activity</b><br/><i>classify, do ONE thing, hand back</i>"]
+    INT["to_intent(goal, state)<br/>→ <b>Intent</b>(name, extras)"]
+    DSP["dispatch(intent)<br/><i>the ONE place a transition happens</i>"]
 
-    GF -->|"activity accepts"| WORK["activity.work(goal, state)"]
+    WK -.->|"calls"| ACT
+    ACT -.->|"ActivityResult"| ADV
+    ADV -->|"asks for a work order"| TR
+    TR -->|"a goal, or nothing left to do"| ADV
+    ADV --> INT --> DSP
+    DSP -->|"tapped; the next look says where it landed"| W
+    ADV -->|"no transition needed"| W
 
-    WORK --> CTX{"context.classify(frame)<br/><i>scoped: WHICH market screen?</i>"}
-    CTX -->|MISS| UNREC["ActivityResult(UNRECOGNISED)<br/><i>hand back, do not act</i>"]
-    CTX -->|"PURCHASE_PAGE<br/>CONFIRM_DIALOG<br/>…"| H["_HANDLERS[context]<br/><i>one handler</i>"]
-
-    H --> ACT["ONE action<br/><i>tap / read / stage</i>"]
-    ACT --> DID["state.did(intent, signature)<br/><i>market only — see §4</i>"]
-    ACT --> RES["ActivityResult<br/>WORKING · FINISHED · UNRECOGNISED"]
-
-    RES --> P
-    UNREC --> P
+    classDef owner fill:#e8f0fe,stroke:#4169e1
+    class D owner
 ```
 
-**The four questions, and who answers each**
+**Why the result does not go back to `perceive`.** It goes to `_advance`, and the order there
+is load-bearing: re-perceive FIRST, then consult the task runner. An activity finishing means
+the world may be somewhere else, so asking with the pre-activity state tells the task runner
+*you are at the idle lock* about a bot that has just woken into a village.
 
-| question | answered by | mechanism |
+**Why `dispatch` is not the end of one branch.** Every path converges on `_advance`, and a
+transition may be dispatched from any of them — the activity finished, no activity serves this
+state, or the one that does cannot fill this order. Drawing it as the tail of a "no activity"
+branch made it look like a fallback. It is the common exit.
+
+**Where the four routings live**
+
+| question | answered by | in the diagram |
 |---|---|---|
-| where am I? | `classify_nav_state` | family CNN → fingerprints |
-| who works here? | the registry | built from each activity's `SERVES` |
-| can they do this order? | `_serves_goal` | `isinstance(goal, tuple(GOALS))` |
-| which screen of theirs is this? | the activity's context module | `classify()` → a constant, or `MISS` |
+| where am I? | `classify_nav_state` | `perceive` |
+| who works here? | the registry, built from each `SERVES` | `_pick` |
+| can they do this order? | `isinstance(goal, GOALS)` | `_serves_goal` |
+| which screen of theirs is this? | the activity's own context module | inside `activity.work` |
 
----
+**What the dispatcher decides, and what it refuses to.** It decides WHO handles a screen; it
+never decides what the screen MEANS (Guiding Principle #1). Meaning belongs to the activity,
+inside its own context — a dialog, a tab switch or a barter round change the screen without
+changing the world, and none of them is a transition.
 
 ## 2. What an activity declares
 
