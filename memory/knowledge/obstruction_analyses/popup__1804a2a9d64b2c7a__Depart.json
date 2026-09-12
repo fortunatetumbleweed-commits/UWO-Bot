@@ -1,0 +1,21 @@
+{
+  "purpose": "A game news/announcements popup showing recent patch notes and update notices has appeared over the city screen, unrelated to departing for Faro",
+  "full_text": "Updates — September 9 (Wed) Update Advance Notice [Content Added 9/8 18:30] 5 d ago. August 10 (Mon) Update Advance Notice 2026.08.07. July 8 Patch Notes [7/9 13:40 Update] 2026.07.06. Notices — 9/9 Data Patch [Content Added 9/9 18:04 (UTC+9)] 3 d ago. 09/09 New Products Announcement.",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "1804a2a9d64b2c7a",
+  "goal_intent": "Depart",
+  "cached_at": "2026-09-12T15:32:26.468486+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "A game news/announcements popup showing recent patch notes and update notices has appeared over the city screen, unrelated to departing for Faro",
+    "full_text": "Updates — September 9 (Wed) Update Advance Notice [Content Added 9/8 18:30] 5 d ago. August 10 (Mon) Update Advance Notice 2026.08.07. July 8 Patch Notes [7/9 13:40 Update] 2026.07.06. Notices — 9/9 Data Patch [Content Added 9/9 18:04 (UTC+9)] 3 d ago. 09/09 New Products Announcement.",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

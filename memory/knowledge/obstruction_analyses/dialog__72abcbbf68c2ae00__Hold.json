@@ -1,0 +1,21 @@
+{
+  "purpose": "Confirmation dialog asking whether to replenish stock via trade points (costs 111 trade points, 39/50 replenishes remaining), opened by tapping the restock button on the purchase screen",
+  "full_text": "Replenish Stock? (Does not affect market price) Remaining: 39/50 [111 trade points] — OK / Cancel",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "72abcbbf68c2ae00",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-12T18:33:57.455318+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Confirmation dialog asking whether to replenish stock via trade points (costs 111 trade points, 39/50 replenishes remaining), opened by tapping the restock button on the purchase screen",
+    "full_text": "Replenish Stock? (Does not affect market price) Remaining: 39/50 [111 trade points] — OK / Cancel",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

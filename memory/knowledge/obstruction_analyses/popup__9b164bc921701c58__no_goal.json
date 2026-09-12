@@ -1,0 +1,21 @@
+{
+  "purpose": "A tooltip or info popup explaining that Deeds can be exchanged for valuable items by higher-ranking officials, likely triggered by hovering over or tapping a Deed-related UI element near the Pass/Season Pass area.",
+  "full_text": "Deeds can be exchanged for valuable items by the higher-ups.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "9b164bc921701c58",
+  "goal_intent": null,
+  "cached_at": "2026-09-12T17:32:50.494747+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A tooltip or info popup explaining that Deeds can be exchanged for valuable items by higher-ranking officials, likely triggered by hovering over or tapping a Deed-related UI element near the Pass/Season Pass area.",
+    "full_text": "Deeds can be exchanged for valuable items by the higher-ups.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

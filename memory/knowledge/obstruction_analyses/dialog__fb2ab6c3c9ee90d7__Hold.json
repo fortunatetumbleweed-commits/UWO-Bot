@@ -1,0 +1,21 @@
+{
+  "purpose": "Samuel Burgess is offering to negotiate the purchase price of Madeira goods down by 21.5% (from 181,828 to 133,942) with a 79.2% success rate, asking the bot to choose how many negotiation attempts to use",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 181,828 → 133,942 (-21.5%). Negotiation Success Rate: Failed | 79.2% | Success. Samuel Burgess: Hmm, we should be able to buy it for 21.5% less. Why don't you try negotiating? Options: No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "fb2ab6c3c9ee90d7",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-12T15:55:58.090453+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Samuel Burgess is offering to negotiate the purchase price of Madeira goods down by 21.5% (from 181,828 to 133,942) with a 79.2% success rate, asking the bot to choose how many negotiation attempts to use",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 181,828 → 133,942 (-21.5%). Negotiation Success Rate: Failed | 79.2% | Success. Samuel Burgess: Hmm, we should be able to buy it for 21.5% less. Why don't you try negotiating? Options: No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

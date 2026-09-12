@@ -1,0 +1,21 @@
+{
+  "purpose": "Lorenzo Pinto is offering to negotiate the purchase price of Madeira Wine down by 21.5% (from 181,828 to 133,942 gold), with a 79.2% success rate and multiple negotiation attempts remaining — the bot must choose whether to use 1 chance, all remaining chances, or decline",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 181,828 → 133,942 (-21.5%). Negotiation Success Rate: Failed ... 79.2% ... Success. Lorenzo Pinto: In my opinion, we can buy this for 21.5% less. Would you like to negotiate? No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "5ced73ff14db91f1",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-12T15:50:25.294477+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Lorenzo Pinto is offering to negotiate the purchase price of Madeira Wine down by 21.5% (from 181,828 to 133,942 gold), with a 79.2% success rate and multiple negotiation attempts remaining — the bot must choose whether to use 1 chance, all remaining chances, or decline",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 181,828 → 133,942 (-21.5%). Negotiation Success Rate: Failed ... 79.2% ... Success. Lorenzo Pinto: In my opinion, we can buy this for 21.5% less. Would you like to negotiate? No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

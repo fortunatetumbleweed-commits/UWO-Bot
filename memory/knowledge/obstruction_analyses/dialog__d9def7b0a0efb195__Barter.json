@@ -1,0 +1,21 @@
+{
+  "purpose": "Game is asking the bot to confirm completing the barter trade, warning that 225 Bambara Groundnut that was received but not claimed will be permanently discarded if the bot proceeds",
+  "full_text": "Complete the trade? 225 Bambara Groundnut has not been claimed yet. Unclaimed trade goods will be discarded.",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "d9def7b0a0efb195",
+  "goal_intent": "Barter",
+  "cached_at": "2026-09-12T17:07:37.978382+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Game is asking the bot to confirm completing the barter trade, warning that 225 Bambara Groundnut that was received but not claimed will be permanently discarded if the bot proceeds",
+    "full_text": "Complete the trade? 225 Bambara Groundnut has not been claimed yet. Unclaimed trade goods will be discarded.",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

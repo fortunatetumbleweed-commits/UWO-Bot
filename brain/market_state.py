@@ -111,6 +111,28 @@ class MarketState:
     # the window costs nothing and closes the case where it does.
     shelf_before_cart: Optional[Tuple] = None
 
+    # WHAT THE CONFIRM CARD SAID WE ARE BUYING, carried to the result card that proves it
+    # landed: (good, units). The card reads `Trade Goods: Candle (Sundries) x495`, so the
+    # quantity and the good are both on it, one tap before the purchase commits.
+    #
+    # WHY THIS EXISTS. The two credit paths both fail on the purchase that empties a shelf,
+    # which is the normal path when gathering: `credit_the_shelf_drop` needs an AFTER reading
+    # and a bought-out tile reads unreadable, while `_credit_the_cargo_rise` is an aggregate
+    # and names no good. So `market_buy` dropped the whole ledger and the next tick went to
+    # the Sell grid to re-read the hold — SEVEN times in the 107-minute Svear run of
+    # 2026-09-11, about 12 minutes, every one of them after buying out a shelf.
+    #
+    # The card is a THIRD source and it is independent of both: it is what the game says it
+    # is about to sell us, per good, and it does not care what the tile behind it reads.
+    purchase_in_flight: Optional[Tuple] = None
+
+    # Set when the result card credited the ledger from what the confirm card said. Read and
+    # cleared by the buy handler, which used to DROP the whole ledger whenever the shelf could
+    # not be read — for every good, because one good's tile was unreadable. A credit that
+    # already happened makes that unnecessary, and keeping the count is what removes the trip
+    # to the Sell grid.
+    credited_by_card: bool = False
+
     # Per-control attempt counts — the retry bound, replacing every `for attempt in range`.
     # The bound lives here because the GOAL's lifetime is the right lifetime for it.
     attempts: dict = field(default_factory=dict)

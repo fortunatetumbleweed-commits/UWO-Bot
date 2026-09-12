@@ -474,6 +474,29 @@ class MarketActivity:
         how FC-3 happened at San Village: iteration 1 pressed OK, the overflow card appeared,
         iteration 2 pressed its Receive, and the handler that owns overflow never ran.
         """
+        # READ THE CARD BEFORE ANSWERING IT. Its table names the good and the units one tap
+        # before the transaction commits, and it is the only source of per-good units that
+        # survives buying out a shelf — which is the normal way a gather ends, and the reason
+        # the ledger used to be thrown away and the hold re-read from the Sell grid. Carried
+        # on the state until the RESULT card proves the purchase landed.
+        #
+        # ONLY FOR A BUY, AND THE CARD CANNOT TELL YOU THAT. A SALE raises the same card with
+        # the same `Trade Goods` table, so reading it without asking which way the goods are
+        # moving credits a sale as a purchase — the ledger would move by twice the amount, in
+        # the wrong direction. Live 2026-09-12 at Faro during `trim_before_gather`: a SALES
+        # confirmation for 365 Raisin was read as a purchase of 365 Raisin. It did no damage
+        # only because the ledger happened to be None during a trim.
+        #
+        # The GOAL is what knows the direction, and the handler already has it. `Hold` buys;
+        # `TrimHold` and `SellHold` sell. Same shape as the overflow card being named by its
+        # button: a card read without asking what it belongs to.
+        if isinstance(goal, Hold) and self._classify() == _ctx.CONFIRM_DIALOG:
+            buying = _ctx.confirm_card_purchase(self._frame())
+            if buying is not None:
+                self._state.purchase_in_flight = buying
+                logger.info(f"[market] the confirm card says {buying[1]} {buying[0]!r} — "
+                            "carrying it to the result card")
+
         from brain.commit_actions import tap_one_positive
         if not tap_one_positive(goal_keywords=["ok", "confirm"],
                                 capture_fn=lambda: self._frame(),
@@ -597,6 +620,20 @@ class MarketActivity:
         #
         # So the names come from what was staged, and the CARD is still what authorises them:
         # being in this handler means the game has confirmed the transaction.
+        # THE PURCHASE THE CONFIRM CARD NAMED HAS NOW LANDED. This context IS the proof
+        # (CLAUDE.md: "a transaction's RESULT DIALOG is the proof it happened"), so the units
+        # it carried can be credited per good — and that is what keeps the visit's running
+        # count alive when the shelf cannot be read.
+        #
+        # The result card itself is no use for this: it reports MONEY, `Purchase Cost 254,364
+        # / Tax 42,911 / Total Amount 248,677`, and never a quantity. Confirm says how many,
+        # result says it happened; neither does both.
+        in_flight, self._state.purchase_in_flight = self._state.purchase_in_flight, None
+        if in_flight is not None and self._state.ledger is not None:
+            good, qty = in_flight
+            self._state.ledger.bought(good, qty)
+            self._state.credited_by_card = True
+
         sold = list(sold) + [n for n in self._state.sold_pending if n not in sold]
         for name in sold:
             if name not in self._state.sold:

@@ -58,7 +58,7 @@
         },
         {
           "material": "Pig",
-          "ratio": 218,
+          "ratio": 188,
           "source_ports": [
             "Faro",
             "Gijón"
@@ -73,7 +73,7 @@
     ],
     "output_per_round": {
       "Neutral": 829,
-      "Friendly": 988
+      "Friendly": 1235
     },
     "preconditions": {
       "amity_min": null,

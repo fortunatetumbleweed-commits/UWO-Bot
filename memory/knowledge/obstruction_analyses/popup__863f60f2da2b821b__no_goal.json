@@ -1,0 +1,21 @@
+{
+  "purpose": "An NPC speech bubble from a market vendor or townsperson expressing a mundane complaint about wanting to finish their work quota and go home — ambient world dialogue, not a blocking UI popup",
+  "full_text": "I just want to fulfill my quota and go home...",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "863f60f2da2b821b",
+  "goal_intent": null,
+  "cached_at": "2026-09-12T17:32:36.174835+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "An NPC speech bubble from a market vendor or townsperson expressing a mundane complaint about wanting to finish their work quota and go home — ambient world dialogue, not a blocking UI popup",
+    "full_text": "I just want to fulfill my quota and go home...",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

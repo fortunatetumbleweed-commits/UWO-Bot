@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase Result confirmation showing the completed bulk purchase transaction, displaying cost breakdown (base cost, tax, discount) and total amount deducted, with remaining gold balance shown — this is the final confirmation step after buying goods toward the Raisin hold goal",
+  "full_text": "Result. Purchase Cost 209,588. Tax 10,063. Discount -37,823. Total Amount 181,828. Balance 77,598,425,300. OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "afc1771082466b11",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-12T15:50:54.374395+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase Result confirmation showing the completed bulk purchase transaction, displaying cost breakdown (base cost, tax, discount) and total amount deducted, with remaining gold balance shown — this is the final confirmation step after buying goods toward the Raisin hold goal",
+    "full_text": "Result. Purchase Cost 209,588. Tax 10,063. Discount -37,823. Total Amount 181,828. Balance 77,598,425,300. OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

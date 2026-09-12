@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade Goods Info popup showing Pig livestock details, price calculation (Sales Cost 555, Tax -25, Surcharge +150, Per Price 680), and a quantity selector for staging Pigs to sell — this is the confirmation/load dialog after tapping the Pig tile to stage it",
+  "full_text": "Trade Goods Info — Pig, Livestock (978 in hold). Calculation: Sales Cost 555, Tax -25, Surcharge +150, Per Price 680. Description: A domesticated version of the boar. Widely raised for its meat. Prices: Current Price 555, Max Price 599, Min Price 510. Quantity: 1/978. Min | Max. Final Sales Price: 680. Cancel | Load.",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "2552181f79e16122",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-12T19:00:19.427482+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade Goods Info popup showing Pig livestock details, price calculation (Sales Cost 555, Tax -25, Surcharge +150, Per Price 680), and a quantity selector for staging Pigs to sell — this is the confirmation/load dialog after tapping the Pig tile to stage it",
+    "full_text": "Trade Goods Info — Pig, Livestock (978 in hold). Calculation: Sales Cost 555, Tax -25, Surcharge +150, Per Price 680. Description: A domesticated version of the boar. Widely raised for its meat. Prices: Current Price 555, Max Price 599, Min Price 510. Quantity: 1/978. Min | Max. Final Sales Price: 680. Cancel | Load.",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

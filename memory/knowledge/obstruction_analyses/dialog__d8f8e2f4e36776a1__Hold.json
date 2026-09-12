@@ -1,0 +1,21 @@
+{
+  "purpose": "Edmund Gilbert (negotiator) is offering to purchase the Gobelin fabric for 21.5% less (173,430 vs 237,390) with a 79.2% success rate, prompting the bot to choose whether to use negotiation attempts",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 237,390 → 173,430 (-21.5%). Negotiation Success Rate: Failed | 79.2% | Success. Edmund Gilbert: Hmm, I think we can purchase this for 21.5% less. Would you like to negotiate? No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "d8f8e2f4e36776a1",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-12T17:47:05.808837+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Edmund Gilbert (negotiator) is offering to purchase the Gobelin fabric for 21.5% less (173,430 vs 237,390) with a 79.2% success rate, prompting the bot to choose whether to use negotiation attempts",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 237,390 → 173,430 (-21.5%). Negotiation Success Rate: Failed | 79.2% | Success. Edmund Gilbert: Hmm, I think we can purchase this for 21.5% less. Would you like to negotiate? No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

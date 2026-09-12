@@ -1,0 +1,21 @@
+{
+  "purpose": "Edmund Gilbert is offering a negotiation to purchase goods at 21.5% less (133,942 instead of 181,828), with a 79.2% success rate and multiple remaining attempts — the bot must choose whether to negotiate or decline",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 181,828 → 133,942 (-21.5%). Negotiation Success Rate: Failed — 79.2% — Success. Edmund Gilbert: Hmm, I think we can purchase this for 21.5% less. Would you like to negotiate? [No] [Use 1 chance] [Use all remaining chances]",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "73a9115f566d090a",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-12T15:53:16.866052+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Edmund Gilbert is offering a negotiation to purchase goods at 21.5% less (133,942 instead of 181,828), with a 79.2% success rate and multiple remaining attempts — the bot must choose whether to negotiate or decline",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 181,828 → 133,942 (-21.5%). Negotiation Success Rate: Failed — 79.2% — Success. Edmund Gilbert: Hmm, I think we can purchase this for 21.5% less. Would you like to negotiate? [No] [Use 1 chance] [Use all remaining chances]",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

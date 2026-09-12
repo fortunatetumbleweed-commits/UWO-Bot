@@ -1,0 +1,21 @@
+{
+  "purpose": "The world map is displayed showing the area around Madeira, Casablanca, and Las Palmas — this is the map view the bot needs to navigate to find and select 'Hutu Village' as a destination",
+  "full_text": "Casablanca 108 Madeira Las Palmas 409",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "1e37d87d71f8d51d",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-12T16:07:22.596199+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The world map is displayed showing the area around Madeira, Casablanca, and Las Palmas — this is the map view the bot needs to navigate to find and select 'Hutu Village' as a destination",
+    "full_text": "Casablanca 108 Madeira Las Palmas 409",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

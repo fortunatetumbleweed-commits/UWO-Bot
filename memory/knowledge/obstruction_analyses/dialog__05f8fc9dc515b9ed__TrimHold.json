@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade Goods Info panel for Raisin showing pricing breakdown (sales cost 1,106, tax -49, surcharge +300, per-price 1,357) with quantity set to 1/1,230 — this is the load/stage confirmation dialog that opened when the bot tapped the Raisin tile to stage it for selling",
+  "full_text": "Trade Goods Info — Raisin (Luxuries) — Dried grapes. Great as a snack and as a culinary ingredient. Calculation: Sales Cost 1,106 | Tax -49 | Surcharge +300 | Per Price 1,357. Prices: Current Price 1,106 | Max Price 1,319 | Min Price 1,058. Quantity: 1/1,230. Final Sales Price: 1,357. [Cancel] [Load]",
+  "dismissal": "tap_accept",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "05f8fc9dc515b9ed",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-12T17:59:52.095909+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade Goods Info panel for Raisin showing pricing breakdown (sales cost 1,106, tax -49, surcharge +300, per-price 1,357) with quantity set to 1/1,230 — this is the load/stage confirmation dialog that opened when the bot tapped the Raisin tile to stage it for selling",
+    "full_text": "Trade Goods Info — Raisin (Luxuries) — Dried grapes. Great as a snack and as a culinary ingredient. Calculation: Sales Cost 1,106 | Tax -49 | Surcharge +300 | Per Price 1,357. Prices: Current Price 1,106 | Max Price 1,319 | Min Price 1,058. Quantity: 1/1,230. Final Sales Price: 1,357. [Cancel] [Load]",
+    "relates_to_goal": true,
+    "dismissal": "tap_accept",
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

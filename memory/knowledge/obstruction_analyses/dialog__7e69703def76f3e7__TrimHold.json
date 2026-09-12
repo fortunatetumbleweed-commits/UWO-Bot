@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade Goods Info dialog for Pig livestock showing current sell price of 720 gold each (589 base + surcharge - tax), asking the bot to confirm quantity and load the goods for sale",
+  "full_text": "Trade Goods Info — Pig, Livestock, 1467 in hold. Description: A domesticated version of the boar. Widely raised for its meat. Calculation: Sales Cost 589, Tax -29, Surcharge +160, Per Price 720. Prices: Current Price 589, Max Price 599, Min Price 510. Quantity: 1/1,467. Final Sales Price: 720. Buttons: Min, Max, Cancel, Load.",
+  "dismissal": "tap_accept",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "7e69703def76f3e7",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-12T16:03:00.856928+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade Goods Info dialog for Pig livestock showing current sell price of 720 gold each (589 base + surcharge - tax), asking the bot to confirm quantity and load the goods for sale",
+    "full_text": "Trade Goods Info — Pig, Livestock, 1467 in hold. Description: A domesticated version of the boar. Widely raised for its meat. Calculation: Sales Cost 589, Tax -29, Surcharge +160, Per Price 720. Prices: Current Price 589, Max Price 599, Min Price 510. Quantity: 1/1,467. Final Sales Price: 720. Buttons: Min, Max, Cancel, Load.",
+    "dismissal": "tap_accept",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

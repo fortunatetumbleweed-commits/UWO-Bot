@@ -38,6 +38,8 @@ unit test that reaches for the device is a slow test.
 """
 from __future__ import annotations
 
+import re
+
 from typing import Any, Optional, Sequence
 
 from loguru import logger
@@ -200,6 +202,104 @@ def _detect_dialog(frame, elements):
     except Exception as exc:                      # a classifier must never raise into a tick
         logger.debug(f"[market-context] dialog detection skipped: {exc}")
         return None
+
+
+def confirm_card_purchase(frame, *, elements=None, dialog=None):
+    """What the CONFIRM card says is about to be bought: (good, units), or None.
+
+    THE CARD IS A TABLE, AND IT IS READ AS ONE. Its columns are headed `Trade Goods`,
+    `Purchase Cost`, `Tax`, `Discount`, `Purchase Price`, and the first column holds three
+    stacked cells — the good, its category, and the quantity:
+
+        y120  'Trade Goods'   'Purchase Cost'  'Tax 5%'  'Discount'  'Purchase Price'
+        y170  'Raisin'
+        y236  'Luxuries'
+        y247  '410'           <- the units, its own element under the same header
+
+    WRITTEN FIRST AGAINST A TRANSCRIPTION, WHICH WAS THE MISTAKE. The original read joined
+    every label and matched `Trade Goods: Candle (Sundries) x495` — a string taken from the
+    obstruction consult's `full_text`, which is Claude's RENDERING of the card, not what
+    OmniParser returns. The parse actually returns the cells separately, so the pattern
+    matched the test fixture and never a real frame. Live 2026-09-12 at Bordeaux every
+    purchase fell through to "no confirm card credited it" and went to the Sell grid exactly
+    as before.
+
+    The lesson is the day's: read the STRUCTURE, not however the parse happened to group the
+    text. The merged form is still accepted, because the parse does sometimes group it that
+    way and a fallback costs nothing — but it is the fallback now, not the rule.
+    """
+    if elements is None and frame is not None:
+        from vision.omniparser import parse_fast_cached
+        elements = parse_fast_cached(frame)
+    els = [e for e in (elements or [])
+           if (getattr(e, "label", "") or "").strip()]
+
+    found = _purchase_from_the_table(els)
+    if found is not None:
+        return found
+
+    # THE MERGED FORM, when the parse puts the whole column in one label.
+    text = " | ".join((getattr(e, "label", "") or "").strip() for e in els)
+    m = re.search(r"trade goods\s*:?\s*([A-Za-z][A-Za-z '\-]*?)\s*(?:\([^)]*\))?\s*"
+                  r"(?:x|qty\s*)\s*([\d,]+)", text, re.I)
+    if not m:
+        return None
+    good = m.group(1).strip(" |")
+    try:
+        qty = int(m.group(2).replace(",", ""))
+    except ValueError:
+        return None
+    return (good, qty) if good and qty > 0 else None
+
+
+def _purchase_from_the_table(els):
+    """The good and its units from the card's first column, or None.
+
+    ANCHORED ON THE HEADER, never on a coordinate: `Trade Goods` names the column, and the
+    cells beneath it are the good, its category and the quantity. Positions here are all
+    RELATIVE to that header, so the card may sit anywhere on screen.
+    """
+    header = next((e for e in els
+                   if (getattr(e, "label", "") or "").strip().lower() == "trade goods"), None)
+    if header is None:
+        return None
+    # The column is the header's own x-span, widened because the cells beneath are wider than
+    # the heading — the good's row spans the whole column, the quantity is a narrow cell in it.
+    span = header.x2 - header.x1
+    lo, hi = header.x1 - span, header.x2 + span
+    below = [e for e in els
+             if e.y1 > header.y2 and lo <= (e.x1 + e.x2) // 2 <= hi]
+    if not below:
+        return None
+    below.sort(key=lambda e: e.y1)
+
+    # HOW THE CELLS ARE GROUPED IS NOT STABLE, so neither test may demand a whole cell.
+    # Measured on two live cards a few minutes apart:
+    #
+    #     Bordeaux   'Raisin'  |  'Luxuries'        |  '410'      three clean cells
+    #     Faro       'Pig'     |  '489] Livestock'               quantity, junk and category
+    #                                                            welded into one
+    #
+    # So the QUANTITY is the first number found anywhere in the column below the good, and
+    # the GOOD is the first cell there carrying no digits. Both stay confined to the column,
+    # which is what keeps the money out of it — 155,991 and 133,986 sit in other columns on
+    # that same card and are larger and higher than the 489.
+    good = qty = None
+    for e in below:
+        label = (getattr(e, "label", "") or "").strip()
+        digits = re.search(r"\d[\d,]*", label)
+        if good is None and not digits and re.search(r"[A-Za-z]", label):
+            # THE FIRST WORDS UNDER THE HEADER ARE THE GOOD. Its category sits below it and
+            # is skipped by taking the first, which is why this needs no category vocabulary.
+            good = label
+        elif qty is None and digits and good is not None:
+            try:
+                qty = int(digits.group().replace(",", ""))
+            except ValueError:
+                pass
+        if good is not None and qty is not None:
+            break
+    return (good, qty) if good and qty and qty > 0 else None
 
 
 def _card_text(dialog, whole_frame_text: str) -> str:

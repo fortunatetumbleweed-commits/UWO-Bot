@@ -1,0 +1,21 @@
+{
+  "purpose": "The bot has arrived at London's port and the Harbor location popup has appeared, indicating successful landfall at the destination port",
+  "full_text": "Harbor",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "e347660d52d87798",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-12T19:48:32.037441+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The bot has arrived at London's port and the Harbor location popup has appeared, indicating successful landfall at the destination port",
+    "full_text": "Harbor",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "high"
+  }
+}

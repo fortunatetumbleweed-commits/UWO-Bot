@@ -306,6 +306,11 @@ _DIALOG_ACTION_WORDS = frozenset({
 })
 
 
+# The area a gated frame reports: the parse never ran, so there is no largest element. A
+# sentinel rather than 0.0, which would read as "measured, and it was nothing".
+_NOT_MEASURED = -1.0
+
+
 def _large_dimmed_popup(frame) -> tuple:
     """(is_large_dimmed_popup, largest_element_pct, margin_brightness).
 
@@ -316,15 +321,45 @@ def _large_dimmed_popup(frame) -> tuple:
     """
     import numpy as _np
     try:
-        from vision.omniparser import parse_fast_cached
-        els = parse_fast_cached(frame) or []
-        biggest = max((( e.x2 - e.x1) * (e.y2 - e.y1) for e in els), default=0)
-        area_pct = 100.0 * biggest / float(frame.width * frame.height)
-
         a = _np.asarray(frame.convert("L")).astype(float)
         band = _np.concatenate([a[:60, :].ravel(), a[-60:, :].ravel(),
                                 a[:, :80].ravel(), a[:, -80:].ravel()])
         dim = float(band.mean())
+
+        # THE CHEAP TEST FIRST, AND IT IS DECISIVE. This function can only ever answer TRUE
+        # for something that DIMS the screen — the return below requires `dim < MAX`. So a
+        # frame with nothing dimmed cannot be a hit, and paying OmniParser to find that out
+        # is the single largest avoidable cost in a run.
+        #
+        # Measured on the 107-minute Svear run of 2026-09-11: this function and the daily-news
+        # check above it cost 13.7 of the 18 minutes the whole obstruction pass spent, at
+        # ~5.1s a frame, and 75% of 125 sampled frames had nothing covering the screen at all.
+        # The parse also DEFEATS a short-circuit built to avoid it — Phase 4a settles sea,
+        # world map and port overworld with the family CNN in ~50ms precisely so OmniParser is
+        # never touched, and this ran first and dragged it in on every frame.
+        #
+        # WHY THE SCRIM AND NOT THIS MARGIN MEAN. A night sea is dark on AVERAGE and would
+        # gate wrongly — the run rejected frames reading margin brightness 15. `scrim_state`
+        # takes the left gutter's 99.9th percentile instead: a dimmed gutter has no bright
+        # pixels, while a dark scene still does. The gutter is the probe point because dialogs
+        # are centred and panels are never on the left.
+        #
+        # THIS DOES NOT GATE `_detect_interruptors`, and must not. Dialogs all dim, but
+        # POPUPS DO NOT NECESSARILY (user, 2026-09-12) — a popup that does not dim is found by
+        # OCR TOKENS, which is that pass's job and is left running on every frame.
+        #
+        # Logged, not silent: the gate disagreed with the margin test on ~2 of 121 real frames
+        # sampled, so the skips are auditable against what the full check would have said.
+        from vision.overlay import CLEAR, scrim_state
+        if scrim_state(frame) == CLEAR:
+            logger.info(f"[perceive] nothing is dimmed (scrim clear, margin {dim:.0f}) — "
+                        "no modal is possible; skipping the popup parse")
+            return False, _NOT_MEASURED, dim
+
+        from vision.omniparser import parse_fast_cached
+        els = parse_fast_cached(frame) or []
+        biggest = max((( e.x2 - e.x1) * (e.y2 - e.y1) for e in els), default=0)
+        area_pct = 100.0 * biggest / float(frame.width * frame.height)
         box = max(els, key=lambda e: (e.x2 - e.x1) * (e.y2 - e.y1), default=None)
         dy_pct = dx_pct = 100.0
         if box is not None:
@@ -428,10 +463,10 @@ def _has_daily_news_close_x(frame) -> bool:
     # specificity (0/147 false positives with the signature; 7/147 without).
     big, area_pct, dim = _large_dimmed_popup(frame)
     if not big:
-        logger.info(
-            f"[perceive] no large dimmed popup (largest element {area_pct:.1f}%, margin "
-            f"brightness {dim:.0f}) — rejecting"
-        )
+        seen = ("not measured" if area_pct == _NOT_MEASURED
+                else f"largest element {area_pct:.1f}%")
+        logger.info(f"[perceive] no large dimmed popup ({seen}, margin brightness "
+                    f"{dim:.0f}) — rejecting")
         return False
 
     # ...THEN LOOK FOR THE CLOSE-X, rather than assuming where it is.
@@ -2784,6 +2819,11 @@ _OVERWORLD_LOCATIONS = ("sea", "port_overworld", "world_map")
 _TRANSIENT_GATE_LOCATIONS = ("sea", "port_overworld")
 
 
+# How far across the frame the left menu may reach. The village's items sit well inside this;
+# it is here to stop a centred card's own text being read as a menu.
+_LEFT_MENU_X_FRAC = 0.25
+
+
 def _has_village_menu(frame) -> bool:
     """True when the left menu is a VILLAGE's — barter + gifting, on no port screen.
 
@@ -2804,9 +2844,32 @@ def _has_village_menu(frame) -> bool:
     try:
         from vision.omniparser import parse_fast_cached
         from vision.region_detectors.left_menu import detect_left_menu
-        menu = detect_left_menu(list(parse_fast_cached(frame)), frame.width, frame.height)
+        els = list(parse_fast_cached(frame))
+        menu = detect_left_menu(els, frame.width, frame.height)
         labels = {l.strip().lower() for l in (menu.labels() if menu else [])}
-        return _VILLAGE_MENU_MARKERS <= labels
+        if _VILLAGE_MENU_MARKERS <= labels:
+            return True
+
+        # THE PARSE ALREADY READ THE MENU — ask it when the detector comes back empty.
+        #
+        # `detect_left_menu` fails on exactly the frames this check exists for. A modal over a
+        # village DIMS the menu behind it, which is what makes the detector's grouping fail,
+        # and a dimmed menu is precisely the case the transient gate above is trying to
+        # rescue. Live 2026-09-12 at Hutu, with the overflow card up: the detector said no
+        # menu, so the frame stayed `unknown`, no activity was resolved, and nobody owned the
+        # card — while OmniParser had already returned every word on that same frame:
+        #
+        #     ['Barter', 'Explore', 'Gifting', 'Loot', 'Recruit Crew', ...]
+        #
+        # Reorganize, do not re-derive (memory): the evidence was in hand and the caller was
+        # asking the one reader that could not see it.
+        #
+        # STILL NARROW. The vocabulary is unchanged — barter AND gifting, matched exactly — so
+        # a genuine full-screen notice, which COVERS the menu, still reads False. What widens
+        # is only WHERE the words may be found, and they must still be on the left.
+        left = {(getattr(e, "label", "") or "").strip().lower()
+                for e in els if e.x2 < frame.width * _LEFT_MENU_X_FRAC}
+        return _VILLAGE_MENU_MARKERS <= left
     except Exception as exc:
         logger.debug(f"[classify] village-menu check failed: {exc}")
         return False

@@ -1,0 +1,21 @@
+{
+  "purpose": "World map is displayed showing Atlantic ports (Casablanca, Las Palmas) near Madeira, but the target village 'San Village' is not visible — the bot needs to scroll the map to find it",
+  "full_text": "Casablanca 108 Las Palmas 409",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "45ae09e58d59e311",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-12T19:06:44.519493+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "World map is displayed showing Atlantic ports (Casablanca, Las Palmas) near Madeira, but the target village 'San Village' is not visible — the bot needs to scroll the map to find it",
+    "full_text": "Casablanca 108 Las Palmas 409",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "low"
+  }
+}

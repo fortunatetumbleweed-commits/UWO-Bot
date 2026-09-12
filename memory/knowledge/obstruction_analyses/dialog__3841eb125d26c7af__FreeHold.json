@@ -1,0 +1,21 @@
+{
+  "purpose": "Edmund Gilbert (a trade NPC) is offering to negotiate a 24.5% price premium on the Iron sale, with a 76.2% success rate, asking whether to use negotiation attempts",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 209,912 → 248,976 (24.5% increase). Negotiation Success Rate: Failed | 76.2% | Success. Edmund Gilbert: Hmm, I think we can get a 24.5% premium for this. Would you like to negotiate? Options: No | Use 1 chance | Use all remaining chances.",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "3841eb125d26c7af",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-12T15:24:58.092234+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Edmund Gilbert (a trade NPC) is offering to negotiate a 24.5% price premium on the Iron sale, with a 76.2% success rate, asking whether to use negotiation attempts",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 209,912 → 248,976 (24.5% increase). Negotiation Success Rate: Failed | 76.2% | Success. Edmund Gilbert: Hmm, I think we can get a 24.5% premium for this. Would you like to negotiate? Options: No | Use 1 chance | Use all remaining chances.",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

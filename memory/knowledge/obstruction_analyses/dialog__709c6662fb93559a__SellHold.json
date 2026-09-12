@@ -1,0 +1,21 @@
+{
+  "purpose": "Sale result summary showing the completed bulk sell transaction at London, including profit, tax, surcharge, and updated gold balance after selling cargo",
+  "full_text": "Result — Mate Trade EXP: 1,383,230 | Contribution: 0 | Obtained Trade Point: 19,193 | Trade Fame: 0 | Sales Cost: 162,492,896 | Tax: -11,282,960 | Surcharge: 47,447,816 | Profit: 176,809,008 | Total Amount: 198,657,752 | Balance: 77,796,803,455 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "709c6662fb93559a",
+  "goal_intent": "SellHold",
+  "cached_at": "2026-09-12T17:27:12.995658+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Sale result summary showing the completed bulk sell transaction at London, including profit, tax, surcharge, and updated gold balance after selling cargo",
+    "full_text": "Result — Mate Trade EXP: 1,383,230 | Contribution: 0 | Obtained Trade Point: 19,193 | Trade Fame: 0 | Sales Cost: 162,492,896 | Tax: -11,282,960 | Surcharge: 47,447,816 | Profit: 176,809,008 | Total Amount: 198,657,752 | Balance: 77,796,803,455 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "high"
+  }
+}
