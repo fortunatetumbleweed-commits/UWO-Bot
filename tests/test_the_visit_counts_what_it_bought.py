@@ -125,6 +125,31 @@ class TheConfirmCardNamesTheGoodAndTheUnits(unittest.TestCase):
                             _el("Purchase", 300, 600, 500, 640)], dialog=False))
 
 
+class ASaleIsNotAPurchase(unittest.TestCase):
+    """The same card, the same table, the opposite direction — and the card cannot say which.
+
+    Live 2026-09-12 at Faro during `trim_before_gather`: a SALES confirmation for 365 Raisin
+    was read as a purchase of 365 Raisin. It did no damage only because the ledger happened to
+    be None during a trim; with a live ledger the count moves by twice the amount, the wrong
+    way. The GOAL knows the direction and the handler already holds it.
+    """
+
+    def test_the_reader_itself_cannot_tell_a_sale_from_a_buy(self):
+        """Stated as a test because it is WHY the goal gate exists, not a defect in the
+        reader: a sell card carries the same Trade Goods table."""
+        self.assertEqual(confirm_card_purchase(None, elements=CONFIRM, dialog=False),
+                         ("Raisin", 410))
+
+    def test_only_a_Hold_goal_may_credit_a_purchase(self):
+        import inspect
+
+        from brain.activities import market
+
+        src = inspect.getsource(market.MarketActivity._on_our_dialog)
+        self.assertIn("isinstance(goal, Hold)", src,
+                      "a sell confirm must not be carried as a purchase")
+
+
 class TheCountSurvivesABoughtOutShelf(unittest.TestCase):
     """The ledger is already per-good — `fleet` and `pending` are dicts and its own docstring
     names the Barcelona case. What was missing is an input that works when the tile is gone."""

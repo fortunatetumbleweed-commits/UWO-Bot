@@ -474,12 +474,23 @@ class MarketActivity:
         how FC-3 happened at San Village: iteration 1 pressed OK, the overflow card appeared,
         iteration 2 pressed its Receive, and the handler that owns overflow never ran.
         """
-        # READ THE CARD BEFORE ANSWERING IT. `Trade Goods: Candle (Sundries) x495` names the
-        # good and the units one tap before the purchase commits, and it is the only source of
-        # per-good units that survives buying out a shelf — which is the normal way a gather
-        # ends, and the reason the ledger used to be thrown away and the hold re-read from the
-        # Sell grid. Carried on the state until the RESULT card proves the purchase landed.
-        if self._classify() == _ctx.CONFIRM_DIALOG:
+        # READ THE CARD BEFORE ANSWERING IT. Its table names the good and the units one tap
+        # before the transaction commits, and it is the only source of per-good units that
+        # survives buying out a shelf — which is the normal way a gather ends, and the reason
+        # the ledger used to be thrown away and the hold re-read from the Sell grid. Carried
+        # on the state until the RESULT card proves the purchase landed.
+        #
+        # ONLY FOR A BUY, AND THE CARD CANNOT TELL YOU THAT. A SALE raises the same card with
+        # the same `Trade Goods` table, so reading it without asking which way the goods are
+        # moving credits a sale as a purchase — the ledger would move by twice the amount, in
+        # the wrong direction. Live 2026-09-12 at Faro during `trim_before_gather`: a SALES
+        # confirmation for 365 Raisin was read as a purchase of 365 Raisin. It did no damage
+        # only because the ledger happened to be None during a trim.
+        #
+        # The GOAL is what knows the direction, and the handler already has it. `Hold` buys;
+        # `TrimHold` and `SellHold` sell. Same shape as the overflow card being named by its
+        # button: a card read without asking what it belongs to.
+        if isinstance(goal, Hold) and self._classify() == _ctx.CONFIRM_DIALOG:
             buying = _ctx.confirm_card_purchase(self._frame())
             if buying is not None:
                 self._state.purchase_in_flight = buying
