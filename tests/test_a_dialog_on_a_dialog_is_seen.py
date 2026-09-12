@@ -100,7 +100,13 @@ class TheCardIsTheDialogNotTheScreenBehindIt(unittest.TestCase):
         assert labels == {"ok", "cancel"}, \
             "took an action button off the dialog BEHIND this one"
         assert "receive" not in labels
-        assert d.kind() == "confirmation"
+        # `discard_notice` since 2026-09-12, and it is the same card described better: the
+        # kind is now read from the card's CONTENTS before its button words. Both dismiss as
+        # `caller_decides`, so nothing downstream changes — what changes is that the overflow
+        # card beneath this one stops being called a `reward` because its button says
+        # Receive. See tests/test_the_overflow_card_is_not_a_reward.py.
+        assert d.kind() == "discard_notice"
+        assert d.dismiss_action() == "caller_decides"
 
     def test_the_bbox_is_the_card_and_clears_the_side_panel_guard(self):
         """566px, not the 932px stripe that tripped the guard written for info panels."""

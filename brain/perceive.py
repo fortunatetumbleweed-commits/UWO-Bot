@@ -2819,6 +2819,11 @@ _OVERWORLD_LOCATIONS = ("sea", "port_overworld", "world_map")
 _TRANSIENT_GATE_LOCATIONS = ("sea", "port_overworld")
 
 
+# How far across the frame the left menu may reach. The village's items sit well inside this;
+# it is here to stop a centred card's own text being read as a menu.
+_LEFT_MENU_X_FRAC = 0.25
+
+
 def _has_village_menu(frame) -> bool:
     """True when the left menu is a VILLAGE's — barter + gifting, on no port screen.
 
@@ -2839,9 +2844,32 @@ def _has_village_menu(frame) -> bool:
     try:
         from vision.omniparser import parse_fast_cached
         from vision.region_detectors.left_menu import detect_left_menu
-        menu = detect_left_menu(list(parse_fast_cached(frame)), frame.width, frame.height)
+        els = list(parse_fast_cached(frame))
+        menu = detect_left_menu(els, frame.width, frame.height)
         labels = {l.strip().lower() for l in (menu.labels() if menu else [])}
-        return _VILLAGE_MENU_MARKERS <= labels
+        if _VILLAGE_MENU_MARKERS <= labels:
+            return True
+
+        # THE PARSE ALREADY READ THE MENU — ask it when the detector comes back empty.
+        #
+        # `detect_left_menu` fails on exactly the frames this check exists for. A modal over a
+        # village DIMS the menu behind it, which is what makes the detector's grouping fail,
+        # and a dimmed menu is precisely the case the transient gate above is trying to
+        # rescue. Live 2026-09-12 at Hutu, with the overflow card up: the detector said no
+        # menu, so the frame stayed `unknown`, no activity was resolved, and nobody owned the
+        # card — while OmniParser had already returned every word on that same frame:
+        #
+        #     ['Barter', 'Explore', 'Gifting', 'Loot', 'Recruit Crew', ...]
+        #
+        # Reorganize, do not re-derive (memory): the evidence was in hand and the caller was
+        # asking the one reader that could not see it.
+        #
+        # STILL NARROW. The vocabulary is unchanged — barter AND gifting, matched exactly — so
+        # a genuine full-screen notice, which COVERS the menu, still reads False. What widens
+        # is only WHERE the words may be found, and they must still be on the left.
+        left = {(getattr(e, "label", "") or "").strip().lower()
+                for e in els if e.x2 < frame.width * _LEFT_MENU_X_FRAC}
+        return _VILLAGE_MENU_MARKERS <= left
     except Exception as exc:
         logger.debug(f"[classify] village-menu check failed: {exc}")
         return False

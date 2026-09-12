@@ -215,7 +215,8 @@ class DialogAction:
     is_positive: bool = False
 
 
-DialogKind = str   # "informational"|"confirmation"|"system"|"reward"|"quest_offer"|"unknown"
+DialogKind = str   # "informational"|"confirmation"|"system"|"reward"|"quest_offer"
+                   # |"overflow"|"discard_notice"|"unknown"
 
 
 @dataclass(frozen=True)
@@ -244,6 +245,29 @@ class DialogModel:
         informational → unknown.
         """
         action_labels = {a.label.strip().lower() for a in self.actions}
+
+        # STRUCTURE BEFORE BUTTON WORDS. A button is the WEAKEST evidence a card carries, and
+        # `Receive` is overloaded: it claims a prize on a reward card and ACCEPTS GOODS on the
+        # overflow card, where accepting is the branch that discards them.
+        #
+        # Live 2026-09-12 at Hutu Village, and it ended the mission. An "Insufficient Empty
+        # Space" card — 147 units pending, hold at 4,952/4,952 — matched `receive` below and
+        # came back `reward`; `game_rules` then refused to answer a reward whose only option
+        # is Receive, which was RIGHT, and the run failed with "a reward dialog nobody will
+        # answer". The title and the body both say plainly what the card is. Nothing read them.
+        #
+        # It had never bitten because `kind()` is only consulted when NOBODY owns the dialog.
+        # At San on 2026-09-10 the same card was claimed by `VillageActivity`, which used this
+        # very detector and dumped Water and Food. The label was wrong that day too.
+        #
+        # The same wording-vs-structure lesson `village_context` already carries: its
+        # OVERFLOW_PROMPT once keyed on "cargo is full" while the game says "Insufficient
+        # Empty Space", so its handler was unreachable and 360 units went silently overboard.
+        # See `docs/dialogs_understood_not_matched.md` for where this should end up.
+        structural = self._structural_kind(action_labels)
+        if structural is not None:
+            return structural
+
         if "accept" in action_labels and "decline" in action_labels:
             return "quest_offer"
         if "confirm" in action_labels and "cancel" in action_labels:
@@ -258,6 +282,26 @@ class DialogModel:
             return "confirmation"   # fallback when actions don't match priors
         return "unknown"
 
+    def _structural_kind(self, action_labels) -> Optional[DialogKind]:
+        """The kinds that are known by what the card CONTAINS, or None.
+
+        Read off the body text, which is where a card says what it is. Never raises: a
+        classifier that cannot answer must fall through to the words, not break the tick.
+        """
+        try:
+            from vision.region_detectors.overflow_cards import (is_discard_notice,
+                                                                is_overflow_card)
+            text = " | ".join(list(self.body_text) + sorted(action_labels))
+            # THE NOTICE FIRST — it opens OVER the overflow card, so both sets of furniture
+            # are on screen at once and the innermost is the live one.
+            if is_discard_notice(text):
+                return "discard_notice"
+            if is_overflow_card(text):
+                return "overflow"
+        except Exception as exc:                   # noqa: BLE001 — a reading, not a decision
+            logger.debug(f"[dialog] structural kind unavailable: {exc}")
+        return None
+
     def dismiss_action(self) -> str:
         """Recommended action to clear this dialog when the goal is to continue.
 
@@ -268,6 +312,12 @@ class DialogModel:
         if k == "informational":           return "tap_close"
         if k == "system":                  return "tap_ok"
         if k == "reward":                  return "tap_claim"
+        # NOBODY DISMISSES AN OVERFLOW CARD GENERICALLY. Its button accepts goods and discards
+        # whatever will not fit, so only the activity that knows what is expendable may press
+        # it — `VillageActivity._on_overflow` frees space first, protecting materials a
+        # further round can still use.
+        if k in ("overflow", "discard_notice"):
+            return "caller_decides"
         if k in ("confirmation", "quest_offer"):
             return "caller_decides"
         return "unknown"
