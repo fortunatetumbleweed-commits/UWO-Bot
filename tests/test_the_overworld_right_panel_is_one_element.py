@@ -12,6 +12,7 @@ What the two readings show, and what this locks down:
     minimap      derived [202,397]        derived [200,399]
     season row   y[397,439]               y[399,438]            <- THE ANCHOR
     list         Harbor, Market, …        Berber Village, …
+    gauges       none                     4 cells attached at the left
 
 Three bugs live in this element being five separate constants. `CHROME_RIGHT_PANEL_REGION`
 starts at 2050 when the panel starts at 1862 and runs to the frame edge when the panel ends at
@@ -66,7 +67,7 @@ SEA = [
     _el("icon", 1777, 6, 1873, 92),
     _el("icon", 1879, 7, 1959, 91),
     _el("icon", 1978, 8, 2060, 91),
-    # the gauge column to the LEFT of the panel: speed, wind, crew. Not part of it.
+    # the gauge strip attached to the panel's left edge: tide, speed, wind, current
     _el("icon", 1778, 129, 1865, 200),
     _el("27.6", 1780, 197, 1864, 277, "button"),
     _el("icon", 1781, 274, 1864, 356),
@@ -112,11 +113,62 @@ class TheSamePanelIsFoundInBothWorlds(unittest.TestCase):
             self.assertLess(abs(a[0] - b[0]), 6, f"tab x {a} vs {b}")
             self.assertLess(abs(a[1] - b[1]), 6, f"tab y {a} vs {b}")
 
-    def test_the_panel_spans_agree(self):
+    def test_the_panel_body_spans_agree(self):
+        """The BODY is the same rectangle in both worlds — strip, minimap, season row, list."""
         port = detect_overworld_panel(_FRAME, PORT)
         sea = detect_overworld_panel(_FRAME, SEA)
-        self.assertLess(abs(port.box[0] - sea.box[0]), 6)
+        self.assertLess(abs(port.minimap[0] - sea.minimap[0]), 6)
+        self.assertLess(abs(port.minimap[2] - sea.minimap[2]), 6)
         self.assertLess(abs(port.box[2] - sea.box[2]), 6)
+
+    def test_the_OUTER_box_differs_by_the_gauge_strip(self):
+        """And only by that. The sea hangs a column off the panel's left edge; the port
+        does not, so the sea's box reaches further left by exactly the strip's width."""
+        port = detect_overworld_panel(_FRAME, PORT)
+        sea = detect_overworld_panel(_FRAME, SEA)
+        self.assertEqual(port.box[0], port.minimap[0])
+        self.assertEqual(sea.box[0], min(g[0] for g in sea.gauges))
+        self.assertLess(sea.box[0], port.box[0])
+
+
+class TheGaugeStripBelongsToThePanel(unittest.TestCase):
+    """A vertical icon strip attached to the panel's top-left, drawn at sea only (user,
+    2026-09-11). Read off frame 0588 top to bottom: HW in red (tide state), a ship over 27.6
+    (speed), a windsock over 4 ◄ (wind), waves over 1 ◄ (current).
+
+    It was previously EXCLUDED as if it were foreign, which is what made the tab search need
+    containment: the cells are the same size and shape as tabs and sit immediately beside
+    them, so only which side of the seam they fall on tells them apart.
+    """
+
+    def test_four_cells_at_sea(self):
+        p = detect_overworld_panel(_FRAME, SEA)
+        self.assertEqual(len(p.gauges), 4)
+        self.assertTrue(p.at_sea)
+
+    def test_none_at_a_port(self):
+        p = detect_overworld_panel(_FRAME, PORT)
+        self.assertEqual(p.gauges, ())
+        self.assertFalse(p.at_sea)
+
+    def test_they_are_stacked_top_to_bottom(self):
+        p = detect_overworld_panel(_FRAME, SEA)
+        tops = [g[1] for g in p.gauges]
+        self.assertEqual(tops, sorted(tops))
+
+    def test_ATTACHED_is_the_test_not_a_position(self):
+        """Each cell's RIGHT edge meets the panel's LEFT edge. That is a relation between two
+        things read off the frame, so it survives the shift that moves both."""
+        p = detect_overworld_panel(_FRAME, SEA)
+        for g in p.gauges:
+            self.assertLess(abs(g[2] - p.minimap[0]), 14, g)
+
+    def test_the_speed_tile_is_the_second_cell(self):
+        """`vision.sea_hud.read_speed` locates this tile from the minimap with four offset
+        constants and falls back to an absolute crop. Measured on frame 0588 that fallback,
+        (1915,243,1975,283), lands INSIDE the minimap rather than on the strip."""
+        p = detect_overworld_panel(_FRAME, SEA)
+        self.assertEqual(p.gauges[1], (1780, 197, 1864, 277))
 
 
 class TheSeasonRowIsTheAnchor(unittest.TestCase):
