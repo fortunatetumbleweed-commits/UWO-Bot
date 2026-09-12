@@ -112,6 +112,12 @@ def _safe_total(frame) -> Optional[int]:
         return None
 
 
+# A marker, not a credit: it says the CONFIRM CARD already wrote the units to the ledger, so
+# the shelf and cargo readings below have nothing left to do. Identity-compared, so it never
+# reads as a good named "the confirm card" with a quantity of zero.
+_BY_THE_CARD = ("credited by the confirm card",)
+
+
 def _credit_the_cargo_rise(state, orders: Mapping, goods: Mapping, frame,
                            cargo_before: Optional[int]) -> list:
     """What the HOLD gained across the purchase, when the shelf could not say.
@@ -272,7 +278,7 @@ def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn, s
         # and Matchlock could never attribute a rise to either. The card names one good and its
         # units, and does not care what the tile behind it reads.
         if not credited and state.credited_by_card:
-            credited = [("the confirm card", 0)]
+            credited = _BY_THE_CARD
         state.credited_by_card = False
         stuck = None if credited else _stocked_but_unmoved(state, orders, goods,
                                                            before=before)
@@ -301,7 +307,13 @@ def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn, s
                         "confirm card credited it — re-reading the hold rather than keeping "
                         "a count we know is stale")
             state.ledger = None
-        if credited:
+        if credited is _BY_THE_CARD:
+            # SAY WHICH READING ANSWERED. The shelf did not drop — it could not be read at
+            # all, which is the whole reason the card was needed — and reporting this as a
+            # shelf drop describes the one measurement that failed.
+            logger.info("[market] the confirm card already credited this purchase — the "
+                        "shelf was not needed")
+        elif credited:
             logger.info(f"[market] the shelf dropped {credited} — credited to the ledger")
         elif stuck:
             logger.info(f"[market] bought 0 while {stuck!r} is still in stock — the shelf is "
