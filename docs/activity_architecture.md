@@ -63,7 +63,7 @@ classDiagram
     Activity <|.. HarborActivity
     Activity <|.. VillageActivity
     Activity <|.. SeaActivity
-    Activity <|.. AshoreActivity
+    Activity <|.. PortActivity
     Activity <|.. WorldMapActivity
     Activity <|.. PositionKnownActivity
     Activity <|.. MainMenuActivity
@@ -108,7 +108,7 @@ flowchart LR
         M["MarketActivity"]
         HB["HarborActivity"]
         V["VillageActivity"]
-        A["AshoreActivity"]
+        A["PortActivity"]
         SEA["SeaActivity"]
         WM["WorldMapActivity"]
     end
@@ -117,14 +117,14 @@ flowchart LR
         G1["Hold · FreeHold<br/>TrimHold · SellHold"]
         G2["Depart · RecruitCrew"]
         G3["Barter · ReadBarterPanel"]
-        G4["ArriveAshore · ReadHold"]
+        G4["ArriveAshore"]
+        G5["ReadHold<br/><i>needs the ☰</i>"]
         G6["ChooseDestination · RemoteCheck<br/>ReadEventSchedule · MoveViaLocationInfo"]
     end
 
     S1 --> M
     S2 --> HB
     S3 --> V
-    S3 --> A
     S4 --> A
     S5 --> SEA
     S6 --> WM
@@ -132,12 +132,17 @@ flowchart LR
     M  --> G1
     HB --> G2
     V  --> G3
+    V  --> G4
     A  --> G4
+    A  --> G5
     SEA --> G4
+    SEA --> G5
     WM --> G6
 
     classDef note fill:#fff3cd,stroke:#b8860b
-    N["<b>village has TWO activities</b> —<br/>VillageActivity for a Barter,<br/>AshoreActivity for an ArriveAshore.<br/>Keying one per state silently<br/>overwrote whichever registered first."]:::note
+    N2["<b>no edge village → ReadHold</b>, and that<br/>is the fix: the hold reads behind the ☰<br/>and a village has none. Claiming it<br/>answered 'already where the work<br/>happens' and looped on BLOCKED."]:::note
+    G5 -.-> N2
+    N["<b>one screen, one activity</b> —<br/>VillageActivity answers a Barter AND<br/>an ArriveAshore on its own screen.<br/>It used to share the village with<br/>AshoreActivity, which also served<br/>the port: two worlds affording<br/>nothing in common."]:::note
     S3 -.-> N
 ```
 
@@ -163,7 +168,7 @@ transition in all fifteen worlds at once.
 
 Note what its `work()` does, which is nothing — it logs and returns FINISHED carrying what
 perceive already produced. `KnowWhereWeAre` is satisfied exactly when the state is in
-`WORKABLE`, so this is a PREDICATE wearing an activity's clothes. `AshoreActivity` is the
+`WORKABLE`, so this is a PREDICATE wearing an activity's clothes. `PortActivity`'s answer to `ArriveAshore` is the
 same shape, and both would disappear the day goals carry their own done-condition
 (`docs/the_plan_is_a_checklist.md`).
 
@@ -272,104 +277,199 @@ the run it cost.
 
 ---
 
-## 6. Two classes that are not activities, and one activity that is missing
+## 6. The port overworld got its activity — what landed, and what did not
 
-**The test an activity should pass: it is named by a state the classifier emits.** Nine of the
-eleven do. `market`, `harbor`, `village`, `sea`, `world_map`, `main_menu`, `idle_lock`,
-`transient` and the unnameable chromed screen are all things `classify_nav_state` returns.
+**Status: BUILT 2026-09-11** on branch `port_activity`. This section was the argument for the
+change; it now records what the change was and what it deliberately left alone.
 
-Two are not. There is no `ashore` state and no `position_known` state.
+### The test an activity should pass
 
-### They are predicates wearing an activity's clothes
+**It is named by a state the classifier emits.** Ten of the eleven do: `market`, `harbor`,
+`village`, `sea`, `world_map`, `main_menu`, `idle_lock`, `transient`, the unnameable chromed
+screen, and now `port_overworld`. There was no `ashore` state, and there is still no
+`position_known` one.
 
-Both have a `work()` that takes NO ACTION. `AshoreActivity` returns FINISHED with the port and
-the state; `PositionKnownActivity` logs and returns FINISHED with what perceive already
-produced. Neither taps, reads or changes anything.
+### What was wrong
 
-That is not a defect in the classes, it is a missing feature elsewhere. Their goals are
-CONDITIONS, not work:
+`AshoreActivity` served the port overworld AND the village. A port has the ☰, the globe and
+the building list; a village is a chromed screen with a back arrow and no ☰, no globe. That
+forced the only per-world capability declarations in the codebase:
 
-| goal | true when |
-|---|---|
-| `ArriveAshore` | the state is `port_overworld` or `village` |
-| `KnowWhereWeAre` | the state is in `WORKABLE` |
+```python
+CAN_START = {"port_overworld": ("OPEN_WORLD_MAP", "ENTER_BUILDING"),
+             "village":        ("EXIT_BUILDING",)}
+```
 
-Both are decidable from the frame the dispatcher has already perceived. A goal has no
-done-condition of its own today, so the only way to say "this is finished" is to register
-something that answers it — and the only registerable thing is an activity. Give goals a
-satisfied-by check (`docs/the_plan_is_a_checklist.md`, whose predicate half is still open) and
-both classes stop being needed. That doc's rule is the same one: an item is done when the
-WORLD says so, not when an action reported success.
+**An activity that must ask which world it woke up in before it can say what it can do is two
+activities sharing a name** (user).
 
-`AshoreActivity` also serves TWO worlds, which forces the only per-world capability
-declarations in the codebase — `CAN_START` and `LEADS_TO` as dicts keyed by state, with
-opposite values in each entry. An activity that must ask which world it woke up in before it
-can say what it can do is two activities sharing a name.
+It cost a run. `ReadHold` reads the fleet panel from behind the ☰, and `GOALS` was not split
+per world, so routing answered *already where the work happens* at a village, handed the read
+to an activity that could not do it, and took BLOCKED back on every tick. Live 2026-08-29 at
+Svear that was dead on tick 2, before touching the game.
 
-### Meanwhile the port overworld has no owner
+### What landed
 
-Strip the predicate away and what is left of `AshoreActivity` is a PORT activity in embryo: it
-holds the port's capabilities and none of the port's work.
+1. **`PortActivity`** serves `port_overworld` alone, with flat `CAN_START` and `LEADS_TO`
+   again. Affordances per world are byte-identical to before.
+2. **`VillageActivity` answers `ArriveAshore`** on its own screen — the activity that owns a
+   screen is the one that says you have arrived on it. It needed no new capabilities; it
+   already declared `EXIT_BUILDING` and its destination.
+3. **Routing asks per goal, not per activity.** `ArriveAshore` is satisfied at a port or a
+   village; `ReadHold` at a port or at sea. A village now routes a `ReadHold` OUT to the sea,
+   where the hamburger is. That is the wedge above, closed without a special case.
+4. **`brain/port_context.py`** classifies the port screen: nameplate, building list, other
+   tab, nothing readable. Two tabs can look right at once — the CONTENT lies (a quest
+   objective containing "market" at Bordeaux) and so does the HIGHLIGHT (the location pin
+   lights warm and is not in the exclusive group), so the list needs two exact names, not one.
+5. **`actions/port_panel.py`** holds the port's work, moved out of `actions/sail_actions.py`
+   where it had accumulated among the SAILING primitives for want of an owner.
+6. **`brain/intents.dispatch` names the world, not the reader.** It used to
+   `from actions.sail_actions import tap_building_entry`; it now asks
+   `brain.activities.port.enter_building` (user: *"dispatcher should not know about tap
+   building entry, that is the PortActivity's responsibility"*).
+
+`selected_tab_index` and the luminance constants stayed in `sail_actions`: the world map has a
+tab strip too and reads it the same way. Moving them with the port broke 44 tests, which is
+the evidence that they are shared rather than port-specific.
+
+### What did NOT land, and why
+
+**`tap_building_entry` is still a sub-loop.** It claims to tap ONCE and, in that one call,
+checks for a nameplate, selects the Buildings tab (trying each candidate and verifying by
+re-reading the list), reads the menu, pages it up to four times, opens the port map, and taps.
 
 ```mermaid
 flowchart TB
-    subgraph today["today"]
+    subgraph now["today — one call, two nested loops"]
         direction TB
-        T1["AshoreActivity<br/><i>declares</i> OPEN_WORLD_MAP · ENTER_BUILDING<br/>work() does nothing"]
-        T2["dispatch(intent)<br/><i>taps the globe, taps the entry</i>"]
-        T3["tap_building_entry()<br/>nameplate? → select_buildings_tab (try+verify loop)<br/>→ read_building_menu → scroll up to 4 pages<br/>→ port-map fallback → tap"]
-        T1 -.->|"no work to do"| T2
-        T2 --> T3
+        T1["dispatch(ENTER_BUILDING)"]
+        T2["port.enter_building()"]
+        T3["tap_building_entry()<br/>nameplate? → select_buildings_tab (try+verify loop)<br/>→ read_building_menu → page up to 4× → port map → tap"]
+        T1 --> T2 --> T3
     end
 
-    subgraph proposed["a port activity"]
+    subgraph later["flattened — one action per tick"]
         direction TB
-        P1["PortActivity<br/>SERVES port_overworld"]
-        P2["port_context.classify()"]
-        P3["BUILDING_LIST<br/>TASKS_TAB · PLAYERS_TAB<br/>NAMEPLATE_UP<br/>LIST_BELOW_FOLD"]
-        P4["one handler, ONE action:<br/>switch the tab / scroll once / tap the row"]
-        P1 --> P2 --> P3 --> P4
+        P1["port_context.classify()"]
+        P2["NAMEPLATE · BUILDING_LIST<br/>OTHER_TAB · NO_PANEL"]
+        P3["ONE action:<br/>switch the tab / page once / tap the row"]
+        P1 --> P2 --> P3
     end
 
     classDef bad fill:#ffe0e0,stroke:#c00
     class T3 bad
 ```
 
-**The port screen has real contexts, and they are already known.** Which of Tasks / Buildings
-/ Players is lit, and the location pin that toggles independently of those three
-(`port-tab-strip-two-can-be-lit`). Whether a building nameplate is up, which is a second way in
-that the code already prefers when present. Whether the wanted row is below the fold.
+Flattening it is blocked on TWO dispatcher guards, and both are about the same blind spot:
 
-**Today they are handled inside a transition primitive.** `tap_building_entry` says it taps
-"ONCE" and then, in one call, checks for a nameplate, calls `select_buildings_tab` (which tries
-each tab candidate and VERIFIES by re-reading the list), reads the menu, pages the list up to
-four times, falls back to the port map, and taps. Two nested loops inside a function the
-dispatcher calls to make one transition — which is the sub-loop shape Guiding Principle #5
-exists to remove, sitting in the one world with nobody to own it.
+| guard | why it fires | where |
+|---|---|---|
+| in-flight | `_screen_signature` returns the FAMILY verdict when it is ≥0.90 sure, and a port reads 0.9998 — so a tab switch or a page leaves it identical and the next tick reads the tap as lost | `brain/dispatcher.py` |
+| stall | the step tuple is (state, goal, intent, statuses, observed) and none of those move either; `_MAX_RETRIES` is 3 | `brain/run_goal.py` |
 
-It has already cost a run. The comment at `actions/sail_actions.py:1318` records Bordeaux: the
-Tasks tab was showing, and the fuzzy match hit the word "market" inside a QUEST OBJECTIVE. That
-is a context misread, and it is exactly what the market's `classify()` makes unreachable rather
-than guarded.
+Neither needs a new concept. Both already carry small tables of per-intent knowledge
+(`_INTENT_SETTLE_S`, `_RETRY_ONCE_IF_UNCHANGED`), and what is missing is a progress marker in
+the in-flight key and the stall tuple, so a transition that reports real progress is not read
+as one that never landed. There is also a cost to watch: `_INTENT_SETTLE_S` charges
+ENTER_BUILDING 20s, so a naive flattening would wait that per page.
 
-### The near-term move
+### The one class that is still a predicate
 
-Rename rather than delete, and the predicate question can wait:
+`PositionKnownActivity` serves all fifteen workable states and its `work()` takes no action.
+`KnowWhereWeAre` is true exactly when the state is in `WORKABLE`, which is decidable from the
+frame already perceived. `PortActivity`'s answer to `ArriveAshore` is the same shape. Give
+goals a satisfied-by check (`docs/the_plan_is_a_checklist.md`, whose predicate half is still
+open) and neither needs to be registered at all.
 
-1. `AshoreActivity` becomes `PortActivity`, serving `port_overworld` ALONE.
-2. Village drops out of its `SERVES` — `VillageActivity` already declares
-   `CAN_START = ("EXIT_BUILDING",)` and `LEADS_TO {"EXIT_BUILDING": "sea"}`, so the village
-   entries are a duplicate, not a dependency.
-3. `ReadHold` loses its village registration as a side effect, which closes the wedge of
-   2026-08-29: the hold reads behind the ☰, a village has none, and routing said "already
-   where the work happens" because `village` was in `SERVES`.
-4. `CAN_START` and `LEADS_TO` collapse back to flat tuples.
+---
 
-**Do NOT simply delete it.** `PositionKnownActivity` serves every workable state with
-`CAN_START = ()`, so `affordances()` would still see a declaration and return an EMPTY
-frozenset rather than None — which means "nothing can be started here", not "unknown". Entering
-a market and opening the world map would be refused at every port, permanently.
+## 7. The overworld right panel
 
-Then, as the port's work moves out of `tap_building_entry`, it has somewhere to go.
+**Status: BUILT 2026-09-11.** `vision/region_detectors/overworld_panel.py`.
+
+The port overworld and the sea carry the SAME element, in the same place, with the same parts
+in the same order (user: *"a very distinct UI element shared by both sea and port overworld,
+with different contents"*). Measured on two frames of
+`data/sessions/trace_barter_cmd_2026-09-11T13-47-33`:
+
+| part | port (frame 0000, London) | sea (frame 0588, Atlantic) |
+|---|---|---|
+| gauge strip | none | tide `HW` · speed `27.6` · wind `4` · current `1` |
+| tab strip | Tasks · Buildings · Players · pin | Tasks · Ports · fleets · ships |
+| minimap | the town, GLOBE bottom-right | the sea, lat/long bottom-right |
+| season row | ☀ Summer Aug 00:10 | ☀ Summer Aug Night |
+| the list | Harbor, Market, Shipyard… | Berber Village, Las Palmas… |
+
+The four tab centres agree to within two pixels across both worlds, and the body spans
+x[1862, 2267] in both. Only the pictures on the tabs differ.
+
+```mermaid
+flowchart LR
+    subgraph panel["OverworldPanel — found, never located"]
+        direction TB
+        A["season row<br/><b>THE ANCHOR</b><br/>identical in both worlds, and TEXT"]
+        B["span<br/><i>median edges of the wide boxes<br/>sharing its column</i>"]
+        C["tabs<br/><i>lowest row of small square boxes<br/>above the minimap, INSIDE the span</i>"]
+        D["gauges<br/><i>cells whose RIGHT edge meets<br/>the panel's LEFT edge — sea only</i>"]
+        E["minimap<br/><i>the gap between tabs and season row</i>"]
+        F["rows<br/><i>labelled, wide, below the row's middle,<br/>judged by CENTRE not edges</i>"]
+        A --> B --> C
+        B --> D
+        C --> E
+        B --> F
+    end
+```
+
+**It replaced five encodings that could not see each other**, each learned from a live wedge
+and written where it was learned:
+
+| what | where | what was wrong with it |
+|---|---|---|
+| `CHROME_RIGHT_PANEL_REGION` | `config/settings.py` | (2050,100,2400,420) — begins 188px right of the panel, runs 133px past its end |
+| `RIGHT_EDGE` | `vision/state_fingerprints_data.py` | the same box, normalised, calibrated separately to different numbers |
+| `_tab_strip_band` | `actions/sail_actions.py` | the strip alone, offset from the minimap crop |
+| `BUILDING_MENU_REGION` | `config/settings.py` | the list alone |
+| `panels.detect_right_panel` | `vision/region_detectors/panels.py` | a DIFFERENT thing (Cart, Hire, City Info) sharing the name |
+
+Two live failures are this element being taken for something else: on 2026-09-01
+ENTER_BUILDING at sea "cycled the minimap's four tab icons for minutes", because the strip
+exists in both worlds and the code knew only the port's; and the obstruction classifier has
+read the port's panel as a POPUP.
+
+**No absolute position remains in the module** (user: *"I hope to avoid the hardcoded bbox,
+especially for the x and y starting point"*). What is left are ratios of the panel's own
+measured width and one seam tolerance. A test shifts the whole panel 110px and expects the
+same reading, because the game re-bakes its camera-cutout offset per screen.
+
+Three faults the real frames caught while building it, each worth keeping:
+
+- **The season row is the CELLS on that line, not everything crossing it.** The minimap is one
+  tall box spanning the line, so sweeping it in made the row 300px tall, which put the tab
+  search above the wrong line and returned the ACCOUNT BAR as the strip.
+- **A tab is INSIDE the span, not merely centred near it.** The sea's gauge cells are the same
+  size and shape and sit flush against the edge; a centre-plus-margin test separated them by
+  two pixels, which is not a separation.
+- **A row is judged by its CENTRE, not its edges.** `Bureau` at London comes back as
+  x[1860,2351] because the parse merged it with the coordinate footer, 84px past the panel.
+  Judging by an edge drops a building the bot can walk into
+  (`memory/a-box-bigger-than-its-thing`).
+
+### Who asks it
+
+- `vision/chrome_via_omniparser.py` — `has_right_panel` is the panel being FOUND, with the old
+  count kept as a floor. The dangerous direction is the false negative that reads an overworld
+  as a chromed screen, and OR-ing can only add answers.
+- `brain/port_context.py` — the tab strip. Its points are identical to the older reader on
+  both frames and `selected_tab_index` agrees on both, so this changed no behaviour.
+- `vision/sea_hud.py` — the speed tile, and ONLY through the panel (user: *"they exist at the
+  same time"*). That deleted four offsets from `MINIMAP_CROP` and an absolute fallback that
+  measured (1915,243,1975,283) against a minimap at x[1864,2266) — inside the map disc. The
+  module's own comment records that failing live on 2026-08-24. **The cell is found by its
+  CONTENT**: the speed is the only decimal in the strip, so the reader scans the cells rather
+  than trusting `gauges[1]`, which would be a calibrated coordinate in another hat.
+
+Still outstanding: a seventh copy of the minimap detection lives inline in
+`tools/run_ai_nav_live.py`, which recalibrates `MINIMAP_CROP` at startup.
 
 See `docs/market_as_contexts.md` for the context pattern's own design note.
