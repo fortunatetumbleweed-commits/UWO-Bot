@@ -639,6 +639,30 @@ Detail:
   `a81fe6a`, which catches `Specialties` and would miss the next banner.  And §5: the
   invariants are needed either way, because a better detector raises the floor but does not
   make a bad reading a refusal.  **Not decided.**
+- **★ Dialogs understood, not matched (PROPOSED, 2026-09-12)** →
+  `docs/dialogs_understood_not_matched.md`.  `DialogModel.kind()` classifies a card by ONE
+  BUTTON WORD — `action_labels & {"claim","collect","receive","continue"} → "reward"` — and
+  the overflow card's only button is `Receive`.  So at Hutu on 2026-09-12 an *Insufficient
+  Empty Space* card, 147 units pending against a hold at 4,952/4,952, was named a REWARD;
+  `game_rules` rightly refused to answer a reward whose only option is `Receive` (accepting is
+  what DISCARDS the overflow) and the mission failed.  The title and the body both say plainly
+  what the card is, and nothing read them.  **It had never bitten because `kind()` is only
+  consulted when NOBODY owns the dialog** — at San on 2026-09-10 the state resolved to
+  `village`, `VillageActivity` claimed the card and used its own STRUCTURAL test
+  (`is_overflow_card`: a `Received Trade Goods` strip above a `Cargo` strip), and dumped Water
+  and Food correctly.  The label was wrong then too; it only became fatal when the family CNN
+  read the same card as `transient@1.00` rather than `chromed@1.00`, the state came out
+  `unknown`, and no activity was resolved to own it.  **This is the wording-vs-structure lesson
+  the market and village contexts already learned** — `OVERFLOW_PROMPT` once keyed on "cargo is
+  full" while the game says "Insufficient Empty Space", and its handler was unreachable for as
+  long as that lasted.  The proposal: hand the model the TITLE, the BODY, the structured strips,
+  the BUTTONS, what the bot was doing, its goal, and the guideline for that transaction — and
+  ask what the card MEANS for the work in hand, not what category it is.
+  `vision/obstruction_consult.py` already does exactly this shape (goal in the question,
+  cached learn-once by kind+hash+goal, advisory not authoritative), so this extends a working
+  pattern rather than inventing one.  **Structure first, ask only where structure has no
+  answer**, never on the tick path, and never as a licence to tap.  **CHEAP FIX MEANWHILE**:
+  `kind()` should consult `is_overflow_card` / `is_discard_notice` before its word list.
 - **★ The dispatcher, activities and contexts, as they ARE (BUILT, 2026-09-11)** →
   `docs/activity_architecture.md`.  Seven sections read off the code, with diagrams: the
   tick's four routings (state→activity, goal→which activity, context→handler, handler→ONE
