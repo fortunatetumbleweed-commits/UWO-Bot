@@ -55,7 +55,7 @@ class TheMarketLoop(unittest.TestCase):
             buy_fn=lambda port, goal, **k: {"met": True, "bought_total": 445},
             show_grid_fn=lambda: None, port_fn=lambda: "Amsterdam")
 
-        with patch("actions.sail_actions.tap_building_entry", side_effect=screen.enter):
+        with patch("actions.port_panel.tap_building_entry", side_effect=screen.enter):
             d = Dispatcher(perceive=screen.perceive,
                            activities={"building:market": market},
                            next_goal=next_goal, to_intent=to_intent, dispatch=dispatch)

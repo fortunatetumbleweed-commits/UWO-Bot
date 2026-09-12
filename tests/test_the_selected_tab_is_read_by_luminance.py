@@ -80,7 +80,8 @@ def test_the_port_strip_still_gets_an_answer():
 
     It is only ever a hint there: `_ensure_tab` re-orders which tab it tries first, so a wrong
     answer costs one tap rather than a mission."""
-    from actions.sail_actions import selected_tab_index, _tab_strip_candidates
+    from actions.sail_actions import selected_tab_index
+    from actions.port_panel import _tab_strip_candidates
     f = _img(_PORT)
     cands = _tab_strip_candidates(f)
     if len(cands) < 3:
@@ -127,7 +128,8 @@ def test_the_independent_pin_must_be_excluded_before_brightness():
     actual selection. Only the mutually exclusive group may be compared, which is what
     `trailing_toggles` exists for — and it is now protecting the primary signal, not a
     fallback."""
-    from actions.sail_actions import _brightest_tab, _tab_strip_candidates
+    from actions.sail_actions import _brightest_tab
+    from actions.port_panel import _tab_strip_candidates
     f = _img(_PORT)
     cands = _tab_strip_candidates(f)
     if len(cands) < 4:

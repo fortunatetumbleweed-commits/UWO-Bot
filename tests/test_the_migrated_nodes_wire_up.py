@@ -78,7 +78,7 @@ def _activities(world, **market_kw):
 def _run(node, params, world, **market_kw):
     from brain.run_goal import run_goal as real_run_goal
     acts = _activities(world, **market_kw)
-    with patch("actions.sail_actions.tap_building_entry", side_effect=world.enter), \
+    with patch("actions.port_panel.tap_building_entry", side_effect=world.enter), \
          patch("brain.run_goal.run_goal",
                side_effect=lambda g, **k: real_run_goal(g, perceive=world.perceive,
                                                         activities=acts)), \

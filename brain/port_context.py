@@ -103,7 +103,7 @@ def _is_the_building_list(rows) -> bool:
     must not count (live 2026-08-19). The count is what separates a list from a stray
     shortcut — see `_ENOUGH_BUILDING_NAMES`.
     """
-    from actions.sail_actions import _BUILDING_NAMES
+    from actions.port_panel import _BUILDING_NAMES
 
     hits = sum(1 for row in rows or []
                if str(row[0]).strip().strip(":.").lower() in _BUILDING_NAMES)
@@ -136,7 +136,7 @@ def _tabs(frame, elements=None) -> list:
     answer sooner. A miss here means "no tabs", which routes to NO_PANEL — a reason to look
     again, never a reason to tap.
     """
-    from actions.sail_actions import _tab_strip_candidates
+    from actions.port_panel import _tab_strip_candidates
     from vision.region_detectors.overworld_panel import detect_overworld_panel
 
     panel = detect_overworld_panel(frame, elements)

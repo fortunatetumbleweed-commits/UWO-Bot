@@ -27,14 +27,24 @@ an activity that could not do it, and got BLOCKED back. Live 2026-08-29 at Svear
 on tick 2, before touching the game. `ReadHold` is not served here for the village any more,
 so the same order now routes OUT to the sea, where the hamburger exists.
 
-WHAT THIS ACTIVITY DOES NOT YET OWN, and should. The port's real work still lives inside
-`actions.sail_actions.tap_building_entry`, which the dispatcher calls to perform ONE
-transition and which, in that one call, checks for a nameplate, selects the Buildings tab
-(trying each candidate and verifying by re-reading the list), reads the menu, pages it up to
-four times, falls back to opening the port map, and taps. Two nested loops inside a primitive,
-in the one world that had nobody to own them — and it has already misfired: at Bordeaux the
-Tasks tab was showing and the fuzzy match hit the word "market" inside a QUEST OBJECTIVE
-(`actions/sail_actions.py`, `tap_building_entry`).
+WHAT IT NOW OWNS. The port's work moved out of `actions/sail_actions.py` into
+`actions/port_panel.py` (2026-09-11) — the tab strip, the building list, the nameplate over a
+door, the port map as the last way in — and the intent dispatcher asks `enter_building` below
+instead of importing a reader by name. It had accumulated among the SAILING primitives for
+the plain reason that the port overworld was the only world with no activity to own it.
+
+WHAT IS STILL WRONG, and unchanged by that move. `tap_building_entry` claims to tap ONCE and,
+in that one call, checks for a nameplate, selects the Buildings tab (trying each candidate and
+verifying by re-reading the list), reads the menu, pages it up to four times, opens the port
+map, and taps. Two nested loops inside a primitive the dispatcher calls to make one
+transition. It has already misfired: at Bordeaux the Tasks tab was showing and the fuzzy match
+hit the word "market" inside a QUEST OBJECTIVE.
+
+Flattening it into one action per tick is a SEPARATE change and needs the dispatcher to carry
+a progress marker, because `_screen_signature` returns the family verdict on a port (0.9998)
+— so a tab switch or a scroll leaves it identical, the in-flight guard reads the tap as lost,
+and `_MAX_RETRIES` ends the goal after three such ticks. `_INTENT_SETTLE_S` would also charge
+ENTER_BUILDING's 20s to every scroll.
 
 Those are CONTEXTS of this screen, in the market's sense: which of Tasks / Buildings / Players
 is lit, the location pin that toggles independently of those three
@@ -51,6 +61,27 @@ from brain.activities.sea import ArriveAshore, ReadHold, read_the_hold
 from brain.dispatcher import ActivityResult, FINISHED
 
 STATE = "port_overworld"
+
+
+def enter_building(name: str, frame=None) -> dict:
+    """Take one step toward being inside `name`. The port's own entry point.
+
+    THE DISPATCHER ASKS THE PORT, NOT A PRIMITIVE (user, 2026-09-11: *"dispatcher should not
+    know about tap building entry, that is the PortActivity's responsibility"*). It used to
+    `from actions.sail_actions import tap_building_entry` inside `dispatch()`, which named a
+    port-specific reader from the layer that is supposed to know only which world handles
+    what. Now it names the port, and how a port lets you in is the port's business.
+
+    Returns what the tap reported: {tapped, via, position, reason}. `tapped` means a control
+    was pressed, NOT that we are inside — entering takes a walk across the port and there is
+    no local signal telling "walking" from "the tap missed", so the next perceive answers.
+    """
+    from actions.port_panel import tap_building_entry
+    # FORWARD WHAT WE WERE GIVEN, and nothing more. Passing `frame=None` explicitly changes
+    # the call the reader sees, which is what several stubs assert on — and a dispatch has no
+    # tick frame to hand down anyway, so the reader captures its own.
+    return (tap_building_entry(name, frame) if frame is not None
+            else tap_building_entry(name)) or {}
 
 
 class PortActivity:

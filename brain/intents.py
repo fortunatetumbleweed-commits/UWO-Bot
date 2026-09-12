@@ -239,10 +239,12 @@ def dispatch(intent: Intent) -> Any:
         return res
 
     if intent.name == "ENTER_BUILDING":
-        from actions.sail_actions import tap_building_entry
+        # ASK THE PORT. Which world serves this intent is routing and belongs here; HOW that
+        # world lets you in does not, and this line used to import the reader by name.
+        from brain.activities.port import enter_building
         name = intent.extras.get("name") or ""
         logger.info(f"[intent] {intent}")
-        res = tap_building_entry(name) or {}
+        res = enter_building(name)
         # NOT VERIFIED HERE, ON PURPOSE. `tapped` means a control was pressed, not that the
         # bot is inside — entering takes a walk across the port and there is no local signal
         # separating "walking" from "the tap missed". The dispatcher re-perceives after every

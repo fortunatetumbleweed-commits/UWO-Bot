@@ -63,16 +63,18 @@ class DispatchTapsAndReturns(unittest.TestCase):
     wait-for-the-transition loop in this codebase has been a source of stalls."""
 
     def test_entering_taps_the_building_entry(self):
-        with patch("actions.sail_actions.tap_building_entry",
+        with patch("actions.port_panel.tap_building_entry",
                    return_value={"tapped": True, "via": "list"}) as tap:
             dispatch(Intent("ENTER_BUILDING", {"name": "market"}))
+        # Through `brain.activities.port.enter_building` — the dispatcher names the PORT
+        # now, not the reader (2026-09-11). The call it makes is unchanged.
         tap.assert_called_once_with("market")
 
     def test_it_does_not_wait_or_verify_arrival(self):
         """`tapped` means a control was pressed, not that the bot is inside. Entering takes a
         walk across the port, and there is no local signal separating "walking" from "the tap
         missed" — so nobody here tries to tell them apart."""
-        with patch("actions.sail_actions.tap_building_entry",
+        with patch("actions.port_panel.tap_building_entry",
                    return_value={"tapped": True}), \
              patch("time.sleep") as slept, \
              patch("capture.adb_capture.capture_screen") as cap:
@@ -81,7 +83,7 @@ class DispatchTapsAndReturns(unittest.TestCase):
         cap.assert_not_called()
 
     def test_a_refused_tap_is_reported_not_retried(self):
-        with patch("actions.sail_actions.tap_building_entry",
+        with patch("actions.port_panel.tap_building_entry",
                    return_value={"tapped": False, "reason": "not the building list"}) as tap:
             res = dispatch(Intent("ENTER_BUILDING", {"name": "market"}))
         self.assertFalse(res["tapped"])

@@ -22,7 +22,8 @@ import unittest
 
 from PIL import Image
 
-from actions.sail_actions import _row_only, selected_tab_index, _on_buildings_tab
+from actions.port_panel import _row_only, _on_buildings_tab
+from actions.sail_actions import selected_tab_index
 
 
 def _el(cx, cy, label="icon"):

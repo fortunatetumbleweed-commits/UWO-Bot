@@ -15,6 +15,7 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
+import actions.port_panel as pp   # the port panel moved here 2026-09-11
 import actions.sail_actions as sa
 
 MARKET_LIST = [("Harbor", 2180, 300), ("Market", 2180, 400), ("Shipyard", 2180, 500),
@@ -28,39 +29,39 @@ TASKS_PANEL = [("Move to Market in Jakarta and deliver", 2180, 300),
 class WhichRowIsTheBuilding(unittest.TestCase):
 
     def test_the_plain_label_matches(self):
-        self.assertEqual(sa._building_row(MARKET_LIST, "market"), (2180, 400))
+        self.assertEqual(pp._building_row(MARKET_LIST, "market"), (2180, 400))
 
     def test_a_quest_sentence_containing_the_name_does_not(self):
         """This exact match sent the fleet on a quest voyage to Jakarta."""
-        self.assertIsNone(sa._building_row(TASKS_PANEL, "market"))
+        self.assertIsNone(pp._building_row(TASKS_PANEL, "market"))
 
     def test_ocr_mangling_of_the_real_label_still_matches(self):
-        self.assertIsNotNone(sa._building_row([("Markot", 2180, 400)], "market"))
+        self.assertIsNotNone(pp._building_row([("Markot", 2180, 400)], "market"))
 
     def test_a_short_decoration_is_tolerated(self):
-        self.assertEqual(sa._building_row([("the Market", 2180, 400)], "market"), (2180, 400))
+        self.assertEqual(pp._building_row([("the Market", 2180, 400)], "market"), (2180, 400))
 
 
 class RefusingToTap(unittest.TestCase):
 
     def test_it_will_not_tap_a_panel_that_is_not_the_building_list(self):
         """Knowing it is the wrong list and tapping anyway is the worst outcome."""
-        with patch.object(sa, "_nameplate_for", return_value=None), \
-             patch.object(sa, "select_buildings_tab",
+        with patch.object(pp, "_nameplate_for", return_value=None), \
+             patch.object(pp, "select_buildings_tab",
                           return_value={"ok": False, "frame": None, "reason": "no tab icons"}), \
              patch.object(sa, "tap") as tap:
-            res = sa.tap_building_entry("Market", frame=object())
+            res = pp.tap_building_entry("Market", frame=object())
         self.assertFalse(res["tapped"])
         self.assertEqual(res["reason"], "no tab icons")
         tap.assert_not_called()
 
     def test_a_tap_reports_where_it_tapped(self):
-        with patch.object(sa, "_nameplate_for", return_value=None), \
-             patch.object(sa, "select_buildings_tab",
+        with patch.object(pp, "_nameplate_for", return_value=None), \
+             patch.object(pp, "select_buildings_tab",
                           return_value={"ok": True, "frame": object(), "reason": ""}), \
              patch("vision.ocr.read_building_menu", return_value=MARKET_LIST), \
-             patch.object(sa, "tap") as tap:
-            res = sa.tap_building_entry("Market", frame=object())
+             patch.object(pp, "tap") as tap:
+            res = pp.tap_building_entry("Market", frame=object())
         self.assertEqual((res["tapped"], res["via"], res["position"]), (True, "list", (2180, 400)))
         tap.assert_called_once_with(2180, 400)
 
@@ -92,7 +93,7 @@ class WhereTheBotIsBelongsToTheTask(unittest.TestCase):
              patch.object(sa, "harbor_panel_open", return_value=False), \
              patch("brain.perceive.perceive") as perceive, \
              patch.object(sa, "press_back") as back, \
-             patch.object(sa, "tap_building_entry") as entry, \
+             patch.object(pp, "tap_building_entry") as entry, \
              patch("brain.unexpected_dialog.clear_blockers", return_value={"cleared": False}):
             perceive.return_value.to_location_dict.return_value = loc
             ok = sa.navigate_to_building("harbor", timeout=5.0)
@@ -144,7 +145,7 @@ class TheWalkIsNotRetapped(unittest.TestCase):
              patch("brain.perceive.perceive") as perceive, \
              patch.object(sa, "time") as fake_time, \
              patch("brain.unexpected_dialog.clear_blockers", return_value={"cleared": False}), \
-             patch.object(sa, "tap_building_entry",
+             patch.object(pp, "tap_building_entry",
                           side_effect=lambda n, f: taps.append(n) or
                           {"tapped": True, "via": "list", "position": (1, 2), "reason": ""}):
             perceive.return_value.to_location_dict.return_value = loc
