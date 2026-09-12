@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase result confirmation showing the bot successfully bought Candle stock, displaying cost breakdown (purchase cost, tax, discount) and final total deducted from balance",
+  "full_text": "Result — Purchase Cost: 114,345 | Tax: 5,445 | Discount: -23,265 | Total Amount: 96,525 | Balance: 77,552,737,745 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "025d16d1008076a5",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-12T04:19:51.095152+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase result confirmation showing the bot successfully bought Candle stock, displaying cost breakdown (purchase cost, tax, discount) and final total deducted from balance",
+    "full_text": "Result — Purchase Cost: 114,345 | Tax: 5,445 | Discount: -23,265 | Total Amount: 96,525 | Balance: 77,552,737,745 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Confirmation dialog asking the bot to approve selling excess Candle (933 units) and Iron (391 units) from the hold as part of the trim operation, showing final prices with tax and surcharge before committing the sale",
+  "full_text": "Confirm Sales. Trade Goods | Sales Cost | Tax 6% | Surcharge | Price. Candle (Sundries, qty 933): 12,129 | 0 | +3,732 | 15,861. Iron (Wares, qty 391): 364,803 | -17,204 | +112,999 | 460,598. Total Sales: 376,932 | -17,204 | +116,731 | 476,459. Cancel | OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "da37ef61bd86a72d",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-12T04:28:05.345454+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Confirmation dialog asking the bot to approve selling excess Candle (933 units) and Iron (391 units) from the hold as part of the trim operation, showing final prices with tax and surcharge before committing the sale",
+    "full_text": "Confirm Sales. Trade Goods | Sales Cost | Tax 6% | Surcharge | Price. Candle (Sundries, qty 933): 12,129 | 0 | +3,732 | 15,861. Iron (Wares, qty 391): 364,803 | -17,204 | +112,999 | 460,598. Total Sales: 376,932 | -17,204 | +116,731 | 476,459. Cancel | OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

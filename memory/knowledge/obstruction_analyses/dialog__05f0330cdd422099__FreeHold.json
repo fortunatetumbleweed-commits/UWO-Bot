@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade result summary showing the successful sale of 133 Almonds (Luxuries specialty cargo) at London, displaying profit, tax, surcharge, and updated gold balance after the transaction",
+  "full_text": "Result — Mate Trade EXP: 1,925 | Contribution: 17 | Obtained Trade Point: 0 | Trade Fame: 195 | Sales Cost: 183,915 | Tax: -11,323 | Surcharge: 56,414 | Profit: 177,751 | Total Amount: 229,006 | Balance: 77,553,569,488 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "05f0330cdd422099",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-12T03:27:51.760158+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade result summary showing the successful sale of 133 Almonds (Luxuries specialty cargo) at London, displaying profit, tax, surcharge, and updated gold balance after the transaction",
+    "full_text": "Result — Mate Trade EXP: 1,925 | Contribution: 17 | Obtained Trade Point: 0 | Trade Fame: 195 | Sales Cost: 183,915 | Tax: -11,323 | Surcharge: 56,414 | Profit: 177,751 | Total Amount: 229,006 | Balance: 77,553,569,488 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

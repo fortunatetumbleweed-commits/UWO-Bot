@@ -1,0 +1,21 @@
+{
+  "purpose": "An NPC tutorial instructor is hailing the player, offering to teach them something — a scripted tutorial prompt unrelated to navigating to Amsterdam.",
+  "full_text": "You there. Come over here, I have something good to teach you.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "dc18121ea08fe46a",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-12T03:30:20.907263+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "An NPC tutorial instructor is hailing the player, offering to teach them something — a scripted tutorial prompt unrelated to navigating to Amsterdam.",
+    "full_text": "You there. Come over here, I have something good to teach you.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

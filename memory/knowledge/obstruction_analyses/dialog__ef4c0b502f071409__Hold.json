@@ -1,0 +1,21 @@
+{
+  "purpose": "Thomas Tew the negotiator is offering a 21.5% price discount on the current trade good via bargaining, asking whether to spend negotiation attempt(s) at a 76.2% success rate to reduce the price from 290,880 to 215,130",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 290,880 → 215,130 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Thomas Tew: For this product, you can get a 21.5% discount. Do you want to bargain? [No] [Use 1 chance] [Use all remaining chances]",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "ef4c0b502f071409",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-12T04:03:25.776945+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Thomas Tew the negotiator is offering a 21.5% price discount on the current trade good via bargaining, asking whether to spend negotiation attempt(s) at a 76.2% success rate to reduce the price from 290,880 to 215,130",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 290,880 → 215,130 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Thomas Tew: For this product, you can get a 21.5% discount. Do you want to bargain? [No] [Use 1 chance] [Use all remaining chances]",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

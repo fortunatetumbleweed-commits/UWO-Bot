@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase confirmation dialog asking the bot to confirm buying 495 Candles for a total of 96,525 gold (after 6% tax and discount applied)",
+  "full_text": "Confirm Purchase | Trade Goods: Candle (Sundries) x495 | Purchase Cost: 114,345 | Tax 6%: 5,445 | Discount: -23,265 | Purchase Price: 96,525 | Total Price: 114,345 tax 5,445 discount -23,265 = 96,525 | Cancel | OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "1005e01c4778e637",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-12T04:14:08.701852+00:00",
+  "visit_count": 8,
+  "raw_api_response": {
+    "purpose": "Purchase confirmation dialog asking the bot to confirm buying 495 Candles for a total of 96,525 gold (after 6% tax and discount applied)",
+    "full_text": "Confirm Purchase | Trade Goods: Candle (Sundries) x495 | Purchase Cost: 114,345 | Tax 6%: 5,445 | Discount: -23,265 | Purchase Price: 96,525 | Total Price: 114,345 tax 5,445 discount -23,265 = 96,525 | Cancel | OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase Result summary confirming the bot successfully bought Candles, showing cost breakdown (114,345 base - 23,265 discount + 5,445 tax = 96,525 total) with remaining balance of 77,552,641,220 gold",
+  "full_text": "Result — Purchase Cost: 114,345 | Tax: 5,445 | Discount: -23,265 | Total Amount: 96,525 | Balance: 77,552,641,220 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "8afa88cc18f32d7c",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-12T04:22:31.106639+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase Result summary confirming the bot successfully bought Candles, showing cost breakdown (114,345 base - 23,265 discount + 5,445 tax = 96,525 total) with remaining balance of 77,552,641,220 gold",
+    "full_text": "Result — Purchase Cost: 114,345 | Tax: 5,445 | Discount: -23,265 | Total Amount: 96,525 | Balance: 77,552,641,220 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "high"
+  }
+}

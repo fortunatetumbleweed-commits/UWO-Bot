@@ -1,0 +1,21 @@
+{
+  "purpose": "Lorenzo Pinto (the advisor) is offering to negotiate the purchase price of Gin down by 21.5% (from 248,677 to 182,501), with a 76.2% success rate and multiple negotiation attempts remaining — the bot must choose whether to attempt negotiation or decline.",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 248,677 → 182,501 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Lorenzo Pinto: In my opinion, we can buy this for 21.5% less. Would you like to negotiate? [No] [Use 1 chance] [Use all remaining chances]",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "5b8883ba6b750b35",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-12T03:38:06.408335+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Lorenzo Pinto (the advisor) is offering to negotiate the purchase price of Gin down by 21.5% (from 248,677 to 182,501), with a 76.2% success rate and multiple negotiation attempts remaining — the bot must choose whether to attempt negotiation or decline.",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 248,677 → 182,501 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Lorenzo Pinto: In my opinion, we can buy this for 21.5% less. Would you like to negotiate? [No] [Use 1 chance] [Use all remaining chances]",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

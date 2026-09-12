@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase confirmation result showing the bot successfully bought goods (Matchlock Gun bulk purchase) at a discounted price of 290,880 gold, with the remaining balance displayed",
+  "full_text": "Result — Purchase Cost: 352,692 | Tax: 0 | Discount: -61,812 | Total Amount: 290,880 | Balance: 77,553,028,804 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "a35aa844998066be",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-12T04:03:47.798712+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Purchase confirmation result showing the bot successfully bought goods (Matchlock Gun bulk purchase) at a discounted price of 290,880 gold, with the remaining balance displayed",
+    "full_text": "Result — Purchase Cost: 352,692 | Tax: 0 | Discount: -61,812 | Total Amount: 290,880 | Balance: 77,553,028,804 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

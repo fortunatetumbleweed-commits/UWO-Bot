@@ -256,7 +256,7 @@
     "inputs": [
       {
         "material": "Iron",
-        "ratio": 116,
+        "ratio": 144,
         "source_ports": [
           "Amsterdam",
           "Barcelona",
@@ -267,7 +267,7 @@
       },
       {
         "material": "Matchlock Gun",
-        "ratio": 51,
+        "ratio": 65,
         "source_ports": [
           "Barcelona",
           "Seville"
@@ -276,7 +276,7 @@
       },
       {
         "material": "Candle",
-        "ratio": 102,
+        "ratio": 130,
         "source_ports": [
           "Santa Island",
           "Tripoli"
@@ -288,7 +288,7 @@
       "svear_village": [
         {
           "material": "Iron",
-          "ratio": 116,
+          "ratio": 144,
           "source_ports": [
             "Amsterdam",
             "Barcelona",
@@ -299,7 +299,7 @@
         },
         {
           "material": "Matchlock Gun",
-          "ratio": 51,
+          "ratio": 65,
           "source_ports": [
             "Barcelona",
             "Seville"
@@ -308,7 +308,7 @@
         },
         {
           "material": "Candle",
-          "ratio": 102,
+          "ratio": 130,
           "source_ports": [
             "Santa Island",
             "Tripoli"
@@ -322,7 +322,7 @@
     ],
     "output_per_round": {
       "Neutral": 448,
-      "Friendly": 495
+      "Friendly": 519
     },
     "preconditions": {
       "amity_min": null,
