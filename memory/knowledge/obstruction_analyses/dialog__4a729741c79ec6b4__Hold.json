@@ -1,0 +1,21 @@
+{
+  "purpose": "Negotiation dialog asking whether to use negotiation attempts to reduce the purchase price of Madeira Wine (Liquor) by 21.5%, with a 79.2% success rate — this is part of the purchase flow the bot is actively in",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 205,771 → 151,639 (-21.5%). Negotiation Success Rate: Failed ... 79.2% ... Success. Albrecht Wallenstein: Hmm, we should be able to buy it for 21.5% less. Why don't you try negotiating? Options: No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "4a729741c79ec6b4",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-12T18:58:37.088296+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Negotiation dialog asking whether to use negotiation attempts to reduce the purchase price of Madeira Wine (Liquor) by 21.5%, with a 79.2% success rate — this is part of the purchase flow the bot is actively in",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 205,771 → 151,639 (-21.5%). Negotiation Success Rate: Failed ... 79.2% ... Success. Albrecht Wallenstein: Hmm, we should be able to buy it for 21.5% less. Why don't you try negotiating? Options: No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "John Rolfe is prompting the bot to attempt a price negotiation on the Bambara Luxuries being sold, offering a 24.5% price increase from 200,736,192 to 238,550,096 gold with a 79.2% success rate and several attempts remaining",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 200,736,192 → 238,550,096 (24.5% increase). Negotiation Success Rate: Failed — 79.2% — Success. John Rolfe: This product should be worth 24.5% more. Should I try negotiating? Options: No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "d6feade8a0c016bb",
+  "goal_intent": "SellHold",
+  "cached_at": "2026-09-12T19:50:25.220830+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "John Rolfe is prompting the bot to attempt a price negotiation on the Bambara Luxuries being sold, offering a 24.5% price increase from 200,736,192 to 238,550,096 gold with a 79.2% success rate and several attempts remaining",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 200,736,192 → 238,550,096 (24.5% increase). Negotiation Success Rate: Failed — 79.2% — Success. John Rolfe: This product should be worth 24.5% more. Should I try negotiating? Options: No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

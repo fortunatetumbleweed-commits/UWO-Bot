@@ -1,0 +1,21 @@
+{
+  "purpose": "Confirm Sales dialog asking the bot to approve selling 113 Pig and 176 Raisin as part of trimming the hold — this is the sales confirmation step of the trim operation",
+  "full_text": "Confirm Sales. Trade Goods | Sales Cost | Tax 6% | Surcharge | Price. Pig (Livestock) x113: 62,715 | -2,825 | +16,950 | 76,840. Raisin (Luxuries) x176: 7,392 | 0 | +1,936 | 9,328. Total Sales: 70,107 | -2,825 | +18,886 | 86,168. Cancel | OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "eda9198da1eed7a0",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-12T19:03:27.904936+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Confirm Sales dialog asking the bot to approve selling 113 Pig and 176 Raisin as part of trimming the hold — this is the sales confirmation step of the trim operation",
+    "full_text": "Confirm Sales. Trade Goods | Sales Cost | Tax 6% | Surcharge | Price. Pig (Livestock) x113: 62,715 | -2,825 | +16,950 | 76,840. Raisin (Luxuries) x176: 7,392 | 0 | +1,936 | 9,328. Total Sales: 70,107 | -2,825 | +18,886 | 86,168. Cancel | OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

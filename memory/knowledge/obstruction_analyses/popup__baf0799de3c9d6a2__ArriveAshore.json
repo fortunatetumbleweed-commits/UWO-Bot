@@ -1,0 +1,21 @@
+{
+  "purpose": "Navigation panel showing nearby port distances and current sailing conditions (wind, season, time of day) while underway — this is the standard HUD sidebar, not an obstruction",
+  "full_text": "C/HW | 10 | 27.6 k | Dry Season Sep | Daytime | São Tomé Approx. 200.2km",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "baf0799de3c9d6a2",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-12T17:13:13.002689+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Navigation panel showing nearby port distances and current sailing conditions (wind, season, time of day) while underway — this is the standard HUD sidebar, not an obstruction",
+    "full_text": "C/HW | 10 | 27.6 k | Dry Season Sep | Daytime | São Tomé Approx. 200.2km",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "low"
+  }
+}

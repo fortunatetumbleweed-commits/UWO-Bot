@@ -1,0 +1,21 @@
+{
+  "purpose": "Thomas Tew is offering to negotiate a higher sell price for Pigs — 24.5% more (86,168 → 102,279 gold) — with a 79.2% success rate and multiple negotiation attempts remaining",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 86,168 → 102,279 (24.5% up). Negotiation Success Rate: Failed | 79.2% | Success. Thomas Tew: We should be able to sell this product for 24.5% more. Would you like to negotiate? Options: No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "149e368605778fa1",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-12T19:03:51.122672+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Thomas Tew is offering to negotiate a higher sell price for Pigs — 24.5% more (86,168 → 102,279 gold) — with a 79.2% success rate and multiple negotiation attempts remaining",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 86,168 → 102,279 (24.5% up). Negotiation Success Rate: Failed | 79.2% | Success. Thomas Tew: We should be able to sell this product for 24.5% more. Would you like to negotiate? Options: No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

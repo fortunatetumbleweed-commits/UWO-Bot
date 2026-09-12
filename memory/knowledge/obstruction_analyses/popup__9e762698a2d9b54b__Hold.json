@@ -1,0 +1,21 @@
+{
+  "purpose": "Merchant John Rolfe is offering to negotiate the purchase price down by 21.5% (from 125,184 to 91,932) with a 79.2% success rate, prompting the bot to decide whether to use negotiation attempts",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 125,184 → 91,932 (-21.5%). Negotiation Success Rate: Failed | 79.2% | Success.",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "9e762698a2d9b54b",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-12T15:37:49.576007+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Merchant John Rolfe is offering to negotiate the purchase price down by 21.5% (from 125,184 to 91,932) with a 79.2% success rate, prompting the bot to decide whether to use negotiation attempts",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 125,184 → 91,932 (-21.5%). Negotiation Success Rate: Failed | 79.2% | Success.",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

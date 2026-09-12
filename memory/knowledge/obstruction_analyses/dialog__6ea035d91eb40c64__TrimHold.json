@@ -1,0 +1,21 @@
+{
+  "purpose": "Thomas Tew is offering a price negotiation opportunity to sell Raisins for 24.5% more (495,305 → 588,380 gold) with a 79.2% success rate, asking whether to use negotiation attempts",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 495,305 → 588,380 (24.5% increase). Negotiation Success Rate: Failed | 79.2% | Success. Thomas Tew: We should be able to sell this product for 24.5% more. Would you like to negotiate? Options: No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "6ea035d91eb40c64",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-12T18:01:45.253275+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Thomas Tew is offering a price negotiation opportunity to sell Raisins for 24.5% more (495,305 → 588,380 gold) with a 79.2% success rate, asking whether to use negotiation attempts",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 495,305 → 588,380 (24.5% increase). Negotiation Success Rate: Failed | 79.2% | Success. Thomas Tew: We should be able to sell this product for 24.5% more. Would you like to negotiate? Options: No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade result summary showing the bot successfully sold cargo at Lisboa, earning 61,924 profit and a new balance of 77,599,027,944 gold — part of freeing the hold",
+  "full_text": "Result. Mate Trade EXP: 474. Contribution: 0. Obtained Trade Point: 0. Trade Fame: 0. Sales Cost: 70,555. Tax: -3,836. Surcharge: 21,920. Profit: 61,924. Total Amount: 88,639. Balance: 77,599,027,944. OK.",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "603f3ed1d2824ad2",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-12T15:28:19.173458+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade result summary showing the bot successfully sold cargo at Lisboa, earning 61,924 profit and a new balance of 77,599,027,944 gold — part of freeing the hold",
+    "full_text": "Result. Mate Trade EXP: 474. Contribution: 0. Obtained Trade Point: 0. Trade Fame: 0. Sales Cost: 70,555. Tax: -3,836. Surcharge: 21,920. Profit: 61,924. Total Amount: 88,639. Balance: 77,599,027,944. OK.",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

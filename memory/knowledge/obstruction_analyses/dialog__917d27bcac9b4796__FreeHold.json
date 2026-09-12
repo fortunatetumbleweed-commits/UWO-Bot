@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade result summary showing the bot successfully sold Matchlock Guns, displaying the sales breakdown including profit of 136,800 gold and new balance of 77,598,898,376 gold",
+  "full_text": "Result — Mate Trade EXP: 1,057 | Contribution: 0 | Obtained Trade Point: 0 | Trade Fame: 0 | Sales Cost: 169,480 | Tax: -8,664 | Surcharge: 49,096 | Profit: 136,800 | Total Amount: 209,912 | Balance: 77,598,898,376 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "917d27bcac9b4796",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-12T15:25:18.368174+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade result summary showing the bot successfully sold Matchlock Guns, displaying the sales breakdown including profit of 136,800 gold and new balance of 77,598,898,376 gold",
+    "full_text": "Result — Mate Trade EXP: 1,057 | Contribution: 0 | Obtained Trade Point: 0 | Trade Fame: 0 | Sales Cost: 169,480 | Tax: -8,664 | Surcharge: 49,096 | Profit: 136,800 | Total Amount: 209,912 | Balance: 77,598,898,376 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

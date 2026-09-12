@@ -1,0 +1,21 @@
+{
+  "purpose": "Game is asking the bot to confirm the sale of 113 Pigs at a total price of 2,712 ducats (base cost 2,147 plus surcharge of +565, zero tax), as part of the hold-trim operation that requires selling excess Pigs",
+  "full_text": "Confirm Sales — Trade Goods: Pig (Livestock, qty 113) | Sales Cost: 2,147 | Tax 6%: 0 | Surcharge: +565 | Price: 2,712 — Total Sales: 2,147 | 0 | +565 | 2,712 — [Cancel] [OK]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "3ae07f176cff5a63",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-12T18:37:35.082144+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Game is asking the bot to confirm the sale of 113 Pigs at a total price of 2,712 ducats (base cost 2,147 plus surcharge of +565, zero tax), as part of the hold-trim operation that requires selling excess Pigs",
+    "full_text": "Confirm Sales — Trade Goods: Pig (Livestock, qty 113) | Sales Cost: 2,147 | Tax 6%: 0 | Surcharge: +565 | Price: 2,712 — Total Sales: 2,147 | 0 | +565 | 2,712 — [Cancel] [OK]",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

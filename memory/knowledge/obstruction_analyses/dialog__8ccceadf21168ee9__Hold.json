@@ -1,0 +1,21 @@
+{
+  "purpose": "Negotiation dialog asking whether to use negotiation attempts to reduce the purchase price of Ammo by 21.5% (from 125,184 to 91,932 gold) with a 79.2% success rate",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 125,184 → 91,932 (-21.5%). Negotiation Success Rate: Failed ... 79.2% ... Success. Albrecht Wallenstein: Hmm, we should be able to buy it for 21.5% less. Why don't you try negotiating? Options: No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "8ccceadf21168ee9",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-12T15:40:44.960756+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Negotiation dialog asking whether to use negotiation attempts to reduce the purchase price of Ammo by 21.5% (from 125,184 to 91,932 gold) with a 79.2% success rate",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 125,184 → 91,932 (-21.5%). Negotiation Success Rate: Failed ... 79.2% ... Success. Albrecht Wallenstein: Hmm, we should be able to buy it for 21.5% less. Why don't you try negotiating? Options: No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

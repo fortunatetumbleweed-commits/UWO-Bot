@@ -1,0 +1,21 @@
+{
+  "purpose": "Sales confirmation dialog asking the bot to confirm selling 365 Raisins (Luxuries) for a total price of 495,305 gold after tax and surcharge adjustments",
+  "full_text": "Confirm Sales — Trade Goods: Raisin (Luxuries, qty 365), Sales Cost: 403,690, Tax 6%: -17,885, Surcharge: +109,500, Price: 495,305 — Total Sales: 403,690 / -17,885 / +109,500 / 495,305 — [Cancel] [Ok]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "0d12b919a4cce661",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-12T18:01:21.598056+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Sales confirmation dialog asking the bot to confirm selling 365 Raisins (Luxuries) for a total price of 495,305 gold after tax and surcharge adjustments",
+    "full_text": "Confirm Sales — Trade Goods: Raisin (Luxuries, qty 365), Sales Cost: 403,690, Tax 6%: -17,885, Surcharge: +109,500, Price: 495,305 — Total Sales: 403,690 / -17,885 / +109,500 / 495,305 — [Cancel] [Ok]",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}
