@@ -663,6 +663,24 @@ Detail:
   pattern rather than inventing one.  **Structure first, ask only where structure has no
   answer**, never on the tick path, and never as a licence to tap.  **CHEAP FIX MEANWHILE**:
   `kind()` should consult `is_overflow_card` / `is_discard_notice` before its word list.
+- **★ NAVIGATION IS NOT A BUSINESS RUN (RULE, 2026-09-12)** →
+  `docs/navigation_is_not_a_business_run.md`.  Two loops drive this bot and they have OPPOSITE
+  costs.  A business run meets anything — port, market, dialog, notice — and must perceive what
+  is in front of it.  **Manual navigation is at sea for the whole voyage, assumes NO
+  interruptor, and reads only the STEERING, the SPEED and the MINI-MAP** (user).  Its tick
+  budget is under 3s, and that is not a preference: the ship keeps moving between decisions, so
+  the interval is how far it travels blind.  **Nothing on the navigation path may call
+  `perceive()` or run OmniParser per tick** — a whole-frame parse costs ~2.6s measured, which is
+  a third of a business tick and the WHOLE of a navigation one.  Anything the loop needs is
+  CALIBRATED ONCE at startup (`MINIMAP_CROP`, the speed gauge, the wheel arrows) — measured, not
+  hardcoded, and not re-measured every tick.  **How it went wrong**: `read_speed` was changed on
+  2026-09-12 to locate the gauge through the overworld panel instead of four offsets against
+  `MINIMAP_CROP` — RIGHT for the business run, whose old fallback read the inside of the map
+  disc, and wrong for navigation, whose tick went from under 3s to 6s.  Nothing failed; it just
+  got slower, and the Jeddah voyage took two collisions on the tight stretches where that margin
+  ran out.  The file's own docstring had stated the rule the whole time ("opt-in because
+  locating costs an OmniParser parse… which the manual-navigation loop cannot afford").  **The
+  shape to watch for: a shared reader made more careful with only one caller in mind.**
 - **★ The dispatcher, activities and contexts, as they ARE (BUILT, 2026-09-11)** →
   `docs/activity_architecture.md`.  Seven sections read off the code, with diagrams: the
   tick's four routings (state→activity, goal→which activity, context→handler, handler→ONE

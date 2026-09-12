@@ -186,6 +186,26 @@ def _auto_calibrate_ui() -> None:
         log.warning("[calibrate] mini-map calibration failed (%s); "
                     "keeping default %s", e, mnv.get_minimap_crop())
 
+    # 1b. The speed gauge — located ONCE, for the same reason the mini-map is.
+    #
+    # NAVIGATION READS THREE THINGS: the mini-map, the steering controls and this gauge. It
+    # is at sea for the whole voyage and assumes no interruptor, so nothing on screen moves
+    # between ticks and nothing needs finding twice.
+    #
+    # Without this the speed read locates the panel on every call — an OmniParser parse of
+    # the whole frame, measured 2.6s, twice a tick. That is correct for a BUSINESS run, which
+    # meets a new screen every few seconds and cannot assume what is on it, and it is what
+    # took this loop from under 3s a tick to 6s (user, 2026-09-12). A slower tick is a worse
+    # navigator: the ship covers more water between decisions, and the collisions on the
+    # Jeddah voyage were on the tight stretches where that margin ran out.
+    try:
+        from vision.sea_hud import calibrate_speed_gauge
+        if not calibrate_speed_gauge(img):
+            log.warning("[calibrate] no speed gauge found — every read will locate the "
+                        "panel instead, at ~2.6s a call")
+    except Exception as e:
+        log.warning("[calibrate] speed-gauge calibration failed (%s)", e)
+
     # 2. Wheel arrows via bright-pixel centroid
     #
     # Scan region tightened to the wheel-disc bbox (x=180..500,

@@ -178,6 +178,42 @@ def speed_candidate_boxes(img, elements=None) -> list:
     return list(panel.gauges) if panel is not None else []
 
 
+# ── The calibrated gauge, for the navigation loop ────────────────────────────
+#
+# TWO MODES USE THIS FILE AND THEY HAVE OPPOSITE COSTS (user, 2026-09-12).
+#
+#   A BUSINESS RUN meets anything — a port, a dialog, a notice — so it must FIND the panel on
+#   the frame in front of it, and paying OmniParser for that is correct.
+#
+#   MANUAL NAVIGATION is at sea for the whole voyage, assumes no interruptor, and reads only
+#   the minimap, the steering and this gauge. The panel does not move between ticks, so
+#   finding it every tick buys nothing and costs everything: measured 2.6s for the parse,
+#   twice a tick, against a tick that used to run in under 3s.
+#
+# So the loop CALIBRATES ONCE — the same contract `MINIMAP_CROP` already has — and then reads
+# the number out of a fixed box with no parse at all. Still MEASURED off the panel rather than
+# offset from a remembered constant, which is what the old four-offset fallback got wrong;
+# just measured once instead of a hundred times.
+_SPEED_BOXES: tuple = ()
+
+
+def calibrate_speed_gauge(img, elements=None) -> tuple:
+    """Find the gauge cells once and remember them for the voyage. Returns what was set.
+
+    Empty means not found, and the caller decides — for navigation that is worth a warning,
+    because the alternative is paying for a parse on every tick.
+    """
+    global _SPEED_BOXES
+    _SPEED_BOXES = tuple(speed_candidate_boxes(img, elements))
+    logger.info(f"[calibrate] speed gauge: {len(_SPEED_BOXES)} cell(s) {_SPEED_BOXES}")
+    return _SPEED_BOXES
+
+
+def get_speed_boxes() -> tuple:
+    """The calibrated cells, or empty when nothing has been calibrated yet."""
+    return _SPEED_BOXES
+
+
 def read_speed(img, *, elements=None, locate: bool = False) -> Optional[float]:
     """Extract current sailing speed (knots) from a tight crop just
     left of the mini-map.
@@ -187,22 +223,22 @@ def read_speed(img, *, elements=None, locate: bool = False) -> Optional[float]:
     **0.0 is a real reading, not a failure** — it is the whole point of
     the speed-0 check, so callers must distinguish it from None.
 
-    `locate=True` (or passing `elements`) finds the tile from the
-    mini-map's ACTUAL position first and only falls back to the fixed
-    crop — use it wherever the UI may have drifted.  It is opt-in
-    because locating costs an OmniParser parse (~2-3s), which the
-    manual-navigation loop cannot afford at its sub-1s cadence; that
-    path calibrates `MINIMAP_CROP` once at startup instead.
+    WHERE THE BOX COMES FROM: the cells `calibrate_speed_gauge` found, when a caller has
+    calibrated; otherwise the panel is located on this frame, which costs an OmniParser parse
+    (~2.6s measured). A business run pays that gladly — it does not know what screen it is
+    on. The navigation loop must not: it calibrates once at startup, like `MINIMAP_CROP`.
     """
     try:
         import numpy as np
         from actions.water_tap import _get_reader
     except Exception:
         return None
-    # THE PANEL'S GAUGE CELLS, and nothing else. No offsets from the mini-map and no
-    # absolute fallback: the strip and the panel are drawn together, so if the panel is not
-    # there, there is no speed on screen to read.
-    boxes = speed_candidate_boxes(img, elements)
+    # THE CALIBRATED CELLS FIRST, and for the navigation loop that is the whole story: the
+    # panel does not move during a voyage, so it is located once and never looked for again.
+    # Falling through to a search is right for a business run, which meets a new screen every
+    # few seconds, and wrong for navigation, which would pay 2.6s a tick to re-learn a fact
+    # it already had.
+    boxes = list(_SPEED_BOXES) or speed_candidate_boxes(img, elements)
 
     raw = []
     for box in boxes:
