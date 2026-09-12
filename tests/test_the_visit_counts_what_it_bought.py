@@ -73,6 +73,28 @@ CONFIRM = [
     _el("Cancel", 985, 963, 1200, 1011),
 ]
 
+# ── The Faro card, frame_0035, the SAME table with the cells grouped differently ──────
+#
+# Read minutes after the Bordeaux one. How OmniParser groups the cells is NOT stable, and a
+# reader that demands a whole cell be a number fails here: the quantity, a stray bracket and
+# the category came back welded into `489] Livestock`. The money on this card — 155,991 and
+# 133,986 — is larger and HIGHER than the 489, so nothing about size or order can separate
+# them; only the column can, which is what the header anchor is for.
+CONFIRM_MERGED_CELLS = [
+    _el("Confirm Purchase", 1065, 53, 1337, 97),
+    _el("Trade Goods", 629, 117, 807, 157),
+    _el("Purchase Cost", 1048, 120, 1242, 160),
+    _el("Tax 6%", 1312, 120, 1416, 160),
+    _el("Discount", 1562, 120, 1684, 160),
+    _el("Purchase Price", 1760, 120, 1962, 160),
+    _el("Pig", 517, 187, 573, 225),
+    _el("489] Livestock", 467, 235, 648, 275),
+    _el("155,991", 1086, 211, 1194, 251),
+    _el("7,335", 1342, 212, 1418, 252),
+    _el("-29,3400", 1553, 207, 1685, 247),
+    _el("133,986", 1806, 212, 1914, 252),
+]
+
 # The result card, also from a live run: money only, never a quantity.
 RESULT = [_el("Result", 1100, 200, 1300, 240),
           _el("Purchase Cost 254,364", 900, 300, 1500, 340),
@@ -105,6 +127,19 @@ class TheConfirmCardNamesTheGoodAndTheUnits(unittest.TestCase):
         shifted = [_el(e.label, e.x1 + 120, e.y1 + 90, e.x2 + 120, e.y2 + 90) for e in CONFIRM]
         self.assertEqual(confirm_card_purchase(None, elements=shifted, dialog=False),
                          ("Raisin", 410))
+
+    def test_THE_CELLS_MAY_BE_WELDED_TOGETHER(self):
+        """`489] Livestock` — the quantity, a stray bracket and the category in one cell. The
+        quantity is the first number anywhere in the column below the good, not a cell that
+        happens to be purely numeric."""
+        self.assertEqual(
+            confirm_card_purchase(None, elements=CONFIRM_MERGED_CELLS, dialog=False),
+            ("Pig", 489))
+
+    def test_the_money_is_excluded_by_the_COLUMN_not_by_size(self):
+        """On that card 155,991 and 133,986 are both larger and higher up than the 489."""
+        _good, qty = confirm_card_purchase(None, elements=CONFIRM_MERGED_CELLS, dialog=False)
+        self.assertEqual(qty, 489)
 
     def test_the_merged_form_still_works(self):
         """The parse sometimes groups the column into one label; that stays supported as a

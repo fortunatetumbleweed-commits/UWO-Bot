@@ -273,19 +273,30 @@ def _purchase_from_the_table(els):
         return None
     below.sort(key=lambda e: e.y1)
 
+    # HOW THE CELLS ARE GROUPED IS NOT STABLE, so neither test may demand a whole cell.
+    # Measured on two live cards a few minutes apart:
+    #
+    #     Bordeaux   'Raisin'  |  'Luxuries'        |  '410'      three clean cells
+    #     Faro       'Pig'     |  '489] Livestock'               quantity, junk and category
+    #                                                            welded into one
+    #
+    # So the QUANTITY is the first number found anywhere in the column below the good, and
+    # the GOOD is the first cell there carrying no digits. Both stay confined to the column,
+    # which is what keeps the money out of it — 155,991 and 133,986 sit in other columns on
+    # that same card and are larger and higher than the 489.
     good = qty = None
     for e in below:
         label = (getattr(e, "label", "") or "").strip()
-        if qty is None and re.fullmatch(r"[\d,]{1,7}", label):
+        digits = re.search(r"\d[\d,]*", label)
+        if good is None and not digits and re.search(r"[A-Za-z]", label):
+            # THE FIRST WORDS UNDER THE HEADER ARE THE GOOD. Its category sits below it and
+            # is skipped by taking the first, which is why this needs no category vocabulary.
+            good = label
+        elif qty is None and digits and good is not None:
             try:
-                qty = int(label.replace(",", ""))
+                qty = int(digits.group().replace(",", ""))
             except ValueError:
                 pass
-        elif good is None and re.fullmatch(r"[A-Za-z][A-Za-z '\-]{1,28}", label):
-            # THE FIRST WORD UNDER THE HEADER IS THE GOOD; the CATEGORY sits below it and is
-            # skipped by taking the first, which is also why this does not need to know the
-            # category vocabulary.
-            good = label
         if good is not None and qty is not None:
             break
     return (good, qty) if good and qty and qty > 0 else None
