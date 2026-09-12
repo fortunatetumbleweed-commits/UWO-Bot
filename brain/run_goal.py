@@ -114,18 +114,19 @@ def default_activities() -> Mapping[str, Any]:
     from brain.activities.main_menu import MainMenuActivity
     from brain.activities.market import MarketActivity
     from brain.activities.bootstrap import PositionKnownActivity
-    from brain.activities.sea import AshoreActivity, SeaActivity
+    from brain.activities.port import PortActivity
+    from brain.activities.sea import SeaActivity
     from brain.activities.world_map import WorldMapActivity
     from brain.activities.transient import TransientActivity
     from brain.activities.unrecognized_chromed import UnrecognizedChromedActivity
     from brain.activities.village import VillageActivity
 
-    # A STATE MAY HAVE MORE THAN ONE ACTIVITY, resolved by its GOALS filter — `village` is
-    # served by VillageActivity for a Barter and by AshoreActivity for an ArriveAshore.
+    # A STATE MAY HAVE MORE THAN ONE ACTIVITY, resolved by its GOALS filter — every workable
+    # state is served by its own activity AND by `PositionKnownActivity` for the bootstrap.
     # Keying one activity per state silently overwrote whichever registered first.
     registry: dict = {}
     for activity in (MarketActivity(), HarborActivity(), VillageActivity(), SeaActivity(),
-                     AshoreActivity(), WorldMapActivity(), PositionKnownActivity(),
+                     PortActivity(), WorldMapActivity(), PositionKnownActivity(),
                      IdleLockActivity(), TransientActivity(), MainMenuActivity(),
                      UnrecognizedChromedActivity()):
         for where in activity.SERVES:
@@ -153,9 +154,11 @@ def affordances(where: Any, activities: Mapping[str, Any]) -> Optional[frozenset
 
     A world's affordances are the UNION over the activities serving it, because two can serve
     one world and each knows its own part. `CAN_START` may be a flat tuple (the same
-    everywhere that activity serves) or a dict keyed by state — `AshoreActivity` needs the
-    second, serving both `port_overworld`, which has the globe and the building list, and
-    `village`, which has neither.
+    everywhere that activity serves) or a dict keyed by state. Every activity declares a FLAT
+    one today: the dict form existed for `AshoreActivity`, which served `port_overworld` and
+    `village` at once and so had to answer differently in each. Splitting it into
+    `PortActivity` removed the need. The dict form stays supported because an activity serving
+    two worlds is legal, not because one does.
 
     None means UNCONSTRAINED — no activity serving this world declared anything, so we do not
     know and must not refuse. An empty frozenset is different: somebody declared that nothing

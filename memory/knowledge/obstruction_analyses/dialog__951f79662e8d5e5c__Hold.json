@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase result dialog showing the bot successfully bought goods at Barcelona after declining negotiation, displaying the final cost of 170,059 gold (with a 41,347 discount applied) and the remaining balance",
+  "full_text": "Result — Purchase Cost: 211,406 | Tax: 0 | Discount: -41,347 | Total Amount: 170,059 | Balance: 77,553,324,743 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "951f79662e8d5e5c",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-12T03:54:37.482279+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase result dialog showing the bot successfully bought goods at Barcelona after declining negotiation, displaying the final cost of 170,059 gold (with a 41,347 discount applied) and the remaining balance",
+    "full_text": "Result — Purchase Cost: 211,406 | Tax: 0 | Discount: -41,347 | Total Amount: 170,059 | Balance: 77,553,324,743 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

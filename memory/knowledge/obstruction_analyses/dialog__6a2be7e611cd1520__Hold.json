@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase Result dialog confirming a completed bulk buy transaction, showing cost breakdown (254,364 base + 42,911 tax − 48,598 discount = 248,677 total) and the player's remaining balance after the purchase",
+  "full_text": "Result — Purchase Cost: 254,364 | Tax: 42,911 | Discount: -48,598 | Total Amount: 248,677 | Balance: 77,553,746,085 | OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "6a2be7e611cd1520",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-12T03:38:27.688811+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase Result dialog confirming a completed bulk buy transaction, showing cost breakdown (254,364 base + 42,911 tax − 48,598 discount = 248,677 total) and the player's remaining balance after the purchase",
+    "full_text": "Result — Purchase Cost: 254,364 | Tax: 42,911 | Discount: -48,598 | Total Amount: 248,677 | Balance: 77,553,746,085 | OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

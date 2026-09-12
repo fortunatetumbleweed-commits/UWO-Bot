@@ -1,0 +1,21 @@
+{
+  "purpose": "Confirmation dialog asking the bot to approve the sale of 3633 Birch Tree (Wares) for a total price of 45,575,985 gold, after 6% tax deduction and surcharge applied",
+  "full_text": "Confirm Sales — Trade Goods: Birch Tree (Wares, qty 3633) | Sales Cost: 37,045,701 | Tax 6%: -2,212,497 | Surcharge: +10,742,781 | Price: 45,575,985 — Total Sales: 37,045,701 | -2,212,497 | +10,742,781 | 45,575,985 — Cancel / OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "7f61b3ad37d8ed4d",
+  "goal_intent": "SellHold",
+  "cached_at": "2026-09-12T05:05:28.399704+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Confirmation dialog asking the bot to approve the sale of 3633 Birch Tree (Wares) for a total price of 45,575,985 gold, after 6% tax deduction and surcharge applied",
+    "full_text": "Confirm Sales — Trade Goods: Birch Tree (Wares, qty 3633) | Sales Cost: 37,045,701 | Tax 6%: -2,212,497 | Surcharge: +10,742,781 | Price: 45,575,985 — Total Sales: 37,045,701 | -2,212,497 | +10,742,781 | 45,575,985 — Cancel / OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Sell confirmation dialog asking the bot to confirm the sale of 133 Almonds (Luxuries/Specialties) for 699,447 ducats after 6% tax deduction and specialty surcharge",
+  "full_text": "Confirm Sales — Trade Goods: Almond (Luxuries, Specialties, qty 133) | Sales Cost: 556,073 | Tax 6%: -35,644 | Surcharge: +179,018 | Price: 699,447 — Total Sales: 556,073 | -35,644 | +179,018 | 699,447 — Cancel | OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "cb8c0da5f42a1a91",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-12T03:28:37.837051+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Sell confirmation dialog asking the bot to confirm the sale of 133 Almonds (Luxuries/Specialties) for 699,447 ducats after 6% tax deduction and specialty surcharge",
+    "full_text": "Confirm Sales — Trade Goods: Almond (Luxuries, Specialties, qty 133) | Sales Cost: 556,073 | Tax 6%: -35,644 | Surcharge: +179,018 | Price: 699,447 — Total Sales: 556,073 | -35,644 | +179,018 | 699,447 — Cancel | OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

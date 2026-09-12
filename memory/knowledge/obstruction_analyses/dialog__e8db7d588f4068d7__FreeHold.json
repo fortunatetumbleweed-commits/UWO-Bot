@@ -1,0 +1,21 @@
+{
+  "purpose": "Sale confirmation dialog asking the bot to confirm selling Myrrh for 229,006 gold (after 6% tax and specialty surcharge), as part of freeing hold space at London.",
+  "full_text": "Confirm Sales — Trade Goods: Myrrh (Medicine, Specialties) — Sales Cost: 183,915 — Tax 6%: -11,323 — Surcharge: +56,414 — Price: 229,006 — Total Sales: 183,915 / -11,323 / +56,414 / 229,006 — [Cancel] [OK]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "e8db7d588f4068d7",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-12T03:27:09.125278+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "dismissal": "tap_ok",
+    "full_text": "Confirm Sales — Trade Goods: Myrrh (Medicine, Specialties) — Sales Cost: 183,915 — Tax 6%: -11,323 — Surcharge: +56,414 — Price: 229,006 — Total Sales: 183,915 / -11,323 / +56,414 / 229,006 — [Cancel] [OK]",
+    "confidence": "high",
+    "relates_to_goal": true,
+    "purpose": "Sale confirmation dialog asking the bot to confirm selling Myrrh for 229,006 gold (after 6% tax and specialty surcharge), as part of freeing hold space at London.",
+    "outcome_for_goal": "still_blocking"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Market NPC is asking the player to confirm they have brought trade goods to sell",
+  "full_text": "You brought the goods, right?",
+  "dismissal": "tap_accept",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "6192f6519c90ab29",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-12T03:23:47.681331+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Market NPC is asking the player to confirm they have brought trade goods to sell",
+    "full_text": "You brought the goods, right?",
+    "dismissal": "tap_accept",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

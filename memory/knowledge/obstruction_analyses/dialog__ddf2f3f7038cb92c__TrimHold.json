@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade result summary showing the completed sale of Iron, confirming proceeds, tax, surcharge, profit, and updated gold balance after the transaction",
+  "full_text": "Result — Mate Trade EXP: 822, Contribution: 0, Obtained Trade Point: 0, Trade Fame: 0 — Sales Cost: 376,932, Tax: -17,204, Surcharge: 116,731, Profit: 106,453, Total Amount: 476,459 — Balance: 77,553,117,679 — Ok",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "ddf2f3f7038cb92c",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-12T04:28:47.984058+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade result summary showing the completed sale of Iron, confirming proceeds, tax, surcharge, profit, and updated gold balance after the transaction",
+    "full_text": "Result — Mate Trade EXP: 822, Contribution: 0, Obtained Trade Point: 0, Trade Fame: 0 — Sales Cost: 376,932, Tax: -17,204, Surcharge: 116,731, Profit: 106,453, Total Amount: 476,459 — Balance: 77,553,117,679 — Ok",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

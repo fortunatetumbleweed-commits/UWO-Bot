@@ -9,8 +9,9 @@
 #   - has_back_arrow      → icon present in CHROME_BACK_ARROW_REGION (top-left).
 #   - has_world_map_btn   → text element matching "world map" in
 #                           CHROME_WORLD_MAP_BTN_REGION (bottom-left).
-#   - has_right_panel     → ≥ MIN_RIGHT_PANEL_ELEMENTS detected in
-#                           CHROME_RIGHT_PANEL_REGION (4 tab icons + minimap).
+#   - has_right_panel     → the overworld right panel was FOUND structurally
+#                           (vision.region_detectors.overworld_panel), or, failing that,
+#                           ≥ MIN_RIGHT_PANEL_ELEMENTS sit in CHROME_RIGHT_PANEL_REGION.
 #
 # What this module CANNOT populate from parse_fast alone:
 #   - has_home / has_hamburger.  Both icons share the SAME top-right region
@@ -27,6 +28,8 @@
 from __future__ import annotations
 
 from typing import Iterable, List
+
+from loguru import logger
 
 from config.settings import (
     CHROME_BACK_ARROW_REGION,
@@ -82,11 +85,27 @@ def detect_chrome_from_elements(
         for el in elems
     )
 
+    # THE PANEL IS FOUND, NOT COUNTED IN A BOX (user, 2026-09-11). `CHROME_RIGHT_PANEL_REGION`
+    # is (2050, 100, 2400, 420) and the panel measures x[1862, 2267]: it starts 188px left of
+    # where the box begins and ends 133px short of the frame edge the box runs to. So the box
+    # misses the panel's left third — the Tasks tab and half of Buildings — and counts scene
+    # pixels on the right instead. It has worked by accident, because two of the four tabs
+    # happen to fall inside it.
+    #
+    # `detect_overworld_panel` finds the whole element structurally, anchored on the season
+    # row, and costs nothing extra: it is pure arithmetic over the parse already in hand.
+    #
+    # THE COUNT STAYS AS A FLOOR, and the direction matters. True here means "overworld"; a
+    # false NEGATIVE reads an overworld as a chromed screen, which is the dangerous way to be
+    # wrong. OR-ing can only add answers, so every frame that passes today still passes, and
+    # the frames the box was clipping now pass too.
+    panel = _overworld_panel(elems)
     right_panel_elements = [
         el for el in elems
         if _bbox_centre_in_region(el, CHROME_RIGHT_PANEL_REGION)
     ]
-    has_right_panel = len(right_panel_elements) >= MIN_RIGHT_PANEL_ELEMENTS
+    has_right_panel = (panel is not None
+                       or len(right_panel_elements) >= MIN_RIGHT_PANEL_ELEMENTS)
 
     return ChromeState(
         has_hamburger     = False,  # cannot disambiguate from parse_fast
@@ -97,8 +116,11 @@ def detect_chrome_from_elements(
         scores = {
             "back_arrow_via_omniparser":    1.0 if has_back_arrow    else 0.0,
             "world_map_btn_via_omniparser": 1.0 if has_world_map_btn else 0.0,
+            # 1.0 when the panel was actually FOUND; otherwise the old count's ratio, which
+            # is a proxy for it rather than a reading of it.
             "right_panel_via_omniparser":
-                float(len(right_panel_elements)) / MIN_RIGHT_PANEL_ELEMENTS,
+                1.0 if panel is not None
+                else float(len(right_panel_elements)) / MIN_RIGHT_PANEL_ELEMENTS,
         },
     )
 
@@ -158,3 +180,14 @@ def port_overworld_is_drawn(frame, elements=None) -> bool:
         from vision.omniparser import parse_fast_cached
         elements = parse_fast_cached(frame)
     return bool(detect_chrome_from_elements(elements).has_right_panel)
+
+
+def _overworld_panel(elems):
+    """The port/sea right panel, or None. Never raises — a chrome read must not be the thing
+    that stops a tick, and the count beside it still answers when this cannot."""
+    try:
+        from vision.region_detectors.overworld_panel import detect_overworld_panel
+        return detect_overworld_panel(None, elems)
+    except Exception as exc:                       # noqa: BLE001 — a read, not a decision
+        logger.debug(f"[chrome] overworld panel unavailable: {exc}")
+        return None

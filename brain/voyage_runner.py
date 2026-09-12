@@ -81,7 +81,8 @@ class VoyageRunner:
             return False
 
         if status == FINISHED:
-            # ASHORE. `AshoreActivity` says so the moment the state stops being sea; the
+            # ASHORE. `PortActivity` (or `VillageActivity`) says so the moment the state
+            # stops being sea — whichever owns the screen the voyage ended on; the
             # committed destination was set when the departure was, and repeating it here
             # would be a second copy of a decision already made.
             self.status, self.port = ARRIVED, observed.get("port")

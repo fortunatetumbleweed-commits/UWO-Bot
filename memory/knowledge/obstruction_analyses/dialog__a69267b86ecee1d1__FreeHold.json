@@ -1,0 +1,21 @@
+{
+  "purpose": "Game is asking the bot to confirm the sale of 133 Mutton (Food) for a net price of 115,311 gold after 6% tax deduction and surcharge bonus",
+  "full_text": "Confirm Sales — Trade Goods: Mutton (Food, qty 133), Sales Cost: 91,770, Tax 6%: -5,187, Surcharge: +28,728, Price: 115,311 — Total Sales: 91,770 / -5,187 / +28,728 / 115,311 — Cancel | OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "a69267b86ecee1d1",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-12T03:25:39.086354+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Game is asking the bot to confirm the sale of 133 Mutton (Food) for a net price of 115,311 gold after 6% tax deduction and surcharge bonus",
+    "full_text": "Confirm Sales — Trade Goods: Mutton (Food, qty 133), Sales Cost: 91,770, Tax 6%: -5,187, Surcharge: +28,728, Price: 115,311 — Total Sales: 91,770 / -5,187 / +28,728 / 115,311 — Cancel | OK",
+    "relates_to_goal": true,
+    "dismissal": "tap_ok",
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

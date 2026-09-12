@@ -1,0 +1,21 @@
+{
+  "purpose": "An NPC merchant or quest character is greeting the player and asking if they have brought trade goods, likely a market or trade NPC dialogue prompt in the London port",
+  "full_text": "You brought the goods, right?",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "af497262ae5c5863",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-12T03:30:32.087713+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "An NPC merchant or quest character is greeting the player and asking if they have brought trade goods, likely a market or trade NPC dialogue prompt in the London port",
+    "full_text": "You brought the goods, right?",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

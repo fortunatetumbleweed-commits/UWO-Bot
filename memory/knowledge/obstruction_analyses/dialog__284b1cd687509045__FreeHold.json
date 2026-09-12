@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade result summary showing the successful sale of Myrrh (Medicine specialty), displaying profit, tax, surcharge, and updated gold balance after the transaction",
+  "full_text": "Result — Mate Trade EXP: 633, Contribution: 0, Obtained Trade Point: 0, Trade Fame: 0, Sales Cost: 91,770, Tax: -5,187, Surcharge: 28,728, Profit: 82,061, Total Amount: 115,311, Balance: 77,553,340,482 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "284b1cd687509045",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-12T03:26:22.686723+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade result summary showing the successful sale of Myrrh (Medicine specialty), displaying profit, tax, surcharge, and updated gold balance after the transaction",
+    "full_text": "Result — Mate Trade EXP: 633, Contribution: 0, Obtained Trade Point: 0, Trade Fame: 0, Sales Cost: 91,770, Tax: -5,187, Surcharge: 28,728, Profit: 82,061, Total Amount: 115,311, Balance: 77,553,340,482 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

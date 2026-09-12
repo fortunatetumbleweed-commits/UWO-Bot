@@ -639,6 +639,47 @@ Detail:
   `a81fe6a`, which catches `Specialties` and would miss the next banner.  And §5: the
   invariants are needed either way, because a better detector raises the floor but does not
   make a bad reading a refusal.  **Not decided.**
+- **★ The dispatcher, activities and contexts, as they ARE (BUILT, 2026-09-11)** →
+  `docs/activity_architecture.md`.  Seven sections read off the code, with diagrams: the
+  tick's four routings (state→activity, goal→which activity, context→handler, handler→ONE
+  action), the `Activity` Protocol and its eleven implementers, the market's context table,
+  and the two gaps.  **§6 — the port overworld finally has an activity.**  `AshoreActivity`
+  served the port AND the village, two worlds affording nothing in common, which forced the
+  only per-world `CAN_START`/`LEADS_TO` dicts in the codebase; *an activity that must ask
+  which world it woke up in before it can say what it can do is two activities sharing a
+  name* (user).  `PortActivity` serves the port alone, `VillageActivity` answers arrival on
+  its own screen, and routing now asks PER GOAL — which closes the Svear wedge of 2026-08-29
+  (`ReadHold` claimed servable at a village, where there is no ☰, so it answered "already
+  where the work happens" and looped on BLOCKED).  `brain/port_context.py` classifies the
+  port screen and `actions/port_panel.py` holds its work, moved out of `sail_actions` where
+  it had accumulated among the SAILING primitives; `dispatch` now names the WORLD rather than
+  importing `tap_building_entry` (user: *"dispatcher should not know about tap building
+  entry"*).  **STILL OPEN**: `tap_building_entry` remains a sub-loop — one call that selects
+  a tab, pages a list four times and opens the port map — and flattening it needs a progress
+  marker in the dispatcher's in-flight key and `run_goal`'s stall tuple, because
+  `_screen_signature` returns the family verdict on a port (0.9998) so a tab switch leaves it
+  identical.  Also still open: `PositionKnownActivity` and arrival are PREDICATES wearing an
+  activity's clothes, and stop needing to exist the day goals carry a satisfied-by check
+  (`docs/the_plan_is_a_checklist.md`).
+- **★ The overworld right panel — ONE element, two worlds (BUILT, 2026-09-11)** →
+  `docs/activity_architecture.md` §7, `vision/region_detectors/overworld_panel.py`.  The port
+  overworld and the sea carry the same panel in the same place: gauge strip (sea only — tide,
+  speed, wind, current), tab strip, minimap, season row, list.  Tab centres agree to within
+  two pixels across both worlds; only the pictures on them differ.  It had been encoded FIVE
+  times that could not see each other — `CHROME_RIGHT_PANEL_REGION` (2050,100,2400,420)
+  against a real x[1862,2267], `RIGHT_EDGE` in the fingerprints, `_tab_strip_band`,
+  `BUILDING_MENU_REGION`, and `panels.detect_right_panel` (a different thing sharing the
+  name) — and two live failures are this element taken for something else: ENTER_BUILDING at
+  sea cycling "the minimap's four tab icons" (2026-09-01), and the obstruction classifier
+  reading it as a POPUP.  **THE SEASON ROW IS THE ANCHOR** — identical in both worlds and
+  TEXT, so it is read rather than located — and **no absolute position remains in the
+  module** (user: *"avoid the hardcoded bbox, especially for the x and y starting point"*);
+  what is left are ratios of the panel's own measured width.  Asked by `has_right_panel`
+  (found, with the old count as a floor), by `port_context`, and by `sea_hud.read_speed`,
+  which now reaches the speed tile ONLY through the panel (user: *"they exist at the same
+  time"*) and finds it by CONTENT — the only decimal in the strip — rather than by index.
+  Still outstanding: a seventh copy of the minimap detection inline in
+  `tools/run_ai_nav_live.py`.
 - **★ Dialogs without sub-loops — the market as contexts (DRAFT, 2026-08-30)** →
   `docs/market_as_contexts.md`.  A UI framework's listener registry buys INVERSION OF CONTROL,
   not "no polling" — and we have no event source, so the substitute is the dispatcher's tick:

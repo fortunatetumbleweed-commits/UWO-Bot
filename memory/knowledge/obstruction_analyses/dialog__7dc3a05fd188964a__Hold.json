@@ -1,0 +1,21 @@
+{
+  "purpose": "Thomas Tew (merchant NPC) is offering a 21.5% discount on the item being purchased, asking the bot to confirm whether to use negotiation attempts to lock in the reduced price of 70,785 gold (down from 96,525)",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 96,525 → 70,785 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Thomas Tew: For this product, you can get a 21.5% discount. Do you want to bargain? Options: No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "7dc3a05fd188964a",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-12T04:17:14.993655+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Thomas Tew (merchant NPC) is offering a 21.5% discount on the item being purchased, asking the bot to confirm whether to use negotiation attempts to lock in the reduced price of 70,785 gold (down from 96,525)",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 96,525 → 70,785 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success. Thomas Tew: For this product, you can get a 21.5% discount. Do you want to bargain? Options: No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

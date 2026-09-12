@@ -26,7 +26,9 @@ from loguru import logger
 
 from brain.activities.harbor import HarborActivity
 from brain.activities.market import MarketActivity
-from brain.activities.sea import AshoreActivity, ClearOfTheVillage
+from brain.activities.port import PortActivity
+from brain.activities.sea import (ArriveAshore, ClearOfTheVillage, ReadHold,
+                                  SeaActivity)
 from brain.activities.world_map import WorldMapActivity
 from brain.dispatcher import Intent
 
@@ -38,6 +40,11 @@ _TAIL_CAN_SAIL_FROM = ("sea", "sea_cinematic", "world_map", "port_overworld", "p
 
 # Screens where Back means "Exit Game?", not "go up one level".
 _NEVER_BACK_FROM = ("port_overworld", "main_menu")
+
+# WHERE A VOYAGE CAN HAVE ENDED. Not one activity's `SERVES` any more: the port overworld and
+# the village are owned by different activities now, and arrival is true on both. Written as
+# the UNION of the two screens a ship can arrive at, which is what the goal actually means.
+_ASHORE_STATES = (PortActivity.SERVES + ("village",))
 
 
 def _ends_by_finishing(where: Any) -> bool:
@@ -168,12 +175,34 @@ def to_intent(goal: Any, state: Any) -> Optional[Intent]:
     # says "no ☰ there", walk out, read again. Standing in the wrong place is a ROUTING
     # problem, and routing is the dispatcher's, so it is answered here as a transition rather
     # than by a reader that can only re-perceive and cannot move.
-    if isinstance(goal, AshoreActivity.GOALS):
-        if where in AshoreActivity.SERVES:
-            return None                       # already where the work happens
+    # ONE ACTIVITY, TWO GOALS, DIFFERENT REACH — asked per goal, not per activity.
+    #
+    # `PortActivity` serves both, and its `SERVES` answers for `ReadHold` alone. Arrival is
+    # true in a VILLAGE too, and a village is `_is_inside`, so sharing one test would have
+    # answered a fleet that had just arrived with a Back out of the place it sailed to.
+    #
+    # This is the fact `docs/per_goal_serving.md` records and declines to generalise: the
+    # reach belongs to the CONTROL (the ☰ is on the overworlds and at sea, nowhere else), not
+    # to the goal, and a per-goal table would be a third copy of it. Two goals are written out
+    # here rather than a mechanism invented for them.
+    if isinstance(goal, ArriveAshore):
+        if where in _ASHORE_STATES:
+            return None                       # the voyage is over; nothing to press
         if _is_inside(where) and not _ends_by_finishing(where):
             return Intent("EXIT_BUILDING", {"purpose": str(goal), "from": where})
-        return None                           # at sea, mid-transition: nothing to press
+        return None                           # at sea: SeaActivity is watching the HUD
+
+    if isinstance(goal, ReadHold):
+        if where in PortActivity.SERVES or where in SeaActivity.SERVES:
+            return None                       # the ☰ is here
+        # A VILLAGE HAS NO ☰, AND USED TO CLAIM IT DID. `AshoreActivity.SERVES` listed
+        # `village`, so this answered "already where the work happens", handed the read to an
+        # activity that could not do it and took BLOCKED back on every tick. Live 2026-08-29
+        # at Svear that was dead on tick 2, before touching the game. Leaving is the answer:
+        # a village exits to the sea, and the hamburger is there.
+        if _is_inside(where) and not _ends_by_finishing(where):
+            return Intent("EXIT_BUILDING", {"purpose": str(goal), "from": where})
+        return None                           # mid-transition: nothing to press
 
     # LEAVING A VILLAGE IS ROUTING, ONE BACK AT A TIME.
     #
@@ -210,10 +239,12 @@ def dispatch(intent: Intent) -> Any:
         return res
 
     if intent.name == "ENTER_BUILDING":
-        from actions.sail_actions import tap_building_entry
+        # ASK THE PORT. Which world serves this intent is routing and belongs here; HOW that
+        # world lets you in does not, and this line used to import the reader by name.
+        from brain.activities.port import enter_building
         name = intent.extras.get("name") or ""
         logger.info(f"[intent] {intent}")
-        res = tap_building_entry(name) or {}
+        res = enter_building(name)
         # NOT VERIFIED HERE, ON PURPOSE. `tapped` means a control was pressed, not that the
         # bot is inside — entering takes a walk across the port and there is no local signal
         # separating "walking" from "the tap missed". The dispatcher re-perceives after every

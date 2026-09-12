@@ -1227,11 +1227,11 @@ class Dispatcher:
     def _pick(self, where: Any, goal: Any) -> Optional[Activity]:
         """The activity for this state that can serve this goal.
 
-        A STATE MAY HAVE MORE THAN ONE ACTIVITY. `village` is served by `VillageActivity`
-        for a Barter and by `AshoreActivity` for an ArriveAshore — the same screen, two
-        different jobs — and registering one keyed only by state silently overwrote the
-        other (found 2026-08-28: AshoreActivity clobbered VillageActivity because it was
-        registered later).
+        A STATE MAY HAVE MORE THAN ONE ACTIVITY. Every workable state is served by its own
+        activity AND by `PositionKnownActivity` for the bootstrap, and registering one keyed
+        only by state silently overwrote the other (found 2026-08-28, when `AshoreActivity`
+        clobbered `VillageActivity` at a village because it was registered later; that pair
+        is gone, the resolution it forced is not).
 
         This is the intent-filter resolution the design already describes: SERVES filters on
         the STATE, GOALS on the ORDER, and the pair identifies the handler. An activity that
@@ -1243,8 +1243,8 @@ class Dispatcher:
             return None
         candidates = list(found) if isinstance(found, (list, tuple)) else [found]
         # NO SHORT-CIRCUIT FOR A SINGLE CANDIDATE. Skipping the filter when only one activity
-        # is registered would resolve the bare port overworld to `AshoreActivity` for ANY
-        # goal, when it serves only `ArriveAshore` — and the port's whole normal behaviour is
+        # is registered would resolve the bare port overworld to `PortActivity` for ANY
+        # goal, when it serves two — and the port's whole normal behaviour is
         # to have NO activity so the dispatcher asks the task runner for a goal and
         # dispatches an intent. Returning None here is what preserves that.
         general = None

@@ -1,0 +1,21 @@
+{
+  "purpose": "Samuel Burgess is offering to negotiate a higher sell price for Mutton (24.5% more, from 115,311 to 136,458 gold) with a 76.2% success rate, prompting the bot to choose whether to use negotiation attempts",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 115,311 → 136,458 (24.5% increase). Negotiation Success Rate: Failed | 76.2% | Success. Samuel Burgess: Oh, we should be able to sell this for 24.5% more. Why don't you try negotiating? Options: No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "320afbc28d2b54c2",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-12T03:26:01.533700+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Samuel Burgess is offering to negotiate a higher sell price for Mutton (24.5% more, from 115,311 to 136,458 gold) with a 76.2% success rate, prompting the bot to choose whether to use negotiation attempts",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 115,311 → 136,458 (24.5% increase). Negotiation Success Rate: Failed | 76.2% | Success. Samuel Burgess: Oh, we should be able to sell this for 24.5% more. Why don't you try negotiating? Options: No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

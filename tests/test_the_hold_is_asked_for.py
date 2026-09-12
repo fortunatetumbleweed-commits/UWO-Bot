@@ -9,7 +9,8 @@ import types
 import unittest
 from unittest import mock
 
-from brain.activities.sea import AshoreActivity, ArriveAshore, ReadHold
+from brain.activities.port import PortActivity
+from brain.activities.sea import ArriveAshore, ReadHold
 from brain.dispatcher import BLOCKED, FINISHED, WORKING, Intent
 from brain.intents import dispatch, to_intent
 
@@ -18,11 +19,11 @@ def _state(where, port="Lisboa"):
     return types.SimpleNamespace(state=where, location=where, port=port, frame=None)
 
 
-class TheAshoreActivityReadsIt(unittest.TestCase):
+class ThePortActivityReadsIt(unittest.TestCase):
     def test_it_reports_the_two_numbers(self):
         with mock.patch("actions.fleet_status.read_fleet_status",
                         return_value={"cargo_capacity": 4108, "cargo_used": 500}):
-            res = AshoreActivity().work(ReadHold(), _state("port_overworld"))
+            res = PortActivity().work(ReadHold(), _state("port_overworld"))
         self.assertEqual(res.status, FINISHED)
         self.assertEqual(res.observed["cargo_capacity"], 4108)
         self.assertEqual(res.observed["cargo_used"], 500)
@@ -32,14 +33,14 @@ class TheAshoreActivityReadsIt(unittest.TestCase):
         set a flag. Treating a missing flag as failure re-read a hold already read."""
         with mock.patch("actions.fleet_status.read_fleet_status",
                         return_value={"cargo_capacity": 4108, "cargo_used": 0}):  # no "ok"
-            res = AshoreActivity().work(ReadHold(), _state("port_overworld"))
+            res = PortActivity().work(ReadHold(), _state("port_overworld"))
         self.assertEqual(res.status, FINISHED)
 
     def test_an_unreadable_hold_is_BLOCKED_and_carries_the_reason(self):
         with mock.patch("actions.fleet_status.read_fleet_status",
                         return_value={"cargo_capacity": None, "cargo_used": None,
                                       "reason": "no ☰ there"}):
-            res = AshoreActivity().work(ReadHold(), _state("building:market"))
+            res = PortActivity().work(ReadHold(), _state("building:market"))
         self.assertEqual(res.status, BLOCKED)
         self.assertIn("☰", res.observed["reason"])
 
@@ -48,11 +49,11 @@ class TheAshoreActivityReadsIt(unittest.TestCase):
         obstructions and re-perceives between ticks, so the retry happens by itself."""
         with mock.patch("actions.fleet_status.read_fleet_status",
                         return_value={"cargo_capacity": None, "cargo_used": None}) as read:
-            AshoreActivity().work(ReadHold(), _state("port_overworld"))
+            PortActivity().work(ReadHold(), _state("port_overworld"))
         self.assertEqual(read.call_count, 1)
 
     def test_arriving_ashore_still_works(self):
-        res = AshoreActivity().work(ArriveAshore(), _state("port_overworld"))
+        res = PortActivity().work(ArriveAshore(), _state("port_overworld"))
         self.assertEqual(res.status, FINISHED)
 
 
@@ -127,7 +128,8 @@ class TheHoldReadsAtSeaToo(unittest.TestCase):
         from brain.activities import sea
 
         self.assertTrue(hasattr(sea, "read_the_hold"))
-        self.assertIn("read_the_hold", inspect.getsource(sea.AshoreActivity.work))
+        from brain.activities.port import PortActivity
+        self.assertIn("read_the_hold", inspect.getsource(PortActivity.work))
         self.assertIn("read_the_hold", inspect.getsource(sea.SeaActivity.work))
 
 
@@ -135,6 +137,7 @@ class TheDispatcherPicksWithoutAmbiguity(unittest.TestCase):
     def test_each_state_has_exactly_one_server_for_a_hold_read(self):
         """Both activities declare ReadHold, which is only safe because they serve disjoint
         states. If that ever overlaps, the winner would be registration order."""
-        from brain.activities.sea import AshoreActivity, SeaActivity
+        from brain.activities.port import PortActivity
+        from brain.activities.sea import SeaActivity
 
-        self.assertFalse(set(SeaActivity.SERVES) & set(AshoreActivity.SERVES))
+        self.assertFalse(set(SeaActivity.SERVES) & set(PortActivity.SERVES))

@@ -1,0 +1,21 @@
+{
+  "purpose": "A tooltip or promotional popup explaining that Deeds (a collectible item/currency) can be exchanged for valuable items with higher-ranking NPCs or at a special exchange location, likely a Pass/Battle Pass advertisement or daily hint.",
+  "full_text": "Deeds can be exchanged for valuable items by the higher-ups.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "50e6d3b4f1260efd",
+  "goal_intent": null,
+  "cached_at": "2026-09-12T03:21:27.929703+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "A tooltip or promotional popup explaining that Deeds (a collectible item/currency) can be exchanged for valuable items with higher-ranking NPCs or at a special exchange location, likely a Pass/Battle Pass advertisement or daily hint.",
+    "full_text": "Deeds can be exchanged for valuable items by the higher-ups.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

@@ -11,7 +11,7 @@ detected, and each candidate is verified by re-reading the list.
 """
 from unittest import mock
 
-import actions.sail_actions as sa
+import actions.port_panel as sa   # the port panel moved here 2026-09-11
 
 
 class _El:

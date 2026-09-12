@@ -1,0 +1,21 @@
+{
+  "purpose": "Game is asking the bot to confirm the purchase of 303 Matchlock Guns at a discounted price of 290,880 gold (17.5% discount applied, no tax)",
+  "full_text": "Confirm Purchase — Trade Goods: Matchlock Gun (Firearms, qty 303) | Purchase Cost: 352,692 | Tax 0%: 0 | Discount: -61,812 | Purchase Price: 290,880 — Total Price: 352,692 | 0 | -61,812 | 290,880 — [Cancel] [OK]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "646cc977a750af52",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-12T04:02:53.183700+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Game is asking the bot to confirm the purchase of 303 Matchlock Guns at a discounted price of 290,880 gold (17.5% discount applied, no tax)",
+    "full_text": "Confirm Purchase — Trade Goods: Matchlock Gun (Firearms, qty 303) | Purchase Cost: 352,692 | Tax 0%: 0 | Discount: -61,812 | Purchase Price: 290,880 — Total Price: 352,692 | 0 | -61,812 | 290,880 — [Cancel] [OK]",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Lorenzo Pinto (the negotiation advisor) is offering to negotiate a 24.5% higher sell price for Myrrh, with a 76.2% success rate and multiple negotiation attempts remaining — the bot must choose whether to accept or decline the negotiation",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 229,006 → 271,417 (24.5% up). Negotiation Success Rate: Failed — 76.2% — Success. Lorenzo Pinto says: In my opinion, we can sell this for 24.5% more. Would you like to negotiate? Options: No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "8dedc5c69cf2374c",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-12T03:27:31.691474+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Lorenzo Pinto (the negotiation advisor) is offering to negotiate a 24.5% higher sell price for Myrrh, with a 76.2% success rate and multiple negotiation attempts remaining — the bot must choose whether to accept or decline the negotiation",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 229,006 → 271,417 (24.5% up). Negotiation Success Rate: Failed — 76.2% — Success. Lorenzo Pinto says: In my opinion, we can sell this for 24.5% more. Would you like to negotiate? Options: No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

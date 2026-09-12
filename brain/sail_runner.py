@@ -216,8 +216,8 @@ class SailRunner:
         # flight. Neither is a failed attempt, and clearing the pending goal on either makes
         # the next tick count a fresh one.
         #
-        # Live 2026-08-29: `Depart` at a port_overworld is served by nobody (AshoreActivity is
-        # there but serves ArriveAshore and ReadHold), so every tick of the walk to the
+        # Live 2026-08-29: `Depart` at a port_overworld is served by nobody (`PortActivity`
+        # is there but serves ArriveAshore and ReadHold), so every tick of the walk to the
         # harbour reported "no activity for state 'port_overworld'". The two-attempt bound was
         # spent in two ticks and the leg gave up while the character was still walking.
         if status in (WORKING, UNRECOGNISED):

@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade result summary showing the completed sale of Iron cargo, displaying profit, tax, surcharge, and updated gold balance after the transaction",
+  "full_text": "Result — Mate Trade EXP: 269,930 | Contribution: 0 | Obtained Trade Point: 3,767 | Trade Fame: 0 | Sales Cost: 37,045,701 | Tax: -2,212,497 | Surcharge: 10,742,781 | Profit: 34,706,049 | Total Amount: 45,575,985 | Balance: 77,598,688,464 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "0e6ef6e075c53e43",
+  "goal_intent": "SellHold",
+  "cached_at": "2026-09-12T05:06:13.977051+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade result summary showing the completed sale of Iron cargo, displaying profit, tax, surcharge, and updated gold balance after the transaction",
+    "full_text": "Result — Mate Trade EXP: 269,930 | Contribution: 0 | Obtained Trade Point: 3,767 | Trade Fame: 0 | Sales Cost: 37,045,701 | Tax: -2,212,497 | Surcharge: 10,742,781 | Profit: 34,706,049 | Total Amount: 45,575,985 | Balance: 77,598,688,464 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

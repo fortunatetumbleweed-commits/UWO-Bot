@@ -25,6 +25,8 @@ from __future__ import annotations
 
 import math
 import re
+
+from loguru import logger
 from typing import Optional, Tuple
 
 # Lazy singleton — RapidOCR (ONNX-port of PP-OCR) is used ONLY for the
@@ -65,26 +67,10 @@ SPEED_CROP  = (1910, 240, 1970, 280)
 LATLON_CROP = (2255, 360, 2395, 400)
 
 
-def speed_crop_for(minimap_crop: tuple[int, int, int, int]) -> tuple[int, int, int, int]:
-    """Compute the SPEED_CROP from the current MINIMAP_CROP."""
-    mx0, my0, _, _ = minimap_crop
-    return (mx0 - 69, my0 + 38, mx0 - 9, my0 + 78)
-
-
 def latlon_crop_for(minimap_crop: tuple[int, int, int, int]) -> tuple[int, int, int, int]:
     """Compute the LATLON_CROP from the current MINIMAP_CROP."""
     _, _, mx1, my1 = minimap_crop
     return (mx1 - 129, my1 - 35, mx1 + 11, my1 + 5)
-
-
-def _current_speed_crop() -> tuple[int, int, int, int]:
-    """Live SPEED_CROP based on the current MINIMAP_CROP module attr.
-    Falls back to the absolute constant if the import fails."""
-    try:
-        from brain.ai_nav.vision_input import MINIMAP_CROP
-        return speed_crop_for(MINIMAP_CROP)
-    except Exception:
-        return SPEED_CROP
 
 
 def _current_latlon_crop() -> tuple[int, int, int, int]:
@@ -105,27 +91,29 @@ _SPEED_RE = re.compile(r"^\s*(\d{1,2}\.\d{1,2})\s*$")
 
 # ── Locating the speed tile instead of assuming where it is ──────────────────
 #
-# The speed number sits in a strip of three stacked tiles immediately LEFT of the mini-map:
-# ship icon → speed (a DECIMAL, e.g. "27.5"), windsock → wind strength (an integer), water →
-# current strength (an integer).
+# The speed number sits in the gauge strip attached to the LEFT of the overworld right panel:
+# tide state, then a ship icon over the speed (a DECIMAL, e.g. "27.5"), a windsock over wind
+# strength (an integer), water over current strength (an integer).
 #
-# `_current_speed_crop` derives its box as an OFFSET from `MINIMAP_CROP`, which is a module
-# constant — and the UI drifts. Measured 2026-08-24 on auto-sail frames: the mini-map's real
-# left edge is x≈1862 while `MINIMAP_CROP` says 1984, a ~120px error that put the crop INSIDE
-# the mini-map disc. `read_speed` then returned None on every at-sea frame, and the departure
-# check fell back to comparing ETAs. (The manual-navigation tool recalibrates `MINIMAP_CROP`
-# at startup, `tools/run_ai_nav_live.py`, which is why the same reader works there — a second
-# copy of this detection lives inline in that file and the two should be consolidated.)
+# THE STRIP IS PART OF THE PANEL, so it is found with it — see
+# `vision.region_detectors.overworld_panel`, which anchors on the season row and measures
+# every box from what it reads. Nothing here is an offset from anything any more.
 #
-# So: FIND the mini-map, then read a generous band beside it. The band does not need to be
-# tight, because the SPEED IS THE ONLY DECIMAL in the strip — wind and current are integers,
-# and `_SPEED_RE` already demands `\d{1,2}\.\d{1,2}`. That makes the read self-disambiguating
-# and tolerant of the drift that broke the fixed crop.
-
-_BAND_LEFT_OF_MINIMAP = 230
-_BAND_RIGHT_INSET = 5
-_BAND_TOP_INSET = 10
-_BAND_HEIGHT = 180
+# WHAT WAS HERE BEFORE, kept because it is the argument for the change. The band was four
+# offsets from `MINIMAP_CROP` (230 left, inset 5, 10 down, 180 tall) with `SPEED_CROP` as an
+# absolute fallback. The offsets produced a 225px-wide band over open sea for an 84px tile,
+# which READ CORRECTLY — the speed is the only decimal in the strip and `_SPEED_RE` demands
+# one, so the looseness was deliberate and it worked. The fallback did not: measured
+# 2026-08-24, `MINIMAP_CROP` said the map began at x 1984 when its real left edge is ~1862,
+# a ~120px error that put the crop INSIDE the mini-map disc, and `read_speed` returned None
+# on every at-sea frame until the locate path was added. 1862 is, to within two pixels, the
+# panel edge the detector now measures on its own.
+#
+# `SPEED_CROP` survives below because `tools/calibrate_ship_arc.py` still saves crops with it.
+# It is a calibration tool's constant now, not a reader's.
+#
+# (A second copy of this detection still lives inline in `tools/run_ai_nav_live.py`, which
+# recalibrates `MINIMAP_CROP` at startup. The two should be consolidated.)
 
 
 def locate_minimap_bbox(elements) -> Optional[tuple]:
@@ -139,23 +127,55 @@ def locate_minimap_bbox(elements) -> Optional[tuple]:
 
 
 def locate_speed_band(img, elements=None) -> Optional[tuple]:
-    """A generous crop box around the speed tile, located from the mini-map. None if unknown.
+    """The speed tile's box, taken from the overworld right panel. None if it is not there.
 
-    Returns None rather than a guess when the mini-map cannot be found — a wrong box reads
-    somebody else's pixels, and "unknown" is the honest answer a caller can fall back on.
+    THROUGH THE PANEL, AND ONLY THROUGH IT (user, 2026-09-11: *"I would like it to be only
+    accessed through the panel, because they exist at the same time"*). The gauge strip is
+    part of that panel and is drawn at sea and nowhere else, so "no panel" and "no speed to
+    read" are the same fact — and returning None then is the honest answer, not a degradation.
+    `SeaActivity` already treats an unreadable speed as deciding nothing and falls through to
+    the ETA.
+
+    WHAT THIS REPLACES, and why the old way was not merely different. The band used to be
+    computed as four offsets from the mini-map: 230px left of it, inset 5, 10 down, 180 tall.
+    Measured on frame 0588 of `data/sessions/trace_barter_cmd_2026-09-11T13-47-33` that gave
+    (1632, 211, 1857, 391) — 225px wide against a tile that is 84px wide, starting 146px left
+    of the strip, out over open sea. It read correctly anyway, because the SPEED IS THE ONLY
+    DECIMAL in the strip and `_SPEED_RE` demands one; the looseness was deliberate and it
+    worked. What did not work was the fallback beneath it. `SPEED_CROP` is (1915, 243, 1975,
+    283) and the panel's minimap runs x[1864,2266] y[200,399], so that crop lands INSIDE the
+    map disc. The module's own comment records it failing exactly that way on 2026-08-24,
+    when `MINIMAP_CROP` said 1984 and the real edge was ~1862 — which is, to within two
+    pixels, the panel's left edge this now measures.
+
+    THE CELL IS FOUND BY ITS CONTENT, not by its index in the strip. `gauges[1]` is the speed
+    tile on every frame looked at so far, and relying on that would be the same assumption as
+    a calibrated coordinate wearing a different hat — a port that stacks the cells otherwise,
+    or a strip that gains one, would silently read the wind. So the caller scans the cells and
+    keeps the decimal, which is the rule that made the loose band safe in the first place.
+    """
+    boxes = speed_candidate_boxes(img, elements)
+    return boxes[0] if boxes else None
+
+
+def speed_candidate_boxes(img, elements=None) -> list:
+    """Every gauge cell of the overworld right panel, top to bottom. Empty when at a port.
+
+    One of them holds the speed. Which one is decided by what is IN it, not by where it sits.
     """
     if elements is None:
         try:
             from vision.omniparser import parse_fast_cached
             elements = list(parse_fast_cached(img))
         except Exception:
-            return None
-    mm = locate_minimap_bbox(elements)
-    if mm is None:
-        return None
-    mx0, my0 = mm[0], mm[1]
-    return (max(0, mx0 - _BAND_LEFT_OF_MINIMAP), max(0, my0 + _BAND_TOP_INSET),
-            max(1, mx0 - _BAND_RIGHT_INSET), my0 + _BAND_TOP_INSET + _BAND_HEIGHT)
+            return []
+    try:
+        from vision.region_detectors.overworld_panel import detect_overworld_panel
+        panel = detect_overworld_panel(img, elements)
+    except Exception as exc:                       # noqa: BLE001 — a read, not a decision
+        logger.debug(f"[sea_hud] overworld panel unavailable: {exc}")
+        return []
+    return list(panel.gauges) if panel is not None else []
 
 
 def read_speed(img, *, elements=None, locate: bool = False) -> Optional[float]:
@@ -179,12 +199,10 @@ def read_speed(img, *, elements=None, locate: bool = False) -> Optional[float]:
         from actions.water_tap import _get_reader
     except Exception:
         return None
-    boxes = []
-    if locate or elements is not None:
-        band = locate_speed_band(img, elements)
-        if band is not None:
-            boxes.append(band)
-    boxes.append(_current_speed_crop())
+    # THE PANEL'S GAUGE CELLS, and nothing else. No offsets from the mini-map and no
+    # absolute fallback: the strip and the panel are drawn together, so if the panel is not
+    # there, there is no speed on screen to read.
+    boxes = speed_candidate_boxes(img, elements)
 
     raw = []
     for box in boxes:

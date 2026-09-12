@@ -1,0 +1,21 @@
+{
+  "purpose": "Thomas Tew is offering to negotiate a 24.5% higher sell price for the current trade good, with a 76.2% success rate and multiple negotiation attempts remaining — the bot must choose whether to accept or decline the negotiation offer",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 476,459 → 562,932 (24.5% increase). Negotiation Success Rate: Failed | 76.2% | Success. Thomas Tew: We should be able to sell this product for 24.5% more. Would you like to negotiate? Options: No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "d5724892a831b636",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-12T04:28:28.487905+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Thomas Tew is offering to negotiate a 24.5% higher sell price for the current trade good, with a 76.2% success rate and multiple negotiation attempts remaining — the bot must choose whether to accept or decline the negotiation offer",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 476,459 → 562,932 (24.5% increase). Negotiation Success Rate: Failed | 76.2% | Success. Thomas Tew: We should be able to sell this product for 24.5% more. Would you like to negotiate? Options: No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

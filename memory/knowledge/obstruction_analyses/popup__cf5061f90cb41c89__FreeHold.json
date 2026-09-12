@@ -1,0 +1,21 @@
+{
+  "purpose": "An NPC in London is hailing the player with a tutorial or hint prompt, saying they have something good to teach — this is an ambient NPC interaction unrelated to freeing the hold",
+  "full_text": "You there. Come over here, I have something good to teach you.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "cf5061f90cb41c89",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-12T03:24:05.812922+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "An NPC in London is hailing the player with a tutorial or hint prompt, saying they have something good to teach — this is an ambient NPC interaction unrelated to freeing the hold",
+    "full_text": "You there. Come over here, I have something good to teach you.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

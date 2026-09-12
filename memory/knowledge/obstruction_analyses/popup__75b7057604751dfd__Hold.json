@@ -1,0 +1,21 @@
+{
+  "purpose": "Albrecht Wallenstein is prompting the bot to attempt price negotiation on a purchase, offering a 21.5% discount (96,525 → 70,785 gold) with a 76.2% success rate and multiple remaining negotiation attempts",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 96,525 → 70,785 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success.",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "75b7057604751dfd",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-12T04:14:32.497301+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Albrecht Wallenstein is prompting the bot to attempt price negotiation on a purchase, offering a 21.5% discount (96,525 → 70,785 gold) with a 76.2% success rate and multiple remaining negotiation attempts",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 96,525 → 70,785 (-21.5%). Negotiation Success Rate: Failed | 76.2% | Success.",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

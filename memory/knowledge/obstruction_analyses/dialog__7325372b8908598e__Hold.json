@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase Result dialog confirming a bulk Candle purchase completed at a total cost of 96,525 gold (after a 23,265 discount and 5,445 tax), awaiting OK to finalize the transaction",
+  "full_text": "Result — Purchase Cost: 114,345 | Tax: 5,445 | Discount: -23,265 | Total Amount: 96,525 | Balance: 77,552,930,795 | OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "7325372b8908598e",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-12T04:14:52.758132+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase Result dialog confirming a bulk Candle purchase completed at a total cost of 96,525 gold (after a 23,265 discount and 5,445 tax), awaiting OK to finalize the transaction",
+    "full_text": "Result — Purchase Cost: 114,345 | Tax: 5,445 | Discount: -23,265 | Total Amount: 96,525 | Balance: 77,552,930,795 | OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}
