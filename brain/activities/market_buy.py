@@ -262,6 +262,18 @@ def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn, s
         credited = credit_the_shelf_drop(state, before, goods)
         if not credited:
             credited = _credit_the_cargo_rise(state, orders, goods, frame, cargo_before)
+        # THE CONFIRM CARD ALREADY ANSWERED. `_on_result` credits what the card named the
+        # moment the purchase is proved, so by the time we are back on the grid the ledger is
+        # current and neither reading above is needed.
+        #
+        # This is the case the two of them cannot cover between them, and it is the NORMAL one
+        # when gathering: buying out a shelf destroys the AFTER reading the shelf credit needs,
+        # and the cargo total is an aggregate that names no good — so a port stocking both Iron
+        # and Matchlock could never attribute a rise to either. The card names one good and its
+        # units, and does not care what the tile behind it reads.
+        if not credited and state.credited_by_card:
+            credited = [("the confirm card", 0)]
+        state.credited_by_card = False
         stuck = None if credited else _stocked_but_unmoved(state, orders, goods,
                                                            before=before)
         state.awaiting_credit = None
@@ -285,8 +297,9 @@ def on_purchase_page(state, goal, port, *, frame, capture_fn, tap_fn, omni_fn, s
             # which is authoritative. It costs a tab switch, and only on a purchase whose
             # shelf could not be read — and the seed hands the Purchase page back now, so it
             # no longer breaks the restock that follows.
-            logger.info("[market] the shelf could not be read across that purchase — "
-                        "re-reading the hold rather than keeping a count we know is stale")
+            logger.info("[market] the shelf could not be read across that purchase, and no "
+                        "confirm card credited it — re-reading the hold rather than keeping "
+                        "a count we know is stale")
             state.ledger = None
         if credited:
             logger.info(f"[market] the shelf dropped {credited} — credited to the ledger")

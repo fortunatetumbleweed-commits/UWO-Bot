@@ -38,6 +38,8 @@ unit test that reaches for the device is a slow test.
 """
 from __future__ import annotations
 
+import re
+
 from typing import Any, Optional, Sequence
 
 from loguru import logger
@@ -200,6 +202,40 @@ def _detect_dialog(frame, elements):
     except Exception as exc:                      # a classifier must never raise into a tick
         logger.debug(f"[market-context] dialog detection skipped: {exc}")
         return None
+
+
+def confirm_card_purchase(frame, *, elements=None, dialog=None):
+    """What the CONFIRM card says is about to be bought: (good, units), or None.
+
+    The card reads `Confirm Purchase | Trade Goods: Candle (Sundries) x495 | ...`, so the
+    good and the quantity are both on it one tap before the purchase commits. That makes it a
+    source of per-good units that does NOT depend on the shelf — which matters because the
+    purchase that empties a shelf destroys the very reading the shelf credit needs, and
+    gathering empties shelves by design.
+
+    The category in brackets is dropped: `Candle (Sundries)` is the good `Candle`.
+
+    NOT A DECISION, just a reading. Whether to believe it is the caller's, and the result card
+    is what says the purchase actually happened.
+    """
+    if elements is None and frame is not None:
+        from vision.omniparser import parse_fast_cached
+        elements = parse_fast_cached(frame)
+    text = " | ".join((getattr(e, "label", "") or "").strip()
+                      for e in (elements or []) if (getattr(e, "label", "") or "").strip())
+    if dialog is None and frame is not None:
+        dialog = _detect_dialog(frame, elements)
+    card = _card_text(dialog, text)
+    m = re.search(r"trade goods\s*:?\s*([A-Za-z][A-Za-z '\-]*?)\s*(?:\([^)]*\))?\s*x\s*([\d,]+)",
+                  card, re.I)
+    if not m:
+        return None
+    good = m.group(1).strip(" |")
+    try:
+        qty = int(m.group(2).replace(",", ""))
+    except ValueError:
+        return None
+    return (good, qty) if good and qty > 0 else None
 
 
 def _card_text(dialog, whole_frame_text: str) -> str:
