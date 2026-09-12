@@ -58,7 +58,15 @@ from loguru import logger
 
 # The seasons, as the game draws them. The row reads "☀ | Summer | Aug | 00:10" at a port and
 # "☀ | Summer | Aug | Night" at sea — same row, and the last cell is a clock or a day phase.
-_SEASONS = ("spring", "summer", "autumn", "fall", "winter")
+#
+# THE TROPICS HAVE THEIR OWN SEASONS, and leaving them out cost 23% of at-sea frames before a
+# single live tick. Sampled across the September traces, the misses were not OCR failures:
+# off Hutu Village the row reads "Wet Season Oct" and "Wet Season Dec". The game names the
+# season by LATITUDE, and a four-name list is a temperate assumption written down.
+# "wet" and "dry" stand alone because OCR truncates them: off Hutu Village the row came back
+# as just `Dry`. They are safe as bare words here only because a match must still produce a
+# COHERENT panel — a tab strip above it or a list below it — before it is believed.
+_SEASONS = ("spring", "summer", "autumn", "fall", "winter", "wet", "dry")
 
 # NO SEARCH REGION. There was one — the right fifth of the frame — and it was the same
 # mistake in miniature as the constants above (user, 2026-09-11: *"I hope to avoid the
@@ -84,6 +92,16 @@ _MIN_ROW_H_FRAC = 0.11
 
 # A row spans most of the panel; a sub-label does not.
 _ROW_MIN_WIDTH_FRAC = 0.6
+
+# ABOVE THIS, THE ANCHOR IS NOT A CELL — the parse has swallowed the panel's whole HEAD (tab
+# strip, minimap, season row) into one box and labelled it with the season. Measured across 66
+# anchors in the September traces the two cases do not overlap: a season CELL is 28-48px tall,
+# a merged head is 230-314. It happens on 29 of those 66, so it is the normal case, not an
+# edge case.
+_MERGED_HEAD_MIN_H = 80
+
+# A text line in that row, used to carve the season strip off the bottom of a merged head.
+_SEASON_LINE_H = 44
 
 # How far a part may sit outside the measured span and still be attached to it, as a fraction
 # of the panel width. Small, because what it must resolve is a seam: the sea's gauge strip is
@@ -157,13 +175,22 @@ def detect_overworld_panel(frame, elements: Sequence[Any] = None) -> Optional[Ov
     if not els:
         return None
 
-    season = _season_row(els)
+    # TRY EACH CANDIDATE, KEEP THE ONE THAT MAKES A PANEL. A substring test can match
+    # something that is not the row, so the structure decides rather than the word: a real
+    # anchor has a tab strip above it or a list below it. No candidate at all means no panel,
+    # which is a real answer — a building interior has none.
+    for hit in _season_candidates(els):
+        panel = _panel_from(frame, els, hit)
+        if panel is not None:
+            return panel
+    logger.debug("[overworld_panel] no season row — not an overworld")
+    return None
+
+
+def _panel_from(frame, els, hit) -> Optional[OverworldPanel]:
+    """Build the panel around one candidate season row, or None if it does not cohere."""
+    season = _season_row(els, hit)
     if season is None:
-        # NO SEASON ROW, NO PANEL. Deliberately strict: without the anchor every other part
-        # would have to be found by a position written down here, which is the thing this
-        # module exists to stop. A caller that wants "is there anything on the right" should
-        # ask the chrome detector, which is what that count is for.
-        logger.debug("[overworld_panel] no season row — not an overworld")
         return None
 
     x0, x1 = _span(els, season)
@@ -182,6 +209,12 @@ def detect_overworld_panel(frame, elements: Sequence[Any] = None) -> Optional[Ov
     bottom = min(_height(frame, els), max((r[2] for r in rows), default=0) + row_h)
     list_region = (x0, season[3], x1, bottom) if rows else None
 
+    # A ROW WITH NOTHING AROUND IT IS NOT THE ANCHOR. The word matched, but a panel has a tab
+    # strip above it or a list below it; without either, this is some other text that happens
+    # to name a season.
+    if not tabs and not rows:
+        return None
+
     # THE STRIP IS PART OF THE PANEL, so the panel's own box reaches around it.
     left = min([g[0] for g in gauges], default=x0)
     return OverworldPanel(box=(left, top, x1, list_region[3] if list_region else season[3]),
@@ -189,23 +222,66 @@ def detect_overworld_panel(frame, elements: Sequence[Any] = None) -> Optional[Ov
                           list_region=list_region, rows=tuple(rows), gauges=tuple(gauges))
 
 
-def _season_row(els) -> Optional[Tuple[int, int, int, int]]:
+def _season_candidates(els) -> List:
+    """Every element whose label CONTAINS a season word, top to bottom.
+
+    CONTAINS, NOT EQUALS. The row is several cells and the parse merges them as it pleases:
+    measured across the September traces it came back as one token more than once —
+    `Wet Season Oct` at sea, `plAutumnerNov` at a port, where "Autumn" is welded to its
+    neighbours on both sides. Demanding an exact match lost the whole panel on those frames.
+    (Contrast `_is_the_building_list`, which matches building names EXACTLY and must: there
+    the risk runs the other way, a quest objective containing the word "market".)
+
+    Several, not one, because a substring test can hit something that is not the row. The
+    caller tries each and keeps the one that yields a coherent panel, which is a structural
+    check rather than another coordinate.
+    """
+    out = [e for e in els
+           if any(w in ((getattr(e, "label", "") or "").strip().lower()) for w in _SEASONS)]
+    return sorted(out, key=lambda e: e.y1)
+
+
+def _season_row(els, hit) -> Optional[Tuple[int, int, int, int]]:
     """The ☀ | Season | Month | time row, as one box spanning its cells.
 
-    Found by the SEASON WORD, which is one of five and is drawn the same everywhere. The month
-    and the clock beside it vary; the season does not.
+    TWO SHAPES OF ANCHOR, because the parse merges as it pleases. Either the season CELL
+    alone, or the panel's whole HEAD in one box carrying the season as its label — and the
+    head's BOTTOM edge is the season row's bottom, which is the only part of it this needs.
+
+    Getting that wrong is not a near miss. The band below is padded from the hit's own height,
+    so a 314px-tall head produced a 577px "row" spanning the whole frame, and every box
+    downstream was computed from it.
     """
-    hit = next((e for e in els
-                if (getattr(e, "label", "") or "").strip().lower() in _SEASONS), None)
     if hit is None:
         return None
+    if (hit.y2 - hit.y1) > _MERGED_HEAD_MIN_H:
+        return (hit.x1, hit.y2 - _SEASON_LINE_H, hit.x2, hit.y2)
     # Its neighbours COMPLETE the box, and they are the cells that sit INSIDE its band — not
     # everything that crosses it. The minimap is one tall box spanning y[134,425] at a port,
     # so "anything whose band contains this line" swallowed it and the row came back 300px
     # tall, which then put the tab search above the wrong line and returned the ACCOUNT BAR
     # at the top of the screen as the tab strip.
     pad = max(16, (hit.y2 - hit.y1) // 2)
-    row = [e for e in els if e.y1 >= hit.y1 - pad and e.y2 <= hit.y2 + pad]
+    band = sorted((e for e in els if e.y1 >= hit.y1 - pad and e.y2 <= hit.y2 + pad),
+                  key=lambda e: e.x1)
+
+    # CONTIGUOUS WITH THE ANCHOR, not merely level with it. Dropping the right-of-frame
+    # prescreen was right — it was an absolute position — but it let ANY element at the
+    # season's height join the row: at one port a box on the far left came in and the span
+    # came back starting at x 335 instead of 1862, which then found no tabs and no rows and
+    # threw the whole panel away.
+    #
+    # The cells of this row sit ~30-42px apart against a ~102px-wide season word, so growing
+    # out from the anchor while the gap stays under one cell-width keeps the row and stops at
+    # the panel's edge. A relation between things read off the frame, not a coordinate.
+    gap = max(40, hit.x2 - hit.x1)
+    i = band.index(hit)
+    lo = hi = i
+    while lo > 0 and band[lo].x1 - band[lo - 1].x2 <= gap:
+        lo -= 1
+    while hi < len(band) - 1 and band[hi + 1].x1 - band[hi].x2 <= gap:
+        hi += 1
+    row = band[lo:hi + 1]
     return (min(e.x1 for e in row), min(e.y1 for e in row),
             max(e.x2 for e in row), max(e.y2 for e in row))
 

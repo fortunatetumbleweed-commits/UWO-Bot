@@ -217,6 +217,60 @@ class TheBoxesAreDerivedNotRemembered(unittest.TestCase):
         self.assertLessEqual(p.box[3], 1080)
 
 
+class TheAnchorSurvivesHowTheParseMangesIt(unittest.TestCase):
+    """Three ways the season row comes back that an exact match on a lone word did not
+    survive. Measured over 120 frames of the September traces BEFORE any of this ran live:
+    the port was found on 57% and the sea on 77%. All three are now covered, and every
+    remaining miss is a frame with no panel on it — a blank loader, or a player-info card the
+    family classifier mislabelled.
+    """
+
+    def test_THE_TROPICS_HAVE_THEIR_OWN_SEASONS(self):
+        """`Wet Season Oct` off Hutu Village. The game names the season by LATITUDE, so a
+        list of the four temperate ones is an assumption written down — and it cost 23% of
+        at-sea frames."""
+        els = [e for e in SEA if e.label != "Summer"]
+        els.append(_el("Wet Season Oct", 1944, 402, 2130, 448, "text"))
+        p = detect_overworld_panel(_FRAME, els)
+        self.assertIsNotNone(p)
+        self.assertEqual(len(p.tabs), 4)
+
+    def test_a_truncated_season_still_anchors(self):
+        """Off the same village it came back as just `Dry`."""
+        els = [e for e in SEA if e.label != "Summer"]
+        els.append(_el("Dry", 1944, 402, 2010, 430, "text"))
+        self.assertIsNotNone(detect_overworld_panel(_FRAME, els))
+
+    def test_THE_MERGED_HEAD_is_not_a_cell(self):
+        """The parse swallows the tab strip, the minimap and the season row into ONE box and
+        labels it with the season — 29 of 66 anchors sampled. Its BOTTOM edge is the row's
+        bottom; treating it as a cell padded a 314px box into a 577px 'row' spanning the
+        whole frame, and every box downstream was computed from that."""
+        els = [e for e in PORT if e.label not in ("Summer", "Aug", "00.10", "10")]
+        els.append(_el("Spring", 1864, 128, 2372, 442, "button"))
+        p = detect_overworld_panel(_FRAME, els)
+        self.assertIsNotNone(p)
+        self.assertLess(p.season_row[3] - p.season_row[1], 60, p.season_row)
+        self.assertEqual([r[0] for r in p.rows], ["Harbor", "Market"])
+
+    def test_THE_ROW_IS_CONTIGUOUS_WITH_THE_ANCHOR(self):
+        """Level with it is not enough. Dropping the right-of-frame prescreen was right — it
+        was an absolute position — but it let anything at the season's height join the row: at
+        one port a box on the far left came in and the span started at x 335 instead of 1862,
+        so no tabs and no rows were found and the panel was thrown away."""
+        els = list(PORT) + [_el("Language", 335, 400, 520, 432, "text")]
+        p = detect_overworld_panel(_FRAME, els)
+        self.assertIsNotNone(p)
+        self.assertGreater(p.season_row[0], 1800, p.season_row)
+
+    def test_a_season_word_with_no_panel_around_it_is_refused(self):
+        """The substring test can hit text that is not the row, so the STRUCTURE decides: a
+        real anchor has a tab strip above it or a list below it."""
+        self.assertIsNone(detect_overworld_panel(_FRAME, [
+            _el("Summer Festival is here!", 400, 500, 900, 540, "text"),
+        ]))
+
+
 class ItReportsStructureNotMeaning(unittest.TestCase):
 
     def test_it_does_not_name_the_tabs(self):
