@@ -18,15 +18,17 @@ edge case:
     Gun blocks it even for an unambiguous single-good purchase (user, 2026-09-12).
 
 The confirm card is independent of both. It says what the game is about to sell us, per good,
-and does not care what the tile behind it reads.
+and does not care what the tile behind it reads. IT IS A TABLE, and it is read as one:
 
-    Confirm Purchase | Trade Goods: Candle (Sundries) x495 | Purchase Cost: 114,345 | ... | OK
-    Result. Purchase Cost 254,364. Tax 42,911. Total Amount 248,677. Balance … OK
+    y120   Trade Goods    Purchase Cost   Tax 5%    Discount    Purchase Price
+    y170   Raisin
+    y236   Luxuries
+    y247   410            <- the units, a cell of its own under the same header
 
-Note which card carries what: CONFIRM has the quantity, RESULT has none — it reports money.
-Confirm says how many, result says it happened, and neither does both. CLAUDE.md's note that
-"the per-good quantity lives on the tile, not in the dialog" is right about the result card
-and wrong about the confirm card.
+Note which card carries what: CONFIRM has the quantity, RESULT has none — it reports money
+(`Purchase Cost 254,364 / Tax 42,911 / Total Amount 248,677`). Confirm says how many, result
+says it happened, and neither does both. CLAUDE.md's note that "the per-good quantity lives on
+the tile, not in the dialog" is right about the result card and wrong about the confirm card.
 """
 from __future__ import annotations
 
@@ -38,39 +40,78 @@ from brain.market_ledger import MarketLedger
 from brain.market_state import MarketState
 
 
-def _el(label):
+def _el(label, x1, y1, x2, y2):
     return types.SimpleNamespace(label=label, element_type="text",
-                                 x1=800, y1=400, x2=1600, y2=440)
+                                 x1=x1, y1=y1, x2=x2, y2=y2)
 
 
-# The cards exactly as they were read at Amsterdam and Tripoli on 2026-09-11.
-CONFIRM = [_el("Confirm Purchase"),
-           _el("Trade Goods: Candle (Sundries) x495"),
-           _el("Purchase Cost: 114,345"), _el("Tax 6%: 5,445"), _el("Cancel"), _el("OK")]
-RESULT = [_el("Result"), _el("Purchase Cost 254,364"), _el("Tax 42,911"),
-          _el("Discount -48,598"), _el("Total Amount 248,677"), _el("OK")]
+# ── The Bordeaux confirm card, frame_0073, EXACTLY as OmniParser returned it ──────────
+#
+# NOT A TRANSCRIPTION. The first version of this test used
+# `Trade Goods: Candle (Sundries) x495`, a string taken from the obstruction consult's
+# `full_text` — which is Claude's RENDERING of the card, not the parse. The reader matched
+# that fixture and never a live frame: at Bordeaux on 2026-09-12 every purchase fell through
+# to "no confirm card credited it" and went to the Sell grid exactly as before, while these
+# tests passed. A model's description of a screen is not a reading of it.
+CONFIRM = [
+    _el("Confirm Purchase", 1065, 53, 1337, 97),
+    # the column headers
+    _el("Trade Goods", 630, 120, 806, 160),
+    _el("Purchase Cost", 1048, 120, 1242, 160),
+    _el("Tax 5%", 1312, 120, 1416, 160),
+    _el("Discount", 1562, 120, 1684, 160),
+    _el("Purchase Price", 1760, 120, 1962, 160),
+    # the first column: the good, its category, its units — three stacked cells
+    _el("Raisin", 404, 170, 959, 226),
+    _el("Luxuries", 518, 236, 634, 270),
+    _el("410", 469, 247, 507, 285),
+    # the money row
+    _el("282,900", 1086, 208, 1197, 248),
+    _el("11,070", 1332, 211, 1426, 251),
+    _el("237,390", 1806, 212, 1914, 252),
+    _el("Ok", 1204, 962, 1423, 1010),
+    _el("Cancel", 985, 963, 1200, 1011),
+]
+
+# The result card, also from a live run: money only, never a quantity.
+RESULT = [_el("Result", 1100, 200, 1300, 240),
+          _el("Purchase Cost 254,364", 900, 300, 1500, 340),
+          _el("Total Amount 248,677", 900, 400, 1500, 440),
+          _el("Ok", 1204, 900, 1423, 950)]
 
 
 class TheConfirmCardNamesTheGoodAndTheUnits(unittest.TestCase):
 
     def test_the_live_card(self):
+        """Read from the TABLE: the good and its units are cells under the Trade Goods
+        header, not a phrase in one label."""
         self.assertEqual(confirm_card_purchase(None, elements=CONFIRM, dialog=False),
+                         ("Raisin", 410))
+
+    def test_the_category_cell_is_not_mistaken_for_the_good(self):
+        """`Luxuries` sits between the good and its units in the same column."""
+        good, _qty = confirm_card_purchase(None, elements=CONFIRM, dialog=False)
+        self.assertEqual(good, "Raisin")
+
+    def test_the_money_columns_are_not_mistaken_for_the_units(self):
+        """282,900 and 237,390 are larger and nearer the top than the 410 — and they are in
+        OTHER columns, which is what the header anchor is for."""
+        _good, qty = confirm_card_purchase(None, elements=CONFIRM, dialog=False)
+        self.assertEqual(qty, 410)
+
+    def test_THE_CARD_MAY_SIT_ANYWHERE(self):
+        """Every position is relative to the `Trade Goods` header, so a shifted card reads
+        the same — the cutout offset moves this card like everything else."""
+        shifted = [_el(e.label, e.x1 + 120, e.y1 + 90, e.x2 + 120, e.y2 + 90) for e in CONFIRM]
+        self.assertEqual(confirm_card_purchase(None, elements=shifted, dialog=False),
+                         ("Raisin", 410))
+
+    def test_the_merged_form_still_works(self):
+        """The parse sometimes groups the column into one label; that stays supported as a
+        FALLBACK, not as the rule."""
+        merged = [_el("Trade Goods: Candle (Sundries) x495", 630, 120, 1200, 160)]
+        self.assertEqual(confirm_card_purchase(None, elements=merged, dialog=False),
                          ("Candle", 495))
-
-    def test_the_category_in_brackets_is_not_part_of_the_name(self):
-        self.assertEqual(
-            confirm_card_purchase(None, elements=[_el("Trade Goods: Iron (Metal) x517")],
-                                  dialog=False), ("Iron", 517))
-
-    def test_a_two_word_good(self):
-        self.assertEqual(
-            confirm_card_purchase(None, elements=[_el("Trade Goods: Matchlock Gun (Firearms) x1,205")],
-                                  dialog=False), ("Matchlock Gun", 1205))
-
-    def test_a_thousands_separator(self):
-        self.assertEqual(
-            confirm_card_purchase(None, elements=[_el("Trade Goods: Candle x1,047")],
-                                  dialog=False), ("Candle", 1047))
 
     def test_THE_RESULT_CARD_CARRIES_NO_QUANTITY(self):
         """It reports money. Trusting it alone to credit a ledger cannot work, which is why
@@ -79,7 +120,9 @@ class TheConfirmCardNamesTheGoodAndTheUnits(unittest.TestCase):
 
     def test_a_page_full_of_goods_is_not_a_confirm_card(self):
         self.assertIsNone(confirm_card_purchase(
-            None, elements=[_el("Iron"), _el("Candle"), _el("Purchase")], dialog=False))
+            None, elements=[_el("Iron", 300, 400, 500, 440),
+                            _el("Candle", 300, 500, 500, 540),
+                            _el("Purchase", 300, 600, 500, 640)], dialog=False))
 
 
 class TheCountSurvivesABoughtOutShelf(unittest.TestCase):
