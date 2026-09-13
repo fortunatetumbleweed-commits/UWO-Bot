@@ -303,6 +303,17 @@ appear to disagree, the principle wins and the rule is out of date.*
 - **Scoped test runs** — run only the tests for modules you edited;
   escalate to the full suite when changes touch ≥3 subdirs or critical-
   path modules (perception, recovery, planner, FSM core).
+  - **THE SUITE HAS TWO HALVES, and a change usually belongs to one** (user, 2026-09-13:
+    *"changing one does not affect the other"*).  `pytest -m "not business"` is the
+    navigation half, `pytest -m "not navigation"` the business half; plain `pytest` is
+    still everything.  The markers are DERIVED from the modules each file names, not
+    declared in it (`tests/groups.py`), so a test joins a half the day it starts touching
+    one, and a file naming both halves — or neither — runs in every group.
+  - **The exception is what they share.**  `brain/perceive.py`, `brain/dispatcher.py`,
+    `vision/sea_hud.py` and `vision/omniparser.py` are read by both halves; change one and
+    run the WHOLE suite.  That is not hypothetical — the 2026-09-12 navigation regression
+    was a `read_speed` change made for the business run, and one group would have missed it.
+    conftest prints a warning when a group filter is used with one of these modified.
 - **Flow completeness** — a flow is complete only when it (1) ends at a
   recognised state AND (2) contains at least one positive transaction
   (confirm / buy / sell / recruit / set-sail).  Back / Home = Cancel,

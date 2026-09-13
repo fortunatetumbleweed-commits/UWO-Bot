@@ -71,6 +71,7 @@ deps (`pip install -r requirements.txt`), and model weights
 | **Inspect frames + trace** | `python -m tools.tick_viewer <session>` | step through ticks, jump to issue ticks |
 | **Offline sim** | `python -m tools.sim_ai_nav` · `python -m tools.run_sim_voyage` | replay perception/steering without the phone |
 | **Regression scenarios** | `python -m pytest tests/tactical_scenarios/` | perceive-from-frames replays of hard cases |
+| **Test one half** | `python -m pytest -m "not business"` · `-m "not navigation"` | the suite splits into navigation and business; see `tests/groups.py` |
 | **Capture a voyage** | `python -m tools.capture_voyage` · `python -m tools.sail_capture` | record frames + trace for training/eval |
 | **Autonomous grow loop** | `python run_task.py tasks/self_grow.yaml` | sail-and-trade loop *(early — see limits)* |
 | **Interactive CLI** | `python run.py` | manual commands: goto, sail, trade, explore |

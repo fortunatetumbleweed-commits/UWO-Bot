@@ -18,6 +18,7 @@ here. A test that genuinely needs the device must opt in explicitly:
 
 and those are skipped by default; run them with `--device`.
 """
+import pathlib
 import subprocess
 import sys
 
@@ -105,12 +106,59 @@ def pytest_collection_modifyitems(config, items):
             if "stage_perception" in item.keywords:
                 item.add_marker(skip_percep)
 
+    _mark_the_group(items)
+    _warn_if_a_shared_module_changed(config)
+
     if config.getoption("--device"):
         return
     skip = pytest.mark.skip(reason="needs the real phone; pass --device to run")
     for item in items:
         if "device" in item.keywords:
             item.add_marker(skip)
+
+
+def _mark_the_group(items):
+    """Mark each file `navigation` or `business` from the modules it names.
+
+    Derived, never declared — see tests/groups.py for why and for what the split buys. A file
+    that names both sides, or neither, gets no marker and runs in every group.
+    """
+    from tests import groups
+
+    seen = {}
+    for item in items:
+        path = str(getattr(item, "fspath", "") or "")
+        if not path:
+            continue
+        if path not in seen:
+            try:
+                seen[path] = groups.classify(pathlib.Path(path).read_text(errors="ignore"))
+            except OSError:
+                seen[path] = None
+        if seen[path]:
+            item.add_marker(getattr(pytest.mark, seen[path]))
+
+
+def _warn_if_a_shared_module_changed(config):
+    """Half the suite is not enough when the change is in the half they share.
+
+    This is the rule the split needs to be safe rather than merely fast, and it is not
+    hypothetical: on 2026-09-12 `read_speed` was made more careful for the business run and
+    doubled the navigation tick, and `vision/sea_hud.py` is a file both halves read.
+    """
+    from tests import groups
+
+    if not any("navigation" in m or "business" in m for m in (config.getoption("-m") or "",)):
+        return
+    try:
+        changed = subprocess.check_output(
+            ["git", "diff", "--name-only", "HEAD"], text=True, timeout=10).split()
+    except Exception:
+        return
+    shared = [f for f in changed if f in groups.SHARED_MODULES]
+    if shared:
+        print("\n*** " + ", ".join(shared) + " is read by BOTH halves — run the whole suite, "
+              "not one group. See tests/groups.py.\n")
 
 
 @pytest.fixture(autouse=True)
