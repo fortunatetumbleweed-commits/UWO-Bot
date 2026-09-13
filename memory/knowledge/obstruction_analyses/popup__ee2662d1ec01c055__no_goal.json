@@ -1,0 +1,21 @@
+{
+  "purpose": "A floating barrel/treasure item has appeared on the sea map offering obtainable loot, showing the surrounding area's activity counters (Sea Exploration x0, Explore Land x0, Fishing x0, Cannot Salvage x0) and an 'Obtain' button to collect it",
+  "full_text": "Sea Exploration x0, Explore Land x0, Fishing x0, Cannot Salvage x0. Obtain. TW 0.0. Season 7 Key M... Full Moon Luck... Admiral Chronicle: Move to Cathedral in Den Helder (0/1)",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "ee2662d1ec01c055",
+  "goal_intent": null,
+  "cached_at": "2026-09-12T22:27:58.028687+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A floating barrel/treasure item has appeared on the sea map offering obtainable loot, showing the surrounding area's activity counters (Sea Exploration x0, Explore Land x0, Fishing x0, Cannot Salvage x0) and an 'Obtain' button to collect it",
+    "full_text": "Sea Exploration x0, Explore Land x0, Fishing x0, Cannot Salvage x0. Obtain. TW 0.0. Season 7 Key M... Full Moon Luck... Admiral Chronicle: Move to Cathedral in Den Helder (0/1)",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

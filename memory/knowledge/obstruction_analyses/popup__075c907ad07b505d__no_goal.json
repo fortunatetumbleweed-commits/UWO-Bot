@@ -1,0 +1,21 @@
+{
+  "purpose": "A side panel showing the player's current voyage activity tallies (Sea Exploration, Explore Land, Fishing, Cannot Salvage counts) and quest/chronicle reminders, which has expanded or appeared as a persistent HUD panel on the right side of the screen — likely the activity/log sidebar that tracks ongoing sailing statistics and active chronicle quests.",
+  "full_text": "TW 0.0 3A Sea Exploration ×0 Explore Land ×0 Fishing ×0 Cannot Salvage ×0 Season 7 Key M... Full Moon Luck... Admiral Chronicle: Move to Cathedral in Den Helder (0/1) Proceed with another Relationship Chronicle. New Royal Order available. Visit Amsterdam Castle. You have a new request. Go find the nearest.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "075c907ad07b505d",
+  "goal_intent": null,
+  "cached_at": "2026-09-12T22:48:30.384481+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A side panel showing the player's current voyage activity tallies (Sea Exploration, Explore Land, Fishing, Cannot Salvage counts) and quest/chronicle reminders, which has expanded or appeared as a persistent HUD panel on the right side of the screen — likely the activity/log sidebar that tracks ongoing sailing statistics and active chronicle quests.",
+    "full_text": "TW 0.0 3A Sea Exploration ×0 Explore Land ×0 Fishing ×0 Cannot Salvage ×0 Season 7 Key M... Full Moon Luck... Admiral Chronicle: Move to Cathedral in Den Helder (0/1) Proceed with another Relationship Chronicle. New Royal Order available. Visit Amsterdam Castle. You have a new request. Go find the nearest.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

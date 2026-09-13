@@ -1,0 +1,21 @@
+{
+  "purpose": "A context menu or radial action popup has appeared on the sea chart, showing available maritime actions at the current location — Sea Exploration, Explore Land, Fishing, and Cannot Salvage — likely triggered by tapping on the sea or the ship, plus a side panel showing quest/chronicle info",
+  "full_text": "Sea Exploration x0 | Explore Land x0 | Fishing x0 | Cannot Salvage x0 | Season 7 Key M... | Move to Cathedral in Den Helder (0/1) | Proceed with another Relationship Chronicle | New Royal Order available. Visit Amsterdam Castle. | You have a new request. Go find the nearest...",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "187142b09a6a8a61",
+  "goal_intent": null,
+  "cached_at": "2026-09-12T22:40:03.904692+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "A context menu or radial action popup has appeared on the sea chart, showing available maritime actions at the current location — Sea Exploration, Explore Land, Fishing, and Cannot Salvage — likely triggered by tapping on the sea or the ship, plus a side panel showing quest/chronicle info",
+    "full_text": "Sea Exploration x0 | Explore Land x0 | Fishing x0 | Cannot Salvage x0 | Season 7 Key M... | Move to Cathedral in Den Helder (0/1) | Proceed with another Relationship Chronicle | New Royal Order available. Visit Amsterdam Castle. | You have a new request. Go find the nearest...",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}
