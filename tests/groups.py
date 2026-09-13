@@ -5,15 +5,17 @@ business, most of them do not overlap, and changing one does not affect the othe
 difference is upstream, at the dispatcher level, and the sea gauges, those are shared. If
 those are not touched, generally we only need to run the tests for one group."*
 
-Measured on 2026-09-12, running each group on its own:
+Measured 2026-09-13, all three green, on a quiet machine:
 
-    navigation    37 files   4:42   (slow per file — it loads the minimap/shoreline models)
-    business     230 files   7:21
-    shared       245 files   4:08   (vision primitives, hygiene, the four that span both)
+    pytest -m "not business"     2,336 tests    7:57    the navigation half
+    pytest -m "not navigation"   5,188 tests   11:12    the business half
+    pytest                       5,622 tests   16:15    everything
 
-So a navigation change verifies in about 9 minutes instead of 16, and a business change in
-about 12. `pytest -m "not business"` and `pytest -m "not navigation"` are the two halves;
-plain `pytest` is still everything.
+So a navigation change verifies in half the time and a business change in about two thirds.
+The halves overlap by some 1,900 tests and that is why neither is anywhere near half the
+clock: the shared middle — the vision primitives and the hygiene checks — belongs to neither
+side and runs in both. The navigation half is few tests and slow anyway, because it loads the
+mini-map and shoreline models.
 
 DERIVED, NOT DECLARED. Nothing is marked in the test files themselves. A file is classified
 by the modules it names — imports and `mock.patch` targets alike — so a test that starts
