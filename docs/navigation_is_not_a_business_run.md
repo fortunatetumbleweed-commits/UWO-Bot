@@ -18,9 +18,9 @@ which one it is serving, because what is careful in one is waste in the other.
 | how it is driven | `Dispatcher.step()` — perceive, route, one action, hand back | its own control loop over `AiNavPipeline` |
 
 **The tick budget is not a preference.** The ship keeps moving between decisions, so the
-interval sets how far it travels blind. At 6 s a fast hull covers enough water on a tight
-shoreline to run out of margin — the Jeddah voyage of 2026-09-12 took two collisions on
-exactly those stretches, having sailed the rest of the Arabian coast cleanly.
+interval sets how far it travels blind. At 5 s a hull covers enough water on a tight shoreline
+to run out of margin — the Jeddah voyage of 2026-09-12 took two collisions on exactly those
+stretches, having sailed the rest of the Arabian coast cleanly.
 
 ## The rule
 
@@ -66,13 +66,54 @@ It was wrong for navigation, and the file's own docstring had said so all along:
 > manual-navigation loop cannot afford at its sub-1s cadence; that path calibrates
 > `MINIMAP_CROP` once at startup instead.
 
-The change made locating unconditional, removing the opt-in the comment describes. The
-navigation tick went from under 3 s to 6 s, and nothing failed — it just got slower, which is
-why it was not noticed until a voyage steered worse than remembered.
+The change made locating unconditional, removing the opt-in the comment describes. Nothing
+failed — it just got slower, which is why it was not noticed until a voyage steered worse than
+remembered. Measured from the traces, one row per tick, across all four of that day's sessions:
+
+    17:27  before    16 ticks   median 5.1 s
+    17:39  before    34 ticks   median 5.3 s
+    17:48  before   209 ticks   median 5.0 s
+    18:21  AFTER    634 ticks   median 2.4 s   max 3.9 s
+
+2.6 s a tick — exactly one parse.
+
+BEWARE THE WRONG CLOCK. The first figures taken for this were gaps between STEERING HOLDS, and
+they read 6.0 s → 3.0 s. That metric is not the tick: a tick that holds course logs no hold, so
+a run of straight sailing looks like one long gap, and it showed phantom 36 s "stalls" that the
+user rightly disbelieved from watching the ship. `trace.jsonl` has a row per tick and is the
+honest clock.
 
 **The shape to watch for: a shared reader made more careful, with only one caller in mind.**
 Correctness work on a business-run path lands on the navigation path too, and navigation pays
 in the one currency it cannot spare.
+
+## Navigation already knows when it is blind
+
+It does not need interruptor detection to notice that something is covering the screen. The
+heading model's own confidence says so, for free.
+
+Live 2026-09-12, a full-screen disaster notice covered the game mid-voyage. Out of 634 ticks
+it marked exactly the three that were covered, and nothing else:
+
+    tick 302   conf 0.95   heading 162°     last clear frame
+    tick 303   conf 0.00   heading 162°     notice up — the heading is STALE, not read
+    tick 304   conf 0.00   heading 162°
+    tick 305   conf 0.00   heading 162°
+    tick 306   conf 0.95   heading 105°     re-acquired
+    tick 307   conf 0.95   heading 342°     …and swung 237° over two ticks
+
+`frame_shift_px` agreed: -51 against an expected 17.6 on tick 303, the whole screen having
+changed at once.
+
+THE BOT STEERED ON ALL THREE. It acted on a heading its own model had scored 0.00, and the
+commit followed the garbage that came back afterwards — 165° → 77° → 173° → 257° in thirteen
+seconds. Holding course until confidence returns is what a person does, costs nothing, and
+needs no idea of what a disaster notice IS.
+
+Not changed today: the game handles disasters itself once the repair materials are set (user),
+so this particular notice should not appear. The observation is recorded because the SIGNAL is
+the useful part — a zero-confidence heading is a reliable "I cannot see the sea", available on
+the navigation path without a parse, a model or a perceive.
 
 ## Checklist for touching a shared reader
 
