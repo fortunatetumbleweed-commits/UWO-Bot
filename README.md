@@ -46,6 +46,8 @@ branch — Trémaux-style dead-end handling driven purely by the traced bank.*
 
 Viewer
 The viewer is a debugging tool I developed for the navigation, it shows the voyage tick by tick, with both the frames and the read/calculated data for each frame, like direction, speed etc.
+
+
 https://github.com/user-attachments/assets/df7c9875-6b91-494a-8bd1-f4acb37c9244
 
 
