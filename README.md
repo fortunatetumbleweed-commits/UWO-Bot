@@ -44,7 +44,7 @@ dead-end tip, reverses out when it stops making progress, and takes the other
 branch — Trémaux-style dead-end handling driven purely by the traced bank.*
 
 
-Viewer
+*Viewer
 The viewer is a debugging tool I developed for the navigation, it shows the voyage tick by tick, with both the frames and the read/calculated data for each frame, like direction, speed etc.
 
 
