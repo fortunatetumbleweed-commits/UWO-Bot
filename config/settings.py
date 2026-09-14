@@ -2,7 +2,18 @@
 # Global configuration — ADB device, timing, capture, and vision settings.
 
 # ADB
-ADB_DEVICE_ID: str = "31101JEHN26098"  # physical device
+#
+# THE SERIAL IS NOT A PROPERTY OF THE PROJECT. It was a literal until 2026-09-14, when the
+# phone was swapped and every adb call started adding `-s` for a device that was not there —
+# which fails silently, because the helpers swallow the error and return "". The symptom was
+# `get_display_rotation() -> None` on a phone that was plugged in and reporting ROTATION_270.
+#
+# Empty is the useful default: every call site guards with `if ADB_DEVICE_ID`, so an empty
+# value omits `-s` entirely and adb picks the single attached device. Set ANDROID_SERIAL
+# (adb's own variable) when more than one is connected.
+import os
+
+ADB_DEVICE_ID: str = os.environ.get("ANDROID_SERIAL", "")
 ADB_TIMEOUT: int = 10            # seconds before ADB command is considered failed
 
 # Screen capture
