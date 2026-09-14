@@ -719,6 +719,43 @@ class Dispatcher:
         if self._unblock is not None and self._unblock(state):
             logger.info("[dispatch] cleared an obstruction — re-perceiving")
             state = self._perceive()
+            # AN INTENT DISPATCHED UNDER A MODAL WAS SWALLOWED. The game blocks input
+            # outside a card it has raised, so a tap sent while one was up did nothing —
+            # and the in-flight guard cannot tell "still landing" from "never landed",
+            # because the screen it watches genuinely did not move.
+            #
+            # Live 2026-09-14, and it ended the Hutu mission at Oslo. The globe was tapped
+            # at 16:20:41 with a "Moon Rabbit's Part Gift Package" promo covering the
+            # middle of the screen. `clear_blockers` dismissed the promo correctly at
+            # 16:21:07, and the three ticks that followed stood on a clean port with the
+            # globe plainly visible, each logging "already dispatched and the screen has
+            # not changed — letting it land". The tap it was waiting for had been eaten
+            # twenty-six seconds earlier. On a port the family classifier answers with
+            # certainty, so `_screen_signature` collapses to its verdict — identical with
+            # the card up and with it gone — and the promo's whole life was invisible.
+            #
+            # THE KEY IS EVIDENCE ABOUT A WORLD THAT NO LONGER EXISTS, which is a stored
+            # conclusion outliving what it was drawn from. Dropping it does not tap: it
+            # lets the ordinary decision run again, and if the work no longer needs doing
+            # nothing is dispatched.
+            #
+            # Why this does not reopen the toggle hazard `_RETRY_ONCE_IF_UNCHANGED`
+            # excludes OPEN_WORLD_MAP for (the rail toggles; 2026-09-01 opened and closed
+            # the map seventeen times in four minutes): that loop re-tapped on every
+            # unchanged tick with nothing in the way. This fires ONLY where an obstruction
+            # was observed and cleared. And note the stall guard would not have caught such
+            # a loop anyway — each toggle CHANGES the screen — so the bound here is the
+            # rarity of the trigger, not the counter.
+            #
+            # Geometry cannot do this job: the promo sat at x 844-1800 and the globe is at
+            # x 2227, well outside it. A modal swallows the tap by being modal, not by
+            # covering the button.
+            if self._in_flight is not None:
+                logger.info(f"[dispatch] {self._in_flight[0]} was dispatched under an "
+                            "obstruction that has now been cleared — presuming it was "
+                            "swallowed, so the next look may dispatch it again")
+                self._in_flight = None
+                self._in_flight_looks = 0
 
         # WHAT THE MOVE INVALIDATED, dropped before anyone can read it.
         #
