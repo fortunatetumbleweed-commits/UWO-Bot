@@ -122,26 +122,42 @@ def test_the_route_TAB_is_not_a_route_ROW():
     assert find_text_button(with_tab, "route", y_max=110) == (1234, 53)
 
 
-def test_the_tab_bar_identifies_itself():
-    """OmniParser labels every world-map tab and gives it a box, so "which tab" needs no
-    pixel band — the tabs are Port | Explore | Route | Trade in a ROW at one height, and a
-    saved-route row named "Sailing Route 2" is not part of that row (user, 2026-08-24)."""
-    import types
-    from unittest import mock
-    from actions.route_execution import world_map_tab
+def test_THE_ROUTE_TAB_IS_REQUIRED_NOT_TAPPED():
+    """The list is only the route list once the Route tab is LIT, so the tab is a
+    precondition to check, never an action to perform and assume.
 
-    def _el(label, cx, cy):
-        return types.SimpleNamespace(label=label, element_type="button", cx=cx, cy=cy,
-                                     x1=cx - 40, y1=cy - 20, x2=cx + 40, y2=cy + 20)
+    Live 2026-09-14, one leg from home. The world map opened on the Port tab, the Route tap
+    at (1234,49) was dropped, and nothing noticed: the tab strip is unchanged across the tap
+    and all three list looks (mean pixel change 0.11, noise). The run reported
+    "route 'Sans to London' not found in list", which is a CONCLUSION — it never saw the
+    route list. That route had sailed three times in the preceding fortnight.
 
-    bar = [_el("Port", 858, 52), _el("Explore", 1047, 55),
-           _el("Route", 1234, 50), _el("Trade", 1424, 50)]
-    row_trap = _el("Sailing Route 2", 149, 145)
+    This module had forked its own tab finder before `require_world_map_tab` existed and
+    never came back to it. The canonical one confirms by EFFECT and repeats the same tap
+    after a longer settle, and the port search, the village search and WorldMapActivity all
+    use it. Asserted on the source so the fork cannot quietly return.
+    """
+    import inspect
 
-    with mock.patch("vision.omniparser.parse_fast_cached", return_value=bar + [row_trap]):
-        assert world_map_tab(object(), "route") == (1234, 50)
-        assert world_map_tab(object(), "explore") == (1047, 55)
+    from actions.route_execution import select_route_and_move
 
-    # A lone word is not a tab bar — refuse rather than tap a route row.
-    with mock.patch("vision.omniparser.parse_fast_cached", return_value=[row_trap]):
-        assert world_map_tab(object(), "route") is None
+    src = inspect.getsource(select_route_and_move)
+    assert 'require_world_map_tab("route"' in src, "the tab must be REQUIRED, not tapped"
+
+    # …and a refusal must stop, not fall through to reading whatever tab is lit.
+    # ANCHOR ON THE CALL, NOT THE WORD: the comment above it names the function too, and an
+    # index into the prose measures the comment rather than the code.
+    gate = src.index("if not require_world_map_tab(")
+    assert "return False" in src[gate:gate + 400]
+
+
+def test_a_failed_tab_switch_does_not_blame_the_route():
+    """The old message named the route, which sent the reader hunting a name that was
+    right. What it must report is what it actually observed."""
+    import inspect
+
+    from actions.route_execution import select_route_and_move
+
+    src = inspect.getsource(select_route_and_move)
+    gate = src.index("if not require_world_map_tab(")
+    assert "not the route list" in src[gate:gate + 600]

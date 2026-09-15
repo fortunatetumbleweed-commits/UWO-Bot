@@ -202,44 +202,6 @@ def open_world_map() -> bool:
     return _open_world_map(context="port_overworld")
 
 
-# THE TAB BAR IDENTIFIES ITSELF — OmniParser labels every tab and gives it a box, so there is
-# no need to say "near the top" in pixels (user, 2026-08-24). The world map's tabs are
-# Port | Explore | Route | Trade, and they sit in a ROW at one height; a saved-route row
-# called "Sailing Route 2" does not.
-_WORLD_MAP_TABS = ("port", "explore", "route", "trade")
-_TAB_ROW_TOL_PX = 30
-
-# Fallback only, for when OmniParser is unavailable: the bar is at the very top and the
-# saved-route rows start well below it.
-_TAB_BAR_MAX_Y = 110
-
-
-def world_map_tab(frame, name: str):
-    """(cx, cy) of a world-map tab, found by ASSOCIATION: the labelled tab that sits in the
-    row of world-map tabs. None when the bar is not on screen.
-    """
-    try:
-        from vision.omniparser import parse_fast_cached
-        els = list(parse_fast_cached(frame))
-    except Exception as exc:
-        logger.debug(f"[route] OmniParser unavailable for the tab bar: {exc}")
-        return None
-    tabs = [e for e in els
-            if (getattr(e, "label", "") or "").strip().lower() in _WORLD_MAP_TABS]
-    if len(tabs) < 2:
-        return None                      # one word alone is not a tab bar
-    ys = sorted(e.cy for e in tabs)
-    mid = ys[len(ys) // 2]
-    row = [e for e in tabs if abs(e.cy - mid) <= _TAB_ROW_TOL_PX]
-    if len(row) < 2:
-        return None
-    hit = next((e for e in row
-                if (getattr(e, "label", "") or "").strip().lower() == name.lower()), None)
-    if hit is None:
-        return None
-    logger.info(f"[route] {name!r} tab @ ({hit.cx},{hit.cy}) "
-                f"(tab row: {[(e.label or '').strip() for e in sorted(row, key=lambda e: e.cx)]})")
-    return (int(hit.cx), int(hit.cy))
 # A freshly opened list needs a moment before its rows are readable.
 _ROUTE_LIST_LOOKS = 3
 
@@ -247,19 +209,30 @@ _ROUTE_LIST_LOOKS = 3
 def select_route_and_move(route_name: str) -> bool:
     """On the world map: Route tab → select `route_name` → Move. Returns True if the
     Move tap was issued (i.e. the route was found and selected)."""
-    # THE ROUTE TAB IS IN THE TAB BAR — a saved route named "Sailing Route 2" also contains
-    # the word "route", and an unbounded substring match happily taps THAT (measured on the
-    # live list, 2026-08-24). Tapping a row instead of the tab leaves the panel showing
-    # something else entirely, and the row scan below then finds nothing. Same trap as
-    # "market" matching inside the quest line "move to market in ...".
-    frame = _cap()
-    tab = world_map_tab(frame, "route") or find_text_button(_ocr(frame), "route",
-                                                            y_max=_TAB_BAR_MAX_Y)
-    if not tab:
-        logger.error("[route] Route tab not found in the tab bar")
+    # THE TAB IS REQUIRED, NOT TAPPED. This used to locate the Route tab, tap it once and
+    # carry straight on to reading the list — so a tap that did not land was never noticed,
+    # and the three looks below then searched whatever tab WAS lit.
+    #
+    # Live 2026-09-14, and it ended the mission one leg from home. The world map opened on
+    # the Port tab, the Route tap at (1234,49) was dropped, and the tab strip is unchanged
+    # across the tap and all three looks (mean pixel change 0.11, noise). The run reported
+    # "route 'Sans to London' not found in list", which is a CONCLUSION: it never saw the
+    # route list. That same route had sailed three times in the preceding fortnight.
+    #
+    # `require_world_map_tab` is the canonical answer and has been since 2026-08-27 — it
+    # confirms by EFFECT, repeats the same tap after a longer settle when the tab is not lit,
+    # and is already used by the port search, the village search and WorldMapActivity. This
+    # module forked its own tab finder before that existed and never came back; the fork is
+    # the whole defect. One canonical implementation per concern (CLAUDE.md).
+    #
+    # It also keeps the 2026-08-24 lesson the fork was written for: a saved route named
+    # "Sailing Route 2" contains the word "route", so a loose text match taps a ROW instead
+    # of the tab. The canonical reader finds the tab by the ROW it sits in, not by wording.
+    from actions.sail_actions import require_world_map_tab
+    if not require_world_map_tab("route", why="saved routes live on the Route tab"):
+        logger.error("[route] could not get onto the Route tab — not looking for "
+                     f"{route_name!r}, because the list on screen is not the route list")
         return False
-    tap(*tab)
-    time.sleep(1.5)
 
     # THE LIST TAKES A MOMENT TO RENDER. One look 1.5s after the tap reported "not found"
     # against a list that does carry the route (live 2026-08-24: 'san to london' was the
