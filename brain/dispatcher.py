@@ -264,9 +264,9 @@ _RETRY_ONCE_IF_UNCHANGED = frozenset({"ENTER_BUILDING", "EXIT_BUILDING"})
 _RETRY_EXIT_FROM = ("building", "sub_menu", "village")
 
 
-# The name of the game's own window, so a log line can say "and it was ours" without the
-# reader having to know the package.
-_THE_GAME = "com.linegames.uwogl"
+# The game's package, so a log line can say "and it was ours" without the reader having to
+# know it. ONE DEFINITION — `config.settings` owns the fact; this was a second literal.
+from config.settings import GAME_PACKAGE as _THE_GAME
 
 
 def _who_has_focus() -> str:

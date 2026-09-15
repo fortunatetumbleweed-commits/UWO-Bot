@@ -50,6 +50,10 @@ INPUT_PRIMITIVES = {
     # which is how one Back closing the world map went unnoticed for a whole run.
     "hide_keyboard": (),
     "wake": (),
+    # An intent rather than a touch, but it belongs in the trace all the same: a relaunch is
+    # the single most important frame-to-frame explanation a report can carry, and a walk
+    # that shows the game simply reappearing is a walk nobody can follow.
+    "launch_game": (),
     "pinch_zoom": (1200, 540),
     "input_text": ("hello",),
 }

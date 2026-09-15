@@ -281,7 +281,8 @@ def _offline_device(request, monkeypatch):
             return fn
 
         for _fn in ("tap", "tap_fast", "long_press", "swipe", "swipe_fast",
-                    "press_back", "wake", "pinch_zoom", "input_text", "hide_keyboard"):
+                    "press_back", "wake", "pinch_zoom", "input_text", "hide_keyboard",
+                    "launch_game"):
             monkeypatch.setattr(_adb_actions, _fn, _recorder(_fn), raising=False)
 
         # THE KEYBOARD IS NEVER UP OFFLINE. `keyboard_is_up` asks the OS, which is right and
@@ -291,6 +292,11 @@ def _offline_device(request, monkeypatch):
         # defeated in exactly the way its own docstring warns about. A stand-in here keeps
         # the guard honest and the tests offline, like the canned rotation above.
         monkeypatch.setattr(_adb_actions, "keyboard_is_up", lambda: False, raising=False)
+        # THE GAME IS ALWAYS IN FRONT OFFLINE, for the same reason: `the_game_is_in_front`
+        # asks the OS and re-raises the guard rather than swallowing it. Without this, every
+        # test that reaches the unknown-blocking path would either trip the guard or, worse,
+        # be handed None and take the "could not ask" branch for the wrong reason.
+        monkeypatch.setattr(_adb_actions, "the_game_is_in_front", lambda: True, raising=False)
     except Exception:
         pass
 

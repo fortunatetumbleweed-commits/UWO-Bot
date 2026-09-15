@@ -17,7 +17,10 @@ import shlex
 import subprocess
 import time
 
-from config.settings import ADB_DEVICE_ID, ADB_TIMEOUT, TAP_DELAY_MIN, TAP_DELAY_MAX
+from loguru import logger
+
+from config.settings import (ADB_DEVICE_ID, ADB_TIMEOUT, GAME_LAUNCH_ACTIVITY,
+                             GAME_PACKAGE, TAP_DELAY_MIN, TAP_DELAY_MAX)
 
 # How long a finger physically presses the screen (milliseconds).
 # Real taps measured on Android: ~80–220ms.
@@ -286,6 +289,48 @@ def press_back() -> None:
     _adb(["shell", "input", "keyevent", "4"])
     _human_delay()
     _acted('press_back', 1.2)
+
+def the_game_is_in_front() -> "bool | None":
+    """Is the game the focused app? None when the question cannot be answered.
+
+    A SCREEN NOBODY CAN CLASSIFY HAS TWO EXPLANATIONS and the pixels cannot separate them:
+    the game is showing something new, or the game is GONE. Android owns the window stack,
+    so it can be asked (Guiding Principle #0).
+
+    Live 2026-09-15, and it cost fourteen minutes. The game exited between one frame and the
+    next — frame 321 is the world map at 2400x1080, frame 322 is the Android launcher at
+    1080x2400, the phone having rotated out of the game's landscape lock. The tap that
+    followed landed on the launcher. The screen then timed out to black, and the bot polled
+    it, consulted Claude seven times, pressed Back after each one, and SAVED THE BLACK SCREEN
+    AS TWO NEW INTERRUPTORS. Claude had answered "app may be loading or crashed" and there
+    was nothing that could act on it.
+
+    None, not False, when the read fails: "I could not ask" must never be mistaken for "the
+    game is gone", which is the one answer that triggers a relaunch.
+    """
+    try:
+        win = focused_window()
+    except AssertionError:
+        raise                       # tests/conftest.py blocking ADB — let that be heard
+    except Exception:
+        return None
+    if not win:
+        return None
+    return GAME_PACKAGE in win
+
+
+def launch_game() -> None:
+    """Start the game from cold. Only for a game that is genuinely not running."""
+    try:
+        from actions import action_trace
+        if action_trace.active():
+            action_trace.record_tap(-1, -1, "launch_game")
+    except Exception:
+        pass
+    logger.info(f"[adb] launching {GAME_PACKAGE} — it is not the foreground app")
+    _adb(["shell", "am", "start", "-n", f"{GAME_PACKAGE}/{GAME_LAUNCH_ACTIVITY}"])
+    _acted('launch_game', 5.0)
+
 
 def keyboard_is_up() -> bool:
     """Is the soft keyboard showing? THE OS KNOWS — never infer it from pixels.

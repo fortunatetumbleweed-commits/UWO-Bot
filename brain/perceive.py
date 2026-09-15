@@ -2074,6 +2074,38 @@ def reset_unknown_debounce() -> None:
     _unknown_signature_history = None
 
 
+# At most one relaunch per process. A game that will not stay up is not a thing to keep
+# restarting — the second failure is a fact for a person, not a retry.
+_RELAUNCHED = False
+
+
+def _the_game_has_gone_and_was_relaunched() -> bool:
+    """True when the game was not in front and a relaunch was issued.
+
+    NONE IS NOT FALSE. `the_game_is_in_front` returns None when it could not ask, and
+    "I could not ask" must never be read as "the game is gone" — that is the one answer
+    that starts an app.
+    """
+    global _RELAUNCHED
+    try:
+        from actions.adb_actions import launch_game, the_game_is_in_front
+        in_front = the_game_is_in_front()
+    except Exception as exc:                  # noqa: BLE001 — a diagnostic must not raise
+        logger.debug(f"[perceive] could not ask who is in front: {exc}")
+        return False
+    if in_front is None or in_front:
+        return False
+    if _RELAUNCHED:
+        logger.error("[perceive] THE GAME IS STILL NOT IN FRONT after a relaunch — stopping "
+                     "rather than restarting it again; this one is for a person")
+        return False
+    logger.error("[perceive] THE GAME IS NOT THE FOREGROUND APP — it has exited. Relaunching "
+                 "rather than pressing Back at whatever is on screen")
+    _RELAUNCHED = True
+    launch_game()
+    return True
+
+
 def handle_unknown_blocking(frame, ocr_tokens: list, nav_detail: str = "") -> bool:
     """
     Handle an unexpected blocking screen.  Called when state="unknown" after
@@ -2108,6 +2140,23 @@ def handle_unknown_blocking(frame, ocr_tokens: list, nav_detail: str = "") -> bo
         )
         return False
 
+    # IS THE GAME STILL THERE? Ask before spending anything on the screen in front of us.
+    #
+    # An unclassifiable screen has two explanations and the pixels cannot separate them: the
+    # game is showing something new, or the game is GONE. Android owns the window stack and
+    # answers in one call, so this is a lookup rather than a guess.
+    #
+    # Live 2026-09-15 it cost fourteen minutes and ended the mission. The game exited between
+    # frame 321 (the world map, 2400x1080) and frame 322 (the Android launcher, 1080x2400,
+    # the phone having rotated out of the game's landscape lock). The screen then timed out
+    # to black, and this function polled it, consulted Claude SEVEN times and pressed Back
+    # after each one. Claude answered "app may be loading or crashed" every time, and the run
+    # SAVED THE BLACK SCREEN AS TWO NEW INTERRUPTORS before the stall guard ended it.
+    #
+    # A game that is gone wants relaunching, not Back — and learning a crash as a dismissable
+    # popup poisons the catalogue for every future run.
+    if _the_game_has_gone_and_was_relaunched():
+        return True
     logger.info(
         f"[perceive] Unknown blocking screen — invoking learn-and-dismiss "
         f"(consecutive same-sig perceives: {consecutive})"

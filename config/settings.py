@@ -151,6 +151,15 @@ CHROME_RIGHT_PANEL_REGION:      tuple = (2050, 100, 2400, 420)   # tab bar + min
 # Minimum template match score (0–1) to consider an element present.
 CHROME_MATCH_THRESHOLD: float = 0.75
 
+# The game itself
+#
+# ONE DEFINITION. `brain/dispatcher.py` had its own `_THE_GAME` literal for naming the
+# focused window; this is the same fact and it is now read from here. The launch component
+# is the SPLASH activity, which is what the launcher resolves to — `GameActivity` is what
+# runs afterwards and is what `mCurrentFocus` reports once the game is up.
+GAME_PACKAGE: str = "com.linegames.uwogl"
+GAME_LAUNCH_ACTIVITY: str = "com.epicgames.ue4.SplashActivity"
+
 # Logging
 LOG_DIR: str = "memory/logs"
 LOG_LEVEL: str = "DEBUG"
