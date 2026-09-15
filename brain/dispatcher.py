@@ -263,6 +263,42 @@ _RETRY_ONCE_IF_UNCHANGED = frozenset({"ENTER_BUILDING", "EXIT_BUILDING"})
 # unchanged observation, and still bounded by the same stall guard — not that loop returning.
 _RETRY_EXIT_FROM = ("building", "sub_menu", "village")
 
+
+# The name of the game's own window, so a log line can say "and it was ours" without the
+# reader having to know the package.
+_THE_GAME = "com.linegames.uwogl"
+
+
+def _who_has_focus() -> str:
+    """A log suffix naming the window Android says has focus. Empty when it cannot be read.
+
+    ASKED ONLY WHERE A TAP IS ALREADY KNOWN TO HAVE CHANGED NOTHING, which is the one moment
+    a screenshot stops being enough. Two things produce an unchanged screen and the pixels
+    cannot tell them apart: the input was DROPPED, or something else had focus and swallowed
+    it. Android authors the window stack, so it can simply be asked (Guiding Principle #0).
+
+    Both happened on 2026-09-14. At Oslo a promo card was visible over the port and the globe
+    tap went nowhere — there the cause was on screen. At Hutu the Ok on the Barter
+    Calculations card vanished twice with NOTHING visible over it, the scene animating behind
+    it and the button shimmering on its own, and the mission died. The user tapped that same
+    button by hand afterwards and the game answered at once, so that one was the drop rate
+    `TAP_DRIFT_MAX` documents (4.8% measured live 2026-09-02) landing twice in a row.
+
+    Which is exactly why this is worth logging rather than guessing at: "the tap was dropped"
+    and "the tap was stolen" call for opposite fixes, and until now a run could not say which
+    it had met.
+    """
+    try:
+        from actions.adb_actions import focused_window
+        win = focused_window()
+    except Exception:
+        return ""
+    if not win:
+        return ""
+    return (" — the game still has focus, so the input was dropped rather than swallowed"
+            if _THE_GAME in win else f" — FOCUS IS {win}, which is not the game: the input "
+                                     "went somewhere else")
+
 # When the family classifier's answer stands on its own. Measured on the frames that
 # defeated the label test: 0.9998, 0.958, 0.996 — it is either sure or it is not.
 _FAMILY_IS_SURE = 0.90
@@ -1426,12 +1462,14 @@ class Dispatcher:
                     # the stall guard ends it with a diagnosis rather than more taps.
                     waited = f"has had its {settle:.0f}s and " if settle else ""
                     logger.info(f"[dispatch] {intent} {waited}the screen is unchanged "
-                                "— the input did not land; dispatching once more")
+                                "— the input did not land; dispatching once more"
+                                + _who_has_focus())
                     self._dispatch(intent)
                     self._fresh = None
                 else:
                     logger.info(f"[dispatch] {intent} already dispatched from {where!r} and "
-                                "the screen has not changed — letting it land")
+                                "the screen has not changed — letting it land"
+                                + _who_has_focus())
             else:
                 logger.info(f"[dispatch] dispatching {intent}")
                 if getattr(intent, "name", None) in self._LEAVING_INTENTS:

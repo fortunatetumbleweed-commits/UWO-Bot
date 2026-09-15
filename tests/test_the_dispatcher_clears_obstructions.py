@@ -166,3 +166,60 @@ def test_IT_IS_THE_CLEAR_THAT_FREES_THE_TICK_NOT_THE_TICK_ITSELF():
     _cleared, after_clear = _tick_with_an_intent_in_flight(blocked=True)
     _waited, after_wait = _tick_with_an_intent_in_flight(blocked=False)
     assert after_clear and not after_wait
+
+
+# ── A TAP THAT CHANGED NOTHING HAS TWO EXPLANATIONS, AND ANDROID KNOWS WHICH ─────────
+#
+# The pixels cannot separate them: the input was DROPPED, or something else held focus and
+# swallowed it. Both happened on 2026-09-14. At Oslo a promo card sat over the port and the
+# globe tap went nowhere, and the cause was on screen. At Hutu the Ok on the Barter
+# Calculations card vanished TWICE with nothing visible over it — the scene animating behind
+# it, the button shimmering on its own — and the mission died. Tapped by hand afterwards the
+# game answered at once, so that one was the ~4.8% drop rate `TAP_DRIFT_MAX` documents,
+# landing twice running.
+#
+# The two call for opposite fixes, so the run must be able to say which it met. Android
+# authors the window stack and can simply be asked.
+
+
+def _focus_note(window):
+    from unittest import mock
+
+    import brain.dispatcher as D
+
+    with mock.patch("actions.adb_actions.focused_window", return_value=window):
+        return D._who_has_focus()
+
+
+def test_the_game_holding_focus_means_the_tap_was_DROPPED():
+    note = _focus_note("com.linegames.uwogl/com.epicgames.ue4.GameActivity")
+    assert "dropped" in note
+
+
+def test_ANOTHER_WINDOW_HOLDING_FOCUS_IS_THE_LOUD_CASE():
+    """A stolen tap is a different defect from a dropped one, and the line must not read
+    like the ordinary case."""
+    note = _focus_note("com.android.systemui/…ShadeWindow")
+    assert "not the game" in note
+    assert "dropped" not in note
+
+
+def test_an_unreadable_focus_says_NOTHING_rather_than_guessing():
+    """The suffix is appended to a real log line, so a failed read must add no words at all
+    — a diagnostic that invents an answer is worse than one that stays quiet."""
+    assert _focus_note(None) == ""
+
+
+def test_asking_costs_nothing_on_the_happy_path():
+    """Read off the source: it must be reached only from the branches that have ALREADY
+    observed an unchanged screen, never from the ordinary dispatch."""
+    import inspect
+
+    import brain.dispatcher as D
+
+    src = inspect.getsource(D.Dispatcher._advance)
+    for line in src.splitlines():
+        if "_who_has_focus()" in line:
+            continue
+        assert "_who_has_focus" not in line
+    assert src.count("_who_has_focus()") == 2, "the two unchanged-screen branches, and no more"

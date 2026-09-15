@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import math
 import random
+import re
 import shlex
 import subprocess
 import time
@@ -41,6 +42,38 @@ PRESS_DURATION_MAX_MS: int = 220
 # faithful than the lattice it replaces, and it keeps every property the anti-
 # detection note above is actually about: a press with duration, motion and lift.
 TAP_DRIFT_MAX: float = 3.0
+
+
+_FOCUS_RE = re.compile(r"mCurrentFocus=Window\{[^}]*?\s(\S+)\}")
+
+
+def focused_window() -> "str | None":
+    """Who Android says has window focus, or None if it cannot be read.
+
+    THE ONE QUESTION A SCREENSHOT CANNOT ANSWER. A tap that changed nothing has two
+    explanations and the pixels cannot separate them: the input was DROPPED, or something
+    else held focus and swallowed it. Android's framework AUTHORS the window stack, so this
+    is a lookup rather than a guess — Guiding Principle #0, and the reason to ask it rather
+    than infer from what we can see.
+
+    Live 2026-09-14, twice in one day. At Oslo the globe tap vanished under a promo card that
+    WAS on screen, and we could see why. At Hutu the Ok on the Barter Calculations card
+    vanished twice with nothing visible over it, the scene animating behind and the button
+    shimmering on its own — and the run died with no way to tell a dropped tap from a stolen
+    one. (That one was almost certainly the drop rate TAP_DRIFT_MAX documents above: the user
+    tapped the same button by hand afterwards and the game answered.)
+
+    Called only where a tap is already known to have changed nothing, so it costs nothing on
+    the happy path. Never raises — a diagnostic that can end a run is worse than no
+    diagnostic — except for the test guard's AssertionError, which must keep firing.
+    """
+    try:
+        m = _FOCUS_RE.search(shell_out(["shell", "dumpsys", "window"]) or "")
+        return m.group(1) if m else None
+    except AssertionError:
+        raise                       # tests/conftest.py blocking ADB — let that be heard
+    except Exception:
+        return None
 
 
 def _drift_offset() -> tuple[int, int]:
