@@ -1,0 +1,21 @@
+{
+  "purpose": "Confirm Purchase dialog asking the bot to confirm buying 586 Pig (Livestock) at a discounted price of 154,704 gold, with a tip from Thomas Tew that Livestock is a Major Trend",
+  "full_text": "Confirm Purchase — Trade Goods: Pig (Livestock, qty 586), Purchase Cost: 190,450, Tax: 0%, Discount: -35,746, Purchase Price: 154,704. Total Price: 190,450, Discount: -35,746, Total: 154,704. Thomas Tew: Livestock is Major Trend in [this region]. Cancel | OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "7e8c0939bf22a0de",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-14T23:38:50.128706+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Confirm Purchase dialog asking the bot to confirm buying 586 Pig (Livestock) at a discounted price of 154,704 gold, with a tip from Thomas Tew that Livestock is a Major Trend",
+    "full_text": "Confirm Purchase — Trade Goods: Pig (Livestock, qty 586), Purchase Cost: 190,450, Tax: 0%, Discount: -35,746, Purchase Price: 154,704. Total Price: 190,450, Discount: -35,746, Total: 154,704. Thomas Tew: Livestock is Major Trend in [this region]. Cancel | OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

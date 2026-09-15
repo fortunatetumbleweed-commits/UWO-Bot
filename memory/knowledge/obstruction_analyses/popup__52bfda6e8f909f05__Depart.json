@@ -1,0 +1,21 @@
+{
+  "purpose": "Another player's ship (TaylorFP, rank Patron, level 1) has appeared nearby on the open sea, likely an encounter or proximity notification while sailing toward Hutu Village",
+  "full_text": "1 Patron TaylorFP 21.4",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "52bfda6e8f909f05",
+  "goal_intent": "Depart",
+  "cached_at": "2026-09-15T00:01:47.841217+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Another player's ship (TaylorFP, rank Patron, level 1) has appeared nearby on the open sea, likely an encounter or proximity notification while sailing toward Hutu Village",
+    "full_text": "1 Patron TaylorFP 21.4",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

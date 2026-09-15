@@ -1,0 +1,21 @@
+{
+  "purpose": "The right-side HUD sidebar showing navigation stats, nearby player ships (Patron, TaylorFP), and quest chronicle reminders — this is the persistent game interface, not a blocking popup",
+  "full_text": "C/HW | 27.6 knots | Patron | TaylorFP | Admiral Chronicle: Complete Anonymous Threatening Letter Request from Istanbul Union (0/1) | Proceed with another Relationship Chronicle | New Royal Order available — Visit Seville Palace | You have a new request",
+  "dismissal": "unknown",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "41c5857b658ff3a8",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-14T23:29:50.570413+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The right-side HUD sidebar showing navigation stats, nearby player ships (Patron, TaylorFP), and quest chronicle reminders — this is the persistent game interface, not a blocking popup",
+    "full_text": "C/HW | 27.6 knots | Patron | TaylorFP | Admiral Chronicle: Complete Anonymous Threatening Letter Request from Istanbul Union (0/1) | Proceed with another Relationship Chronicle | New Royal Order available — Visit Seville Palace | You have a new request",
+    "dismissal": "unknown",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

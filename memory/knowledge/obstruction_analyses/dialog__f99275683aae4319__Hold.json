@@ -1,0 +1,21 @@
+{
+  "purpose": "John Rolfe is offering to negotiate a 21.5% price reduction on the current purchase, requiring the bot to choose whether to spend negotiation attempts (79.2% success rate) to lower the price from 118,552 to 87,232",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 118,552 → 87,232 (-21.5%). Negotiation Success Rate: Failed — 79.2% — Success. John Rolfe: This product can be bought for 21.5% less. Want me to try negotiating? No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "f99275683aae4319",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-15T19:19:04.031721+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "John Rolfe is offering to negotiate a 21.5% price reduction on the current purchase, requiring the bot to choose whether to spend negotiation attempts (79.2% success rate) to lower the price from 118,552 to 87,232",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 118,552 → 87,232 (-21.5%). Negotiation Success Rate: Failed — 79.2% — Success. John Rolfe: This product can be bought for 21.5% less. Want me to try negotiating? No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

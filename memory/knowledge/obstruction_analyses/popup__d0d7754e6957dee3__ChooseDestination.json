@@ -1,0 +1,21 @@
+{
+  "purpose": "A notification banner informing the player that an achievement reward is available to collect, unrelated to navigating to Bordeaux on the world map.",
+  "full_text": "There is an achievement reward.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "d0d7754e6957dee3",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-14T23:40:28.436552+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "A notification banner informing the player that an achievement reward is available to collect, unrelated to navigating to Bordeaux on the world map.",
+    "full_text": "There is an achievement reward.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

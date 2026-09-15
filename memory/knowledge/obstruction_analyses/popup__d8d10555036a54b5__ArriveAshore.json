@@ -1,0 +1,21 @@
+{
+  "purpose": "A weather event notification — Snow has appeared at sea, reducing the fleet's sailing speed by 10% for the current leg toward Gijón.",
+  "full_text": "1 Patron Snow — TaylorFP — Decrease Fleet speed by 10%.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "d8d10555036a54b5",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-14T23:31:19.521061+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "A weather event notification — Snow has appeared at sea, reducing the fleet's sailing speed by 10% for the current leg toward Gijón.",
+    "full_text": "1 Patron Snow — TaylorFP — Decrease Fleet speed by 10%.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}

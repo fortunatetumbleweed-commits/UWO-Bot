@@ -9,7 +9,7 @@
   "structural_hash": "0b20be72f987776c",
   "goal_intent": "Hold",
   "cached_at": "2026-09-11T19:05:47.588154+00:00",
-  "visit_count": 2,
+  "visit_count": 4,
   "raw_api_response": {
     "purpose": "Confirmation dialog asking whether to spend 5 Replenish Tokens to restock a shop's inventory back to full (50/50), triggered by the bot tapping the restock button",
     "full_text": "Replenish Stock? (Does not affect market price) Remaining: 50/50 [Cost: 5 tokens] — OK / Cancel",

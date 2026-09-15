@@ -1,0 +1,21 @@
+{
+  "purpose": "Another player's ship (TaylorFP, a Patron-rank sailor) has appeared nearby on the open sea, likely visible as an encounter or proximity event while sailing toward Bordeaux",
+  "full_text": "1 Patron TaylorFP 19.5 3? from",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "low",
+  "obstruction_kind": "popup",
+  "structural_hash": "3c84d20cfafbcf9d",
+  "goal_intent": "Depart",
+  "cached_at": "2026-09-14T23:43:14.813719+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Another player's ship (TaylorFP, a Patron-rank sailor) has appeared nearby on the open sea, likely visible as an encounter or proximity event while sailing toward Bordeaux",
+    "full_text": "1 Patron TaylorFP 19.5 3? from",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "low"
+  }
+}

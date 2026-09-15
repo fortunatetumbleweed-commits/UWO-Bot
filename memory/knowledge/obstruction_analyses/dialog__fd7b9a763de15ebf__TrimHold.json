@@ -1,0 +1,21 @@
+{
+  "purpose": "Thomas Tew (trader NPC) is offering a negotiation to sell the current cargo at 24.5% above the base price (260,440 → 310,590 gold), with a 79.2% success rate and multiple remaining attempts",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 260,440 → 310,590 (24.5% increase). Negotiation Success Rate: Failed | 79.2% | Success. Thomas Tew: We should be able to sell this product for 24.5% more. Would you like to negotiate? No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "fd7b9a763de15ebf",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-15T19:50:08.400577+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Thomas Tew (trader NPC) is offering a negotiation to sell the current cargo at 24.5% above the base price (260,440 → 310,590 gold), with a 79.2% success rate and multiple remaining attempts",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 260,440 → 310,590 (24.5% increase). Negotiation Success Rate: Failed | 79.2% | Success. Thomas Tew: We should be able to sell this product for 24.5% more. Would you like to negotiate? No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

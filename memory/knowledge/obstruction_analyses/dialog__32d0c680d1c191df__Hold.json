@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase Result dialog confirming a bulk buy of goods completed (likely Brandy or another item), showing the cost, discount applied, total amount paid, and the player's remaining gold balance after the transaction",
+  "full_text": "Result. Purchase Cost: 272,240. Tax: 0. Discount: -54,530. Total Amount: 217,710. Balance: 78,663,340,152. OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "dialog",
+  "structural_hash": "32d0c680d1c191df",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-14T23:47:23.778845+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase Result dialog confirming a bulk buy of goods completed (likely Brandy or another item), showing the cost, discount applied, total amount paid, and the player's remaining gold balance after the transaction",
+    "full_text": "Result. Purchase Cost: 272,240. Tax: 0. Discount: -54,530. Total Amount: 217,710. Balance: 78,663,340,152. OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Negotiation dialog asking whether to attempt to sell Pigs at a 24.5% price premium (98,332 → 117,391 gold) with a 79.2% success rate, using remaining negotiation attempts",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 98,332 → 117,391 (24.5% increase). Negotiation Success Rate: Failed — 79.2% — Success. Edmund Gilbert: Hmm, I think we can get a 24.5% premium for this. Would you like to negotiate? Options: No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "959a3b2968a5b045",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-14T23:57:26.925903+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Negotiation dialog asking whether to attempt to sell Pigs at a 24.5% price premium (98,332 → 117,391 gold) with a 79.2% success rate, using remaining negotiation attempts",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 98,332 → 117,391 (24.5% increase). Negotiation Success Rate: Failed — 79.2% — Success. Edmund Gilbert: Hmm, I think we can get a 24.5% premium for this. Would you like to negotiate? Options: No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

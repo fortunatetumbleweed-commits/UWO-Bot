@@ -1,0 +1,21 @@
+{
+  "purpose": "Another player's ship (TaylorFP, rank Patron) is sailing nearby in the same sea zone, shown on the minimap cluster near Oslo — this is a player-presence indicator, not a dialog",
+  "full_text": "C/HW — Patron — TaylorFP — 27.6 — 2 4",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "3eb9423a51f01576",
+  "goal_intent": "Depart",
+  "cached_at": "2026-09-14T23:29:27.663835+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Another player's ship (TaylorFP, rank Patron) is sailing nearby in the same sea zone, shown on the minimap cluster near Oslo — this is a player-presence indicator, not a dialog",
+    "full_text": "C/HW — Patron — TaylorFP — 27.6 — 2 4",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

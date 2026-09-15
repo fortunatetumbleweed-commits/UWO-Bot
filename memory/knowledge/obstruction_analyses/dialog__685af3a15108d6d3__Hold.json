@@ -1,0 +1,21 @@
+{
+  "purpose": "Confirmation dialog asking whether to spend 2 Diamonds to replenish the Duck livestock stock (40 of 50 remaining) so more can be purchased at this port",
+  "full_text": "Replenish Stock? (Does not affect market price) Remaining: 40/50 [Cost: 2 Diamonds] — Cancel / OK",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "685af3a15108d6d3",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-15T22:07:40.559343+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Confirmation dialog asking whether to spend 2 Diamonds to replenish the Duck livestock stock (40 of 50 remaining) so more can be purchased at this port",
+    "full_text": "Replenish Stock? (Does not affect market price) Remaining: 40/50 [Cost: 2 Diamonds] — Cancel / OK",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

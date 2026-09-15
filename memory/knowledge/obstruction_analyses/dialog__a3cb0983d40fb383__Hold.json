@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase confirmation dialog asking the bot to confirm buying 586 Pig (Livestock) for 154,704 gold after an 18.8% discount off the 190,450 base cost",
+  "full_text": "Confirm Purchase — Trade Goods: Pig (Livestock, qty 586), Purchase Cost: 190,450, Tax 0%: 0, Discount: -35,746, Purchase Price: 154,704. Total Price: 190,450 — 35,746 = 154,704. [Cancel] [OK]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "a3cb0983d40fb383",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-14T23:37:00.909705+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase confirmation dialog asking the bot to confirm buying 586 Pig (Livestock) for 154,704 gold after an 18.8% discount off the 190,450 base cost",
+    "full_text": "Confirm Purchase — Trade Goods: Pig (Livestock, qty 586), Purchase Cost: 190,450, Tax 0%: 0, Discount: -35,746, Purchase Price: 154,704. Total Price: 190,450 — 35,746 = 154,704. [Cancel] [OK]",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

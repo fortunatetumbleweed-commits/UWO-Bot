@@ -1,0 +1,21 @@
+{
+  "purpose": "Game is asking the bot to confirm the sale of 4290 Bambara Groundnut (Luxuries) for a total price of 48,588,540 gold after tax and surcharge adjustments",
+  "full_text": "Confirm Sales | Trade Goods: Bambara Groundnut (Luxuries, qty 4290) | Sales Cost: 38,751,570 | Tax 5%: -1,475,760 | Surcharge: +11,312,730 | Price: 48,588,540 | Total Sales: 38,751,570 | Tax: -1,475,760 | Surcharge: +11,312,730 | Total: 48,588,540 | [Cancel] [OK]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "797720f76eee2b23",
+  "goal_intent": "FreeHold",
+  "cached_at": "2026-09-15T18:56:58.494068+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Game is asking the bot to confirm the sale of 4290 Bambara Groundnut (Luxuries) for a total price of 48,588,540 gold after tax and surcharge adjustments",
+    "full_text": "Confirm Sales | Trade Goods: Bambara Groundnut (Luxuries, qty 4290) | Sales Cost: 38,751,570 | Tax 5%: -1,475,760 | Surcharge: +11,312,730 | Price: 48,588,540 | Total Sales: 38,751,570 | Tax: -1,475,760 | Surcharge: +11,312,730 | Total: 48,588,540 | [Cancel] [OK]",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

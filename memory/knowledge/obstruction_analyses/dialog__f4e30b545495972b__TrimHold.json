@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade Goods Info popup for Pig livestock showing sale price calculation (397 base + 115 surcharge = 512 per unit) and quantity selector — opened when the bot tapped the Pig tile to stage it for selling",
+  "full_text": "Trade Goods Info — Pig (Livestock) — Description: A domesticated version of the boar. Widely raised for its meat. — Calculation: Sales Cost 397, Tax 0, Surcharge +115, Per Price 512 — Current Price 397 — Max Price 441, Min Price 372 — Quantity: 1/1,172 — Final Sales Price 512 — [Min] [Max] [Cancel] [Load]",
+  "dismissal": "tap_accept",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "f4e30b545495972b",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-14T23:53:55.792412+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade Goods Info popup for Pig livestock showing sale price calculation (397 base + 115 surcharge = 512 per unit) and quantity selector — opened when the bot tapped the Pig tile to stage it for selling",
+    "full_text": "Trade Goods Info — Pig (Livestock) — Description: A domesticated version of the boar. Widely raised for its meat. — Calculation: Sales Cost 397, Tax 0, Surcharge +115, Per Price 512 — Current Price 397 — Max Price 441, Min Price 372 — Quantity: 1/1,172 — Final Sales Price 512 — [Min] [Max] [Cancel] [Load]",
+    "dismissal": "tap_accept",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

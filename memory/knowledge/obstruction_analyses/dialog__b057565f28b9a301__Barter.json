@@ -1,0 +1,21 @@
+{
+  "purpose": "The game is asking the bot to confirm whether to complete the barter trade, warning that the 222 Bambara Groundnut that could not fit in cargo (due to insufficient space) will be permanently discarded if the trade is completed without claiming them.",
+  "full_text": "Complete the trade? 222 Bambara Groundnut has not been claimed yet. Unclaimed trade goods will be discarded.",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "b057565f28b9a301",
+  "goal_intent": "Barter",
+  "cached_at": "2026-09-15T21:19:59.516067+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The game is asking the bot to confirm whether to complete the barter trade, warning that the 222 Bambara Groundnut that could not fit in cargo (due to insufficient space) will be permanently discarded if the trade is completed without claiming them.",
+    "full_text": "Complete the trade? 222 Bambara Groundnut has not been claimed yet. Unclaimed trade goods will be discarded.",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

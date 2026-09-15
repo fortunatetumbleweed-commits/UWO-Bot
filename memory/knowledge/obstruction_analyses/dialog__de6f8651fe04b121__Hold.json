@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase result dialog confirming a bulk Pork buy completed with a discount applied, showing total cost of 218,622 gold deducted from balance",
+  "full_text": "Result. Purchase Cost: 268,668. Tax: 0. Discount: -50,046. Total Amount: 218,622. Balance: 80,473,574,516. OK.",
+  "dismissal": "tap_ok",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "de6f8651fe04b121",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-15T22:07:07.480357+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase result dialog confirming a bulk Pork buy completed with a discount applied, showing total cost of 218,622 gold deducted from balance",
+    "full_text": "Result. Purchase Cost: 268,668. Tax: 0. Discount: -50,046. Total Amount: 218,622. Balance: 80,473,574,516. OK.",
+    "dismissal": "tap_ok",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

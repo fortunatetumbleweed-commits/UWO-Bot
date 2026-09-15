@@ -1,0 +1,21 @@
+{
+  "purpose": "The bot has arrived ashore at London; the Harbor arrival screen is showing, confirming the ship has docked and presenting the city navigation menu with Harbor as the entry point.",
+  "full_text": "Harbor — Patron (Level 1) — Winter Dec 20:18 — Harbor, Market, Shipyard, Bank, Inn, Cathedral, Venturer Association, Item Shop, Union",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "04f4b9ea01ad38ac",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-15T23:10:02.644981+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The bot has arrived ashore at London; the Harbor arrival screen is showing, confirming the ship has docked and presenting the city navigation menu with Harbor as the entry point.",
+    "full_text": "Harbor — Patron (Level 1) — Winter Dec 20:18 — Harbor, Market, Shipyard, Bank, Inn, Cathedral, Venturer Association, Item Shop, Union",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "high"
+  }
+}

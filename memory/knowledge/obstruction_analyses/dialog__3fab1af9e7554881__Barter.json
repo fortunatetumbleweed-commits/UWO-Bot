@@ -1,0 +1,21 @@
+{
+  "purpose": "Barter Calculations confirmation dialog showing the trade summary for 1,062 Bambara Groundnuts, including amity gained (+11,993), final amity reaching cap (100,000/100,000), and trade materials (248 grapes + 248 pigs), awaiting OK to confirm the exchange",
+  "full_text": "Barter Calculations — Bambara Groundnut, Trade Quantity 1,062 (+462). Trade Material: 248 (grapes), 248 (pig). Amity Increase/Decrease: Exchange Amity +11,993, Amity Used during Negotiation 0, Total Amity Increase/Decrease Value +11,993, Amity Grade Change Friendly, Final Amity 100,000/100,000. Negotiation Result: Quantity Negotiation Success: 0 Failure: 0, Price Negotiation Success: 0 Failure: 0. Note: Amity gained/used is applied upon confirming the Exchange.",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "3fab1af9e7554881",
+  "goal_intent": "Barter",
+  "cached_at": "2026-09-15T00:21:23.053093+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Barter Calculations confirmation dialog showing the trade summary for 1,062 Bambara Groundnuts, including amity gained (+11,993), final amity reaching cap (100,000/100,000), and trade materials (248 grapes + 248 pigs), awaiting OK to confirm the exchange",
+    "full_text": "Barter Calculations — Bambara Groundnut, Trade Quantity 1,062 (+462). Trade Material: 248 (grapes), 248 (pig). Amity Increase/Decrease: Exchange Amity +11,993, Amity Used during Negotiation 0, Total Amity Increase/Decrease Value +11,993, Amity Grade Change Friendly, Final Amity 100,000/100,000. Negotiation Result: Quantity Negotiation Success: 0 Failure: 0, Price Negotiation Success: 0 Failure: 0. Note: Amity gained/used is applied upon confirming the Exchange.",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

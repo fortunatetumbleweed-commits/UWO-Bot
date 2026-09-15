@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase Result confirmation showing the completed bulk buy of goods (likely Raisin), displaying cost breakdown with discount applied and updated gold balance",
+  "full_text": "Result — Purchase Cost: 272,240 | Tax: 0 | Discount: -54,530 | Total Amount: 217,710 | Balance: 78,662,904,732 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "medium",
+  "obstruction_kind": "dialog",
+  "structural_hash": "ef7b475e07896b39",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-14T23:51:18.922059+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase Result confirmation showing the completed bulk buy of goods (likely Raisin), displaying cost breakdown with discount applied and updated gold balance",
+    "full_text": "Result — Purchase Cost: 272,240 | Tax: 0 | Discount: -54,530 | Total Amount: 217,710 | Balance: 78,662,904,732 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "medium"
+  }
+}

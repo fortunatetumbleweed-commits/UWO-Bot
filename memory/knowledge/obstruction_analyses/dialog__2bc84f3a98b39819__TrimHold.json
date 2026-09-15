@@ -1,0 +1,21 @@
+{
+  "purpose": "Confirmation dialog asking the bot to approve the pending sale of 204 Pigs and 170 Raisins for a total of 260,440 gold before the transaction is finalised",
+  "full_text": "Confirm Sales — Trade Goods | Sales Cost | Tax 1% | Surcharge | Price — Pig (Livestock, qty 204): 4,080 | 0 | +1,020 | 5,100 — Raisin (Luxuries, qty 170): 202,130 | -1,700 | +54,910 | 255,340 — Total Sales: 206,210 | -1,700 | +55,930 | 260,440 — [Cancel] [OK]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "2bc84f3a98b39819",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-15T19:49:42.431920+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Confirmation dialog asking the bot to approve the pending sale of 204 Pigs and 170 Raisins for a total of 260,440 gold before the transaction is finalised",
+    "full_text": "Confirm Sales — Trade Goods | Sales Cost | Tax 1% | Surcharge | Price — Pig (Livestock, qty 204): 4,080 | 0 | +1,020 | 5,100 — Raisin (Luxuries, qty 170): 202,130 | -1,700 | +54,910 | 255,340 — Total Sales: 206,210 | -1,700 | +55,930 | 260,440 — [Cancel] [OK]",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

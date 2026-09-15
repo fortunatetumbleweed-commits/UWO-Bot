@@ -1,0 +1,21 @@
+{
+  "purpose": "Pieter Gerardus (the negotiation officer) is offering to negotiate a 21.5% price reduction on the current purchase, with a 79.2% success rate, and is asking whether to use 1 chance or all remaining chances",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 143,850 → 105,216 (-21.5%). Negotiation Success Rate: Failed | 79.2% | Success. Pieter Gerardus: This product can be bought for 21.5% less. Want me to try negotiating? No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "d172e241d365aaf0",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-15T22:20:52.105760+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Pieter Gerardus (the negotiation officer) is offering to negotiate a 21.5% price reduction on the current purchase, with a 79.2% success rate, and is asking whether to use 1 chance or all remaining chances",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 143,850 → 105,216 (-21.5%). Negotiation Success Rate: Failed | 79.2% | Success. Pieter Gerardus: This product can be bought for 21.5% less. Want me to try negotiating? No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Merchant Lorenzo Pinto is offering to negotiate the purchase price down by 21.5% with a 79.2% success rate, using the remaining negotiation attempts — this dialog was triggered as part of the purchase flow, likely after the bot acknowledged the overload notice",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts (several scales shown). 178,318 → 130,942 (-21.5%). Negotiation Success Rate: Failed ... 79.2% ... Success. Lorenzo Pinto says: In my opinion, we can buy this for 21.5% less. Would you like to negotiate? Options: No | Use 1 chance | Use all remaining chances.",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "7b30a7dfda88a595",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-15T19:44:24.353304+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Merchant Lorenzo Pinto is offering to negotiate the purchase price down by 21.5% with a 79.2% success rate, using the remaining negotiation attempts — this dialog was triggered as part of the purchase flow, likely after the bot acknowledged the overload notice",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts (several scales shown). 178,318 → 130,942 (-21.5%). Negotiation Success Rate: Failed ... 79.2% ... Success. Lorenzo Pinto says: In my opinion, we can buy this for 21.5% less. Would you like to negotiate? Options: No | Use 1 chance | Use all remaining chances.",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

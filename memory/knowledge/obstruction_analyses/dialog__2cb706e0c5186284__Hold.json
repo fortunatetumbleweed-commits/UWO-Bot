@@ -1,0 +1,21 @@
+{
+  "purpose": "Negotiation dialog asking whether to attempt to buy Gobelin Fabrics at a 21.5% discount (from 143,850 to 105,216 gold) with a 79.2% success rate and remaining attempts shown",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 143,850 → 105,216 (-21.5%). Negotiation Success Rate: Failed | 79.2% | Success. Albrecht Wallenstein: Hmm, we should be able to buy it for 21.5% less. Why don't you try negotiating? Options: No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "2cb706e0c5186284",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-15T22:17:09.807238+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Negotiation dialog asking whether to attempt to buy Gobelin Fabrics at a 21.5% discount (from 143,850 to 105,216 gold) with a 79.2% success rate and remaining attempts shown",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 143,850 → 105,216 (-21.5%). Negotiation Success Rate: Failed | 79.2% | Success. Albrecht Wallenstein: Hmm, we should be able to buy it for 21.5% less. Why don't you try negotiating? Options: No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

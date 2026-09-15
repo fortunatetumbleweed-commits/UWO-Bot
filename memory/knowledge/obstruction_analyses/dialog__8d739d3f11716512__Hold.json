@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase result confirmation showing the bot just bought goods (with tax and discount applied), displaying the total cost of 118,552 gold and the remaining balance of 80,275,172,035 gold",
+  "full_text": "Result — Purchase Cost: 143,376 | Tax: 1,160 | Discount: -25,984 | Total Amount: 118,552 | Balance: 80,275,172,035 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "8d739d3f11716512",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-15T19:25:12.926468+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase result confirmation showing the bot just bought goods (with tax and discount applied), displaying the total cost of 118,552 gold and the remaining balance of 80,275,172,035 gold",
+    "full_text": "Result — Purchase Cost: 143,376 | Tax: 1,160 | Discount: -25,984 | Total Amount: 118,552 | Balance: 80,275,172,035 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Numeric keypad dialog asking the bot to enter how many Pigs to load for selling, opened as part of the hold-trimming workflow",
+  "full_text": "Trade Goods Info — Pig (Livestock, qty 1172). Calculation: Sales Cost 397, +115, Final Sales Price 512. Enter Number: 1. Keypad: 1 2 3 4 5 6 7 8 9 0 Max. Max Price 441, Min Price 372. Cancel / Load.",
+  "dismissal": "tap_accept",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "31aa7ddf3a4da7a8",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-14T23:54:18.422562+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Numeric keypad dialog asking the bot to enter how many Pigs to load for selling, opened as part of the hold-trimming workflow",
+    "full_text": "Trade Goods Info — Pig (Livestock, qty 1172). Calculation: Sales Cost 397, +115, Final Sales Price 512. Enter Number: 1. Keypad: 1 2 3 4 5 6 7 8 9 0 Max. Max Price 441, Min Price 372. Cancel / Load.",
+    "dismissal": "tap_accept",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

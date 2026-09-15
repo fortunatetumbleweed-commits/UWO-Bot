@@ -1,0 +1,21 @@
+{
+  "purpose": "Another player's ship (TaylorFP, rank Patron) has sailed into view and their nameplate/encounter card is displaying on screen — a routine at-sea player sighting overlay, not a battle or trade prompt",
+  "full_text": "C/HW | 1 Patron | TaylorFP | 27.6 ~ 14",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "aec79bd613d6d1fa",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-15T00:03:24.407437+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "Another player's ship (TaylorFP, rank Patron) has sailed into view and their nameplate/encounter card is displaying on screen — a routine at-sea player sighting overlay, not a battle or trade prompt",
+    "full_text": "C/HW | 1 Patron | TaylorFP | 27.6 ~ 14",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

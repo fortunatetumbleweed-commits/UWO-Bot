@@ -1,0 +1,21 @@
+{
+  "purpose": "Game is asking whether to finalize the barter trade even though 325 Bambara Groundnut could not be received due to insufficient cargo space — confirming will discard the unclaimed goods",
+  "full_text": "Complete the trade? 325 Bambara Groundnut has not been claimed yet. Unclaimed trade goods will be discarded.",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "247c5af964406137",
+  "goal_intent": "Barter",
+  "cached_at": "2026-09-15T22:52:10.610155+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Game is asking whether to finalize the barter trade even though 325 Bambara Groundnut could not be received due to insufficient cargo space — confirming will discard the unclaimed goods",
+    "full_text": "Complete the trade? 325 Bambara Groundnut has not been claimed yet. Unclaimed trade goods will be discarded.",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

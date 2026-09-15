@@ -1,0 +1,21 @@
+{
+  "purpose": "Sale result summary showing the bot just sold Pigs, displaying profit, surcharge, tax, and updated gold balance after the transaction",
+  "full_text": "Result — Mate Trade EXP: 1,325 | Contribution: 0 | Obtained Trade Point: 0 | Trade Fame: 0 | Sales Cost: 268,590 | Tax: 0 | Surcharge: 77,790 | Profit: 170,430 | Total Amount: 346,380 | Balance: 80,473,125,446 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "a7153e59cf086268",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-15T22:25:36.509763+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Sale result summary showing the bot just sold Pigs, displaying profit, surcharge, tax, and updated gold balance after the transaction",
+    "full_text": "Result — Mate Trade EXP: 1,325 | Contribution: 0 | Obtained Trade Point: 0 | Trade Fame: 0 | Sales Cost: 268,590 | Tax: 0 | Surcharge: 77,790 | Profit: 170,430 | Total Amount: 346,380 | Balance: 80,473,125,446 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

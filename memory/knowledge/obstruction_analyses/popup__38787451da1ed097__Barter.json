@@ -1,0 +1,21 @@
+{
+  "purpose": "Barter Calculations confirmation panel showing the Bambara Groundnut trade will grant +11,993 amity, bringing the bot to max amity (100,000/100,000) at Friendly grade — awaiting OK to finalise the exchange",
+  "full_text": "Barter Calculations — Bambara Groundnut, Trade Quantity 1,062 (+462). Amity Increase/Decrease: Exchange Amity +11,993, Amity Used during Negotiation 0, Total Amity Increase/Decrease Value +11,993, Amity Grade Change Friendly, Final Amity 100,000/100,000. Negotiation Result: Quantity Negotiation Success: 0 Failure: 0, Price Negotiation Success: 0 Failure: 0. Note: Amity gained/used is applied upon confirming the Exchange. [Cancel] [OK]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "38787451da1ed097",
+  "goal_intent": "Barter",
+  "cached_at": "2026-09-15T00:21:01.597673+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Barter Calculations confirmation panel showing the Bambara Groundnut trade will grant +11,993 amity, bringing the bot to max amity (100,000/100,000) at Friendly grade — awaiting OK to finalise the exchange",
+    "full_text": "Barter Calculations — Bambara Groundnut, Trade Quantity 1,062 (+462). Amity Increase/Decrease: Exchange Amity +11,993, Amity Used during Negotiation 0, Total Amity Increase/Decrease Value +11,993, Amity Grade Change Friendly, Final Amity 100,000/100,000. Negotiation Result: Quantity Negotiation Success: 0 Failure: 0, Price Negotiation Success: 0 Failure: 0. Note: Amity gained/used is applied upon confirming the Exchange. [Cancel] [OK]",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade Goods Info popup showing Pig livestock details — price breakdown, price history chart, and quantity selector — opened when the bot tapped the Pig tile to stage it for loading into the hold",
+  "full_text": "Trade Goods Info — Pig, Livestock (quantity: 2123). Calculation: Sales Cost 20, Tax 0, Surcharge +5, Per Price 25. Description: A domesticated version of the boar. Widely raised for its meat. Prices — Current Price 20, Max Price 20, Min Price 17 (price history chart shown). Quantity: 1/2,123. Min | Max buttons. Final Sales Price: 25. Cancel | Load.",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "a0fb1f07912f0069",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-15T19:46:12.645472+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade Goods Info popup showing Pig livestock details — price breakdown, price history chart, and quantity selector — opened when the bot tapped the Pig tile to stage it for loading into the hold",
+    "full_text": "Trade Goods Info — Pig, Livestock (quantity: 2123). Calculation: Sales Cost 20, Tax 0, Surcharge +5, Per Price 25. Description: A domesticated version of the boar. Widely raised for its meat. Prices — Current Price 20, Max Price 20, Min Price 17 (price history chart shown). Quantity: 1/2,123. Min | Max buttons. Final Sales Price: 25. Cancel | Load.",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

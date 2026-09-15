@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase result confirmation showing the cost breakdown (143,376 base, 1,160 tax, -25,984 discount = 118,552 total) for goods just bought at Madeira, with remaining gold balance of 80,275,409,139",
+  "full_text": "Result — Purchase Cost: 143,376 | Tax: 1,160 | Discount: -25,984 | Total Amount: 118,552 | Balance: 80,275,409,139 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "414fbec1ed021144",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-15T19:21:19.509815+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase result confirmation showing the cost breakdown (143,376 base, 1,160 tax, -25,984 discount = 118,552 total) for goods just bought at Madeira, with remaining gold balance of 80,275,409,139",
+    "full_text": "Result — Purchase Cost: 143,376 | Tax: 1,160 | Discount: -25,984 | Total Amount: 118,552 | Balance: 80,275,409,139 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

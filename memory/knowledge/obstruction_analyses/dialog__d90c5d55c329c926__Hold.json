@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase result confirmation showing the total cost, discount applied, and remaining gold balance after buying trade goods (likely Raisin) in bulk at Bordeaux",
+  "full_text": "Result — Purchase Cost: 272,240 | Tax: 0 | Discount: -54,530 | Total Amount: 217,710 | Balance: 78,663,122,442 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "d90c5d55c329c926",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-14T23:49:29.146005+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase result confirmation showing the total cost, discount applied, and remaining gold balance after buying trade goods (likely Raisin) in bulk at Bordeaux",
+    "full_text": "Result — Purchase Cost: 272,240 | Tax: 0 | Discount: -54,530 | Total Amount: 217,710 | Balance: 78,663,122,442 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "high"
+  }
+}

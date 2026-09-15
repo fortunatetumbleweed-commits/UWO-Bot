@@ -1,0 +1,21 @@
+{
+  "purpose": "Edmund Gilbert (trade NPC) is offering to negotiate the purchase price down by 21.5%, prompting the bot to choose whether to use negotiation attempts (79.2% success rate) to reduce the cost from 198,372 to 145,668",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 198,372 → 145,668 (-21.5%). Negotiation Success Rate: Failed ... 79.2% ... Success. Edmund Gilbert: Hmm, I think we can purchase this for 21.5% less. Would you like to negotiate? No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "c0378b768bfea727",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-15T19:41:40.319499+00:00",
+  "visit_count": 1,
+  "raw_api_response": {
+    "purpose": "Edmund Gilbert (trade NPC) is offering to negotiate the purchase price down by 21.5%, prompting the bot to choose whether to use negotiation attempts (79.2% success rate) to reduce the cost from 198,372 to 145,668",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 198,372 → 145,668 (-21.5%). Negotiation Success Rate: Failed ... 79.2% ... Success. Edmund Gilbert: Hmm, I think we can purchase this for 21.5% less. Would you like to negotiate? No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

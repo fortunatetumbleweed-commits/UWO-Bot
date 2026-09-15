@@ -27,7 +27,7 @@
       "hutu_village": [
         {
           "material": "Raisin",
-          "ratio": 188,
+          "ratio": 278,
           "source_ports": [
             "Bordeaux",
             "Madeira",
@@ -37,7 +37,7 @@
         },
         {
           "material": "Pig",
-          "ratio": 188,
+          "ratio": 278,
           "source_ports": [
             "Faro",
             "Gijón"
@@ -73,7 +73,7 @@
     ],
     "output_per_round": {
       "Neutral": 829,
-      "Friendly": 1235
+      "Friendly": 988
     },
     "preconditions": {
       "amity_min": null,

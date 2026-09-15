@@ -1,0 +1,21 @@
+{
+  "purpose": "Edmund Gilbert (the negotiation NPC) is offering to reduce the purchase price of Gobelin Fabrics by 21.5% (from 217,710 to 159,080 gold) with a 79.2% success rate, prompting the bot to choose whether to attempt negotiation using 1 or all remaining chances",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts [several icons shown]. 217,710 → 159,080 (-21.5%). Negotiation Success Rate: Failed | 79.2% | Success. Edmund Gilbert: Hmm, I think we can purchase this for 21.5% less. Would you like to negotiate? Options: No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "650346fc5ce2430f",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-14T23:49:06.976303+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Edmund Gilbert (the negotiation NPC) is offering to reduce the purchase price of Gobelin Fabrics by 21.5% (from 217,710 to 159,080 gold) with a 79.2% success rate, prompting the bot to choose whether to attempt negotiation using 1 or all remaining chances",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts [several icons shown]. 217,710 → 159,080 (-21.5%). Negotiation Success Rate: Failed | 79.2% | Success. Edmund Gilbert: Hmm, I think we can purchase this for 21.5% less. Would you like to negotiate? Options: No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase confirmation result screen showing the completed bulk buy of goods (likely Pig/food items), detailing the purchase cost, tax, discount applied, total amount spent, and remaining gold balance",
+  "full_text": "Result — Purchase Cost: 242,292 | Tax: 1,464 | Discount: -45,384 | Total Amount: 198,372 | Balance: 80,274,523,967 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "102e356f0579bfce",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-15T19:42:03.191030+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase confirmation result screen showing the completed bulk buy of goods (likely Pig/food items), detailing the purchase cost, tax, discount applied, total amount spent, and remaining gold balance",
+    "full_text": "Result — Purchase Cost: 242,292 | Tax: 1,464 | Discount: -45,384 | Total Amount: 198,372 | Balance: 80,274,523,967 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "high"
+  }
+}

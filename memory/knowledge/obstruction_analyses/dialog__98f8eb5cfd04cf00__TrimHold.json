@@ -1,0 +1,21 @@
+{
+  "purpose": "Numeric keypad dialog prompting the bot to enter how many Raisins to load, opened as part of trimming hold quantity to 1919",
+  "full_text": "Enter Number: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 0 | Max | Cancel | Load — Trade Goods Info: Raisin (Luxuries, qty 2089). Final Sales Price 1,502. Current input: 1. Slot: 1/2,089.",
+  "dismissal": "tap_accept",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "98f8eb5cfd04cf00",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-15T19:48:21.433564+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Numeric keypad dialog prompting the bot to enter how many Raisins to load, opened as part of trimming hold quantity to 1919",
+    "full_text": "Enter Number: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 0 | Max | Cancel | Load — Trade Goods Info: Raisin (Luxuries, qty 2089). Final Sales Price 1,502. Current input: 1. Slot: 1/2,089.",
+    "dismissal": "tap_accept",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}
