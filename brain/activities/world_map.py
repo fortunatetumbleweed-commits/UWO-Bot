@@ -284,12 +284,37 @@ class WorldMapActivity:
         # `_kb_hygiene` alone bounds it, so the poisoned-query recovery in `_on_list` — which
         # dismisses AND resets the attempts — is still reached once these are spent.
         if self._kb_hygiene < _MAX_KB_HYGIENE and self._keyboard_is_up():
-            self._kb_hygiene += 1
-            logger.info("[world_map] the soft keyboard is up — putting it away before "
-                        f"deciding what this screen is ({self._kb_hygiene}/{_MAX_KB_HYGIENE}); "
-                        "it covers the list, so an open list reads as a bare map")
-            self._dismiss_keyboard()
-            return ActivityResult(WORKING, {"did": "put the keyboard away"}, detail=str(goal))
+            # LOOK BEFORE DECIDING THE KEYBOARD IS IN THE WAY. The filtered list renders
+            # ABOVE the IME, so typing a query and seeing its one matching row is the normal,
+            # successful case — and this gate used to spend that tick hiding the keyboard
+            # instead of tapping the row.
+            #
+            # Live 2026-09-15 hunting Bordeaux: 'bord' was typed, the list filtered to a
+            # single starred row reading 'Bordeaux' at (234,198), and the gate fired anyway.
+            # The dismissal then took the map with it, so the query and the row went too and
+            # the next tick began again from sea.
+            #
+            # `_find_on_screen` is the same reader `_on_list` uses to decide whether to tap,
+            # so this asks the question that handler is about to ask rather than a new one.
+            visible = None
+            where, kind = getattr(goal, "where", None), getattr(goal, "kind", None)
+            if where and kind:
+                try:
+                    visible = self._find_on_screen(where, kind, in_list=True)
+                except Exception as exc:      # noqa: BLE001 — unreadable is not "visible"
+                    logger.debug(f"[world_map] could not look past the keyboard: {exc}")
+            if visible:
+                logger.info(f"[world_map] the keyboard is up but {where!r} is already "
+                            f"readable @ {visible} — looking, not hiding")
+            else:
+                self._kb_hygiene += 1
+                logger.info("[world_map] the soft keyboard is up and the destination is not "
+                            f"readable — putting it away ({self._kb_hygiene}/"
+                            f"{_MAX_KB_HYGIENE}); it covers the list, so an open list reads "
+                            "as a bare map")
+                self._dismiss_keyboard()
+                return ActivityResult(WORKING, {"did": "put the keyboard away"},
+                                      detail=str(goal))
 
         local = self._classify(state)
         # Remember that the rail opened at all: the icon that produced it is settled, and a
@@ -1134,24 +1159,25 @@ class WorldMapActivity:
         """Is the soft keyboard showing? THE OS KNOWS — do not infer it from pixels."""
         if self._kb_up_fn is not None:
             return bool(self._kb_up_fn())
-        try:
-            from actions.adb_actions import shell_out as _shell_out
-            out = _shell_out(["shell", "dumpsys", "input_method"]) or ""
-        except Exception as exc:
-            logger.debug(f"[world_map] could not ask about the keyboard: {exc}")
-            return False
-        for line in out.splitlines():
-            if "mInputShown=" in line:
-                return line.split("mInputShown=")[1].strip().lower().startswith("true")
-        return False
+        # ONE CANONICAL READER. `sail_actions` asked the same question by counting short OCR
+        # tokens and got a different answer; both now ask the OS through the same helper.
+        from actions.adb_actions import keyboard_is_up as _kb_up
+        return _kb_up()
 
     def _dismiss_keyboard(self) -> None:
-        """Back puts the IME away without leaving the screen underneath it."""
+        """Put the IME away without leaving the screen underneath it.
+
+        This used to press BACK, on the docstring's own claim that Back hides the keyboard
+        and nothing else. That held on the old phone and does not hold on this one — see
+        `actions.adb_actions.hide_keyboard` for the A/B that settles it. Live 2026-09-15 one
+        Back took the world map, the typed query and a filtered row reading 'Bordeaux', and
+        the search restarted from sea.
+        """
         if self._kb_dismiss_fn is not None:
             self._kb_dismiss_fn()
             return
-        from actions.adb_actions import press_back as _press_back
-        _press_back()
+        from actions.adb_actions import hide_keyboard as _hide
+        _hide()
 
     # The rail's rows, as (label, x, y) — the shape `actions.ui.lists` works in. The crop is
     # the left panel, which is where this list lives; OCR of the whole frame would pick up the

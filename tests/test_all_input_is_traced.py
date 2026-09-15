@@ -45,6 +45,10 @@ INPUT_PRIMITIVES = {
     "swipe": (10, 20, 30, 40),
     "swipe_fast": (10, 20, 30, 40),
     "press_back": (),
+    # ESCAPE, added 2026-09-15. It is input like any other and must show in the trace: a
+    # dismissal that leaves no record is exactly the step nobody can explain afterwards,
+    # which is how one Back closing the world map went unnoticed for a whole run.
+    "hide_keyboard": (),
     "wake": (),
     "pinch_zoom": (1200, 540),
     "input_text": ("hello",),

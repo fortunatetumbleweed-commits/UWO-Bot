@@ -281,8 +281,16 @@ def _offline_device(request, monkeypatch):
             return fn
 
         for _fn in ("tap", "tap_fast", "long_press", "swipe", "swipe_fast",
-                    "press_back", "wake", "pinch_zoom", "input_text"):
+                    "press_back", "wake", "pinch_zoom", "input_text", "hide_keyboard"):
             monkeypatch.setattr(_adb_actions, _fn, _recorder(_fn), raising=False)
+
+        # THE KEYBOARD IS NEVER UP OFFLINE. `keyboard_is_up` asks the OS, which is right and
+        # is why it re-raises the ADB guard instead of swallowing it. The reader it replaced
+        # caught every exception including that guard, so twenty-one world-map tests were
+        # quietly ATTEMPTING an adb call and being handed False by the catch — the guard
+        # defeated in exactly the way its own docstring warns about. A stand-in here keeps
+        # the guard honest and the tests offline, like the canned rotation above.
+        monkeypatch.setattr(_adb_actions, "keyboard_is_up", lambda: False, raising=False)
     except Exception:
         pass
 

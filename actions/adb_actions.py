@@ -287,6 +287,58 @@ def press_back() -> None:
     _human_delay()
     _acted('press_back', 1.2)
 
+def keyboard_is_up() -> bool:
+    """Is the soft keyboard showing? THE OS KNOWS — never infer it from pixels.
+
+    The pixel version this replaces counted short OCR tokens below y=500 and called three of
+    them a keyboard, which is a description of a keyboard and also of a dense list, a HUD
+    row, or a map full of two-letter labels.
+    """
+    try:
+        out = shell_out(["shell", "dumpsys", "input_method"]) or ""
+    except AssertionError:
+        raise                       # tests/conftest.py blocking ADB — let that be heard
+    except Exception:
+        return False
+    for line in out.splitlines():
+        if "mInputShown=" in line:
+            return line.split("mInputShown=")[1].strip().lower().startswith("true")
+    return False
+
+
+def hide_keyboard() -> None:
+    """Put the soft keyboard away WITHOUT leaving the screen underneath it.
+
+    ESCAPE, NOT BACK, and that is measured rather than assumed. The IME is supposed to
+    consume BACK while its window is shown, which is why pressing it used to hide only the
+    keyboard. On the phone in use from 2026-09-14 it does not: the press reaches the game,
+    the game closes whatever is open, and the keyboard then goes away because the field it
+    was attached to went with it.
+
+    A/B on the live device 2026-09-15, same screen, keyboard up both times:
+
+        ESCAPE  ->  keyboard down, world map still open, port list intact
+        BACK    ->  keyboard down, world map CLOSED, back at the port overworld
+
+    What it cost before it was understood: hunting Bordeaux, the list had already filtered
+    to a single row and the world-map activity pressed BACK to clear the keyboard "before
+    deciding what this screen is". One press took the map, the typed query and the row that
+    was in plain view, and the next tick started the search over from sea.
+
+    Six earlier dismissals on the OLD phone all left the map open (09-03, 09-07, three on
+    09-08, 09-10). The first one on this phone did not. Nothing in the bot changed.
+    """
+    try:
+        from actions import action_trace
+        if action_trace.active():
+            action_trace.record_tap(-1, -1, "hide_keyboard")
+    except Exception:
+        pass
+    _adb(["shell", "input", "keyevent", "111"])      # KEYCODE_ESCAPE
+    _human_delay()
+    _acted('hide_keyboard', 1.0)
+
+
 def wake() -> None:
     """Wake the screen (KEYCODE_WAKEUP) — used before dismissing the lock/
     screensaver, which the game idles into between steps."""

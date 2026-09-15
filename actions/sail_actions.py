@@ -4082,14 +4082,20 @@ def _navigate_world_map_to_port(destination: str, from_port: Optional[str] = Non
         _search_found_go_to_city = True   # skip Phase 1 city-tap; go straight to Go-to-City
     else:
         logger.info("  Port search failed — falling back to coordinate pan")
-        # Dismiss soft keyboard if still open — it covers the lower half of the world map,
-        # breaking visual port detection and panning.  BACK closes only the keyboard.
-        _kb_toks = list(_ocr_frame(capture_screen()))
-        if sum(1 for text, conf, cx, cy in _kb_toks
-               if len(text.strip()) <= 2 and cy > 500) >= 3:
-            logger.info("  Soft keyboard detected — pressing BACK to dismiss before panning")
-            from actions.adb_actions import press_back as _press_back
-            _press_back()
+        # Dismiss the soft keyboard if still open — it covers the lower half of the world
+        # map, breaking visual port detection and panning.
+        #
+        # TWO THINGS WERE WRONG HERE AND BOTH ARE FIXED ABOVE THE LINE. The comment used to
+        # say "BACK closes only the keyboard", which is what the IME is supposed to do and
+        # what the phone in use from 2026-09-14 does not: the press reaches the game and
+        # takes the world map with it (A/B on the live device, `adb_actions.hide_keyboard`).
+        # And the keyboard was detected by PIXELS — three short OCR tokens below y=500 —
+        # which equally describes a dense list or a map full of two-letter labels. The OS
+        # answers both questions and is asked instead.
+        from actions.adb_actions import hide_keyboard as _hide_kb, keyboard_is_up as _kb_up
+        if _kb_up():
+            logger.info("  Soft keyboard is up (the OS says so) — hiding it before panning")
+            _hide_kb()
             time.sleep(1.5)
 
         # Re-verify we're still on the world map before panning.
