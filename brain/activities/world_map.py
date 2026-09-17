@@ -969,36 +969,46 @@ class WorldMapActivity:
         rail while a list is open toggles it SHUT (measured 2026-08-24). Both checks must
         agree on this, or a vision hiccup behaves oppositely depending on the goal's kind.
         """
-        if kind == "village":
-            return self._village_list_is_open()
+        # THE RAIL IS ONE COMPONENT AND ITS IDENTITY IS THE LIT TAB (user, 2026-09-16: "the
+        # list and box are one component, they always show together, the list can be empty if
+        # everything is filtered out, but it is still there").
+        #
+        # So this asks two independent things instead of two views of one thing ANDed
+        # together: is the rail up, and which tab owns it. Neither depends on what is IN the
+        # rail, which is what both previous versions got wrong in opposite directions — a
+        # filter narrowed to one row read as "no list" (2026-08-24), and a typed-into box
+        # read as "no list" from the moment the search SUCCEEDED (2026-09-16 at Svear, the
+        # mission dying one leg out with the row on screen).
+        #
+        # The injection points stay, so existing tests drive this unchanged.
+        if kind not in ("port", "village"):
+            return True                            # not this rail's business — see above
         try:
-            if self._port_list_open_fn is not None:
-                return bool(self._port_list_open_fn())
-            from actions.sail_actions import _port_list_open
-            return bool(_port_list_open(self._frame()))
-        except Exception as exc:                   # noqa: BLE001 — see above
-            logger.debug(f"[world_map] port-list check failed: {exc}")
-            return True
-
-    def _village_list_is_open(self) -> bool:
-        """Is the rail on screen the VILLAGE list, rather than some other list?
-
-        Identified by what is in it — a search box with `<name> Village` rows beneath — not by
-        which icon we believe we tapped. The icons carry no label, so belief about which one
-        was tapped is exactly the thing that needs checking.
-        """
-        try:
-            if self._village_list_open_fn is not None:
+            # THE INJECTED READER IS INSIDE THE GUARD TOO. It was, before this was rewritten,
+            # and a test exists for exactly that: an injected reader that raises must read as
+            # CANNOT TELL, not as "no" — treating it as no reopens the rail forever.
+            if kind == "village" and self._village_list_open_fn is not None:
                 return bool(self._village_list_open_fn())
-            from actions.sail_actions import _village_list_open
+            if kind == "port" and self._port_list_open_fn is not None:
+                return bool(self._port_list_open_fn())
+            # PARSE FIRST, SO "COULD NOT LOOK" STAYS DISTINCT FROM "NOT THERE". The detector
+            # answers None for both, and only one of them may be read as a shut rail: an
+            # unreadable frame taken for "no rail" reopens it on every tick forever, and
+            # tapping the rail while it IS open toggles it shut (2026-08-24). So the parse is
+            # done here, where a failure can fall into the CANNOT TELL guard below.
             from vision.omniparser import parse_fast_cached
+            from vision.region_detectors.destination_rail import detect_destination_rail
             frame = self._frame()
-            return bool(_village_list_open(frame, list(parse_fast_cached(frame))))
-        except Exception as exc:
-            # CANNOT TELL IS NOT NO. Reading it as "not ours" would reopen the list on every
-            # tick forever. The guard covers whichever implementation raised, because which
-            # one it was is not the point.
-            logger.debug(f"[world_map] village-list check failed: {exc}")
+            elements = list(parse_fast_cached(frame))
+            if detect_destination_rail(frame, elements) is None:
+                return False
+            from actions.sail_actions import active_world_map_tab
+            lit = active_world_map_tab(frame)
+            if lit is None:
+                return True                        # CANNOT TELL IS NOT NO
+            return lit == self._TAB_FOR.get(kind, kind)
+        except Exception as exc:                   # noqa: BLE001 — see above
+            logger.debug(f"[world_map] rail check failed: {exc}")
             return True
 
     def _is_the_search_box(self, frame, el) -> bool:

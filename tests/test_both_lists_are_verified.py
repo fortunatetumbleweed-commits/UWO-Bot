@@ -90,17 +90,30 @@ class CannotTellIsNotNo(unittest.TestCase):
     behave oppositely depending on the goal's kind.
     """
 
-    def _unreadable(self, kind, target):
+    def _unreadable(self, kind):
+        """THE PARSE IS THE SEAM NOW. Both kinds read one rail and ask the lit tab which it
+        is, so the thing that can fail is the look itself — patched where it happens."""
         a = WorldMapActivity(capture_fn=lambda: object())
-        with mock.patch(target, side_effect=RuntimeError("vision down")):
+        with mock.patch("vision.omniparser.parse_fast_cached",
+                        side_effect=RuntimeError("vision down")):
             return a._list_is_open_for(kind)
 
     def test_the_port_check_does_not_reopen_forever(self):
-        self.assertTrue(self._unreadable("port", "actions.sail_actions._port_list_open"))
+        self.assertTrue(self._unreadable("port"))
 
     def test_and_the_village_check_agrees(self):
-        self.assertTrue(self._unreadable("village",
-                                         "actions.sail_actions._village_list_open"))
+        self.assertTrue(self._unreadable("village"))
+
+    def test_A_READABLE_FRAME_WITH_NO_RAIL_IS_A_NO(self):
+        """The other half, and the reason the parse moved out of the detector: a frame we
+        COULD read, showing no rail, must answer False — or the gate never opens a list."""
+        a = WorldMapActivity(capture_fn=lambda: _Frame())
+        with mock.patch("vision.omniparser.parse_fast_cached", return_value=[]):
+            self.assertFalse(a._list_is_open_for("village"))
+
+
+class _Frame:
+    width, height = 2400, 1080
 
 
 class ThePortTestIsNotAListOfPortNames(unittest.TestCase):

@@ -25,8 +25,40 @@ def test_the_bare_map_is_its_tab_row():
     assert classify(None, elements=TABS, tab="port") == MAP_OPEN
 
 
+# THE RAIL'S CLOSE-X, at x 521-523, y 141-144 on every real frame where the rail was open
+# (13 of 13 across the Svear, San and Hutu sessions). It is the rail's own dismiss control,
+# so it is there exactly when the rail is and a typed query cannot change it — which the
+# search box demonstrably can, and did, on 2026-09-16.
+def _search_field():
+    """The other half of the rail's head. Empty it reads 'Search'; filled it reads the
+    query — and on 2026-09-16 it parsed as bare 64px text, which is why nothing about its
+    WIDTH or its WORDING may be required."""
+    return types.SimpleNamespace(label="Search", element_type="button", cx=302, cy=141,
+                                 x1=109, y1=111, x2=495, y2=171)
+
+
+def _rail_close_x():
+    return types.SimpleNamespace(label="icon", element_type="icon", cx=522, cy=142,
+                                 x1=496, y1=112, x2=548, y2=172)
+
+
 def test_an_open_rail_is_a_list():
-    assert classify(None, elements=TABS + _els("Search"), tab="port") == DESTINATION_LIST
+    """A word is not a rail. The fixture carries the close-X because the game always draws
+    one — a search box alone was a screen this test invented."""
+    els = TABS + [_search_field(), _rail_close_x()]
+    assert classify(_Frame(), elements=els, tab="port") == DESTINATION_LIST
+
+
+def test_THE_FILTER_BUTTON_IS_NOT_A_RAIL():
+    """`filter` used to be enough to call a screen a list, and Filter is a MAP control —
+    bottom-left, on screen whether or not a rail is open. Measured 2026-09-16 on Svear
+    frames 12 and 13, both plainly rail-less, both classified `destination_list`."""
+    assert classify(_Frame(), elements=TABS + _els("Filter"), tab="port") == MAP_OPEN
+
+
+class _Frame:
+    """The rail detector reads the frame's size to place its windows."""
+    width, height = 2400, 1080
 
 
 def test_a_selected_destination_is_a_panel():

@@ -45,7 +45,6 @@ CONTEXT_STATES = (MAP_OPEN, DESTINATION_LIST, DESTINATION_PANEL, ROUTE_LIST,
 # The rail is a list when it carries its own search box — every one of them does, which is
 # also why "did a panel open?" could never tell the port list from the goods list
 # (memory: world-map-state-dies-with-the-map).
-_LIST_WORDS = ("search", "filter")
 _ROUTE_WORDS = ("route", "routes")
 # Village Info opens over the map. Which TAB is showing decides what can be read: Base
 # carries amity and the day's rounds, Barter carries the trade list.
@@ -127,11 +126,11 @@ _CITY_PANEL_TITLES = ("city info", "location info")
 _VILLAGE_PANEL_TITLE = "village info"
 
 
-def _search_box(frame, elements) -> bool:
-    """Is the rail's search box on screen, whatever it currently says?"""
+def _destination_rail(frame, elements) -> bool:
+    """Is the destination rail on screen — box and rows together, however they parse?"""
     try:
-        from actions.sail_actions import search_box_present
-        return search_box_present(frame, elements)
+        from vision.region_detectors.destination_rail import detect_destination_rail
+        return detect_destination_rail(frame, elements) is not None
     except Exception:
         return False
 
@@ -193,11 +192,22 @@ def classify(frame, *, elements=None, tab: Optional[str] = None) -> str:
 
     if tab == "route" and any(w in text for w in _ROUTE_WORDS):
         return ROUTE_LIST
-    # A RAIL THAT HAS BEEN TYPED INTO IS STILL A RAIL. The word test alone missed it: an
-    # empty search box reads 'Search' and a filled one reads the query, so a list the bot had
-    # typed into classified as MAP_OPEN and it went on looking at the map while standing in
-    # the list (live 2026-08-29). The box is found by where it sits instead.
-    if any(w in text for w in _LIST_WORDS) or _search_box(frame, elements):
+    # A RAIL THAT HAS BEEN TYPED INTO IS STILL A RAIL, and the rail is ONE COMPONENT — the
+    # box and its rows always show together, and the rows may be filtered to none (user,
+    # 2026-09-16). So this asks for the rail itself, anchored on its own close-X, which is
+    # the one part a query cannot change.
+    #
+    # WHAT THE WORD TEST DID INSTEAD. It held 'search' and 'filter', and FILTER IS
+    # A MAP CONTROL — the button at the bottom-left, on screen whether or not a rail is open.
+    # So a bare map matched it: measured 2026-09-16 on frames 12 and 13 of the Svear run,
+    # both plainly rail-less, both classified `destination_list`. That is the same false
+    # positive `search_box_present` records from 2026-09-01, when a couple of port PINS
+    # classified a bare map as a list and the bot typed 'Barc' into the map twice.
+    #
+    # And 'search' alone was the opposite failure: an empty box reads 'Search', a filled one
+    # reads the query, so a list the bot had typed into classified as MAP_OPEN and it went on
+    # looking at the map while standing in the list (live 2026-08-29).
+    if _destination_rail(frame, elements):
         return DESTINATION_LIST
 
     if _looks_like_the_map(text, elements):

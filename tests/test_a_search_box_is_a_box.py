@@ -48,6 +48,8 @@ EMPTY_BOX = _el(302, 160, 393, 99, "button", "Search")
 FILLED_BOX = _el(302, 141, 384, 63, "button", "svea")
 PIN_A = _el(472, 125, 95, 112, "icon", "icon")
 PIN_B = _el(557, 128, 65, 84, "icon", "icon")
+# The rail's own dismiss control — measured at x 521-523, y 141-144.
+RAIL_CLOSE_X = _el(522, 142, 52, 60, "icon", "icon")
 
 
 class ABoxIsFoundWhateverItSays(unittest.TestCase):
@@ -100,8 +102,13 @@ class TheClassifierFollows(unittest.TestCase):
         self.assertNotEqual(self._classify(tabs + [PIN_A, PIN_B]), "destination_list")
 
     def test_an_open_list_still_is_one(self):
+        """THE RAIL CARRIES ITS CLOSE-X, on all 13 real frames where the log proved it open.
+        A box on its own was a screen this fixture invented: the classifier now asks for the
+        rail as one component, because the box and its rows always show together and the
+        rows may filter to none (user, 2026-09-16)."""
         tabs = [_el(700, 50, 100, 40, "button", t) for t in ("Port", "Explore", "Route")]
-        self.assertEqual(self._classify(tabs + [EMPTY_BOX]), "destination_list")
+        self.assertEqual(self._classify(tabs + [EMPTY_BOX, RAIL_CLOSE_X]),
+                         "destination_list")
 
 
 if __name__ == "__main__":
