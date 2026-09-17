@@ -1,0 +1,21 @@
+{
+  "purpose": "The mini-map / navigation panel on the right side of the world map screen is showing nearby ports and their distances, including 'Svear Village' as the current location — this is the normal world map HUD, not a popup obstruction",
+  "full_text": "C/HW 10 | 10.1 | Patron | Ralees Pirates | TaylorFP | Svear Village Nearby | Stockholm Approx. 488.1km | Kokkola Approx. 494.3km | Visby Approx. 726.1km | Riga Approx. 896.3km | Saint Petersburg Approx. 1040.4km | Winter Feb Night",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "37263508761ac02a",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-17T03:07:44.070546+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "The mini-map / navigation panel on the right side of the world map screen is showing nearby ports and their distances, including 'Svear Village' as the current location — this is the normal world map HUD, not a popup obstruction",
+    "full_text": "C/HW 10 | 10.1 | Patron | Ralees Pirates | TaylorFP | Svear Village Nearby | Stockholm Approx. 488.1km | Kokkola Approx. 494.3km | Visby Approx. 726.1km | Riga Approx. 896.3km | Saint Petersburg Approx. 1040.4km | Winter Feb Night",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

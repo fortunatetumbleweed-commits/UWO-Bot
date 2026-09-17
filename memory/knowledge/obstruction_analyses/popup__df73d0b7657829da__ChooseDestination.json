@@ -1,0 +1,21 @@
+{
+  "purpose": "An NPC dialogue hint is telling the player that the Pillars of Hercules are located near the entrance to the Strait of Gibraltar, alongside a Market building tooltip that appeared when hovering over the market in Barcelona port.",
+  "full_text": "Market. 00:00-23:59. Buy and sell Trade Goods. You'll find the Pillars of Hercules near the entrance to the Strait of Gibraltar.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "df73d0b7657829da",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-17T01:06:06.492808+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "An NPC dialogue hint is telling the player that the Pillars of Hercules are located near the entrance to the Strait of Gibraltar, alongside a Market building tooltip that appeared when hovering over the market in Barcelona port.",
+    "full_text": "Market. 00:00-23:59. Buy and sell Trade Goods. You'll find the Pillars of Hercules near the entrance to the Strait of Gibraltar.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "medium"
+  }
+}

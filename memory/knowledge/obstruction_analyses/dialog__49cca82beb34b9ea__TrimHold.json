@@ -1,0 +1,21 @@
+{
+  "purpose": "Confirmation dialog asking the bot to approve selling 504 Iron for 555,912 gold (after 1% tax and surcharge) as part of trimming the hold to reach the target Iron quantity",
+  "full_text": "Confirm Sales — Trade Goods: Iron (Wares, qty 504), Sales Cost: 436,464, Tax 1%: -2,520, Surcharge: +121,968, Price: 555,912. Total Sales: 436,464, Tax: -2,520, Surcharge: +121,968, Total Price: 555,912. [Cancel] [OK]",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "49cca82beb34b9ea",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-17T01:26:51.212161+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Confirmation dialog asking the bot to approve selling 504 Iron for 555,912 gold (after 1% tax and surcharge) as part of trimming the hold to reach the target Iron quantity",
+    "full_text": "Confirm Sales — Trade Goods: Iron (Wares, qty 504), Sales Cost: 436,464, Tax 1%: -2,520, Surcharge: +121,968, Price: 555,912. Total Sales: 436,464, Tax: -2,520, Surcharge: +121,968, Total Price: 555,912. [Cancel] [OK]",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

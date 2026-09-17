@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase result confirmation showing the cost breakdown (base cost, tax, discount, and total) for a bulk trade goods purchase just completed at Amsterdam",
+  "full_text": "Result — Purchase Cost: 290,554 | Tax: 37,224 | Discount: -55,319 | Total Amount: 272,459 | Balance: 81,522,162,013 — OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "cee04926698246f9",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-17T00:48:37.236468+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase result confirmation showing the cost breakdown (base cost, tax, discount, and total) for a bulk trade goods purchase just completed at Amsterdam",
+    "full_text": "Result — Purchase Cost: 290,554 | Tax: 37,224 | Discount: -55,319 | Total Amount: 272,459 | Balance: 81,522,162,013 — OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

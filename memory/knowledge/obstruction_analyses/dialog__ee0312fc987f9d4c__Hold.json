@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase confirmation dialog asking the bot to confirm buying 495 Candles for a total of 54,450 gold (after a 1% tax of 495 and a discount of -13,860 from the base cost of 67,815), with an 'Overflowing' status indicating the cargo hold is at or near capacity",
+  "full_text": "Confirm Purchase — Trade Goods: Candle (Sundries) | Purchase Cost: 67,815 | Tax 1%: 495 | Discount: -13,860 | Purchase Price: 54,450 | Status: Overflowing | Total Price: 67,815 | Tax: 495 | Discount: -13,860 | Total: 54,450 — Cancel / OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "ee0312fc987f9d4c",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-17T01:23:25.128737+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase confirmation dialog asking the bot to confirm buying 495 Candles for a total of 54,450 gold (after a 1% tax of 495 and a discount of -13,860 from the base cost of 67,815), with an 'Overflowing' status indicating the cargo hold is at or near capacity",
+    "full_text": "Confirm Purchase — Trade Goods: Candle (Sundries) | Purchase Cost: 67,815 | Tax 1%: 495 | Discount: -13,860 | Purchase Price: 54,450 | Status: Overflowing | Total Price: 67,815 | Tax: 495 | Discount: -13,860 | Total: 54,450 — Cancel / OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

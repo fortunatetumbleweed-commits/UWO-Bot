@@ -9,7 +9,7 @@
   "structural_hash": "fbdd55d25c53d488",
   "goal_intent": "Hold",
   "cached_at": "2026-09-12T15:35:47.010689+00:00",
-  "visit_count": 4,
+  "visit_count": 6,
   "raw_api_response": {
     "purpose": "Confirmation dialog asking whether to spend 8 Rufiyaa (premium currency) to replenish the stock of the item being restocked back to its full 50/50 quantity, without affecting the market price",
     "full_text": "Replenish Stock? (Does not affect market price) Remaining: 50/50 [Cost: 8 Rufiyaa] OK / Cancel",

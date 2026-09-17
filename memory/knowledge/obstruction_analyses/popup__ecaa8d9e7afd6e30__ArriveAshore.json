@@ -1,0 +1,21 @@
+{
+  "purpose": "The Shipyard location label has appeared on screen as the bot's character has arrived at or near the Amsterdam shipyard area, indicating the bot has reached the port of Amsterdam",
+  "full_text": "Shipyard",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": true,
+  "outcome_for_goal": "likely_resolved",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "ecaa8d9e7afd6e30",
+  "goal_intent": "ArriveAshore",
+  "cached_at": "2026-09-17T00:43:56.468570+00:00",
+  "visit_count": 4,
+  "raw_api_response": {
+    "purpose": "The Shipyard location label has appeared on screen as the bot's character has arrived at or near the Amsterdam shipyard area, indicating the bot has reached the port of Amsterdam",
+    "full_text": "Shipyard",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": true,
+    "outcome_for_goal": "likely_resolved",
+    "confidence": "medium"
+  }
+}

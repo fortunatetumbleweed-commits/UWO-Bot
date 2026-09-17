@@ -1,0 +1,21 @@
+{
+  "purpose": "Trade assistant Lorenzo Pinto is offering to negotiate a 24.5% higher sell price for Iron, with a 79.2% success rate and multiple negotiation attempts remaining",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 555,912 → 661,752 (24.5% increase). Negotiation Success Rate: Failed | 79.2% | Success. Lorenzo Pinto says: In my opinion, we can sell this for 24.5% more. Would you like to negotiate? Options: No | Use 1 chance (79.2%) | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "0a1608f9068058bf",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-17T01:27:13.256188+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Trade assistant Lorenzo Pinto is offering to negotiate a 24.5% higher sell price for Iron, with a 79.2% success rate and multiple negotiation attempts remaining",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 555,912 → 661,752 (24.5% increase). Negotiation Success Rate: Failed | 79.2% | Success. Lorenzo Pinto says: In my opinion, we can sell this for 24.5% more. Would you like to negotiate? Options: No | Use 1 chance (79.2%) | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

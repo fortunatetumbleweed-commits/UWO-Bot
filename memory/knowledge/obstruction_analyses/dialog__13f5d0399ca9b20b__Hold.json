@@ -1,0 +1,21 @@
+{
+  "purpose": "Negotiation dialog asking whether to use negotiation attempts to reduce the purchase price of Gin by 21.5% (from 272,459 to 200,079 gold), with a 79.2% success rate and 9 attempts remaining",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts: 9. 272,459 → 200,079 (-21.5%). Negotiation Success Rate: Failed | 79.2% | Success. Albrecht Wallenstein: Hmm, we should be able to buy it for 21.5% less. Why don't you try negotiating? Options: No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_decline",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "13f5d0399ca9b20b",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-17T00:46:15.466205+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Negotiation dialog asking whether to use negotiation attempts to reduce the purchase price of Gin by 21.5% (from 272,459 to 200,079 gold), with a 79.2% success rate and 9 attempts remaining",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts: 9. 272,459 → 200,079 (-21.5%). Negotiation Success Rate: Failed | 79.2% | Success. Albrecht Wallenstein: Hmm, we should be able to buy it for 21.5% less. Why don't you try negotiating? Options: No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_decline",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "Numeric keypad dialog has appeared for the bot to enter the quantity of Iron it wants to load/sell, as part of trimming the hold to the target amount of 1047 Iron",
+  "full_text": "Trade Goods Info — Iron (Wares) — Enter Number: 1 — Description: Metal extracted from iron ore. Often serves as the symbol of... — Prices: Max 1,048 / Min 865 — Final Sales Price: 1,103 — Calculation: Sales Cost 866, -5, +242, 1,103 — 1/1,551 — Cancel | Load",
+  "dismissal": "unknown",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "1871e518fee0a0a7",
+  "goal_intent": "TrimHold",
+  "cached_at": "2026-09-17T01:25:44.699210+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Numeric keypad dialog has appeared for the bot to enter the quantity of Iron it wants to load/sell, as part of trimming the hold to the target amount of 1047 Iron",
+    "full_text": "Trade Goods Info — Iron (Wares) — Enter Number: 1 — Description: Metal extracted from iron ore. Often serves as the symbol of... — Prices: Max 1,048 / Min 865 — Final Sales Price: 1,103 — Calculation: Sales Cost 866, -5, +242, 1,103 — 1/1,551 — Cancel | Load",
+    "dismissal": "unknown",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

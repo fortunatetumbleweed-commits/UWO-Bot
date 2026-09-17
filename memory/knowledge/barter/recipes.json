@@ -256,7 +256,7 @@
     "inputs": [
       {
         "material": "Iron",
-        "ratio": 144,
+        "ratio": 130,
         "source_ports": [
           "Amsterdam",
           "Barcelona",
@@ -288,7 +288,7 @@
       "svear_village": [
         {
           "material": "Iron",
-          "ratio": 144,
+          "ratio": 130,
           "source_ports": [
             "Amsterdam",
             "Barcelona",
@@ -322,7 +322,8 @@
     ],
     "output_per_round": {
       "Neutral": 448,
-      "Friendly": 519
+      "Friendly": 519,
+      "Trusting": 435
     },
     "preconditions": {
       "amity_min": null,

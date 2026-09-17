@@ -1,0 +1,21 @@
+{
+  "purpose": "Negotiation dialog asking whether to use negotiation attempts to reduce the Matchlock Gun purchase price by 21.5% (from 285,123 to 210,888 gold), with a 79.2% success rate and multiple remaining attempts",
+  "full_text": "Attempt Negotiation. Remaining negotiation attempts. 285,123 → 210,888 (-21.5%). Negotiation Success Rate: Failed | 79.2% | Success. Samuel Burgess: Hmm, we should be able to buy it for 21.5% less. Why don't you try negotiating? Options: No | Use 1 chance | Use all remaining chances",
+  "dismissal": "tap_accept",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "12dcab712fb09903",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-17T01:13:56.471555+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Negotiation dialog asking whether to use negotiation attempts to reduce the Matchlock Gun purchase price by 21.5% (from 285,123 to 210,888 gold), with a 79.2% success rate and multiple remaining attempts",
+    "full_text": "Attempt Negotiation. Remaining negotiation attempts. 285,123 → 210,888 (-21.5%). Negotiation Success Rate: Failed | 79.2% | Success. Samuel Burgess: Hmm, we should be able to buy it for 21.5% less. Why don't you try negotiating? Options: No | Use 1 chance | Use all remaining chances",
+    "dismissal": "tap_accept",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

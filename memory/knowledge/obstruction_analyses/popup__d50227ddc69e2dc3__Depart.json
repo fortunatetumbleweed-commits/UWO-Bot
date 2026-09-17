@@ -1,0 +1,21 @@
+{
+  "purpose": "An in-game news/announcement panel has appeared showing recent game updates, patch notes, and maintenance notices — this is the game's built-in bulletin board overlay, unrelated to departing for Amsterdam",
+  "full_text": "Updates: September 9 (Wed) Update Advance Notice [Content Added 9/8 18:30] 2026.09.07 | August 10 (Mon) Update Advance Notice 2026.08.07 | July 8 Patch Notes [7/9 13:40 Update] 2026.07.06. Notices: Notice of the Discontinuation of the Existing FLOOR Launcher Service (22 h ago) | 9/16 (Wed) Temporary Maintenance (1 d ago) | 9/9 Data Patch [Content Added 9/9 18:04 (UTC+9)] 2026.09.09",
+  "dismissal": "tap_close_x",
+  "relates_to_goal": false,
+  "outcome_for_goal": "irrelevant",
+  "confidence": "high",
+  "obstruction_kind": "popup",
+  "structural_hash": "d50227ddc69e2dc3",
+  "goal_intent": "Depart",
+  "cached_at": "2026-09-17T00:42:38.751711+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "An in-game news/announcement panel has appeared showing recent game updates, patch notes, and maintenance notices — this is the game's built-in bulletin board overlay, unrelated to departing for Amsterdam",
+    "full_text": "Updates: September 9 (Wed) Update Advance Notice [Content Added 9/8 18:30] 2026.09.07 | August 10 (Mon) Update Advance Notice 2026.08.07 | July 8 Patch Notes [7/9 13:40 Update] 2026.07.06. Notices: Notice of the Discontinuation of the Existing FLOOR Launcher Service (22 h ago) | 9/16 (Wed) Temporary Maintenance (1 d ago) | 9/9 Data Patch [Content Added 9/9 18:04 (UTC+9)] 2026.09.09",
+    "dismissal": "tap_close_x",
+    "relates_to_goal": false,
+    "outcome_for_goal": "irrelevant",
+    "confidence": "high"
+  }
+}

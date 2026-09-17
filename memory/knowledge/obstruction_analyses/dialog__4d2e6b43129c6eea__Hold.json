@@ -1,0 +1,21 @@
+{
+  "purpose": "Purchase confirmation dialog asking the bot to confirm buying a Matchlock Gun for 160,371 ducats (after a 38,925 discount off the 199,296 base cost)",
+  "full_text": "Confirm Purchase — Trade Goods: Matchlock Gun (Firearms, qty 173) | Purchase Cost: 199,296 | Tax 0%: 0 | Discount: -38,925 | Purchase Price: 160,371 | Total Price: 199,296 / 0 / -38,925 / 160,371 — Cancel | OK",
+  "dismissal": "tap_ok",
+  "relates_to_goal": true,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "high",
+  "obstruction_kind": "dialog",
+  "structural_hash": "4d2e6b43129c6eea",
+  "goal_intent": "Hold",
+  "cached_at": "2026-09-17T01:03:06.071471+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "Purchase confirmation dialog asking the bot to confirm buying a Matchlock Gun for 160,371 ducats (after a 38,925 discount off the 199,296 base cost)",
+    "full_text": "Confirm Purchase — Trade Goods: Matchlock Gun (Firearms, qty 173) | Purchase Cost: 199,296 | Tax 0%: 0 | Discount: -38,925 | Purchase Price: 160,371 | Total Price: 199,296 / 0 / -38,925 / 160,371 — Cancel | OK",
+    "dismissal": "tap_ok",
+    "relates_to_goal": true,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "high"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "purpose": "An NPC hint tooltip about the Pillars of Hercules near the Strait of Gibraltar has appeared, overlapping with the Market building tooltip — likely triggered by hovering near an NPC in Barcelona's port overworld while the bot was navigating toward the world map.",
+  "full_text": "Market. 00:00-23:59. Buy and sell Trade Goods. You'll find the Pillars of Hercules near the entrance to the Strait of Gibraltar.",
+  "dismissal": "tap_anywhere",
+  "relates_to_goal": false,
+  "outcome_for_goal": "still_blocking",
+  "confidence": "medium",
+  "obstruction_kind": "popup",
+  "structural_hash": "fc5ee14268cb41ef",
+  "goal_intent": "ChooseDestination",
+  "cached_at": "2026-09-17T01:05:54.390541+00:00",
+  "visit_count": 2,
+  "raw_api_response": {
+    "purpose": "An NPC hint tooltip about the Pillars of Hercules near the Strait of Gibraltar has appeared, overlapping with the Market building tooltip — likely triggered by hovering near an NPC in Barcelona's port overworld while the bot was navigating toward the world map.",
+    "full_text": "Market. 00:00-23:59. Buy and sell Trade Goods. You'll find the Pillars of Hercules near the entrance to the Strait of Gibraltar.",
+    "dismissal": "tap_anywhere",
+    "relates_to_goal": false,
+    "outcome_for_goal": "still_blocking",
+    "confidence": "medium"
+  }
+}
