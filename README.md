@@ -18,14 +18,14 @@ python run_barter.py --save=svear_birch "barter Birch Tree at Svear Village, and
 python run_barter.py --task=svear_birch
 
 
-The bot can also do trading, although this part is a bit rough and not very reliable sometimes. It uses a combination of vision models(Ominparser, MoonDream, Yolo) and OCR cropping to recognize game controls (sometimes not putting together well, and that is what I am trying to learn more and improve), and also use a self trained U-net(posted as a separate project, this project uses the library generated from it) to recognize the direction of the ship for navigation purpose.
+The bot uses a combination of vision models(Ominparser, MoonDream, Yolo) and OCR cropping to recognize game controls (sometimes not putting together well, and that is what I am trying to learn more and improve), and also use a self trained U-net(posted as a separate project, this project uses the library generated from it) to recognize the direction of the ship for navigation purpose.
 
 
 ## 🧭 Exploration (the heart of the project)
 
 The bot navigates open sea, winds down rivers, and hugs coastlines **without a
 map of its own** — it reads the in-game mini-map each tick, estimates the ship's
-heading with a trained CNN, traces the nearest river/coast bank, and steers a
+heading with a trained Unet, traces the nearest river/coast bank, and steers a
 shore-hugging path. That lets it descend the **Nile from Cairo to Lake Victoria
 and sail back** with almost no thrashing.
 
@@ -70,11 +70,6 @@ How it works, in layers:
 
 Design detail: `docs/loop_navigation_design.md`, `docs/navigation_models_status.md`.
 
-## What else it does
-- **Tiered perception** — family CNN + learned screen fingerprints + OmniParser (YOLO) + OCR, with Claude Vision / Moondream VLMs as cached fallbacks.
-- **World-map localization** — reads lat/lon, pan/zoom, village support.
-- **Ports & trading primitives** — enter buildings, read markets, buy/sell (see limitations).
-- **FSM + recovery** — state classification, plan/flow completeness, escalation.
 
 ## Running it
 
@@ -103,20 +98,11 @@ deps (`pip install -r requirements.txt`), and model weights
 
 Honest state — the redesign in `docs/refactor_plan_perceive_flow_fsm.md` targets these:
 
-- **Trading is fragile.** The market-page reader mis-parses the tile grid, so
-  autonomous buy/sell often fail ("no goods available", empty-basket sell). Nav
-  works; profitable trading does not yet.
-- **Absolute screen coordinates are brittle.** They shift with the phone's notch
-  orientation and game-UI updates. A rotation-lock guard mitigates it; the real
-  fix (a learned UI-slot detector) is planned.
-- **Perception composes by priority order, not confidence.** A strong CNN verdict
-  can be overridden by a weak fuzzy string-match (e.g. a port misread as a
-  village), which can stall recovery.
-- **Dialog/overlay handling is ad-hoc**, especially non-standard popups (daily
-  news) shown over another screen.
+- **Not very intelligent.** most of the actions are still specifically coded, like putting goods into carts, purchasing, enter/exit buildings. The bog can handle some simple dialogs, but complicated ones still require programming specifically. The reasoning part is still very weak, and the next thing I want to do most is to be able to use a flywheel solution(first encounter using ClaudeAPI, then use local LLM like Qwen) to let the bot learn and handle different dialogs, without specifically coding for each of them. 
+- **Absolute screen coordinates are brittle.** This has been largely addressed by using Omniparser bboxes, but there are still some stragglers.
 - **OmniParser is slow here (~8 s/call, likely CPU)** — the structural-detection
   tier is a bottleneck.
-- **Combat** is essentially not started.
+
 
 ## Docs
 - Architecture review: `docs/architecture_review_perceive_flows_2026-08.md`
