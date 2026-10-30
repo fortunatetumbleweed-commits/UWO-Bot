@@ -1,4 +1,4 @@
-# UWO-Bot — an intelligent bot(a bit) that plays the game *Uncharted Waters Origin*
+# UWO-Bot — an intelligent(a bit) bot that plays the game *Uncharted Waters Origin*
 I have been a huge fan of the Uncharted Waters series games by Koei Tecomo, and have been playing the UnCharted Waters Origin(https://store.steampowered.com/app/1574360/Uncharted_Waters_Origin/ and https://play.google.com/store/apps/details?id=com.linegames.uwogl&hl=en_US) for some time. Also I have been trying to learn AI for some time, but felt I lacked a use case that I am passionate about to go deeper. One day while playing the game, it came to me the using AI to write a bot that plays this game, and also make the bot intellegent would be something really fun. That is how this project got started.
 
 This is a Python bot that plays the mobile game **Uncharted Waters Origin** on a real
